@@ -1,0 +1,13 @@
+# @coinbase/cds-mobile-visualization
+
+> [NPM registry](https://www.npmjs.com/package/@coinbase/cds-mobile-visualization)
+
+All notable changes to this project will be documented in this file.
+
+`@coinbase/cds-mobile-visualization` adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+<!-- template-start -->
+
+## 3.3.0 (9/18/2025 PST)
+
+- Prepare for open source release.
