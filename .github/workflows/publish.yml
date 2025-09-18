@@ -19,6 +19,9 @@ on:
       - 'packages/*/package.json'
       - 'packages/*/src/**'
 
+permissions:
+  contents: read
+
 jobs:
   # Determine which packages to build/publish
   detect-changes:
