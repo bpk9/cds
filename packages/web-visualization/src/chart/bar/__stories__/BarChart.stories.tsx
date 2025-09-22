@@ -1,14 +1,16 @@
-import React, { memo, useRef } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { isBandScale } from '@coinbase/cds-common/visualizations/charts';
 import { generateRandomId } from '@coinbase/cds-utils';
-import { VStack } from '@coinbase/cds-web/layout';
+import { HStack, VStack } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
 
-import { Chart, useHighlightContext } from '../..';
+import { Chart, ScrubberContext } from '../..';
 import { XAxis, YAxis } from '../../axis';
+import { ChartHeader } from '../../ChartHeader';
 import { useChartContext } from '../../ChartContext';
 import { ReferenceLine, SolidLine, type SolidLineProps } from '../../line';
 import { PeriodSelector } from '../../PeriodSelector';
+import { Scrubber } from '../../Scrubber';
 import { ScrubberLine } from '../../ScrubberLine';
 import { BarChart } from '../BarChart';
 import { BarPlot } from '../BarPlot';
@@ -256,7 +258,7 @@ const tabs: TimePeriodTab[] = [
 
 const ScrubberRect = memo(() => {
   const { getXScale, getYScale } = useChartContext();
-  const { highlightedIndex } = useHighlightContext();
+  const { highlightedIndex } = React.useContext(ScrubberContext) ?? {};
   const xScale = getXScale?.();
   const yScale = getYScale?.();
 
@@ -373,7 +375,6 @@ const Candlesticks = () => {
 
   // todo: see if we can support a bar chart for volume
   // todo: see if we can have this toggle between line candlestick for price
-  // todo: see if we can turn off animations using disableAnimations
 
   // Initial value for the info text
   const initialInfo = formatPrice(stockData[stockData.length - 1].close);
@@ -389,7 +390,7 @@ const Candlesticks = () => {
         <span ref={infoTextRef}>{initialInfo}</span>
       </Text>
       <BarChart
-        disableAnimations
+        enableScrubbing
         showXAxis
         showYAxis
         BarComponent={CandlestickBarComponent}
@@ -397,7 +398,7 @@ const Candlesticks = () => {
         borderRadius={0}
         dataKey={timePeriod.id}
         height={400}
-        onHighlightChange={updateInfoText}
+        onScrubberPosChange={updateInfoText}
         series={[
           {
             id: 'stock-prices',
@@ -416,7 +417,7 @@ const Candlesticks = () => {
         }}
       >
         {timePeriod.id === 'year' ? (
-          <ScrubberLine hideOverlay LineComponent={ThinSolidLine} label={formatTime} />
+          <ScrubberLine hideOverlay LineComponent={ThinSolidLine} />
         ) : (
           <ScrubberRect />
         )}
@@ -461,6 +462,7 @@ export const All = () => {
             showTickMarks: true,
             showLine: true,
             tickMarkSize: 1.5,
+            domain: { max: 50 },
           }}
         />
       </Example>
@@ -528,10 +530,7 @@ export const All = () => {
       <Example title="Gradient Bars">
         <GradientBars />
       </Example>
-      <Example
-        description="todo: figure out how to wait to render axis lines when disableAnimations is true"
-        title="Candlestick Chart"
-      >
+      <Example title="Candlestick Chart">
         <Candlesticks />
       </Example>
     </VStack>

@@ -1258,28 +1258,131 @@ export const ForecastChart = () => {
 
 export const DataFormat = () => {
   return (
-    <LineChart
-      showArea
-      showXAxis
-      showYAxis
-      curve="natural"
-      height={300}
-      renderPoints={() => true}
-      series={[
-        {
-          id: 'line',
-          data: [2, 5.5, 2, 8.5, 1.5, 5],
-        },
-      ]}
-      xAxis={{ data: [1, 2, 3, 5, 8, 10], showLine: true, showTickMarks: true, showGrid: true }}
-      yAxis={{
-        domain: { min: 0 },
-        position: 'start',
-        showLine: true,
-        showTickMarks: true,
-        showGrid: true,
-      }}
-    />
+    <VStack gap={2}>
+      <LineChart
+        enableScrubbing
+        series={[
+          {
+            id: 'line',
+            data: [2, 5.5, 2, 8.5, 1.5, 5],
+          },
+        ]}
+        height={300}
+        showArea
+        renderPoints={() => true}
+        curve="natural"
+        showXAxis
+        xAxis={{
+          data: [1, 2, 3, 5, 8, 10],
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+        showYAxis
+        yAxis={{
+          domain: { min: 0 },
+          position: 'start',
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+      >
+        <Scrubber />
+      </LineChart>
+      <LineChart
+        enableScrubbing
+        series={[
+          {
+            id: 'line',
+            data: [2, 5.5, 2, 8.5, 1.5, 5],
+          },
+        ]}
+        height={300}
+        showArea
+        renderPoints={() => true}
+        curve="natural"
+        showXAxis
+        xAxis={{
+          domain: { min: 0, max: 10 },
+          data: [1, 2, 3, 5, 8, 10],
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+        showYAxis
+        yAxis={{
+          domain: { min: 0 },
+          position: 'start',
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+      >
+        <Scrubber />
+      </LineChart>
+      <LineChart
+        enableScrubbing
+        series={[
+          {
+            id: 'line',
+            data: [2, 5.5, 2, 8.5, 1.5, 5],
+          },
+        ]}
+        height={300}
+        showArea
+        renderPoints={() => true}
+        curve="natural"
+        showXAxis
+        xAxis={{
+          domain: { min: 0, max: 20 },
+          data: [1, 2, 3, 5, 8, 10],
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+        showYAxis
+        yAxis={{
+          domain: { min: 0 },
+          position: 'start',
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+      >
+        <Scrubber />
+      </LineChart>{' '}
+      <LineChart
+        enableScrubbing
+        series={[
+          {
+            id: 'line',
+            data: [2, 5.5, 2, 8.5, 1.5, 5],
+          },
+        ]}
+        height={300}
+        showArea
+        renderPoints={() => true}
+        curve="natural"
+        showXAxis
+        xAxis={{
+          domain: { min: 5, max: 10 },
+          data: [1, 2, 3, 5, 8, 10],
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+        showYAxis
+        yAxis={{
+          domain: { min: 0 },
+          position: 'start',
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+      >
+        <Scrubber />
+      </LineChart>
+    </VStack>
   );
 };
 

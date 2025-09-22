@@ -47,7 +47,7 @@ export const getNumericScale = ({
   range: AxisBounds;
 }): NumericScale => {
   const scale = scaleType === 'log' ? scaleLog() : scaleLinear();
-  return scale.domain([domain.min, domain.max]).range([range.min, range.max]).clamp(true);
+  return scale.domain([domain.min, domain.max]).range([range.min, range.max]);
 };
 
 /**
