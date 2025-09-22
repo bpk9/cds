@@ -1,0 +1,507 @@
+import { formatAxisTick, getAxisTicksData } from '../axis';
+import {
+  type CategoricalScale,
+  getCategoricalScale,
+  getNumericScale,
+  type NumericScale,
+} from '../scale';
+
+describe('getAxisTicksData', () => {
+  let numericScale: NumericScale;
+  let bandScale: CategoricalScale;
+
+  beforeEach(() => {
+    numericScale = getNumericScale({
+      scaleType: 'linear',
+      domain: { min: 0, max: 10 },
+      range: { min: 0, max: 400 },
+    });
+
+    bandScale = getCategoricalScale({
+      domain: { min: 0, max: 4 }, // 5 categories (0, 1, 2, 3, 4)
+      range: { min: 0, max: 400 },
+      padding: 0.1,
+    });
+  });
+
+  describe('tickInterval parameter', () => {
+    it('should generate evenly distributed ticks with tickInterval', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        tickInterval: 80,
+        possibleTickValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      });
+
+      // With 400px range and 80px interval, should get ~5 ticks
+      expect(result.length).toBe(5);
+
+      // Should always include first and last values
+      expect(result[0].tick).toBe(0);
+      expect(result[result.length - 1].tick).toBe(10);
+
+      // Check positions are correct
+      expect(result[0].position).toBe(0);
+      expect(result[result.length - 1].position).toBe(400);
+    });
+
+    it('should handle small tickInterval (more ticks)', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        tickInterval: 40,
+        possibleTickValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      });
+
+      // With 400px range and 40px interval, should get ~10 ticks
+      expect(result.length).toBe(10);
+      expect(result[0].tick).toBe(0);
+      expect(result[result.length - 1].tick).toBe(10);
+    });
+
+    it('should handle large tickInterval (fewer ticks)', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        tickInterval: 120,
+        possibleTickValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      });
+
+      // With 400px range and 120px interval, should get ~3-4 ticks (minimum 4)
+      expect(result.length).toBeGreaterThanOrEqual(3);
+      expect(result.length).toBeLessThanOrEqual(4);
+      expect(result[0].tick).toBe(0);
+      expect(result[result.length - 1].tick).toBe(10);
+    });
+
+    it('should generate whole integers from domain when no possibleTickValues provided', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        tickInterval: 80,
+        // No possibleTickValues provided
+      });
+
+      // Should still generate ticks from domain [0, 10]
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].tick).toBe(0);
+      expect(result[result.length - 1].tick).toBe(10);
+
+      // All tick values should be integers
+      result.forEach(({ tick }) => {
+        expect(Number.isInteger(tick)).toBe(true);
+        expect(tick).toBeGreaterThanOrEqual(0);
+        expect(tick).toBeLessThanOrEqual(10);
+      });
+    });
+
+    it('should use requestedTickCount when both requestedTickCount and tickInterval are provided', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        tickInterval: 80, // This should be ignored
+        requestedTickCount: 5, // This should be used
+        possibleTickValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      });
+
+      // Should use requestedTickCount logic, not tickInterval
+      // D3's ticks(5) may not return exactly 5, but should be close and not based on pixel spacing
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.length).toBeLessThanOrEqual(10); // Reasonable upper bound
+      // Should not be exactly 5 ticks that tickInterval would generate (400px / 80px)
+      expect(result.length).not.toBe(5);
+    });
+  });
+
+  describe('requestedTickCount parameter', () => {
+    it('should use D3 tick generation with requestedTickCount', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        requestedTickCount: 5,
+      });
+
+      expect(result.length).toBeGreaterThan(0);
+      // D3 may not return exactly 5 ticks, but should be close
+      expect(result.length).toBeLessThanOrEqual(10);
+
+      // All positions should be within range
+      result.forEach(({ position }) => {
+        expect(position).toBeGreaterThanOrEqual(0);
+        expect(position).toBeLessThanOrEqual(400);
+      });
+    });
+  });
+
+  describe('explicit ticks array', () => {
+    it('should use exact tick values when provided as array', () => {
+      const exactTicks = [0, 2.5, 5, 7.5, 10];
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        ticks: exactTicks,
+      });
+
+      expect(result.length).toBe(5);
+      expect(result.map((r) => r.tick)).toEqual(exactTicks);
+
+      // Check positions are calculated correctly
+      expect(result[0].position).toBe(0); // 0 -> 0px
+      expect(result[1].position).toBe(100); // 2.5 -> 100px
+      expect(result[2].position).toBe(200); // 5 -> 200px
+      expect(result[3].position).toBe(300); // 7.5 -> 300px
+      expect(result[4].position).toBe(400); // 10 -> 400px
+    });
+  });
+
+  describe('tick filter function', () => {
+    it('should filter ticks using predicate function with possibleTickValues', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        ticks: (value) => value % 2 === 0, // Only even numbers
+        possibleTickValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      });
+
+      const expectedTicks = [0, 2, 4, 6, 8, 10];
+      expect(result.map((r) => r.tick)).toEqual(expectedTicks);
+
+      // Check positions
+      expect(result[0].position).toBe(0); // 0 -> 0px
+      expect(result[1].position).toBe(80); // 2 -> 80px
+      expect(result[2].position).toBe(160); // 4 -> 160px
+    });
+
+    it('should fallback to D3 ticks when no possibleTickValues provided', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        ticks: (value) => value % 2 === 0,
+        requestedTickCount: 6,
+      });
+
+      expect(result.length).toBeGreaterThan(0);
+      // All returned ticks should pass the filter
+      result.forEach(({ tick }) => {
+        expect(tick % 2).toBe(0);
+      });
+    });
+  });
+
+  describe('boolean ticks parameter', () => {
+    it('should return possibleTickValues when ticks is true', () => {
+      const possibleValues = [0, 2, 4, 6, 8, 10];
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        ticks: true,
+        possibleTickValues: possibleValues,
+      });
+
+      expect(result.map((r) => r.tick)).toEqual(possibleValues);
+    });
+
+    it('should return empty array when ticks is false', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        ticks: false,
+        possibleTickValues: [0, 1, 2, 3, 4, 5],
+      });
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('band scale with categories', () => {
+    it('should handle band scale with explicit tick indices', () => {
+      const categories = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
+      const result = getAxisTicksData({
+        scaleFunction: bandScale,
+        categories,
+        ticks: [0, 2, 4], // Show only Jan, Mar, May
+      });
+
+      expect(result.length).toBe(3);
+      expect(result[0].tick).toBe(0); // Jan
+      expect(result[1].tick).toBe(2); // Mar
+      expect(result[2].tick).toBe(4); // May
+
+      // Positions should be centered in bands
+      const bandwidth = bandScale.bandwidth();
+      expect(result[0].position).toBe(bandScale(0)! + bandwidth / 2);
+      expect(result[1].position).toBe(bandScale(2)! + bandwidth / 2);
+      expect(result[2].position).toBe(bandScale(4)! + bandwidth / 2);
+    });
+
+    it('should handle band scale with filter function', () => {
+      const categories = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
+      const result = getAxisTicksData({
+        scaleFunction: bandScale,
+        categories,
+        ticks: (index) => index % 2 === 0, // Show only even indices
+      });
+
+      expect(result.length).toBe(3); // indices 0, 2, 4
+      expect(result[0].tick).toBe(0);
+      expect(result[1].tick).toBe(2);
+      expect(result[2].tick).toBe(4);
+    });
+
+    it('should show all categories when no ticks specified', () => {
+      const categories = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
+      const result = getAxisTicksData({
+        scaleFunction: bandScale,
+        categories,
+      });
+
+      expect(result.length).toBe(5);
+      expect(result.map((r) => r.tick)).toEqual([0, 1, 2, 3, 4]);
+    });
+
+    it('should return empty array when ticks is false for band scale', () => {
+      const categories = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
+      const result = getAxisTicksData({
+        scaleFunction: bandScale,
+        categories,
+        ticks: false,
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it('should filter out invalid indices for band scale', () => {
+      const categories = ['Jan', 'Feb', 'Mar'];
+      const result = getAxisTicksData({
+        scaleFunction: bandScale,
+        categories,
+        ticks: [-1, 0, 1, 2, 5, 10], // Include invalid indices
+      });
+
+      // Should only include valid indices 0, 1, 2
+      expect(result.length).toBe(3);
+      expect(result.map((r) => r.tick)).toEqual([0, 1, 2]);
+    });
+  });
+
+  describe('edge cases and error conditions', () => {
+    it('should handle empty possibleTickValues', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        tickInterval: 80,
+        possibleTickValues: [],
+      });
+
+      // Should fallback to generating from domain
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should handle undefined possibleTickValues with tickInterval', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        tickInterval: 80,
+        // possibleTickValues is undefined
+      });
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].tick).toBe(0);
+      expect(result[result.length - 1].tick).toBe(10);
+    });
+
+    it('should handle scale domain with min > max', () => {
+      // Create a scale with invalid domain for generateEvenlyDistributedTicks
+      const invalidScale = getNumericScale({
+        scaleType: 'linear',
+        domain: { min: 10, max: 0 }, // min > max - invalid domain
+        range: { min: 0, max: 400 },
+      });
+
+      const result = getAxisTicksData({
+        scaleFunction: invalidScale,
+        tickInterval: 80,
+      });
+
+      // Should return empty array when domain generates no valid tick values
+      expect(result).toEqual([]);
+    });
+
+    it('should handle very small tickInterval', () => {
+      const result = getAxisTicksData({
+        scaleFunction: numericScale,
+        tickInterval: 1, // Very small interval
+        possibleTickValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      });
+
+      // Should be limited by possibleTickValues length
+      expect(result.length).toBe(11); // All possible values
+    });
+  });
+
+  describe('maxTickCount parameter', () => {
+    it('should limit generated ticks for large ranges', () => {
+      // Create a scale with a very large domain
+      const largeScale = getNumericScale({
+        scaleType: 'linear',
+        domain: { min: 0, max: 1000000 },
+        range: { min: 0, max: 400 },
+      });
+
+      const result = getAxisTicksData({
+        scaleFunction: largeScale,
+        tickInterval: 80,
+        maxTickCount: 100, // Limit to 100 possible values
+      });
+
+      // Should generate evenly distributed ticks
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.length).toBeLessThanOrEqual(5); // With tickInterval: 80 on 400px range
+
+      // First and last ticks should be at domain boundaries
+      expect(result[0].tick).toBe(0);
+      expect(result[result.length - 1].tick).toBe(1000000);
+
+      // Ticks should be evenly spaced
+      if (result.length > 2) {
+        const spacing = result[1].tick - result[0].tick;
+        for (let i = 2; i < result.length; i++) {
+          const currentSpacing = result[i].tick - result[i - 1].tick;
+          // Allow for some rounding differences
+          expect(Math.abs(currentSpacing - spacing)).toBeLessThanOrEqual(spacing * 0.1);
+        }
+      }
+    });
+
+    it('should use default maxTickCount of 1000 when not specified', () => {
+      // Create a scale with domain larger than default maxTickCount
+      const largeScale = getNumericScale({
+        scaleType: 'linear',
+        domain: { min: 0, max: 10000 },
+        range: { min: 0, max: 400 },
+      });
+
+      const result = getAxisTicksData({
+        scaleFunction: largeScale,
+        tickInterval: 80,
+        // maxTickCount not specified, should use default of 1000
+      });
+
+      expect(result.length).toBeGreaterThan(0);
+
+      // The generated ticks should be from a limited set
+      // With a domain of 10000 and default maxTickCount of 1000,
+      // ticks should jump by ~10
+      if (result.length > 1) {
+        const minJump = (10000 - 0) / 1000; // ~10
+        const actualJump = result[1].tick - result[0].tick;
+        expect(actualJump).toBeGreaterThanOrEqual(minJump * 0.9);
+      }
+    });
+
+    it('should not affect small ranges that are within maxTickCount', () => {
+      // Scale with small domain
+      const smallScale = getNumericScale({
+        scaleType: 'linear',
+        domain: { min: 0, max: 50 },
+        range: { min: 0, max: 400 },
+      });
+
+      const resultWithMaxTickCount = getAxisTicksData({
+        scaleFunction: smallScale,
+        tickInterval: 80,
+        maxTickCount: 100, // Larger than domain range
+      });
+
+      const resultWithoutMaxTickCount = getAxisTicksData({
+        scaleFunction: smallScale,
+        tickInterval: 80,
+        maxTickCount: 1000, // Default
+      });
+
+      // Results should be identical since range (50) < maxTickCount (100)
+      expect(resultWithMaxTickCount.map((r) => r.tick)).toEqual(
+        resultWithoutMaxTickCount.map((r) => r.tick),
+      );
+    });
+
+    it('should handle edge case where maxTickCount equals range', () => {
+      const scale = getNumericScale({
+        scaleType: 'linear',
+        domain: { min: 0, max: 100 },
+        range: { min: 0, max: 400 },
+      });
+
+      const result = getAxisTicksData({
+        scaleFunction: scale,
+        tickInterval: 80,
+        maxTickCount: 100, // Exactly equals the range
+      });
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].tick).toBe(0);
+      expect(result[result.length - 1].tick).toBe(100);
+
+      // All ticks should be integers since range <= maxTickCount
+      result.forEach(({ tick }) => {
+        expect(Number.isInteger(tick)).toBe(true);
+      });
+    });
+
+    it('should handle very small maxTickCount', () => {
+      const scale = getNumericScale({
+        scaleType: 'linear',
+        domain: { min: 0, max: 1000 },
+        range: { min: 0, max: 400 },
+      });
+
+      const result = getAxisTicksData({
+        scaleFunction: scale,
+        tickInterval: 80,
+        maxTickCount: 10, // Very small limit
+      });
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.length).toBeLessThanOrEqual(5); // Limited by tickInterval
+
+      // Ticks should be widely spaced
+      if (result.length > 1) {
+        const spacing = result[1].tick - result[0].tick;
+        expect(spacing).toBeGreaterThanOrEqual(100); // Should jump by at least 100
+      }
+    });
+
+    it('should not affect behavior when possibleTickValues are provided', () => {
+      const scale = getNumericScale({
+        scaleType: 'linear',
+        domain: { min: 0, max: 10 },
+        range: { min: 0, max: 400 },
+      });
+
+      const possibleValues = [0, 2, 4, 6, 8, 10];
+
+      const result = getAxisTicksData({
+        scaleFunction: scale,
+        tickInterval: 80,
+        possibleTickValues: possibleValues,
+        maxTickCount: 3, // This should not affect the result
+      });
+
+      // maxTickCount should only apply when generating from domain,
+      // not when possibleTickValues are provided
+      expect(result.length).toBeGreaterThan(3);
+      expect(result[0].tick).toBe(0);
+      expect(result[result.length - 1].tick).toBe(10);
+    });
+  });
+});
+
+describe('formatAxisTick', () => {
+  it('should use custom formatter when provided', () => {
+    const formatter = (value: number) => `$${value}`;
+    const result = formatAxisTick(100, formatter);
+    expect(result).toBe('$100');
+  });
+
+  it('should return value as-is when no formatter provided', () => {
+    const result = formatAxisTick(100);
+    expect(result).toBe(100);
+  });
+
+  it('should handle string values', () => {
+    const result = formatAxisTick('test');
+    expect(result).toBe('test');
+  });
+
+  it('should handle null/undefined values', () => {
+    expect(formatAxisTick(null)).toBe(null);
+    expect(formatAxisTick(undefined)).toBe(undefined);
+  });
+});

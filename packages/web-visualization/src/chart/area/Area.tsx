@@ -1,0 +1,153 @@
+import React, { memo, useMemo } from 'react';
+import type { SVGProps } from 'react';
+import type { Rect } from '@coinbase/cds-common/types';
+import { getAreaPath } from '@coinbase/cds-common/visualizations/charts/getAreaPath';
+import { type ChartPathCurveType } from '@coinbase/cds-common/visualizations/charts/getPathCurveFunction';
+
+import { useChartContext } from '../ChartContext';
+
+import { DottedArea } from './DottedArea';
+import { GradientArea } from './GradientArea';
+import { SolidArea } from './SolidArea';
+
+export type AreaComponentProps = {
+  d: SVGProps<SVGPathElement>['d'];
+  fill: string;
+  fillOpacity?: number;
+  clipRect?: Rect;
+  disableAnimations?: boolean;
+  stroke?: string;
+  strokeWidth?: number;
+};
+
+export type AreaComponent = React.FC<AreaComponentProps>;
+
+// todo: pull as many props as possible
+// todo: checkout https://mui.com/x/react-charts/lines/#baseline
+export type AreaProps = {
+  /**
+   * The ID of the series to render. Will be used to find the data from the chart context.
+   */
+  seriesId: string;
+  /**
+   * The curve interpolation method to use for the line.
+   * @default 'linear'
+   */
+  curve?: ChartPathCurveType;
+  /**
+   * The type of area to render.
+   * @default 'solid'
+   */
+  type?: 'solid' | 'dotted' | 'gradient';
+  /**
+   * Component to render the area.
+   * Takes precedence over the type prop if provided.
+   */
+  AreaComponent?: AreaComponent;
+  /**
+   * The color of the area.
+   * @default color of the series or 'var(--color-fgPrimary)'
+   */
+  fill?: string;
+  /**
+   * Opacity of the area.
+   * @default 1
+   */
+  fillOpacity?: number;
+  /**
+   * Disable animations for the line.
+   * Overrides the disableAnimations prop on the Chart component.
+   */
+  disableAnimations?: boolean;
+  stroke?: string;
+  strokeWidth?: number;
+};
+
+export const Area = memo<AreaProps>(
+  ({
+    seriesId,
+    curve = 'linear',
+    type = 'solid',
+    AreaComponent: SelectedAreaComponent,
+    fill: specifiedFill,
+    fillOpacity = 1,
+    disableAnimations,
+    stroke,
+    strokeWidth,
+  }) => {
+    const { rect, getSeries, getSeriesData, getStackedSeriesData, getXScale, getYScale, getXAxis } =
+      useChartContext();
+
+    // Get sourceData from series (using stacked data if available)
+    const matchedSeries = useMemo(() => getSeries(seriesId), [seriesId, getSeries]);
+
+    // Check for stacked data first, then fall back to raw data
+    const sourceData = useMemo(() => {
+      const stackedData = getStackedSeriesData(seriesId);
+      if (stackedData) {
+        return stackedData;
+      }
+      return getSeriesData(seriesId) || null;
+    }, [seriesId, getSeriesData, getStackedSeriesData]);
+
+    // Get scales and axes for this series
+    const xScale = getXScale?.(matchedSeries?.xAxisId);
+    const yScale = getYScale?.(matchedSeries?.yAxisId);
+    const xAxis = getXAxis?.(matchedSeries?.xAxisId);
+
+    const area = useMemo(() => {
+      if (!sourceData || sourceData.length === 0 || !xScale || !yScale) return '';
+
+      // Get numeric x-axis data if available
+      const xData =
+        xAxis?.data && Array.isArray(xAxis.data) && typeof xAxis.data[0] === 'number'
+          ? (xAxis.data as number[])
+          : undefined;
+
+      return getAreaPath({
+        data: sourceData,
+        xScale,
+        yScale,
+        curve,
+        xData,
+      });
+    }, [sourceData, xScale, yScale, curve, xAxis?.data]);
+
+    const AreaComponent = useMemo((): AreaComponent => {
+      if (SelectedAreaComponent) {
+        return SelectedAreaComponent;
+      }
+
+      switch (type) {
+        case 'solid':
+          return SolidArea;
+        case 'dotted':
+          return DottedArea;
+        case 'gradient':
+        default:
+          return GradientArea;
+      }
+    }, [SelectedAreaComponent, type]);
+
+    if (!xScale || !yScale || !sourceData || !area) {
+      return null;
+    }
+
+    const fill = specifiedFill ?? matchedSeries?.color ?? 'var(--color-fgPrimary)';
+
+    // todo: should we drop fillOpacity? if we keep it, figure out the best way to handle opacity
+    // Such as DottedArea, where they are set by light / dark theme
+
+    return (
+      <AreaComponent
+        clipRect={rect}
+        d={area}
+        disableAnimations={disableAnimations}
+        fill={fill}
+        fillOpacity={fillOpacity}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+      />
+    );
+  },
+);

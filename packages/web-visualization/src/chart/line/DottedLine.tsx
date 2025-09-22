@@ -1,0 +1,47 @@
+import { memo, type SVGProps } from 'react';
+import type { SharedProps } from '@coinbase/cds-common/types';
+
+import { useChartContext } from '../ChartContext';
+import { Path, type PathProps } from '../Path';
+
+export type DottedLineProps = SharedProps &
+  Omit<PathProps, 'fill'> & {
+    fill?: SVGProps<SVGPathElement>['fill'];
+  };
+
+/**
+ * A customizable dotted line component which uses path element.
+ */
+export const DottedLine = memo<DottedLineProps>(
+  ({
+    fill = 'none',
+    stroke = 'var(--color-bgLine)',
+    strokeDasharray = '0 4',
+    strokeLinecap = 'round',
+    strokeLinejoin = 'round',
+    strokeOpacity = 1,
+    strokeWidth = 2,
+    vectorEffect = 'non-scaling-stroke',
+    disableAnimations,
+    ...props
+  }) => {
+    const context = useChartContext();
+
+    return (
+      <Path
+        disableAnimations={
+          disableAnimations !== undefined ? disableAnimations : context.disableAnimations
+        }
+        fill={fill}
+        stroke={stroke}
+        strokeDasharray={strokeDasharray}
+        strokeLinecap={strokeLinecap}
+        strokeLinejoin={strokeLinejoin}
+        strokeOpacity={strokeOpacity}
+        strokeWidth={strokeWidth}
+        vectorEffect={vectorEffect}
+        {...props}
+      />
+    );
+  },
+);

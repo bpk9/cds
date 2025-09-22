@@ -59,6 +59,11 @@ export const routes = [
     getComponent: () => require('@coinbase/cds-mobile/banner/__stories__/Banner.stories').default,
   },
   {
+    key: 'BarChart',
+    getComponent: () =>
+      require('@coinbase/cds-mobile-visualization/chart/bar/__stories__/BarChart.stories').default,
+  },
+  {
     key: 'Box',
     getComponent: () => require('@coinbase/cds-mobile/layout/__stories__/Box.stories').default,
   },
@@ -94,6 +99,11 @@ export const routes = [
     key: 'CarouselMedia',
     getComponent: () =>
       require('@coinbase/cds-mobile/media/__stories__/CarouselMedia.stories').default,
+  },
+  {
+    key: 'Chart',
+    getComponent: () =>
+      require('@coinbase/cds-mobile-visualization/chart/__stories__/Chart.stories').default,
   },
   {
     key: 'Checkbox',
@@ -262,6 +272,12 @@ export const routes = [
       require('@coinbase/cds-mobile/gradients/__stories__/LinearGradient.stories').default,
   },
   {
+    key: 'LineChart',
+    getComponent: () =>
+      require('@coinbase/cds-mobile-visualization/chart/line/__stories__/LineChart.stories')
+        .default,
+  },
+  {
     key: 'Link',
     getComponent: () => require('@coinbase/cds-mobile/typography/__stories__/Link.stories').default,
   },
@@ -402,6 +418,12 @@ export const routes = [
     key: 'PatternError',
     getComponent: () =>
       require('@coinbase/cds-mobile/system/__stories__/PatternError.stories').default,
+  },
+  {
+    key: 'PeriodSelector',
+    getComponent: () =>
+      require('@coinbase/cds-mobile-visualization/chart/__stories__/PeriodSelector.stories')
+        .default,
   },
   {
     key: 'Pictogram',

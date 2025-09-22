@@ -565,6 +565,26 @@ const sidebars: SidebarsConfig = {
           items: [
             {
               type: 'doc',
+              id: 'components/graphs/AreaChart/areaChart',
+              label: 'AreaChart',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/BarChart/barChart',
+              label: 'BarChart',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/Chart/chart',
+              label: 'Chart',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/LineChart/lineChart',
+              label: 'LineChart',
+            },
+            {
+              type: 'doc',
               id: 'components/graphs/Sparkline/sparkline',
               label: 'Sparkline',
             },

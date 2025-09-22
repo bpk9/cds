@@ -1,0 +1,48 @@
+import { memo } from 'react';
+import type { SharedProps } from '@coinbase/cds-common/types';
+import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
+
+import { useChartContext } from '../ChartContext';
+import { Path, type PathProps } from '../Path';
+
+// todo: reuse shared props
+export type SolidLineProps = SharedProps &
+  Omit<PathProps, 'fill'> & {
+    fill?: string;
+  };
+
+/**
+ * A customizable solid line component which uses path element.
+ */
+export const SolidLine = memo<SolidLineProps>(
+  ({
+    fill = 'none',
+    stroke,
+    strokeLinecap = 'round',
+    strokeLinejoin = 'round',
+    strokeOpacity = 1,
+    strokeWidth = 2,
+    disableAnimations,
+    ...props
+  }) => {
+    const context = useChartContext();
+    const theme = useTheme();
+
+    const effectiveStroke = stroke ?? theme.color.bgLine;
+
+    return (
+      <Path
+        disableAnimations={
+          disableAnimations !== undefined ? disableAnimations : context.disableAnimations
+        }
+        fill={fill}
+        stroke={effectiveStroke}
+        strokeLinecap={strokeLinecap}
+        strokeLinejoin={strokeLinejoin}
+        strokeOpacity={strokeOpacity}
+        strokeWidth={strokeWidth}
+        {...props}
+      />
+    );
+  },
+);

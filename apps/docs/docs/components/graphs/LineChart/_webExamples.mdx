@@ -1,0 +1,895 @@
+## Basic Example
+
+```jsx live
+<LineChart
+  height={250}
+  series={[
+    {
+      id: 'prices',
+      data: [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58],
+    },
+  ]}
+  curve="monotone"
+  showYAxis
+  showArea
+  yAxis={{
+    showGrid: true,
+  }}
+/>
+```
+
+## Simple
+
+```jsx live
+<LineChart
+  disableHighlighting
+  height={250}
+  series={[
+    {
+      id: 'prices',
+      data: [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58],
+    },
+  ]}
+  curve="monotone"
+/>
+```
+
+## Gain/Loss
+
+You can use the y-axis scale and a [linearGradient](https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/linearGradient) to create a gain/loss chart.
+
+todo: we can't seem to do strokeWidth={4} at LineChart level (had to switch this to Chart anyways but should fix this)
+
+```jsx live
+function GainLossChart() {
+  const [highlightedItem, setHighlightedItem] = useState(null);
+  const gradientId = useId();
+
+  const data = [-40, -28, -21, -5, 48, -5, -28, 2, -29, -46, 16, -30, -29, 8];
+
+  const ChartDefs = ({ threshold = 0 }) => {
+    const { getYScale } = useChartContext();
+    // get the default y-axis scale
+    const yScale = getYScale?.();
+
+    if (yScale) {
+      const domain = yScale.domain();
+      const range = yScale.range();
+
+      const baselinePercentage = ((threshold - domain[0]) / (domain[1] - domain[0])) * 100;
+
+      const negativeColor = 'var(--color-bgLine)';
+      const positiveColor = 'var(--color-fgPositive)';
+
+      return (
+        <defs>
+          <linearGradient
+            gradientUnits="userSpaceOnUse"
+            id={`${gradientId}-solid`}
+            x1="0%"
+            x2="0%"
+            y1={range[0]}
+            y2={range[1]}
+          >
+            <stop offset="0%" stopColor={negativeColor} />
+            <stop offset={`${baselinePercentage}%`} stopColor={negativeColor} />
+            <stop offset={`${baselinePercentage}%`} stopColor={positiveColor} />
+            <stop offset="100%" stopColor={positiveColor} />
+          </linearGradient>
+          <linearGradient
+            gradientUnits="userSpaceOnUse"
+            id={`${gradientId}-gradient`}
+            x1="0%"
+            x2="0%"
+            y1={range[0]}
+            y2={range[1]}
+          >
+            <stop offset="0%" stopColor={negativeColor} stopOpacity={0.3} />
+            <stop offset={`${baselinePercentage}%`} stopColor={negativeColor} stopOpacity={0} />
+            <stop offset={`${baselinePercentage}%`} stopColor={positiveColor} stopOpacity={0} />
+            <stop offset="100%" stopColor={positiveColor} stopOpacity={0.3} />
+          </linearGradient>
+        </defs>
+      );
+    }
+
+    return null;
+  };
+
+  const tickLabelFormatter = useCallback(
+    (value) =>
+      new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }).format(value),
+    [],
+  );
+
+  const solidColor = `url(#${gradientId}-solid)`;
+
+  return (
+    <Chart
+      height={250}
+      series={[
+        {
+          id: 'prices',
+          data: data,
+          color: solidColor,
+        },
+      ]}
+      padding={{ top: 12, bottom: 12, left: 0, right: 0 }}
+      onHighlightChange={(dataIndex) => setHighlightedItem(dataIndex)}
+    >
+      <ChartDefs />
+      <YAxis requestedTickCount={2} showGrid tickLabelFormatter={tickLabelFormatter} />
+      <Area seriesId="prices" curve="monotone" fill={`url(#${gradientId}-gradient)`} />
+      <Line strokeWidth={3} curve="monotone" seriesId="prices" stroke={solidColor} />
+      <ScrubberLine hideOverlay />
+      <ScrubberHead
+        seriesId="prices"
+        {...(highlightedItem === null ? { x: data.length - 1, y: data[data.length - 1] } : {})}
+      />
+    </Chart>
+  );
+}
+```
+
+## Multiple Series
+
+You can add multiple series to a line chart.
+
+```jsx live
+<LineChart
+  height={400}
+  series={[
+    {
+      id: 'pageViews',
+      data: [2400, 1398, 9800, 3908, 4800, 3800, 4300],
+      label: 'Page Views',
+      color: 'var(--color-accentBoldBlue)',
+      curve: 'natural',
+    },
+    {
+      id: 'uniqueVisitors',
+      data: [4000, 3000, 2000, 2780, 1890, 2390, 3490],
+      label: 'Unique Visitors',
+      color: 'var(--color-accentBoldGreen)',
+      curve: 'natural',
+    },
+  ]}
+  showXAxis
+  xAxis={{
+    data: ['Page A', 'Page B', 'Page C', 'Page D', 'Page E', 'Page F', 'Page G'],
+    ticks: true,
+    scaleType: 'band',
+  }}
+  showYAxis
+  yAxis={{
+    domain: {
+      min: 0,
+    },
+    showGrid: true,
+    tickLabelFormatter: (value) => value.toLocaleString(),
+  }}
+/>
+```
+
+## Points
+
+You can use the `renderPoints` prop to dynamically show points on a line.
+
+```jsx live
+function PointsChart() {
+  const keyMarketShiftIndices = [4, 6, 7, 9, 10];
+  return (
+    <Chart
+      disableHighlighting
+      height={250}
+      series={[
+        {
+          id: 'prices',
+          data: [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58],
+        },
+      ]}
+      showArea
+      areaType="solid"
+    >
+      <Area seriesId="prices" curve="monotone" fill="rgb(var(--blue5))" />
+      <Line
+        seriesId="prices"
+        renderPoints={({ dataX, ...props }) =>
+          keyMarketShiftIndices.includes(dataX)
+            ? {
+                ...props,
+                strokeWidth: 2,
+                stroke: 'var(--color-bg)',
+                radius: 5,
+                onClick: () => alert('You have clicked a key market shift!'),
+              }
+            : false
+        }
+        curve="monotone"
+      />
+    </Chart>
+  );
+}
+```
+
+## Empty State
+
+This example shows how to use an empty state for a line chart.
+
+Todo: figure out if we can handle this without knowing the # of data points in advance.
+
+Can we also handle color change animations for customers?
+
+```jsx live
+function EmptyStateChart() {
+  const [isLoading, setIsLoading] = useState(true);
+  return (
+    <VStack gap={2}>
+      <Button onClick={() => setIsLoading((loading) => !loading)}>
+        {isLoading ? 'Load Data' : 'Reset'}
+      </Button>
+      <m.div
+        animate={{ '--chartActiveColor': isLoading ? '#717886' : assets.btc.color }}
+        transition={{ duration: 0.3 }}
+      >
+        <LineChart
+          series={[
+            {
+              id: 'line',
+              color: 'var(--chartActiveColor)',
+              data: isLoading
+                ? sparklineInteractiveData.hour.map((price) => 1)
+                : sparklineInteractiveData.hour.map((price) => parseFloat(price.value)),
+              showArea: true,
+            },
+          ]}
+          yAxis={{ domain: isLoading ? { min: -1, max: 3 } : undefined }}
+          disableHighlighting={isLoading}
+          height={300}
+        />
+      </m.div>
+    </VStack>
+  );
+}
+```
+
+## Multiple Axes
+
+todo: move this to an axis doc
+
+```jsx live
+<Chart
+  xAxis={[{ data: [1, 10, 30, 50, 70, 90, 100] }]}
+  yAxis={[
+    { id: 'linearAxis', scaleType: 'linear' },
+    { id: 'logAxis', scaleType: 'log' },
+  ]}
+  series={[
+    { id: 'linear', yAxisId: 'linearAxis', data: [1, 10, 30, 50, 70, 90, 100], label: 'linear' },
+    { id: 'log', yAxisId: 'logAxis', data: [1, 10, 30, 50, 70, 90, 100], label: 'log' },
+  ]}
+  height={512}
+>
+  <XAxis position="end" showLine showTickMarks />
+  <YAxis axisId="linearAxis" position="start" showLine showTickMarks />
+  <YAxis axisId="logAxis" position="end" showLine showTickMarks />
+  <Line seriesId="linear" curve="natural" />
+  <Line seriesId="log" curve="natural" />
+</Chart>
+```
+
+## Line Styles
+
+```jsx live
+<LineChart
+  disableHighlighting
+  height={400}
+  series={[
+    {
+      id: 'top',
+      data: [15, 28, 32, 44, 46, 36, 40, 45, 48, 38],
+    },
+    {
+      id: 'upperMiddle',
+      data: [12, 23, 21, 29, 34, 28, 31, 38, 42, 35],
+      color: '#ef4444',
+      type: 'dotted',
+    },
+    {
+      id: 'lowerMiddle',
+      data: [8, 15, 14, 25, 20, 18, 22, 28, 24, 30],
+      color: '#f59e0b',
+      curve: 'natural',
+      LineComponent: (props) => (
+        <GradientLine {...props} endColor="#F7931A" startColor="#E3D74D" strokeWidth={4} />
+      ),
+    },
+    {
+      id: 'bottom',
+      data: [4, 8, 11, 15, 16, 14, 16, 10, 12, 14],
+      color: '#800080',
+      curve: 'step',
+      AreaComponent: DottedArea,
+      showArea: true,
+    },
+  ]}
+/>
+```
+
+## Live Data
+
+```jsx live
+function LiveLineChartNoSnap() {
+  function randBetween(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  const dataPoints = 120;
+
+  // Generate initial data with blue line between 65-85%
+  const generateInitialData = () => {
+    const blueData = Array.from({ length: dataPoints }, () => randBetween(65, 85));
+    const greenData = blueData.map((value) => 100 - value);
+    return { blueData, greenData };
+  };
+
+  const initialData = generateInitialData();
+  const [running, setRunning] = React.useState(false);
+  const [blueData, setBlueData] = React.useState(initialData.blueData);
+  const [greenData, setGreenData] = React.useState(initialData.greenData);
+
+  React.useEffect(() => {
+    if (!running) {
+      return undefined;
+    }
+
+    const intervalId = setInterval(() => {
+      // Generate new value between 65-85% for blue
+      const newBlueValue = randBetween(65, 85);
+      const newGreenValue = 100 - newBlueValue;
+
+      // Shift arrays and add new values
+      setBlueData((prev) => [...prev.slice(1), newBlueValue]);
+      setGreenData((prev) => [...prev.slice(1), newGreenValue]);
+    }, 125); // Update every 1/2 second
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [running]);
+
+  return (
+    <VStack gap={1}>
+      <HStack gap={2} justifyContent="flex-end">
+        <IconButton
+          onClick={() => setRunning((p) => !p)}
+          name={running ? 'pause' : 'play'}
+          active
+        />
+        <IconButton
+          onClick={() => {
+            const newData = generateInitialData();
+            setBlueData(newData.blueData);
+            setGreenData(newData.greenData);
+          }}
+          name="refresh"
+        />
+      </HStack>
+      <LineChart
+        height={300}
+        series={[
+          {
+            id: 'primary',
+            data: blueData,
+            color: 'var(--color-accentBoldBlue)',
+            curve: 'natural',
+          },
+          {
+            id: 'secondary',
+            data: greenData,
+            color: 'var(--color-accentBoldGreen)',
+            curve: 'natural',
+          },
+        ]}
+        showYAxis
+        yAxis={{
+          domain: { min: 0, max: 100 },
+          showGrid: true,
+          ticks: [0, 20, 40, 60, 80, 100],
+          tickLabelFormatter: (value) => `${value}%`,
+        }}
+        disableAnimations
+        hideScrubberHeads={false}
+      />
+    </VStack>
+  );
+}
+```
+
+## Data Formats
+
+You can adjust the y values for a series of data by setting the `data` prop on the xAxis.
+
+todo: we need to handle showing points for any spot in the axis.
+
+```jsx live
+<LineChart
+  series={[
+    {
+      id: 'line',
+      data: [2, 5.5, 2, 8.5, 1.5, 5],
+    },
+  ]}
+  height={300}
+  showArea
+  renderPoints={() => true}
+  curve="natural"
+  showXAxis
+  xAxis={{ data: [1, 2, 3, 5, 8, 10], showLine: true, showTickMarks: true, showGrid: true }}
+  showYAxis
+  yAxis={{
+    domain: { min: 0 },
+    position: 'start',
+    showLine: true,
+    showTickMarks: true,
+    showGrid: true,
+  }}
+/>
+```
+
+## Customization
+
+### Forecasting
+
+```jsx live
+function ForecastChart() {
+  // Generate monthly Bitcoin data from Jan 2022 to present
+  const generateMonthlyBitcoinData = () => {
+    const startDate = new Date('2022-01-01');
+    const endDate = new Date('2025-01-01'); // Present day
+    const data = [];
+
+    // Starting price around $47,000 (Bitcoin price in Jan 2022)
+    let currentPrice = 47000;
+
+    const currentDate = new Date(startDate);
+    while (currentDate < endDate) {
+      // Simulate realistic Bitcoin volatility with monthly changes
+      const monthlyChange = (Math.random() - 0.5) * 0.4; // ±20% monthly volatility
+      const trendFactor =
+        Math.sin((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365)) * 0.1; // Long-term cycles
+
+      currentPrice = Math.max(15000, currentPrice * (1 + monthlyChange + trendFactor));
+
+      data.push({
+        date: new Date(currentDate),
+        value: Math.round(currentPrice),
+      });
+
+      // Move to next month
+      currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+
+    return data;
+  };
+
+  const historicalData = useMemo(() => generateMonthlyBitcoinData(), []);
+  const [annualGrowthRate, setAnnualGrowthRate] = useState(10);
+
+  // Generate 5 years of monthly forecast data (60 months)
+  const forecastPeriods = 60;
+
+  const generateForecastData = useCallback(
+    (lastPrice: number, periods: number, growthRate: number) => {
+      const monthlyGrowthRate = Math.pow(1 + growthRate / 100, 1 / 12) - 1; // Convert annual to monthly
+      const forecastData = [];
+
+      for (let i = 1; i <= periods; i++) {
+        const forecastPrice = lastPrice * Math.pow(1 + monthlyGrowthRate, i);
+        forecastData.push(Math.round(forecastPrice));
+      }
+      return forecastData;
+    },
+    [],
+  );
+
+  const forecastPriceData = useMemo(
+    () =>
+      generateForecastData(
+        historicalData[historicalData.length - 1].value,
+        forecastPeriods,
+        annualGrowthRate,
+      ),
+    [generateForecastData, historicalData, forecastPeriods, annualGrowthRate],
+  );
+
+  // Create forecast dates
+  const forecastDates = useMemo(() => {
+    const dates = [];
+    const lastDate = new Date(historicalData[historicalData.length - 1].date);
+
+    for (let i = 1; i <= forecastPeriods; i++) {
+      const forecastDate = new Date(lastDate);
+      forecastDate.setMonth(lastDate.getMonth() + i);
+      dates.push(forecastDate);
+    }
+    return dates;
+  }, [historicalData, forecastPeriods]);
+
+  // Create series data
+  const historicalSeriesData = useMemo(() => historicalData.map((d) => d.value), [historicalData]);
+
+  const forecastSeriesData = useMemo(
+    () => [
+      ...Array(historicalData.length - 1).fill(null),
+      historicalData[historicalData.length - 1].value,
+      ...forecastPriceData,
+    ],
+    [historicalData, forecastPriceData],
+  );
+
+  // State management
+  const [currentPrice, setCurrentPrice] = useState(historicalData[historicalData.length - 1].value);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isInForecast, setIsInForecast] = useState(false);
+
+  const formatPrice = useCallback((price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+  }, []);
+
+  const allDates = useMemo(
+    () => [...historicalData.map((d) => d.date), ...forecastDates],
+    [historicalData, forecastDates],
+  );
+
+  const defaultScrubberPosition = useMemo(
+    () => ({
+      x: historicalData.length + forecastPeriods - 1,
+      y: forecastPriceData[forecastPeriods - 1],
+    }),
+    [historicalData.length, forecastPeriods, forecastPriceData],
+  );
+
+  // Simple formatter that just returns the year
+  const formatXAxisLabel = useCallback(
+    (dataIndex: number) => {
+      if (dataIndex >= 0 && dataIndex < allDates.length) {
+        return allDates[dataIndex].getFullYear().toString();
+      }
+      return '';
+    },
+    [allDates],
+  );
+
+  return (
+    <VStack gap={3}>
+      <HStack alignItems="center" justifyContent="space-between">
+        <VStack alignItems="flex-start" gap={1}>
+          <TextLabel2 as="h3">Bitcoin Price Forecast</TextLabel2>
+          <TextLabel2 as="p" color="fgMuted">
+            Historical data (2022-2025) with {annualGrowthRate}% annual growth forecast
+          </TextLabel2>
+        </VStack>
+        <VStack alignItems="flex-end" gap={1}>
+          <TextLabel2 as="p" color="fgMuted">
+            {isHovering
+              ? isInForecast
+                ? 'Forecast'
+                : 'Historical'
+              : `5-Year Target (${forecastDates[forecastDates.length - 1]?.getFullYear()})`}
+          </TextLabel2>
+          <TextLabel2 as="p">{formatPrice(currentPrice)}</TextLabel2>
+        </VStack>
+      </HStack>
+      <HStack alignItems="center" gap={2} justifyContent="flex-end">
+        <TextLabel1>Predicted Growth Rate</TextLabel1>
+        <TextInput
+          compact
+          readOnly
+          end={
+            <IconButton
+              compact
+              transparent
+              disabled={annualGrowthRate >= 20}
+              name="add"
+              onClick={() => setAnnualGrowthRate(Math.min(100, annualGrowthRate + 1))}
+            />
+          }
+          start={
+            <IconButton
+              compact
+              transparent
+              disabled={annualGrowthRate <= 0}
+              name="minus"
+              onClick={() => setAnnualGrowthRate(Math.max(0, annualGrowthRate - 1))}
+            />
+          }
+          style={{ textAlign: 'center', paddingLeft: 0, paddingRight: 0 }}
+          value={`${annualGrowthRate}%`}
+          width="160px"
+        />
+      </HStack>
+      <LineChart
+        disableAnimations
+        showArea
+        AreaComponent={DottedArea}
+        curve="natural"
+        height={350}
+        onHighlightChange={useCallback(
+          (highlightedIndex: number | null) => {
+            if (highlightedIndex !== null) {
+              const dataIndex = highlightedIndex;
+
+              if (dataIndex < historicalData.length) {
+                if (dataIndex >= 0 && dataIndex < historicalData.length) {
+                  setCurrentPrice(historicalData[dataIndex].value);
+                  setIsInForecast(false);
+                }
+              } else {
+                const forecastIndex = dataIndex - historicalData.length;
+                if (forecastIndex >= 0 && forecastIndex < forecastPriceData.length) {
+                  setCurrentPrice(forecastPriceData[forecastIndex]);
+                  setIsInForecast(true);
+                }
+              }
+              setIsHovering(true);
+            } else {
+              // Default to end of forecast when not hovering
+              setCurrentPrice(forecastPriceData[forecastPeriods - 1]);
+              setIsHovering(false);
+              setIsInForecast(false);
+            }
+          },
+          [historicalData, forecastPriceData, forecastPeriods],
+        )}
+        padding={{
+          top: 24,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+        series={[
+          {
+            id: 'historical',
+            data: historicalSeriesData,
+            color: assets.btc.color,
+          },
+          {
+            id: 'forecast',
+            data: forecastSeriesData,
+            color: assets.btc.color,
+            LineComponent: DottedLine,
+          },
+        ]}
+      >
+        <XAxis position="end" requestedTickCount={6} tickLabelFormatter={formatXAxisLabel} />
+        {!isHovering && (
+          <ScrubberHead
+            pulse
+            stroke={assets.btc.color}
+            x={defaultScrubberPosition.x}
+            y={defaultScrubberPosition.y}
+          />
+        )}
+      </LineChart>
+    </VStack>
+  );
+}
+```
+
+### Availability
+
+```jsx live
+function AvailabilityChart() {
+  const availabilityEvents = [
+    {
+      date: new Date('2022-01-01'),
+      availability: 79,
+    },
+    {
+      date: new Date('2022-01-03'),
+      availability: 81,
+    },
+    {
+      date: new Date('2022-01-04'),
+      availability: 82,
+    },
+    {
+      date: new Date('2022-01-06'),
+      availability: 91,
+    },
+    {
+      date: new Date('2022-01-07'),
+      availability: 92,
+    },
+    {
+      date: new Date('2022-01-10'),
+      availability: 86,
+    },
+  ];
+
+  const ChartDefs = memo(({ yellowThresholdPercentage = 85, greenThresholdPercentage = 90 }) => {
+    const { height, series, rect, getYScale, getYAxis } = useChartContext();
+    const yScale = getYScale?.();
+    const yAxis = getYAxis?.();
+
+    if (!series || !rect || !yScale) return null;
+
+    const rangeBounds = yAxis?.domain;
+    const rangeMin = rangeBounds?.min ?? 0;
+    const rangeMax = rangeBounds?.max ?? 100;
+
+    // Calculate the Y positions in the chart coordinate system
+    const yellowThresholdY = yScale(yellowThresholdPercentage) ?? 0;
+    const greenThresholdY = yScale(greenThresholdPercentage) ?? 0;
+    const minY = yScale(rangeMax) ?? 0; // Top of chart (max value)
+    const maxY = yScale(rangeMin) ?? rect.height; // Bottom of chart (min value)
+
+    // Calculate percentages based on actual chart positions
+    const yellowThreshold = ((yellowThresholdY - minY) / (maxY - minY)) * 100;
+    const greenThreshold = ((greenThresholdY - minY) / (maxY - minY)) * 100;
+
+    return (
+      <defs>
+        <linearGradient
+          id="availabilityGradient"
+          x1="0%"
+          x2="0%"
+          y1={minY}
+          y2={maxY}
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="var(--color-fgPositive)" />
+          <stop offset={`${greenThreshold}%`} stopColor="var(--color-fgPositive)" />
+          <stop offset={`${greenThreshold}%`} stopColor="var(--color-fgWarning)" />
+          <stop offset={`${yellowThreshold}%`} stopColor="var(--color-fgWarning)" />
+          <stop offset={`${yellowThreshold}%`} stopColor="var(--color-fgNegative)" />
+          <stop offset="100%" stopColor="var(--color-fgNegative)" />
+        </linearGradient>
+      </defs>
+    );
+  });
+
+  return (
+    <Chart
+      series={[
+        {
+          id: 'availability',
+          data: availabilityEvents.map((event) => event.availability),
+          color: 'url(#availabilityGradient)',
+        },
+      ]}
+      height={300}
+      xAxis={{
+        data: availabilityEvents.map((event) => event.date.getTime()),
+      }}
+      yAxis={{
+        domain: ({ min, max }) => ({ min: Math.max(min - 2, 0), max: Math.min(max + 2, 100) }),
+      }}
+    >
+      <ChartDefs />
+      <XAxis
+        showLine
+        showTickMarks
+        showGrid
+        tickLabelFormatter={(value) => new Date(value).toLocaleDateString()}
+      />
+      <YAxis
+        position="start"
+        showLine
+        showTickMarks
+        showGrid
+        tickLabelFormatter={(value) => `${value}%`}
+      />
+      <Line
+        seriesId="availability"
+        curve="stepAfter"
+        renderPoints={() => ({
+          fill: 'var(--color-bg)',
+          stroke: 'url(#availabilityGradient)',
+          strokeWidth: 2,
+        })}
+      />
+    </Chart>
+  );
+}
+```
+
+### Asset Price Widget
+
+You can coordinate LineChart with custom styles to create a custom card that shows the latest price and percent change.
+
+```jsx live
+function BitcoinChartWithScrubberHead() {
+  const prices = [...btcCandles].reverse().map((candle) => parseFloat(candle.close))
+  const latestPrice = prices[prices.length - 1]
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(price)
+  }
+
+  const formatPercentChange = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'percent',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price)
+  }
+
+  const percentChange = (latestPrice - prices[0]) / prices[0]
+
+  return (
+    <VStack
+      style={{
+        background:
+          'linear-gradient(0deg, rgba(0, 0, 0, 0.80) 0%, rgba(0, 0, 0, 0.80) 100%), #ED702F',
+      }}
+      borderRadius={300}
+      gap={2}
+      padding={2}
+      paddingBottom={0}
+      overflow="hidden"
+    >
+      <HStack gap={2} alignItems="center">
+        <RemoteImage source={assets.btc.imageUrl} size="xxl" shape="circle" />
+        <VStack gap={0.25} flexGrow={1}>
+          <Text font="title1" color="bg">BTC</Text>
+          <Text font="label1" color="fgMuted">Bitcoin</Text>
+        </VStack>
+        <VStack gap={0.25} alignItems="flex-end">
+          <Text font="title1" color="bg">{formatPrice(latestPrice)}</TextLabel2>
+          <Text font="label1" color="fgPositive">+{formatPercentChange(percentChange)}</TextLabel2>
+        </VStack>
+      </HStack>
+      <div
+       style={{  marginLeft: 'calc(-1 * var(--space-2))',
+          marginRight: 'calc(-1 * var(--space-2))', }}
+      >
+        <LineChart
+          disableHighlighting
+          padding={{ left: 0, right: 24, bottom: 0, top: 0 }}
+          series={[
+            {
+              id: 'btcPrice',
+              data: prices,
+              color: assets.btc.color,
+            },
+          ]}
+          showArea
+          width="100%"
+          height={92}
+        >
+          <ScrubberHead
+            pulse
+            seriesId="btcPrice"
+            x={prices.length - 1}
+            y={prices[prices.length - 1]}
+          />
+        </LineChart>
+      </div>
+    </VStack>
+  );
+}
+```
+
+## A11y
+
+Todo: talk about how to handle this
+
+Also look at some sort of way to 'enable' highlighting so that people cannot tab into chart when unnecessary.
+
+## Padding
+
+talk about how this can be adjusted

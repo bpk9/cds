@@ -1,0 +1,9 @@
+{
+  "import": "import { AreaChart } from '@coinbase/cds-web-visualization'",
+  "relatedComponents": [
+    {
+      "label": "SparklineInteractive",
+      "url": "/components/graphs/SparklineInteractive/"
+    }
+  ]
+}

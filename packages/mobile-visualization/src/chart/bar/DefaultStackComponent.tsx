@@ -1,0 +1,123 @@
+import React, { memo, useMemo, useRef } from 'react';
+import { ClipPath, Defs, G, Path } from 'react-native-svg';
+import type { ThemeVars } from '@coinbase/cds-common';
+import { createRoundedRectPath } from '@coinbase/cds-common/visualizations/charts';
+import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
+import { generateRandomId } from '@coinbase/cds-utils';
+
+export type StackComponentBaseProps = {
+  /**
+   * The x position of the stack.
+   */
+  x: number;
+  /**
+   * The y position of the stack.
+   */
+  y: number;
+  /**
+   * The width of the stack.
+   */
+  width: number;
+  /**
+   * The height of the stack.
+   */
+  height: number;
+  /**
+   * The bar elements to render within the stack.
+   */
+  children: React.ReactNode;
+  /**
+   * The index of the category this stack belongs to.
+   */
+  categoryIndex: number;
+  /**
+   * Border radius from theme (e.g., 100, 200, etc.).
+   * @default 100
+   */
+  borderRadius?: ThemeVars.BorderRadius;
+  /**
+   * Whether to round the top corners.
+   */
+  roundTop?: boolean;
+  /**
+   * Whether to round the bottom corners.
+   */
+  roundBottom?: boolean;
+  /**
+   * Disable animations for the stack.
+   */
+  disableAnimations?: boolean;
+  /**
+   * The y-origin for animations (baseline position).
+   */
+  yOrigin?: number;
+};
+
+export type StackComponentProps = StackComponentBaseProps & {
+  /**
+   * Custom class name for the stack group.
+   */
+  className?: string;
+  /**
+   * Custom styles for the stack group.
+   */
+  style?: React.CSSProperties;
+};
+
+export type StackComponent = React.FC<StackComponentProps>;
+
+/**
+ * Default stack component that renders children in a group with animated clip path.
+ */
+export const DefaultStackComponent = memo<StackComponentProps>(function DefaultStackComponent({
+  children,
+  className,
+  style,
+  width,
+  height,
+  x,
+  y,
+  borderRadius = 100,
+  roundTop = true,
+  roundBottom = true,
+  disableAnimations,
+  yOrigin,
+}) {
+  const theme = useTheme();
+  const clipPathId = useRef(generateRandomId()).current;
+
+  const clipPathData = useMemo(() => {
+    return createRoundedRectPath(
+      x,
+      y,
+      width,
+      height,
+      theme.borderRadius[borderRadius],
+      roundTop,
+      roundBottom,
+    );
+  }, [x, y, width, height, theme.borderRadius, borderRadius, roundTop, roundBottom]);
+
+  const initialClipPathData = useMemo(() => {
+    return createRoundedRectPath(
+      x,
+      yOrigin ?? y + height,
+      width,
+      1,
+      theme.borderRadius[borderRadius],
+      roundTop,
+      roundBottom,
+    );
+  }, [x, yOrigin, y, height, width, theme.borderRadius, borderRadius, roundTop, roundBottom]);
+
+  return (
+    <>
+      <Defs>
+        <ClipPath id={clipPathId}>
+          <Path d={clipPathData} />
+        </ClipPath>
+      </Defs>
+      <G clipPath={`url(#${clipPathId})`}>{children}</G>
+    </>
+  );
+});

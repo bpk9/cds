@@ -1,0 +1,614 @@
+import React, { createContext, memo, useCallback, useContext, useMemo, useState } from 'react';
+import { StyleSheet, type ViewStyle } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
+import { Svg } from 'react-native-svg';
+import type { Rect } from '@coinbase/cds-common/types';
+import {
+  type AxisConfig,
+  type AxisConfigProps,
+  type ChartPadding,
+  type ChartScaleFunction,
+  defaultAxisId,
+  getAxisConfig,
+  getAxisDomain,
+  getAxisRange,
+  getAxisScale,
+  getPadding,
+  getStackedSeriesData as calculateStackedSeriesData,
+  isBandScale,
+  type Series,
+} from '@coinbase/cds-common/visualizations/charts';
+import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
+import { Box } from '@coinbase/cds-mobile/layout';
+
+import { ChartContext, type ChartContextValue } from './ChartContext';
+import {
+  ChartDrawingAreaContext,
+  type ChartDrawingAreaContextValue,
+  type RegisteredAxis,
+} from './ChartDrawingAreaContext';
+
+const styles = StyleSheet.create({
+  container: {
+    overflow: 'visible',
+  },
+});
+
+// Chart highlighting context
+export type HighlightContextValue = {
+  /** The currently highlighted data index, or undefined if nothing is highlighted */
+  highlightedIndex?: number;
+  /** Update the highlighted data index */
+  updateHighlightedIndex: (index: number | undefined) => void;
+};
+
+export const HighlightContext = createContext<HighlightContextValue | undefined>(undefined);
+
+export const useHighlightContext = (): HighlightContextValue => {
+  const context = useContext(HighlightContext);
+  if (!context) {
+    throw new Error('useHighlightContext must be used within a Chart component');
+  }
+  return context;
+};
+
+export type ChartBaseProps = {
+  /**
+   * Configuration objects that define how to visualize the data.
+   * Each series contains its own data array.
+   */
+  series?: Array<Series>;
+  /**
+   * Chart content (axes, lines, etc.)
+   */
+  children?: React.ReactNode;
+  /**
+   * Prevents default animations on the chart.
+   */
+  disableAnimations?: boolean;
+  /**
+   * Disables all highlighting interactions (pan gestures).
+   * When true, no highlighting will occur and scrubber components won't be interactive.
+   */
+  disableHighlighting?: boolean;
+  /**
+   * Configuration for x-axis(es). Can be a single config or array of configs.
+   * If array, first axis becomes default if no id is specified.
+   */
+  xAxis?: Partial<AxisConfigProps> | Partial<AxisConfigProps>[];
+  /**
+   * Configuration for y-axis(es). Can be a single config or array of configs.
+   * If array, first axis becomes default if no id is specified.
+   */
+  yAxis?: Partial<AxisConfigProps> | Partial<AxisConfigProps>[];
+  /**
+   * Padding around the entire chart (outside the axes).
+   * This creates space outside of axes rather than between axes and the drawing area.
+   */
+  padding?: number | ChartPadding;
+  /**
+   * Callback fired when the highlighted item changes.
+   * Receives the dataIndex of the highlighted item or null when no item is highlighted.
+   */
+  onHighlightChange?: (dataIndex: number | null) => void;
+  /**
+   * Chart width. If not provided, will use the container's measured width.
+   */
+  width?: number | string;
+  /**
+   * Chart height. If not provided, will use the container's measured height.
+   */
+  height?: number | string;
+  /**
+   * Additional styles for the chart container.
+   */
+  style?: ViewStyle;
+};
+
+export type ChartProps = ChartBaseProps;
+
+export const Chart = memo<ChartProps>(
+  ({
+    series,
+    disableAnimations,
+    disableHighlighting,
+    xAxis: xAxisConfigInput,
+    yAxis: yAxisConfigInput,
+    padding: paddingInput,
+    onHighlightChange,
+    children,
+    width = '100%',
+    height = '100%',
+    style,
+    ...props
+  }) => {
+    const [containerLayout, onContainerLayout] = useLayout();
+
+    // Use provided dimensions or fall back to measured layout
+    const chartWidth = typeof width === 'number' ? width : containerLayout.width;
+    const chartHeight = typeof height === 'number' ? height : containerLayout.height;
+
+    const userPadding = useMemo(() => getPadding(paddingInput), [paddingInput]);
+
+    const xAxisConfig = useMemo(() => getAxisConfig('x', xAxisConfigInput), [xAxisConfigInput]);
+    const yAxisConfig = useMemo(() => getAxisConfig('y', yAxisConfigInput), [yAxisConfigInput]);
+
+    const [highlightedIndex, setHighlightedIndex] = useState<number | undefined>(undefined);
+    const [renderedAxes, setRenderedAxes] = useState<Map<string, RegisteredAxis>>(new Map());
+
+    const axisPadding = useMemo(() => {
+      const padding = { top: 0, right: 0, bottom: 0, left: 0 };
+
+      renderedAxes.forEach((axis) => {
+        if (axis.type === 'x') {
+          if (axis.position === 'start') {
+            padding.top += axis.size;
+          } else if (axis.position === 'end') {
+            padding.bottom += axis.size;
+          }
+        } else if (axis.type === 'y') {
+          if (axis.position === 'start') {
+            padding.left += axis.size;
+          } else if (axis.position === 'end') {
+            padding.right += axis.size;
+          }
+        }
+      });
+
+      return padding;
+    }, [renderedAxes]);
+
+    const totalPadding = useMemo(
+      () => ({
+        top: userPadding.top + axisPadding.top,
+        right: userPadding.right + axisPadding.right,
+        bottom: userPadding.bottom + axisPadding.bottom,
+        left: userPadding.left + axisPadding.left,
+      }),
+      [userPadding, axisPadding],
+    );
+
+    const chartRect: Rect = useMemo(() => {
+      if (chartWidth <= 0 || chartHeight <= 0) return { x: 0, y: 0, width: 0, height: 0 };
+
+      const availableWidth = chartWidth - totalPadding.left - totalPadding.right;
+      const availableHeight = chartHeight - totalPadding.top - totalPadding.bottom;
+
+      return {
+        x: totalPadding.left,
+        y: totalPadding.top,
+        width: availableWidth > 0 ? availableWidth : 0,
+        height: availableHeight > 0 ? availableHeight : 0,
+      };
+    }, [chartHeight, chartWidth, totalPadding]);
+
+    const xAxes = useMemo(() => {
+      const axes = new Map<string, AxisConfig>();
+      if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return axes;
+
+      xAxisConfig.forEach((axisParam) => {
+        const relevantSeries =
+          series?.filter((s) => (s.xAxisId ?? defaultAxisId) === axisParam.id) ?? [];
+
+        const domain = getAxisDomain(axisParam, relevantSeries, 'x');
+        const range = getAxisRange(axisParam, chartRect, 'x');
+
+        const axisConfig: AxisConfig = {
+          scaleType: axisParam.scaleType,
+          domain,
+          range,
+          data: axisParam.data,
+          categoryPadding: axisParam.categoryPadding,
+          domainLimit: axisParam.domainLimit,
+        };
+        axes.set(axisParam.id, axisConfig);
+      });
+
+      return axes;
+    }, [xAxisConfig, series, chartRect]);
+
+    // todo: do we need to worry about axis being set but scale being undefined?
+    const yAxes = useMemo(() => {
+      const axes = new Map<string, AxisConfig>();
+      if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return axes;
+
+      yAxisConfig.forEach((axisParam) => {
+        const axisId = axisParam.id ?? defaultAxisId;
+
+        // Get relevant series data
+        const relevantSeries = series?.filter((s) => (s.yAxisId ?? defaultAxisId) === axisId) ?? [];
+
+        // Calculate domain and range in one pass
+        const domain = getAxisDomain(axisParam, relevantSeries, 'y');
+        const range = getAxisRange(axisParam, chartRect, 'y');
+
+        axes.set(axisId, {
+          scaleType: axisParam.scaleType,
+          domain,
+          range,
+          data: axisParam.data,
+          categoryPadding: axisParam.categoryPadding,
+          domainLimit: axisParam.domainLimit ?? 'nice',
+        });
+      });
+
+      return axes;
+    }, [yAxisConfig, series, chartRect]);
+
+    const xScales = useMemo(() => {
+      const scales = new Map<string, ChartScaleFunction>();
+      if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return scales;
+
+      xAxes.forEach((axisConfig, axisId) => {
+        const scale = getAxisScale({
+          config: axisConfig,
+          type: 'x',
+          range: axisConfig.range,
+          dataDomain: axisConfig.domain,
+        });
+
+        if (scale) {
+          scales.set(axisId, scale);
+        }
+      });
+
+      return scales;
+    }, [chartRect, xAxes]);
+
+    const yScales = useMemo(() => {
+      const scales = new Map<string, ChartScaleFunction>();
+      if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return scales;
+
+      yAxes.forEach((axisConfig, axisId) => {
+        const scale = getAxisScale({
+          config: axisConfig,
+          type: 'y',
+          range: axisConfig.range,
+          dataDomain: axisConfig.domain,
+        });
+
+        if (scale) {
+          scales.set(axisId, scale);
+        }
+      });
+
+      return scales;
+    }, [chartRect, yAxes]);
+
+    // todo: handle multiple scales
+    // todo: can we simplify this a lot to rely on numbers only?
+    const getDataIndexFromX = useCallback(
+      (mouseX: number): number => {
+        const defaultXScale = xScales.get(defaultAxisId);
+        const defaultXAxis = xAxes.get(defaultAxisId);
+
+        if (!defaultXScale || !defaultXAxis) return 0;
+
+        if (isBandScale(defaultXScale)) {
+          const categories = defaultXAxis.data ?? [];
+          const bandwidth = defaultXScale.bandwidth?.() ?? 0;
+          let closestIndex = 0;
+          let closestDistance = Infinity;
+          for (let i = 0; i < categories.length; i++) {
+            const xPos = defaultXScale(i);
+            if (xPos !== undefined) {
+              const distance = Math.abs(mouseX - (xPos + bandwidth / 2));
+              if (distance < closestDistance) {
+                closestDistance = distance;
+                closestIndex = i;
+              }
+            }
+          }
+          return closestIndex;
+        } else {
+          // For numeric scales with axis data, find the nearest data point
+          const axisData = defaultXAxis.data;
+          if (axisData && Array.isArray(axisData) && typeof axisData[0] === 'number') {
+            // We have numeric axis data - find the closest data point
+            const numericData = axisData as number[];
+            let closestIndex = 0;
+            let closestDistance = Infinity;
+
+            for (let i = 0; i < numericData.length; i++) {
+              const xValue = numericData[i];
+              const xPos = defaultXScale(xValue);
+              if (xPos !== undefined) {
+                const distance = Math.abs(mouseX - xPos);
+                if (distance < closestDistance) {
+                  closestDistance = distance;
+                  closestIndex = i;
+                }
+              }
+            }
+            return closestIndex;
+          } else {
+            const xValue = defaultXScale.invert(mouseX);
+            const dataIndex = Math.round(xValue);
+            const domain = defaultXAxis.domain;
+            return Math.max(domain.min ?? 0, Math.min(dataIndex, domain.max ?? 0));
+          }
+        }
+      },
+      [xScales, xAxes],
+    );
+
+    // Unified touch/pan handling
+    const handlePositionUpdate = useCallback(
+      (x: number) => {
+        if (disableHighlighting || !series || series.length === 0 || xScales.size === 0) return;
+
+        const dataIndex = getDataIndexFromX(x);
+        if (dataIndex !== highlightedIndex) {
+          setHighlightedIndex(dataIndex);
+          onHighlightChange?.(dataIndex);
+        }
+      },
+      [
+        disableHighlighting,
+        series,
+        xScales,
+        getDataIndexFromX,
+        highlightedIndex,
+        onHighlightChange,
+      ],
+    );
+
+    const handleInteractionEnd = useCallback(() => {
+      if (disableHighlighting) return;
+      setHighlightedIndex(undefined);
+      onHighlightChange?.(null);
+    }, [disableHighlighting, onHighlightChange]);
+
+    // Legacy touch handlers (kept for compatibility, but pan gesture is preferred)
+    const handleTouchStart = useCallback(() => {
+      // Pan gesture handles all touch interactions now
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+      // Pan gesture handles all touch interactions now
+    }, []);
+
+    const highlightContextValue: HighlightContextValue = useMemo(
+      () => ({
+        highlightedIndex,
+        updateHighlightedIndex: setHighlightedIndex,
+      }),
+      [highlightedIndex],
+    );
+
+    const getXAxis = useCallback((id?: string) => xAxes.get(id ?? defaultAxisId), [xAxes]);
+    const getYAxis = useCallback((id?: string) => yAxes.get(id ?? defaultAxisId), [yAxes]);
+    const getXScale = useCallback((id?: string) => xScales.get(id ?? defaultAxisId), [xScales]);
+    const getYScale = useCallback((id?: string) => yScales.get(id ?? defaultAxisId), [yScales]);
+    const getDefaultXAxis = useCallback(() => xAxes.get(defaultAxisId), [xAxes]);
+    const getDefaultYAxis = useCallback(() => yAxes.get(defaultAxisId), [yAxes]);
+    const getSeries = useCallback(
+      (seriesId?: string) => series?.find((s) => s.id === seriesId),
+      [series],
+    );
+
+    // Compute stacked data for series with stack properties
+    const stackedDataMap = useMemo(() => {
+      if (!series) return new Map<string, Array<[number, number] | null>>();
+      return calculateStackedSeriesData(series);
+    }, [series]);
+
+    const getSeriesData = useCallback(
+      (seriesId?: string) => {
+        if (!seriesId) return undefined;
+        const s = series?.find((ser) => ser.id === seriesId);
+        return s?.data;
+      },
+      [series],
+    );
+
+    const getStackedSeriesData = useCallback(
+      (seriesId?: string) => {
+        if (!seriesId) return undefined;
+        return stackedDataMap.get(seriesId);
+      },
+      [stackedDataMap],
+    );
+
+    const contextValue: ChartContextValue = useMemo(
+      () => ({
+        series,
+        stackedDataMap,
+        getSeries,
+        getSeriesData,
+        getStackedSeriesData,
+        disableAnimations,
+        xAxes,
+        yAxes,
+        xScales,
+        yScales,
+        padding: userPadding,
+        rect: chartRect,
+        width: chartWidth,
+        height: chartHeight,
+        getXAxis,
+        getYAxis,
+        getXScale,
+        getYScale,
+        getDefaultXAxis,
+        getDefaultYAxis,
+      }),
+      [
+        series,
+        getSeries,
+        getSeriesData,
+        getStackedSeriesData,
+        stackedDataMap,
+        disableAnimations,
+        xAxes,
+        yAxes,
+        xScales,
+        yScales,
+        userPadding,
+        chartRect,
+        chartWidth,
+        chartHeight,
+        getXAxis,
+        getYAxis,
+        getXScale,
+        getYScale,
+        getDefaultXAxis,
+        getDefaultYAxis,
+      ],
+    );
+
+    const registerAxis = useCallback(
+      (id: string, type: 'x' | 'y', position: 'start' | 'end', size: number) => {
+        setRenderedAxes((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(id, {
+            id,
+            type,
+            position,
+            size,
+          });
+          return newMap;
+        });
+      },
+      [],
+    );
+
+    const unregisterAxis = useCallback((id: string) => {
+      setRenderedAxes((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(id);
+        return newMap;
+      });
+    }, []);
+
+    const getAxisBounds = useCallback(
+      (axisId: string): Rect | undefined => {
+        const axis = renderedAxes.get(axisId);
+        if (!axis || !chartRect) return;
+
+        // todo: should we keep some sort of ordering here for axes?
+        const axesAtPosition = Array.from(renderedAxes.values())
+          .filter((a) => a.type === axis.type && a.position === axis.position)
+          .sort((a, b) => a.id.localeCompare(b.id));
+
+        const axisIndex = axesAtPosition.findIndex((a) => a.id === axisId);
+        if (axisIndex === -1) return;
+
+        // Calculate offset from previous axes at the same position
+        const offsetFromPreviousAxes = axesAtPosition
+          .slice(0, axisIndex)
+          .reduce((sum, a) => sum + a.size, 0);
+
+        if (axis.type === 'x') {
+          if (axis.position === 'start') {
+            // Position above the chart rect, accounting for user padding
+            const startY = userPadding.top + offsetFromPreviousAxes;
+            return {
+              x: chartRect.x,
+              y: startY,
+              width: chartRect.width,
+              height: axis.size,
+            };
+          } else {
+            // end - position below the chart rect, accounting for user padding
+            const startY = chartRect.y + chartRect.height + offsetFromPreviousAxes;
+            return {
+              x: chartRect.x,
+              y: startY,
+              width: chartRect.width,
+              height: axis.size,
+            };
+          }
+        } else {
+          // y axis
+          if (axis.position === 'start') {
+            // Position to the left of the chart rect, accounting for user padding
+            const startX = userPadding.left + offsetFromPreviousAxes;
+            return {
+              x: startX,
+              y: chartRect.y,
+              width: axis.size,
+              height: chartRect.height,
+            };
+          } else {
+            // right - position to the right of the chart rect, accounting for user padding
+            const startX = chartRect.x + chartRect.width + offsetFromPreviousAxes;
+            return {
+              x: startX,
+              y: chartRect.y,
+              width: axis.size,
+              height: chartRect.height,
+            };
+          }
+        }
+      },
+      [renderedAxes, chartRect, userPadding],
+    );
+
+    const chartDrawingAreaContextValue: ChartDrawingAreaContextValue = useMemo(
+      () => ({
+        registerAxis,
+        unregisterAxis,
+        getAxisBounds,
+      }),
+      [registerAxis, unregisterAxis, getAxisBounds], // These functions are stable
+    );
+
+    // Pan gesture for chart highlighting and scrubbing
+    const panGesture = useMemo(() => {
+      if (disableHighlighting) return null;
+
+      return Gesture.Pan()
+        .activateAfterLongPress(110)
+        .onStart((event) => {
+          runOnJS(handlePositionUpdate)(event.x);
+        })
+        .onUpdate((event) => {
+          runOnJS(handlePositionUpdate)(event.x);
+        })
+        .onEnd(() => {
+          runOnJS(handleInteractionEnd)();
+        })
+        .onTouchesCancelled(() => {
+          runOnJS(handleInteractionEnd)();
+        });
+    }, [disableHighlighting, handlePositionUpdate, handleInteractionEnd]);
+
+    const containerStyles = useMemo(() => {
+      const dynamicStyles: any = {};
+      if (typeof width === 'string') {
+        dynamicStyles.width = width;
+      }
+      if (typeof height === 'string') {
+        dynamicStyles.height = height;
+      }
+
+      return [styles.container, style, dynamicStyles];
+    }, [style, width, height]);
+
+    const chartContent = (
+      <Box onLayout={onContainerLayout} style={containerStyles} {...props}>
+        {chartWidth > 0 && chartHeight > 0 && (
+          <Svg height={chartHeight} width={chartWidth}>
+            {children}
+          </Svg>
+        )}
+      </Box>
+    );
+
+    return (
+      <ChartDrawingAreaContext.Provider value={chartDrawingAreaContextValue}>
+        <ChartContext.Provider value={contextValue}>
+          <HighlightContext.Provider value={highlightContextValue}>
+            {panGesture ? (
+              <GestureDetector gesture={panGesture}>{chartContent}</GestureDetector>
+            ) : (
+              chartContent
+            )}
+          </HighlightContext.Provider>
+        </ChartContext.Provider>
+      </ChartDrawingAreaContext.Provider>
+    );
+  },
+);

@@ -1,0 +1,182 @@
+## Basic Example
+
+todo: talk about how charts work. Talk about how they are an SVG with helpful components / functions to be used.
+
+```jsx live
+<LineChart
+  height={400}
+  series={[
+    {
+      id: 'pageViews',
+      data: [24, 13, 98, 39, 48, 38, 43],
+    },
+  ]}
+  showYAxis
+  yAxis={{
+    showGrid: true,
+  }}
+/>
+```
+
+## Multiple Series
+
+## Axes
+
+### X-Axis Data
+
+todo: should we limit this prop to x axis only for this release?
+
+talk about how to render
+
+### Axis Ticks
+
+### Axis Labels
+
+Talk about how setting xData will result in interpolation when given numbers.
+
+### Axis Scales
+
+## Customization
+
+### Dynamic Size
+
+todo: test this out
+
+### Volume
+
+### Price with Volume
+
+### Earnings History
+
+You can use the scale functions to create a custom chart.
+
+```jsx live
+function EarningsHistory() {
+  const CirclePlot = memo(({ seriesId, opacity = 1 }: { seriesId: string, opacity?: number }) => {
+    const { getSeries, getSeriesData, getXScale, getYScale, rect } = useChartContext();
+    const series = getSeries(seriesId);
+    const data = getSeriesData(seriesId);
+    const xScale = getXScale?.(series?.xAxisId);
+    const yScale = getYScale?.(series?.yAxisId);
+
+    if (!xScale || !yScale || !data || !rect || !isBandScale(xScale)) return null;
+
+    const yScaleSize = Math.abs(yScale.range()[1] - yScale.range()[0]);
+
+    // Have circle diameter be the smaller of the x scale bandwidth or 10% of the y space available
+    const diameter = Math.min(xScale.bandwidth(), yScaleSize / 10);
+
+    return (
+      <g>
+        {data.map((value, index) => {
+          if (value === null || value === undefined) return null;
+
+          // Get x position from band scale - center of the band
+          const xPos = xScale(index);
+          if (xPos === undefined) return null;
+
+          const centerX = xPos + xScale.bandwidth() / 2;
+
+          // Get y position from value
+          const yValue = Array.isArray(value) ? value[1] : value;
+          const centerY = yScale(yValue);
+          if (centerY === undefined) return null;
+
+          return (
+            <circle
+              key={`${seriesId}-${index}`}
+              cx={centerX}
+              cy={centerY}
+              fill={series?.color || 'var(--color-fgPrimary)'}
+              opacity={opacity}
+              r={diameter / 2}
+            />
+          );
+        })}
+      </g>
+    );
+  });
+
+  const quarters = useMemo(() => ['Q1', 'Q2', 'Q3', 'Q4'], []);
+  const estimatedEPS = useMemo(() => [1.71, 1.82, 1.93, 2.34], []);
+  const actualEPS = useMemo(() => [1.68, 1.83, 2.01, 2.24], []);
+
+  const formatEarningAmount = useCallback((value: number) => {
+    return `$${value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }, []);
+
+  const surprisePercentage = useCallback(
+    (index: number): ChartTextChildren => {
+      const percentage = (actualEPS[index] - estimatedEPS[index]) / estimatedEPS[index];
+      const percentageString = percentage.toLocaleString('en-US', {
+        style: 'percent',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+      return (
+        <tspan
+          style={{
+            fill: percentage > 0 ? 'var(--color-fgPositive)' : 'var(--color-fgNegative)',
+            fontWeight: 'bold',
+          }}
+        >
+          {percentage > 0 ? '+' : ''}
+          {percentageString}
+        </tspan>
+      );
+    },
+    [actualEPS, estimatedEPS],
+  );
+
+  const LegendItem = memo(({ opacity = 1, label }: { opacity?: number, label: string }) => {
+    return (
+      <Box alignItems="center" gap={0.5}>
+        <LegendDot opacity={opacity} />
+        <Text font="label2">{label}</Text>
+      </Box>
+    );
+  });
+
+  const LegendDot = memo((props: BoxBaseProps) => {
+    return <Box borderRadius={1000} width={10} height={10} background="bgPositive" {...props} />;
+  });
+
+  return (
+    <VStack gap={0.5}>
+      <Chart
+        disableAnimations
+        height={250}
+        padding={0}
+        series={[
+          {
+            id: 'estimatedEPS',
+            data: estimatedEPS,
+            color: 'var(--color-bgPositive)',
+          },
+          { id: 'actualEPS', data: actualEPS, color: 'var(--color-bgPositive)' },
+        ]}
+        xAxis={{ scaleType: 'band', categoryPadding: 0.25 }}
+      >
+        <YAxis
+          showGrid
+          position="start"
+          requestedTickCount={3}
+          tickLabelFormatter={formatEarningAmount}
+        />
+        <XAxis size={20} tickLabelFormatter={(index) => quarters[index]} />
+        <XAxis size={20} tickLabelFormatter={surprisePercentage} />
+        <CirclePlot opacity={0.5} seriesId="estimatedEPS" />
+        <CirclePlot seriesId="actualEPS" />
+      </Chart>
+      <HStack justifyContent="flex-end" gap={2}>
+        <LegendItem opacity={0.5} label="Estimated EPS" />
+        <LegendItem label="Actual EPS" />
+      </HStack>
+    </VStack>
+  );
+}
+```

@@ -1,0 +1,51 @@
+import { memo } from 'react';
+import type { SharedProps } from '@coinbase/cds-common/types';
+import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
+
+import { useChartContext } from '../ChartContext';
+import { Path, type PathProps } from '../Path';
+
+export type DottedLineProps = SharedProps &
+  Omit<PathProps, 'fill'> & {
+    fill?: string;
+  };
+
+/**
+ * A customizable dotted line component which uses path element.
+ */
+export const DottedLine = memo<DottedLineProps>(
+  ({
+    fill = 'none',
+    stroke,
+    strokeDasharray = '0 4',
+    strokeLinecap = 'round',
+    strokeLinejoin = 'round',
+    strokeOpacity = 1,
+    strokeWidth = 2,
+    vectorEffect = 'non-scaling-stroke',
+    disableAnimations,
+    ...props
+  }) => {
+    const context = useChartContext();
+    const theme = useTheme();
+
+    const effectiveStroke = stroke ?? theme.color.bgLine;
+
+    return (
+      <Path
+        disableAnimations={
+          disableAnimations !== undefined ? disableAnimations : context.disableAnimations
+        }
+        fill={fill}
+        stroke={effectiveStroke}
+        strokeDasharray={strokeDasharray}
+        strokeLinecap={strokeLinecap}
+        strokeLinejoin={strokeLinejoin}
+        strokeOpacity={strokeOpacity}
+        strokeWidth={strokeWidth}
+        vectorEffect={vectorEffect}
+        {...props}
+      />
+    );
+  },
+);

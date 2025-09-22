@@ -27,6 +27,7 @@ import { LocaleProvider } from '@coinbase/cds-common/system/LocaleProvider';
 import { useTabsContext } from '@coinbase/cds-common/tabs/TabsContext';
 import { avatarDotSizeMap, avatarIconSizeMap } from '@coinbase/cds-common/tokens/dot';
 import { useTourContext } from '@coinbase/cds-common/tour/TourContext';
+import * as CDSChartsCommon from '@coinbase/cds-common/visualizations/charts';
 import { useSparklineArea } from '@coinbase/cds-common/visualizations/useSparklineArea';
 import { useSparklinePath } from '@coinbase/cds-common/visualizations/useSparklinePath';
 import * as CDSLottie from '@coinbase/cds-lottie-files';
@@ -91,6 +92,7 @@ import { Tour } from '@coinbase/cds-web/tour/Tour';
 import { TourStep } from '@coinbase/cds-web/tour/TourStep';
 import * as CDSTypography from '@coinbase/cds-web/typography';
 import * as CDSVisualizations from '@coinbase/cds-web/visualizations';
+import * as CDSChartComponents from '@coinbase/cds-web-visualization/chart';
 import * as CDSSparklineComponents from '@coinbase/cds-web-visualization/sparkline';
 import { JSONCodeBlock } from '@site/src/components/page/JSONCodeBlock';
 import * as motion from 'framer-motion';
@@ -175,6 +177,8 @@ const ReactLiveScope: Record<string, unknown> = {
   UpsellCard,
   ...ContentCardComponents,
   // visualizations
+  ...CDSChartComponents,
+  ...CDSChartsCommon,
   ...CDSVisualizations,
   ...CDSSparklineComponents,
   useSparklinePath,

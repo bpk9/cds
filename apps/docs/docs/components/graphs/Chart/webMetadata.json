@@ -1,0 +1,14 @@
+{
+  "import": "import { Chart } from '@coinbase/cds-web-visualization'",
+  "description": "A composable chart component that can be used to display data in a variety of ways.",
+  "relatedComponents": [
+    {
+      "label": "LineChart",
+      "url": "/components/graphs/LineChart/"
+    },
+    {
+      "label": "SparklineInteractive",
+      "url": "/components/graphs/SparklineInteractive/"
+    }
+  ]
+}
