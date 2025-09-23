@@ -1175,7 +1175,6 @@ export const ForecastChart = () => {
 
       // Generate daily forecast points for 5 years
       const currentDate = new Date(lastDate);
-      currentDate.setDate(currentDate.getDate() + 1); // Start from day after last historical point
       let currentPrice = lastPrice;
 
       while (currentDate <= fiveYearsFromNow) {

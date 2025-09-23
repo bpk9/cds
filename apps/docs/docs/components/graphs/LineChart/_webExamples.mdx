@@ -583,7 +583,7 @@ const BTCActiveIndicator = memo(({ style, ...props }: TabsActiveIndicatorProps) 
         areaType="dotted"
         height={300}
       >
-        <Scrubber scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} />
+        <Scrubber scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} pulse />
       </LineChart>
       <PeriodSelector
         TabComponent={BTCTab}
@@ -626,7 +626,6 @@ function ForecastAssetPrice() {
 
       // Generate daily forecast points for 5 years
       const currentDate = new Date(lastDate);
-      currentDate.setDate(currentDate.getDate() + 1); // Start from day after last historical point
       let currentPrice = lastPrice;
 
       while (currentDate <= fiveYearsFromNow) {
@@ -655,12 +654,18 @@ function ForecastAssetPrice() {
     [historicalData, forecastData],
   );
 
+  const AreaComponent = memo(
+    (props: AreaComponentProps) => (
+      <DottedArea {...props} peakOpacity={0.4} baselineOpacity={0.4} />
+    ),
+  );
+
   return (
     <LineChart
       enableScrubbing
       showArea
       showXAxis
-      areaType="dotted"
+      AreaComponent={AreaComponent}
       height={350}
       padding={{
         top: 24,
