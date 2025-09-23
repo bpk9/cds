@@ -13,7 +13,7 @@ import type { SharedProps } from '@coinbase/cds-common/types';
 import { projectPoint } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 
-import { useHighlightContext } from '../Chart';
+import { useScrubberContext } from '../Chart';
 import { useChartContext } from '../ChartContext';
 import { ChartText, type ChartTextProps } from '../text';
 import type { ChartTextChildren } from '../text/ChartText';
@@ -233,9 +233,13 @@ export type PointProps = SharedProps &
        */
       container?: React.CSSProperties;
       /**
-       * Custom styles for the pulse circle element.
+       * Custom styles for the pulse ring element.
        */
-      pulseCircle?: React.CSSProperties;
+      pulseRing?: React.CSSProperties;
+      /**
+       * Custom styles for the ring between the inner circle and the pulse ring elements.
+       */
+      outerRing?: React.CSSProperties;
       /**
        * Custom styles for the inner circle element.
        */
@@ -281,7 +285,7 @@ export const Point = memo(
         getYScale,
         disableAnimations: disableAnimationsContext,
       } = useChartContext();
-      const { highlightedIndex } = useHighlightContext();
+      const { highlightedIndex } = useScrubberContext();
       const [isHovered, setIsHovered] = useState(false);
 
       const xScale = getXScale(xAxisId);
@@ -429,7 +433,7 @@ export const Point = memo(
                     : undefined
                 }
                 r={radius}
-                stroke={effectiveColor}
+                stroke={stroke}
                 strokeWidth={strokeWidth}
               />
             </G>
@@ -448,6 +452,14 @@ export const Point = memo(
                 r={pulseRadius}
               />
             )}
+            {/* Outer ring */}
+            <Circle
+              cx={pixelCoordinate.x}
+              cy={pixelCoordinate.y}
+              fill={effectiveColor}
+              opacity={0.15}
+              r={(radius + pulseRadius) / 2}
+            />
             {/* Main circle */}
             <Circle
               cx={pixelCoordinate.x}
@@ -460,8 +472,7 @@ export const Point = memo(
                   : undefined
               }
               r={radius}
-              stroke={effectiveColor}
-              strokeOpacity={0.15}
+              stroke={stroke}
               strokeWidth={strokeWidth}
             />
           </G>
@@ -479,6 +490,7 @@ export const Point = memo(
         radius,
         onClick,
         strokeWidth,
+        stroke,
         dataX,
         dataY,
         pulse,

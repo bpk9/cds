@@ -35,20 +35,22 @@ const styles = StyleSheet.create({
   },
 });
 
-// Chart highlighting context
-export type HighlightContextValue = {
+// Chart scrubber context
+export type ScrubberContextValue = {
+  /** Whether scrubbing is enabled on the parent Chart component */
+  scrubbingEnabled: boolean;
   /** The currently highlighted data index, or undefined if nothing is highlighted */
   highlightedIndex?: number;
   /** Update the highlighted data index */
   updateHighlightedIndex: (index: number | undefined) => void;
 };
 
-export const HighlightContext = createContext<HighlightContextValue | undefined>(undefined);
+export const ScrubberContext = createContext<ScrubberContextValue | undefined>(undefined);
 
-export const useHighlightContext = (): HighlightContextValue => {
-  const context = useContext(HighlightContext);
+export const useScrubberContext = (): ScrubberContextValue => {
+  const context = useContext(ScrubberContext);
   if (!context) {
-    throw new Error('useHighlightContext must be used within a Chart component');
+    throw new Error('useScrubberContext must be used within a Chart component');
   }
   return context;
 };
@@ -68,10 +70,11 @@ export type ChartBaseProps = {
    */
   disableAnimations?: boolean;
   /**
-   * Disables all highlighting interactions (pan gestures).
-   * When true, no highlighting will occur and scrubber components won't be interactive.
+   * Enables scrubbing interactions (pan gestures).
+   * When true, allows highlighting and makes scrubber components interactive.
+   * @default false
    */
-  disableHighlighting?: boolean;
+  enableScrubbing?: boolean;
   /**
    * Configuration for x-axis(es). Can be a single config or array of configs.
    * If array, first axis becomes default if no id is specified.
@@ -91,7 +94,7 @@ export type ChartBaseProps = {
    * Callback fired when the highlighted item changes.
    * Receives the dataIndex of the highlighted item or null when no item is highlighted.
    */
-  onHighlightChange?: (dataIndex: number | null) => void;
+  onScrubberPosChange?: (dataIndex: number | null) => void;
   /**
    * Chart width. If not provided, will use the container's measured width.
    */
@@ -112,11 +115,11 @@ export const Chart = memo<ChartProps>(
   ({
     series,
     disableAnimations,
-    disableHighlighting,
+    enableScrubbing = false,
     xAxis: xAxisConfigInput,
     yAxis: yAxisConfigInput,
     padding: paddingInput,
-    onHighlightChange,
+    onScrubberPosChange,
     children,
     width = '100%',
     height = '100%',
@@ -336,29 +339,29 @@ export const Chart = memo<ChartProps>(
     // Unified touch/pan handling
     const handlePositionUpdate = useCallback(
       (x: number) => {
-        if (disableHighlighting || !series || series.length === 0 || xScales.size === 0) return;
+        if (!enableScrubbing || !series || series.length === 0 || xScales.size === 0) return;
 
         const dataIndex = getDataIndexFromX(x);
         if (dataIndex !== highlightedIndex) {
           setHighlightedIndex(dataIndex);
-          onHighlightChange?.(dataIndex);
+          onScrubberPosChange?.(dataIndex);
         }
       },
       [
-        disableHighlighting,
+        enableScrubbing,
         series,
         xScales,
         getDataIndexFromX,
         highlightedIndex,
-        onHighlightChange,
+        onScrubberPosChange,
       ],
     );
 
     const handleInteractionEnd = useCallback(() => {
-      if (disableHighlighting) return;
+      if (!enableScrubbing) return;
       setHighlightedIndex(undefined);
-      onHighlightChange?.(null);
-    }, [disableHighlighting, onHighlightChange]);
+      onScrubberPosChange?.(null);
+    }, [enableScrubbing, onScrubberPosChange]);
 
     // Legacy touch handlers (kept for compatibility, but pan gesture is preferred)
     const handleTouchStart = useCallback(() => {
@@ -369,12 +372,13 @@ export const Chart = memo<ChartProps>(
       // Pan gesture handles all touch interactions now
     }, []);
 
-    const highlightContextValue: HighlightContextValue = useMemo(
+    const scrubberContextValue: ScrubberContextValue = useMemo(
       () => ({
+        scrubbingEnabled: enableScrubbing,
         highlightedIndex,
         updateHighlightedIndex: setHighlightedIndex,
       }),
-      [highlightedIndex],
+      [enableScrubbing, highlightedIndex],
     );
 
     const getXAxis = useCallback((id?: string) => xAxes.get(id ?? defaultAxisId), [xAxes]);
@@ -557,7 +561,7 @@ export const Chart = memo<ChartProps>(
 
     // Pan gesture for chart highlighting and scrubbing
     const panGesture = useMemo(() => {
-      if (disableHighlighting) return null;
+      if (!enableScrubbing) return null;
 
       return Gesture.Pan()
         .activateAfterLongPress(110)
@@ -573,7 +577,7 @@ export const Chart = memo<ChartProps>(
         .onTouchesCancelled(() => {
           runOnJS(handleInteractionEnd)();
         });
-    }, [disableHighlighting, handlePositionUpdate, handleInteractionEnd]);
+    }, [enableScrubbing, handlePositionUpdate, handleInteractionEnd]);
 
     const containerStyles = useMemo(() => {
       const dynamicStyles: any = {};
@@ -600,13 +604,13 @@ export const Chart = memo<ChartProps>(
     return (
       <ChartDrawingAreaContext.Provider value={chartDrawingAreaContextValue}>
         <ChartContext.Provider value={contextValue}>
-          <HighlightContext.Provider value={highlightContextValue}>
+          <ScrubberContext.Provider value={scrubberContextValue}>
             {panGesture ? (
               <GestureDetector gesture={panGesture}>{chartContent}</GestureDetector>
             ) : (
               chartContent
             )}
-          </HighlightContext.Provider>
+          </ScrubberContext.Provider>
         </ChartContext.Provider>
       </ChartDrawingAreaContext.Provider>
     );

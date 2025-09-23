@@ -103,7 +103,7 @@ export const LineChart = memo<LineChartProps>(
     yAxis,
     padding: userPadding,
     children,
-    disableHighlighting,
+    enableScrubbing,
     fallback,
     fallbackType = 'positive',
     disableFallback,
@@ -175,7 +175,7 @@ export const LineChart = memo<LineChartProps>(
     return (
       <Chart
         {...chartProps}
-        disableHighlighting={disableHighlighting}
+        enableScrubbing={enableScrubbing}
         padding={calculatedPadding}
         series={chartSeries}
         xAxis={xAxisConfig}
