@@ -7,6 +7,7 @@ import { projectPoint } from '@coinbase/cds-common/visualizations/charts/getPoin
 import type { ChartAxisScaleType } from '@coinbase/cds-common/visualizations/charts/scale';
 import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
 import { RemoteImage } from '@coinbase/cds-web/media';
+import { SectionHeader } from '@coinbase/cds-web/section-header/SectionHeader';
 import {
   SegmentedTab,
   type SegmentedTabProps,
@@ -525,14 +526,7 @@ export const BTCPriceChart = () => {
   })} (${Math.abs(calculatedPercentChange).toFixed(2)}%)`;
 
   const AreaComponent = useMemo(
-    () => (props: AreaComponentProps) => (
-      <GradientArea
-        {...props}
-        endColor="var(--color-bg)"
-        startColor="var(--color-bg)"
-        startOpacity={0.15}
-      />
-    ),
+    () => (props: AreaComponentProps) => <GradientArea {...props} peakOpacity={0.15} />,
     [],
   );
 
@@ -561,7 +555,7 @@ export const BTCPriceChart = () => {
             {
               id: 'price',
               data: currentData,
-              color: '#000000',
+              color: 'black',
             },
           ]}
           style={{ outlineColor: 'var(--color-fg) !important' }}
@@ -584,10 +578,11 @@ export const BTCPriceChart = () => {
             )}
           </AnimatePresence>
           {/* TODO erich use scrubber component here? */}
-          <ScrubberLine label={displayDate} lineStroke="#000000" overlayColor={btcAccentColor} />
+          <ScrubberLine label={displayDate} lineStroke="black" overlayColor={btcAccentColor} />
           <ScrubberHead
             pulse={!isHovering}
             seriesId="price"
+            style={{ stroke: 'white' }}
             {...(!isHovering ? latestPriceCoords : {})}
           />
         </Chart>
@@ -1499,7 +1494,10 @@ const BTCActiveIndicator = memo(({ style, ...props }: TabsActiveIndicatorProps) 
   />
 ));
 
-export const AreaTypesChart = () => {
+export const AssetPriceDotted = () => {
+  const [scrubIndex, setScrubIndex] = useState<number | null>(null);
+  const currentPrice =
+    sparklineInteractiveData.hour[sparklineInteractiveData.hour.length - 1].value;
   const tabs = [
     { id: 'hour', label: '1H' },
     { id: 'day', label: '1D' },
@@ -1510,11 +1508,17 @@ export const AreaTypesChart = () => {
   ];
   const [timePeriod, setTimePeriod] = useState<TabValue>(tabs[0]);
 
-  const data = useMemo(() => {
-    return sparklineInteractiveData[timePeriod.id as keyof typeof sparklineInteractiveData].map(
-      (d) => d.value,
-    );
+  const sparklineTimePeriodData = useMemo(() => {
+    return sparklineInteractiveData[timePeriod.id as keyof typeof sparklineInteractiveData];
   }, [timePeriod]);
+
+  const sparklineTimePeriodDataValues = useMemo(() => {
+    return sparklineTimePeriodData.map((d) => d.value);
+  }, [sparklineTimePeriodData]);
+
+  const sparklineTimePeriodDataTimestamps = useMemo(() => {
+    return sparklineTimePeriodData.map((d) => d.date);
+  }, [sparklineTimePeriodData]);
 
   const onPeriodChange = useCallback(
     (period: TabValue | null) => {
@@ -1523,14 +1527,63 @@ export const AreaTypesChart = () => {
     [tabs, setTimePeriod],
   );
 
+  const formatPrice = useCallback((price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(price);
+  }, []);
+
+  const formatDate = useCallback((date: Date) => {
+    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
+
+    const monthDay = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+
+    const time = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    return `${dayOfWeek}, ${monthDay}, ${time}`;
+  }, []);
+
+  const scrubberLabel: ChartTextChildren = useMemo(() => {
+    if (scrubIndex === null) return null;
+    const price = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(sparklineTimePeriodDataValues[scrubIndex]);
+    const date = formatDate(sparklineTimePeriodDataTimestamps[scrubIndex]);
+    return (
+      <>
+        <tspan style={{ fontWeight: 'bold' }}>{price} USD</tspan> {date}
+      </>
+    );
+  }, [sparklineTimePeriodDataValues, scrubIndex]);
+
   return (
     <VStack gap={2}>
+      <SectionHeader
+        style={{ padding: 0 }}
+        title={<Text font="title1">Bitcoin</Text>}
+        balance={<Text font="title2">{formatPrice(currentPrice)}</Text>}
+        end={
+          <VStack justifyContent="center">
+            <RemoteImage source={assets.btc.imageUrl} size="xl" shape="circle" />
+          </VStack>
+        }
+      />
       <LineChart
         enableScrubbing
+        onScrubberPosChange={setScrubIndex}
         series={[
           {
             id: 'btc',
-            data,
+            data: sparklineTimePeriodDataValues,
             color: assets.btc.color,
           },
         ]}
@@ -1538,7 +1591,7 @@ export const AreaTypesChart = () => {
         areaType="dotted"
         height={300}
       >
-        <Scrubber />
+        <Scrubber scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} />
       </LineChart>
       <PeriodSelector
         TabComponent={BTCTab}

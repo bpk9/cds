@@ -454,29 +454,153 @@ todo: we need to handle showing points for any spot in the axis.
 ### Asset Price with Dotted Area
 
 ```jsx live
-function AreaTypesChart() {
-  const
-<LineChart
-  series={[
-    {
-      id: 'btc',
-      data: [2, 5.5, 2, 8.5, 1.5, 5],
-      color: assets.btc.color,
+function AssetPriceWithDottedArea() {
+  const BTCTab: TabComponent = memo(
+  forwardRef(
+    ({ label, ...props }: SegmentedTabProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
+      const { activeTab } = useTabsContext();
+      const isActive = activeTab?.id === props.id;
+
+      return (
+        <SegmentedTab
+          ref={ref}
+          label={
+            <TextLabel1
+              style={{
+                transition: 'color 0.2s ease',
+                color: isActive ? assets.btc.color : undefined,
+              }}
+            >
+              {label}
+            </TextLabel1>
+          }
+          {...props}
+        />
+      );
     },
-  ]}
-  showArea
-  areaType="dotted"
-  height={300}
->
-  <Scrubber />
-</LineChart>
-}
+  ),
+);
+
+const BTCActiveIndicator = memo(({ style, ...props }: TabsActiveIndicatorProps) => (
+  <PeriodSelectorActiveIndicator
+    {...props}
+    style={{ ...style, backgroundColor: `${assets.btc.color}1A` }}
+  />
+));
+  const [scrubIndex, setScrubIndex] = useState<number | null>(null);
+  const currentPrice =
+    sparklineInteractiveData.hour[sparklineInteractiveData.hour.length - 1].value;
+  const tabs = [
+    { id: 'hour', label: '1H' },
+    { id: 'day', label: '1D' },
+    { id: 'week', label: '1W' },
+    { id: 'month', label: '1M' },
+    { id: 'year', label: '1Y' },
+    { id: 'all', label: 'All' },
+  ];
+  const [timePeriod, setTimePeriod] = useState<TabValue>(tabs[0]);
+
+  const sparklineTimePeriodData = useMemo(() => {
+    return sparklineInteractiveData[timePeriod.id as keyof typeof sparklineInteractiveData];
+  }, [timePeriod]);
+
+  const sparklineTimePeriodDataValues = useMemo(() => {
+    return sparklineTimePeriodData.map((d) => d.value);
+  }, [sparklineTimePeriodData]);
+
+  const sparklineTimePeriodDataTimestamps = useMemo(() => {
+    return sparklineTimePeriodData.map((d) => d.date);
+  }, [sparklineTimePeriodData]);
+
+  const onPeriodChange = useCallback(
+    (period: TabValue | null) => {
+      setTimePeriod(period || tabs[0]);
+    },
+    [tabs, setTimePeriod],
+  );
+
+  const formatPrice = useCallback((price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(price);
+  }, []);
+
+  const formatDate = useCallback((date: Date) => {
+    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
+
+    const monthDay = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+
+    const time = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    return `${dayOfWeek}, ${monthDay}, ${time}`;
+  }, []);
+
+  const scrubberLabel: ChartTextChildren = useMemo(() => {
+    if (scrubIndex === null) return null;
+    const price = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(sparklineTimePeriodDataValues[scrubIndex]);
+    const date = formatDate(sparklineTimePeriodDataTimestamps[scrubIndex]);
+    return (
+      <>
+        <tspan style={{ fontWeight: 'bold' }}>{price} USD</tspan> {date}
+      </>
+    );
+  }, [sparklineTimePeriodDataValues, scrubIndex]);
+
+  return (
+    <VStack gap={2}>
+      <SectionHeader
+        style={{ padding: 0 }}
+        title={<Text font="title1">Bitcoin</Text>}
+        balance={<Text font="title2">{formatPrice(currentPrice)}</Text>}
+        end={
+          <VStack justifyContent="center">
+            <RemoteImage source={assets.btc.imageUrl} size="xl" shape="circle" />
+          </VStack>
+        }
+      />
+      <LineChart
+        enableScrubbing
+        onScrubberPosChange={setScrubIndex}
+        series={[
+          {
+            id: 'btc',
+            data: sparklineTimePeriodDataValues,
+            color: assets.btc.color,
+          },
+        ]}
+        showArea
+        areaType="dotted"
+        height={300}
+      >
+        <Scrubber scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} />
+      </LineChart>
+      <PeriodSelector
+        TabComponent={BTCTab}
+        TabsActiveIndicatorComponent={BTCActiveIndicator}
+        tabs={tabs}
+        activeTab={timePeriod}
+        onChange={onPeriodChange}
+      />
+    </VStack>
+  );
+};
 ```
 
-### Forecasting
+### Forecast Asset Price
 
 ```jsx live
-function ForecastChart() {
+function ForecastAssetPrice() {
   const getDataFromSparkline = (startDate: Date) => {
     const allData = sparklineInteractiveData.all;
     if (!allData || allData.length === 0) return [];
@@ -567,6 +691,7 @@ function ForecastChart() {
         },
         tickInterval: 4,
       }}
+      AreaComponent={(props) => <DottedArea {...props} peakOpacity={0.4} baselineOpacity={0.4} />}
     >
       <Scrubber />
     </LineChart>
