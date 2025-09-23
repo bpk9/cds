@@ -68,6 +68,7 @@
     "expo-dev-launcher": "patch:expo-dev-launcher@npm:5.0.35#.yarn/patches/expo-dev-launcher-npm-5.0.35-f14c68849a.patch",
     "framer-motion@^10.18.0": "patch:framer-motion@npm:10.18.0#.yarn/patches/framer-motion-npm-10.18.0-ae9ea02138",
     "react-helmet-async": "^2.0.5",
+    "react-native-gesture-handler": "2.25.0",
     "react-native-navigation-bar-color": "patch:react-native-navigation-bar-color@npm:2.0.2#.yarn/patches/react-native-navigation-bar-color-npm-2.0.2-9a2ea3aaf6.patch"
   },
   "resolutionComments": {
@@ -78,6 +79,7 @@
     "expo-dev-launcher": "[Managed by CMR] Patching BundleDownloader to fix OOMs on Android due to large bundles",
     "framer-motion@^10.18.0": "Export missing types",
     "react-helmet-async": "Working around Nx graph resolution issue",
+    "react-native-gesture-handler": "Force version 2.25.0 for compatibility with React Native 0.77.x and Kotlin version requirements",
     "react-native-navigation-bar-color": "[Managed by CMR] Promisify react-native-navigation-bar-color"
   },
   "workspaces": [
