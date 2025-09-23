@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import type { SVGProps } from 'react';
-import { createRoundedRectPath } from '@coinbase/cds-common/visualizations/charts';
+import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
 import { m as motion, type MotionProps } from 'framer-motion';
 
 import type { BarComponentProps } from './Bar';
@@ -30,15 +30,7 @@ export const DefaultBar = memo<DefaultBarProps>(
       // Need a minimum height to allow for animation
       const minHeight = 1;
       const initialY = originY - minHeight;
-      return createRoundedRectPath(
-        x,
-        initialY,
-        width,
-        minHeight,
-        borderRadius,
-        roundTop,
-        roundBottom,
-      );
+      return getBarPath(x, initialY, width, minHeight, borderRadius, roundTop, roundBottom);
     }, [disableAnimations, x, originY, width, borderRadius, roundTop, roundBottom]);
 
     const pathProps: SVGProps<SVGPathElement> & MotionProps = {

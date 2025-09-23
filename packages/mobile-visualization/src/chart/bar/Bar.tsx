@@ -7,7 +7,7 @@ import Reanimated, {
 } from 'react-native-reanimated';
 import { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 import type { ThemeVars } from '@coinbase/cds-common';
-import { createRoundedRectPath } from '@coinbase/cds-common/visualizations/charts';
+import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { generateRandomId } from '@coinbase/cds-utils';
 
@@ -240,7 +240,7 @@ export const Bar = memo<BarProps>(
     });
 
     const barPath = useMemo(() => {
-      return createRoundedRectPath(
+      return getBarPath(
         x,
         y,
         width,

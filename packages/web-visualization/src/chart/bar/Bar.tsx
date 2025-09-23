@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import type { SVGProps } from 'react';
 import type { ThemeVars } from '@coinbase/cds-common';
-import { createRoundedRectPath } from '@coinbase/cds-common/visualizations/charts';
+import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-web';
 
 import { DefaultBar } from './';
@@ -185,7 +185,7 @@ export const Bar = memo<BarProps>(
     );
 
     const barPath = useMemo(() => {
-      return createRoundedRectPath(x, y, width, height, borderRadiusPixels, roundTop, roundBottom);
+      return getBarPath(x, y, width, height, borderRadiusPixels, roundTop, roundBottom);
     }, [x, y, width, height, borderRadiusPixels, roundTop, roundBottom]);
 
     const effectiveOriginY = originY ?? y + height;

@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import type { SVGProps } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
-import { getLinePath } from '@coinbase/cds-common/visualizations/charts/getLinePath';
+import { getLinePath } from '@coinbase/cds-common/visualizations/charts';
 import { type ChartPathCurveType } from '@coinbase/cds-common/visualizations/charts/getPathCurveFunction';
 
 import { Area, type AreaComponent } from '../area';

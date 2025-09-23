@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useRef } from 'react';
 import { ClipPath, Defs, G, Path } from 'react-native-svg';
 import type { ThemeVars } from '@coinbase/cds-common';
-import { createRoundedRectPath } from '@coinbase/cds-common/visualizations/charts';
+import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { generateRandomId } from '@coinbase/cds-utils';
 
@@ -87,19 +87,11 @@ export const DefaultStackComponent = memo<StackComponentProps>(function DefaultS
   const clipPathId = useRef(generateRandomId()).current;
 
   const clipPathData = useMemo(() => {
-    return createRoundedRectPath(
-      x,
-      y,
-      width,
-      height,
-      theme.borderRadius[borderRadius],
-      roundTop,
-      roundBottom,
-    );
+    return getBarPath(x, y, width, height, theme.borderRadius[borderRadius], roundTop, roundBottom);
   }, [x, y, width, height, theme.borderRadius, borderRadius, roundTop, roundBottom]);
 
   const initialClipPathData = useMemo(() => {
-    return createRoundedRectPath(
+    return getBarPath(
       x,
       yOrigin ?? y + height,
       width,
