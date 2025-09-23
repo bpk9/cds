@@ -1591,7 +1591,7 @@ export const AssetPriceDotted = () => {
         areaType="dotted"
         height={300}
       >
-        <Scrubber scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} />
+        <Scrubber scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} pulse />
       </LineChart>
       <PeriodSelector
         TabComponent={BTCTab}

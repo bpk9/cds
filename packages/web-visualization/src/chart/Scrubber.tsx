@@ -1,13 +1,23 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  forwardRef,
+  memo,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import { type ChartScaleFunction, projectPoint } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-web';
+import { useRefMap } from '@coinbase/cds-common/hooks/useRefMap';
 
 import { m } from 'framer-motion';
 
 import { useScrubberContext } from './Chart';
 import { useChartContext } from './ChartContext';
-import { ScrubberHead, type ScrubberHeadProps } from './ScrubberHead';
+import { ScrubberHead, type ScrubberHeadProps, type ScrubberHeadRef } from './ScrubberHead';
 import { ScrubberHeadLabel, type ScrubberHeadLabelProps } from './ScrubberHeadLabel';
 import { ScrubberLine, type ScrubberLineProps } from './ScrubberLine';
 import { axisTickLabelsInitialAnimationVariants } from './axis';
@@ -85,446 +95,484 @@ type LabelDimensions = {
   preferredY: number;
 };
 
+export type ScrubberRef = ScrubberHeadRef;
+
 /**
  * Unified component that manages all scrubber elements (heads, line, labels)
  * with intelligent collision detection and consistent positioning.
  */
-export const Scrubber = memo<ScrubberProps>(
-  ({
-    seriesIds,
-    hideScrubberLine,
-    scrubberLabel,
-    scrubberLabelConfig,
-    scrubberComponents,
-    hideOverlay,
-    testID,
-    pulse,
-    scrubberStyles,
-    scrubberClassNames,
-  }) => {
-    const theme = useTheme();
+export const Scrubber = memo(
+  forwardRef<ScrubberRef, ScrubberProps>(
+    (
+      {
+        seriesIds,
+        hideScrubberLine,
+        scrubberLabel,
+        scrubberLabelConfig,
+        scrubberComponents,
+        hideOverlay,
+        testID,
+        pulse,
+        scrubberStyles,
+        scrubberClassNames,
+      },
+      ref,
+    ) => {
+      const theme = useTheme();
+      const scrubberGroupRef = useRef<SVGGElement>(null);
+      const scrubberHeadRefs = useRefMap<ScrubberHeadRef>();
 
-    const { highlightedIndex } = useScrubberContext();
-    const { series, rect, getXScale, getYScale, getStackedSeriesData, getSeriesData, getXAxis } =
-      useChartContext();
+      const { highlightedIndex } = useScrubberContext();
+      const { series, rect, getXScale, getYScale, getStackedSeriesData, getSeriesData, getXAxis } =
+        useChartContext();
 
-    // Track label dimensions for collision detection
-    const [labelDimensions, setLabelDimensions] = useState<Map<string, LabelDimensions>>(new Map());
+      // Track label dimensions for collision detection
+      const [labelDimensions, setLabelDimensions] = useState<Map<string, LabelDimensions>>(
+        new Map(),
+      );
 
-    // TODO: forecast chart is broken
-    const headPositions = useMemo(() => {
-      const xScale = getXScale() as ChartScaleFunction;
-      const xAxis = getXAxis();
+      // Expose imperative handle with pulse method
+      useImperativeHandle(ref, () => ({
+        pulse: () => {
+          // Pulse all registered scrubber heads
+          Object.values(scrubberHeadRefs.refs).forEach((headRef) => {
+            headRef?.pulse();
+          });
+        },
+      }));
 
-      if (!xScale) return [];
+      // TODO: forecast chart is broken
+      const headPositions = useMemo(() => {
+        const xScale = getXScale() as ChartScaleFunction;
+        const xAxis = getXAxis();
 
-      const maxDataLength =
-        series?.reduce((max, s) => {
-          const seriesData = getStackedSeriesData(s.id) || getSeriesData(s.id);
-          return Math.max(max, seriesData?.length ?? 0);
-        }, 0) ?? 0;
+        if (!xScale) return [];
 
-      const dataIndex = highlightedIndex ?? Math.max(0, maxDataLength - 1);
+        const maxDataLength =
+          series?.reduce((max, s) => {
+            const seriesData = getStackedSeriesData(s.id) || getSeriesData(s.id);
+            return Math.max(max, seriesData?.length ?? 0);
+          }, 0) ?? 0;
 
-      // Convert index to actual x value if axis has data
-      let dataX: number;
-      if (xAxis?.data && Array.isArray(xAxis.data) && xAxis.data[dataIndex] !== undefined) {
-        const dataValue = xAxis.data[dataIndex];
-        dataX = typeof dataValue === 'string' ? dataIndex : dataValue;
-      } else {
-        dataX = dataIndex;
-      }
+        const dataIndex = highlightedIndex ?? Math.max(0, maxDataLength - 1);
 
-      return (
-        series
-          ?.filter((s) => {
-            if (seriesIds === undefined) return true;
-            return seriesIds.includes(s.id);
-          })
-          ?.map((s) => {
-            const sourceData = getStackedSeriesData(s.id) || getSeriesData(s.id);
-            // Use dataIndex to get the y value from the series data array
-            const stuff = sourceData?.[dataIndex];
-            let dataY: number | undefined;
-            if (Array.isArray(stuff)) {
-              dataY = stuff[stuff.length - 1];
-            } else if (typeof stuff === 'number') {
-              dataY = stuff;
+        // Convert index to actual x value if axis has data
+        let dataX: number;
+        if (xAxis?.data && Array.isArray(xAxis.data) && xAxis.data[dataIndex] !== undefined) {
+          const dataValue = xAxis.data[dataIndex];
+          dataX = typeof dataValue === 'string' ? dataIndex : dataValue;
+        } else {
+          dataX = dataIndex;
+        }
+
+        return (
+          series
+            ?.filter((s) => {
+              if (seriesIds === undefined) return true;
+              return seriesIds.includes(s.id);
+            })
+            ?.map((s) => {
+              const sourceData = getStackedSeriesData(s.id) || getSeriesData(s.id);
+              // Use dataIndex to get the y value from the series data array
+              const stuff = sourceData?.[dataIndex];
+              let dataY: number | undefined;
+              if (Array.isArray(stuff)) {
+                dataY = stuff[stuff.length - 1];
+              } else if (typeof stuff === 'number') {
+                dataY = stuff;
+              }
+
+              if (dataY !== undefined) {
+                const yScale = getYScale(s.yAxisId) as ChartScaleFunction;
+                const pixelPosition = projectPoint({
+                  x: dataX,
+                  y: dataY,
+                  xScale,
+                  yScale,
+                });
+
+                const resolvedLabel = typeof s.label === 'function' ? s.label(dataIndex) : s.label;
+
+                return {
+                  x: dataX,
+                  y: dataY,
+                  label: resolvedLabel,
+                  pixelX: pixelPosition.x,
+                  pixelY: pixelPosition.y,
+                  targetSeries: s,
+                };
+              }
+            })
+            .filter((head) => head !== undefined) ?? []
+        );
+      }, [
+        getXScale,
+        getXAxis,
+        highlightedIndex,
+        series,
+        getStackedSeriesData,
+        getSeriesData,
+        getYScale,
+        seriesIds,
+      ]);
+
+      // todo: the padding around the label shouldn't be needed for this collision calculation since the ChatText onDimensionsChange will report the bounding box that includes the padding
+      const labelPadding = 4;
+      const minLabelGap = 0.25;
+
+      // Calculate optimal label positioning strategy
+      const labelPositioning = useMemo(() => {
+        // Get current head IDs that are actually being rendered
+        const currentHeadIds = new Set(
+          headPositions.map((head) => head?.targetSeries.id).filter(Boolean),
+        );
+
+        // Only use dimensions for heads that are currently being rendered
+        const dimensions = Array.from(labelDimensions.values()).filter((dim) =>
+          currentHeadIds.has(dim.id),
+        );
+
+        if (dimensions.length === 0) return { strategy: 'auto', adjustments: new Map() };
+
+        const adjustments = new Map<string, { x: number; y: number; side: 'left' | 'right' }>();
+
+        // Sort by Y position to handle overlaps systematically
+        const sortedDimensions = [...dimensions].sort((a, b) => a.preferredY - b.preferredY);
+
+        // Determine if we need to switch sides globally based on overflow
+        let globalSide: 'left' | 'right' = 'right';
+
+        // Check if any labels would overflow on the right side
+        const paddingPx = theme.space[labelPadding];
+        const anchorRadius = 10; // Same as used in ScrubberHeadLabel
+        const bufferPx = 5; // Small buffer to prevent premature switching
+
+        // Safety check for valid bounds
+        if (rect.width <= 0 || rect.height <= 0) {
+          globalSide = 'right'; // Default to right if bounds are invalid
+        } else {
+          // Check if labels would overflow when positioned on the right side
+          // Account for anchor radius and padding when calculating right edge
+          const wouldOverflow = sortedDimensions.some((dim) => {
+            const labelRightEdge = dim.preferredX + anchorRadius + paddingPx + dim.width + bufferPx;
+            return labelRightEdge > rect.x + rect.width;
+          });
+
+          globalSide = wouldOverflow ? 'left' : 'right';
+        }
+
+        // Natural positioning with collision detection
+        const minGap = theme.space[minLabelGap];
+
+        // Initialize all labels at their preferred positions
+        for (const dim of sortedDimensions) {
+          adjustments.set(dim.id, {
+            x: dim.preferredX,
+            y: dim.preferredY,
+            side: globalSide,
+          });
+        }
+
+        // Check for collisions and resolve them
+        const maxIterations = 10;
+        let iteration = 0;
+
+        while (iteration < maxIterations) {
+          let hasCollisions = false;
+          iteration++;
+
+          // Sort by current Y position for systematic collision resolution
+          const currentPositions = sortedDimensions
+            .map((dim) => ({
+              ...dim,
+              currentY: adjustments.get(dim.id)!.y,
+            }))
+            .sort((a, b) => a.currentY - b.currentY);
+
+          // Check adjacent labels for overlaps
+          for (let i = 0; i < currentPositions.length - 1; i++) {
+            const current = currentPositions[i];
+            const next = currentPositions[i + 1];
+
+            const currentAdjustment = adjustments.get(current.id)!;
+            const nextAdjustment = adjustments.get(next.id)!;
+
+            // Calculate required separation
+            const requiredSeparation = current.height / 2 + next.height / 2 + minGap;
+            const currentSeparation = nextAdjustment.y - currentAdjustment.y;
+
+            if (currentSeparation < requiredSeparation) {
+              hasCollisions = true;
+              const deficit = requiredSeparation - currentSeparation;
+
+              // Move labels apart - split the adjustment
+              const offsetPerLabel = deficit / 2;
+
+              adjustments.set(current.id, {
+                ...currentAdjustment,
+                y: currentAdjustment.y - offsetPerLabel,
+              });
+              adjustments.set(next.id, {
+                ...nextAdjustment,
+                y: nextAdjustment.y + offsetPerLabel,
+              });
             }
+          }
 
-            if (dataY !== undefined) {
-              const yScale = getYScale(s.yAxisId) as ChartScaleFunction;
-              const pixelPosition = projectPoint({
-                x: dataX,
-                y: dataY,
-                xScale,
-                yScale,
+          if (!hasCollisions) {
+            break;
+          }
+        }
+
+        // After collision resolution, ensure all labels are within bounds
+        const labelIds = Array.from(adjustments.keys());
+
+        // Check if any labels are outside bounds and need adjustment
+        const outOfBounds = labelIds.filter((id) => {
+          const adjustment = adjustments.get(id)!;
+          const dim = sortedDimensions.find((d) => d.id === id)!;
+          const labelTop = adjustment.y - dim.height / 2;
+          const labelBottom = adjustment.y + dim.height / 2;
+
+          return labelTop < rect.y || labelBottom > rect.y + rect.height;
+        });
+
+        if (outOfBounds.length > 0) {
+          // Get all labels sorted by their preferred Y position (not current)
+          const allLabels = labelIds
+            .map((id) => ({
+              id,
+              dim: sortedDimensions.find((d) => d.id === id)!,
+              preferredY: sortedDimensions.find((d) => d.id === id)!.preferredY,
+              currentY: adjustments.get(id)!.y,
+            }))
+            .sort((a, b) => a.preferredY - b.preferredY);
+
+          // Calculate total height needed
+          const totalLabelHeight = allLabels.reduce((sum, label) => sum + label.dim.height, 0);
+          const totalGaps = (allLabels.length - 1) * minGap;
+          const totalNeeded = totalLabelHeight + totalGaps;
+
+          if (totalNeeded > rect.height) {
+            // Not enough space - use compressed equal spacing as fallback
+            const compressedGap = Math.max(
+              2,
+              (rect.height - totalLabelHeight) / Math.max(1, allLabels.length - 1),
+            );
+            let currentY = rect.y + allLabels[0].dim.height / 2;
+
+            for (const label of allLabels) {
+              adjustments.set(label.id, {
+                ...adjustments.get(label.id)!,
+                y: currentY,
               });
 
-              const resolvedLabel = typeof s.label === 'function' ? s.label(dataIndex) : s.label;
-
-              return {
-                x: dataX,
-                y: dataY,
-                label: resolvedLabel,
-                pixelX: pixelPosition.x,
-                pixelY: pixelPosition.y,
-                targetSeries: s,
-              };
+              currentY += label.dim.height + compressedGap;
             }
-          })
-          .filter((head) => head !== undefined) ?? []
-      );
-    }, [
-      getXScale,
-      getXAxis,
-      highlightedIndex,
-      series,
-      getStackedSeriesData,
-      getSeriesData,
-      getYScale,
-      seriesIds,
-    ]);
+          } else {
+            // Enough space - use minimal displacement algorithm
+            // Start with preferred positions and adjust minimally
+            const finalPositions = [...allLabels];
 
-    // todo: the padding around the label shouldn't be needed for this collision calculation since the ChatText onDimensionsChange will report the bounding box that includes the padding
-    const labelPadding = 4;
-    const minLabelGap = 0.25;
+            // Ensure minimum spacing between adjacent labels
+            for (let i = 1; i < finalPositions.length; i++) {
+              const prev = finalPositions[i - 1];
+              const current = finalPositions[i];
 
-    // Calculate optimal label positioning strategy
-    const labelPositioning = useMemo(() => {
-      // Get current head IDs that are actually being rendered
-      const currentHeadIds = new Set(
-        headPositions.map((head) => head?.targetSeries.id).filter(Boolean),
-      );
+              // Calculate minimum Y position for current label
+              const minCurrentY =
+                prev.preferredY + prev.dim.height / 2 + minGap + current.dim.height / 2;
 
-      // Only use dimensions for heads that are currently being rendered
-      const dimensions = Array.from(labelDimensions.values()).filter((dim) =>
-        currentHeadIds.has(dim.id),
-      );
+              if (current.preferredY < minCurrentY) {
+                // Need to push this label down
+                current.preferredY = minCurrentY;
+              }
+            }
 
-      if (dimensions.length === 0) return { strategy: 'auto', adjustments: new Map() };
+            // Check if the group fits within bounds, if not shift the entire group
+            const groupTop = finalPositions[0].preferredY - finalPositions[0].dim.height / 2;
+            const groupBottom =
+              finalPositions[finalPositions.length - 1].preferredY +
+              finalPositions[finalPositions.length - 1].dim.height / 2;
 
-      const adjustments = new Map<string, { x: number; y: number; side: 'left' | 'right' }>();
+            let shiftAmount = 0;
 
-      // Sort by Y position to handle overlaps systematically
-      const sortedDimensions = [...dimensions].sort((a, b) => a.preferredY - b.preferredY);
+            if (groupTop < rect.y) {
+              // Group is too high, shift down
+              shiftAmount = rect.y - groupTop;
+            } else if (groupBottom > rect.y + rect.height) {
+              // Group is too low, shift up
+              shiftAmount = rect.y + rect.height - groupBottom;
+            }
 
-      // Determine if we need to switch sides globally based on overflow
-      let globalSide: 'left' | 'right' = 'right';
+            // Apply final positions with shift
+            for (const label of finalPositions) {
+              const finalY = label.preferredY + shiftAmount;
 
-      // Check if any labels would overflow on the right side
-      const paddingPx = theme.space[labelPadding];
-      const anchorRadius = 10; // Same as used in ScrubberHeadLabel
-      const bufferPx = 5; // Small buffer to prevent premature switching
+              // Final bounds check for individual labels
+              const clampedY = Math.max(
+                rect.y + label.dim.height / 2,
+                Math.min(rect.y + rect.height - label.dim.height / 2, finalY),
+              );
 
-      // Safety check for valid bounds
-      if (rect.width <= 0 || rect.height <= 0) {
-        globalSide = 'right'; // Default to right if bounds are invalid
-      } else {
-        // Check if labels would overflow when positioned on the right side
-        // Account for anchor radius and padding when calculating right edge
-        const wouldOverflow = sortedDimensions.some((dim) => {
-          const labelRightEdge = dim.preferredX + anchorRadius + paddingPx + dim.width + bufferPx;
-          return labelRightEdge > rect.x + rect.width;
-        });
-
-        globalSide = wouldOverflow ? 'left' : 'right';
-      }
-
-      // Natural positioning with collision detection
-      const minGap = theme.space[minLabelGap];
-
-      // Initialize all labels at their preferred positions
-      for (const dim of sortedDimensions) {
-        adjustments.set(dim.id, {
-          x: dim.preferredX,
-          y: dim.preferredY,
-          side: globalSide,
-        });
-      }
-
-      // Check for collisions and resolve them
-      const maxIterations = 10;
-      let iteration = 0;
-
-      while (iteration < maxIterations) {
-        let hasCollisions = false;
-        iteration++;
-
-        // Sort by current Y position for systematic collision resolution
-        const currentPositions = sortedDimensions
-          .map((dim) => ({
-            ...dim,
-            currentY: adjustments.get(dim.id)!.y,
-          }))
-          .sort((a, b) => a.currentY - b.currentY);
-
-        // Check adjacent labels for overlaps
-        for (let i = 0; i < currentPositions.length - 1; i++) {
-          const current = currentPositions[i];
-          const next = currentPositions[i + 1];
-
-          const currentAdjustment = adjustments.get(current.id)!;
-          const nextAdjustment = adjustments.get(next.id)!;
-
-          // Calculate required separation
-          const requiredSeparation = current.height / 2 + next.height / 2 + minGap;
-          const currentSeparation = nextAdjustment.y - currentAdjustment.y;
-
-          if (currentSeparation < requiredSeparation) {
-            hasCollisions = true;
-            const deficit = requiredSeparation - currentSeparation;
-
-            // Move labels apart - split the adjustment
-            const offsetPerLabel = deficit / 2;
-
-            adjustments.set(current.id, {
-              ...currentAdjustment,
-              y: currentAdjustment.y - offsetPerLabel,
-            });
-            adjustments.set(next.id, {
-              ...nextAdjustment,
-              y: nextAdjustment.y + offsetPerLabel,
-            });
-          }
-        }
-
-        if (!hasCollisions) {
-          break;
-        }
-      }
-
-      // After collision resolution, ensure all labels are within bounds
-      const labelIds = Array.from(adjustments.keys());
-
-      // Check if any labels are outside bounds and need adjustment
-      const outOfBounds = labelIds.filter((id) => {
-        const adjustment = adjustments.get(id)!;
-        const dim = sortedDimensions.find((d) => d.id === id)!;
-        const labelTop = adjustment.y - dim.height / 2;
-        const labelBottom = adjustment.y + dim.height / 2;
-
-        return labelTop < rect.y || labelBottom > rect.y + rect.height;
-      });
-
-      if (outOfBounds.length > 0) {
-        // Get all labels sorted by their preferred Y position (not current)
-        const allLabels = labelIds
-          .map((id) => ({
-            id,
-            dim: sortedDimensions.find((d) => d.id === id)!,
-            preferredY: sortedDimensions.find((d) => d.id === id)!.preferredY,
-            currentY: adjustments.get(id)!.y,
-          }))
-          .sort((a, b) => a.preferredY - b.preferredY);
-
-        // Calculate total height needed
-        const totalLabelHeight = allLabels.reduce((sum, label) => sum + label.dim.height, 0);
-        const totalGaps = (allLabels.length - 1) * minGap;
-        const totalNeeded = totalLabelHeight + totalGaps;
-
-        if (totalNeeded > rect.height) {
-          // Not enough space - use compressed equal spacing as fallback
-          const compressedGap = Math.max(
-            2,
-            (rect.height - totalLabelHeight) / Math.max(1, allLabels.length - 1),
-          );
-          let currentY = rect.y + allLabels[0].dim.height / 2;
-
-          for (const label of allLabels) {
-            adjustments.set(label.id, {
-              ...adjustments.get(label.id)!,
-              y: currentY,
-            });
-
-            currentY += label.dim.height + compressedGap;
-          }
-        } else {
-          // Enough space - use minimal displacement algorithm
-          // Start with preferred positions and adjust minimally
-          const finalPositions = [...allLabels];
-
-          // Ensure minimum spacing between adjacent labels
-          for (let i = 1; i < finalPositions.length; i++) {
-            const prev = finalPositions[i - 1];
-            const current = finalPositions[i];
-
-            // Calculate minimum Y position for current label
-            const minCurrentY =
-              prev.preferredY + prev.dim.height / 2 + minGap + current.dim.height / 2;
-
-            if (current.preferredY < minCurrentY) {
-              // Need to push this label down
-              current.preferredY = minCurrentY;
+              adjustments.set(label.id, {
+                ...adjustments.get(label.id)!,
+                y: clampedY,
+              });
             }
           }
-
-          // Check if the group fits within bounds, if not shift the entire group
-          const groupTop = finalPositions[0].preferredY - finalPositions[0].dim.height / 2;
-          const groupBottom =
-            finalPositions[finalPositions.length - 1].preferredY +
-            finalPositions[finalPositions.length - 1].dim.height / 2;
-
-          let shiftAmount = 0;
-
-          if (groupTop < rect.y) {
-            // Group is too high, shift down
-            shiftAmount = rect.y - groupTop;
-          } else if (groupBottom > rect.y + rect.height) {
-            // Group is too low, shift up
-            shiftAmount = rect.y + rect.height - groupBottom;
-          }
-
-          // Apply final positions with shift
-          for (const label of finalPositions) {
-            const finalY = label.preferredY + shiftAmount;
-
-            // Final bounds check for individual labels
-            const clampedY = Math.max(
-              rect.y + label.dim.height / 2,
-              Math.min(rect.y + rect.height - label.dim.height / 2, finalY),
-            );
-
-            adjustments.set(label.id, {
-              ...adjustments.get(label.id)!,
-              y: clampedY,
-            });
-          }
         }
-      }
 
-      return { strategy: globalSide, adjustments };
-    }, [headPositions, labelDimensions, theme.space, minLabelGap, rect]);
+        return { strategy: globalSide, adjustments };
+      }, [headPositions, labelDimensions, theme.space, minLabelGap, rect]);
 
-    // Callback for labels to register their dimensions
-    const registerLabelDimensions = useCallback(
-      (id: string, width: number, height: number, x: number, y: number) => {
+      // Callback for labels to register their dimensions
+      const registerLabelDimensions = useCallback(
+        (id: string, width: number, height: number, x: number, y: number) => {
+          setLabelDimensions((prev) => {
+            const existing = prev.get(id);
+            const newDimensions = { id, width, height, preferredX: x, preferredY: y };
+
+            // Only update if dimensions actually changed
+            if (
+              existing &&
+              existing.width === width &&
+              existing.height === height &&
+              existing.preferredX === x &&
+              existing.preferredY === y
+            ) {
+              return prev;
+            }
+
+            const next = new Map(prev);
+            next.set(id, newDimensions);
+            return next;
+          });
+        },
+        [],
+      );
+
+      // Callback to create ref handlers for scrubber heads
+      const createScrubberHeadRef = useCallback(
+        (seriesId: string) => {
+          return (headRef: ScrubberHeadRef | null) => {
+            if (headRef) {
+              scrubberHeadRefs.registerRef(seriesId, headRef);
+            }
+          };
+        },
+        [scrubberHeadRefs],
+      );
+
+      // synchronize label positioning state when the position of any scrubber heads change
+      useEffect(() => {
+        const currentHeadIds = new Set(
+          headPositions.map((head) => head?.targetSeries.id).filter(Boolean),
+        );
+
         setLabelDimensions((prev) => {
-          const existing = prev.get(id);
-          const newDimensions = { id, width, height, preferredX: x, preferredY: y };
-
-          // Only update if dimensions actually changed
-          if (
-            existing &&
-            existing.width === width &&
-            existing.height === height &&
-            existing.preferredX === x &&
-            existing.preferredY === y
-          ) {
-            return prev;
+          const next = new Map();
+          for (const [id, dimensions] of prev) {
+            if (currentHeadIds.has(id)) {
+              next.set(id, dimensions);
+            }
           }
-
-          const next = new Map(prev);
-          next.set(id, newDimensions);
           return next;
         });
-      },
-      [],
-    );
+      }, [headPositions]);
 
-    // synchronize label positioning state when the position of any scrubber heads change
-    useEffect(() => {
-      const currentHeadIds = new Set(
-        headPositions.map((head) => head?.targetSeries.id).filter(Boolean),
+      // Check if we have at least the default scales
+      const defaultXScale = getXScale?.();
+      const defaultYScale = getYScale?.();
+      if (!defaultXScale || !defaultYScale) return null;
+
+      // Use custom components if provided
+      const ScrubberLineComponent = scrubberComponents?.ScrubberLineComponent ?? ScrubberLine;
+      const ScrubberHeadComponent = scrubberComponents?.ScrubberHeadComponent ?? ScrubberHead;
+      const ScrubberHeadLabelComponent =
+        scrubberComponents?.ScrubberHeadLabelComponent ?? ScrubberHeadLabel;
+
+      // todo: figure out why scrubber heads across dataKey values isn't working anymore
+      // for animations
+
+      // todo: figure out if we should disable 'pulse' animation when scrubbing
+      return (
+        <m.g
+          ref={scrubberGroupRef}
+          data-component="scrubber-group"
+          data-testid={testID}
+          animate="animate"
+          exit="exit"
+          initial="initial"
+          variants={axisTickLabelsInitialAnimationVariants}
+        >
+          <ScrubberLineComponent
+            hideOverlay={hideOverlay}
+            hideScrubberLine={hideScrubberLine}
+            label={scrubberLabel}
+            labelConfig={scrubberLabelConfig}
+            style={scrubberStyles?.scrubberLine}
+            className={scrubberClassNames?.scrubberLine}
+          />
+          {headPositions.map((scrubberHead) => {
+            if (!scrubberHead) return null;
+            const adjustment = labelPositioning.adjustments.get(scrubberHead.targetSeries.id);
+            const dotStroke = scrubberHead.targetSeries?.color || 'var(--color-fgPrimary)';
+
+            return (
+              <g key={scrubberHead.targetSeries.id} data-component="scrubber-head">
+                {/* todo: fix this type cast, seems to be due to custom components */}
+                <ScrubberHeadComponent
+                  ref={createScrubberHeadRef(scrubberHead.targetSeries.id) as any}
+                  color={scrubberHead.targetSeries?.color}
+                  dataX={scrubberHead.x}
+                  dataY={scrubberHead.y}
+                  seriesId={scrubberHead.targetSeries.id}
+                  testID={testID ? `${testID}-${scrubberHead.targetSeries.id}-dot` : undefined}
+                  pulse={pulse}
+                  style={scrubberStyles?.scrubberHead}
+                  className={scrubberClassNames?.scrubberHead}
+                />
+                {scrubberHead.label &&
+                  (() => {
+                    const finalAnchorX = adjustment?.x ?? scrubberHead.pixelX;
+                    const finalAnchorY = adjustment?.y ?? scrubberHead.pixelY;
+                    const finalSide = adjustment?.side ?? labelPositioning.strategy;
+
+                    return (
+                      <ScrubberHeadLabelComponent
+                        background="var(--color-bg)"
+                        bounds={rect}
+                        color={dotStroke}
+                        dx={16}
+                        onDimensionsChange={({ width, height }) =>
+                          registerLabelDimensions(
+                            scrubberHead.targetSeries.id,
+                            width,
+                            height,
+                            scrubberHead.pixelX,
+                            scrubberHead.pixelY,
+                          )
+                        }
+                        padding={labelPadding}
+                        preferredSide={finalSide}
+                        testID={
+                          testID ? `${testID}-${scrubberHead.targetSeries.id}-label` : undefined
+                        }
+                        x={finalAnchorX}
+                        y={finalAnchorY}
+                        style={scrubberStyles?.scrubberHeadLabel}
+                        className={scrubberClassNames?.scrubberHeadLabel}
+                      >
+                        {scrubberHead.label}
+                      </ScrubberHeadLabelComponent>
+                    );
+                  })()}
+              </g>
+            );
+          })}
+        </m.g>
       );
-
-      setLabelDimensions((prev) => {
-        const next = new Map();
-        for (const [id, dimensions] of prev) {
-          if (currentHeadIds.has(id)) {
-            next.set(id, dimensions);
-          }
-        }
-        return next;
-      });
-    }, [headPositions]);
-
-    // Check if we have at least the default scales
-    const defaultXScale = getXScale?.();
-    const defaultYScale = getYScale?.();
-    if (!defaultXScale || !defaultYScale) return null;
-
-    // Use custom components if provided
-    const ScrubberLineComponent = scrubberComponents?.ScrubberLineComponent ?? ScrubberLine;
-    const ScrubberHeadComponent = scrubberComponents?.ScrubberHeadComponent ?? ScrubberHead;
-    const ScrubberHeadLabelComponent =
-      scrubberComponents?.ScrubberHeadLabelComponent ?? ScrubberHeadLabel;
-
-    // todo: figure out why scrubber heads across dataKey values isn't working anymore
-    // for animations
-    return (
-      <m.g
-        data-component="scrubber-group"
-        data-testid={testID}
-        animate="animate"
-        exit="exit"
-        initial="initial"
-        variants={axisTickLabelsInitialAnimationVariants}
-      >
-        <ScrubberLineComponent
-          hideOverlay={hideOverlay}
-          hideScrubberLine={hideScrubberLine}
-          label={scrubberLabel}
-          labelConfig={scrubberLabelConfig}
-          style={scrubberStyles?.scrubberLine}
-          className={scrubberClassNames?.scrubberLine}
-        />
-        {headPositions.map((scrubberHead) => {
-          if (!scrubberHead) return null;
-          const adjustment = labelPositioning.adjustments.get(scrubberHead.targetSeries.id);
-          const dotStroke = scrubberHead.targetSeries?.color || 'var(--color-fgPrimary)';
-
-          return (
-            <g key={scrubberHead.targetSeries.id} data-component="scrubber-head">
-              <ScrubberHeadComponent
-                color={scrubberHead.targetSeries?.color}
-                dataX={scrubberHead.x}
-                dataY={scrubberHead.y}
-                seriesId={scrubberHead.targetSeries.id}
-                testID={testID ? `${testID}-${scrubberHead.targetSeries.id}-dot` : undefined}
-                pulse={pulse}
-                style={scrubberStyles?.scrubberHead}
-                className={scrubberClassNames?.scrubberHead}
-              />
-              {scrubberHead.label &&
-                (() => {
-                  const finalAnchorX = adjustment?.x ?? scrubberHead.pixelX;
-                  const finalAnchorY = adjustment?.y ?? scrubberHead.pixelY;
-                  const finalSide = adjustment?.side ?? labelPositioning.strategy;
-
-                  return (
-                    <ScrubberHeadLabelComponent
-                      background="var(--color-bg)"
-                      bounds={rect}
-                      color={dotStroke}
-                      dx={16}
-                      onDimensionsChange={({ width, height }) =>
-                        registerLabelDimensions(
-                          scrubberHead.targetSeries.id,
-                          width,
-                          height,
-                          scrubberHead.pixelX,
-                          scrubberHead.pixelY,
-                        )
-                      }
-                      padding={labelPadding}
-                      preferredSide={finalSide}
-                      testID={
-                        testID ? `${testID}-${scrubberHead.targetSeries.id}-label` : undefined
-                      }
-                      x={finalAnchorX}
-                      y={finalAnchorY}
-                      style={scrubberStyles?.scrubberHeadLabel}
-                      className={scrubberClassNames?.scrubberHeadLabel}
-                    >
-                      {scrubberHead.label}
-                    </ScrubberHeadLabelComponent>
-                  );
-                })()}
-            </g>
-          );
-        })}
-      </m.g>
-    );
-  },
+    },
+  ),
 );
