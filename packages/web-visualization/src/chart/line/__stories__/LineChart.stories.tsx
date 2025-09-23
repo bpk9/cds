@@ -1208,7 +1208,6 @@ export const ForecastChart = () => {
       enableScrubbing
       showArea
       showXAxis
-      areaType="dotted"
       height={350}
       padding={{
         top: 24,
