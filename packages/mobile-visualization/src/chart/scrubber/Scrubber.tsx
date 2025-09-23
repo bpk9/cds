@@ -9,7 +9,11 @@ import React, {
   useState,
 } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
-import { type ChartScaleFunction, projectPoint } from '@coinbase/cds-common/visualizations/charts';
+import {
+  type ChartScaleFunction,
+  isBandScale,
+  projectPoint,
+} from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-mobile';
 import { useRefMap } from '@coinbase/cds-common/hooks/useRefMap';
 
@@ -567,7 +571,20 @@ export const Scrubber = memo(
       // todo: figure out why scrubber heads across dataKey values isn't working anymore
       // for animations
 
-      const pixelX = dataX !== undefined ? defaultXScale(dataX) : undefined;
+      // Calculate pixelX, accounting for band scales
+      let pixelX: number | undefined;
+      if (dataX !== undefined && defaultXScale) {
+        const baseX = defaultXScale(dataX);
+        if (baseX !== undefined) {
+          // For band scales, adjust to the center of the band
+          if (isBandScale(defaultXScale)) {
+            const bandwidth = defaultXScale.bandwidth?.() ?? 0;
+            pixelX = baseX + bandwidth / 2;
+          } else {
+            pixelX = baseX;
+          }
+        }
+      }
 
       // todo: figure out if we should disable 'pulse' animation when scrubbing
       return (
