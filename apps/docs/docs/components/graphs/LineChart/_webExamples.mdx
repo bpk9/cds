@@ -711,7 +711,7 @@ function BitcoinChartWithScrubberHead() {
       <HStack gap={2} alignItems="center">
         <RemoteImage source={assets.btc.imageUrl} size="xxl" shape="circle" />
         <VStack gap={0.25} flexGrow={1}>
-          <Text font="title1" color="bg">
+          <Text font="title1" style={{ color: 'white' }}>
             BTC
           </Text>
           <Text font="label1" color="fgMuted">
@@ -719,7 +719,7 @@ function BitcoinChartWithScrubberHead() {
           </Text>
         </VStack>
         <VStack gap={0.25} alignItems="flex-end">
-          <Text font="title1" color="bg">
+          <Text font="title1" style={{ color: 'white' }}>
             {formatPrice(latestPrice)}
           </Text>
           <Text font="label1" color="fgPositive">
@@ -746,7 +746,7 @@ function BitcoinChartWithScrubberHead() {
           width="100%"
           height={92}
         >
-          <Scrubber pulse />
+          <Scrubber pulse scrubberStyles={{ scrubberHead: { stroke: 'white' } }} />
         </LineChart>
       </div>
     </VStack>

@@ -29,6 +29,14 @@ export type ScrubberLineProps = SharedProps &
      * @default 'var(--color-bg)'
      */
     overlayColor?: string;
+    /**
+     * Custom styles to apply to the scrubber line
+     */
+    style?: React.CSSProperties;
+    /**
+     * Custom className to apply to the scrubber line
+     */
+    className?: string;
   };
 
 /**
@@ -43,6 +51,8 @@ export const ScrubberLine = memo<ScrubberLineProps>(
     overlayColor = 'var(--color-bg)',
     LineComponent = DottedLine,
     lineStroke = 'var(--color-bgLineHeavy)',
+    style,
+    className,
     testID,
     ...referenceLineProps
   }) => {
@@ -107,8 +117,9 @@ export const ScrubberLine = memo<ScrubberLineProps>(
 
     if (pixelX === undefined) return null;
 
+    // todo: we might want to apply styles to the reference line instead of the group
     return (
-      <g data-testid={testID}>
+      <g data-testid={testID} style={style} className={className}>
         {!(hideOverlay ?? !isHovering) && (
           <rect
             fill={overlayColor}

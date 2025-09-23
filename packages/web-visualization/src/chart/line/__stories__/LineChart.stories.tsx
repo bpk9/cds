@@ -1138,13 +1138,6 @@ export const PriceChart = () => {
         ]}
         yAxis={{ domainLimit: 'strict' }}
       >
-        <ScrubberHead
-          dataKey={dataKey}
-          pulse={!isHovering}
-          seriesId="price"
-          {...latestPriceCoords}
-          opacity={isHovering ? 0 : 1}
-        />
         <Scrubber scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} />
       </LineChart>
       <Box paddingX={{ phone: 2, tablet: 4, desktop: 4 }}>
@@ -1422,7 +1415,7 @@ export const BitcoinChartWithScrubberHead = () => {
       <HStack gap={2} alignItems="center">
         <RemoteImage source={assets.btc.imageUrl} size="xxl" shape="circle" />
         <VStack gap={0.25} flexGrow={1}>
-          <Text font="title1" color="bg">
+          <Text font="title1" style={{ color: 'white' }}>
             BTC
           </Text>
           <Text font="label1" color="fgMuted">
@@ -1430,7 +1423,7 @@ export const BitcoinChartWithScrubberHead = () => {
           </Text>
         </VStack>
         <VStack gap={0.25} alignItems="flex-end">
-          <Text font="title1" color="bg">
+          <Text font="title1" style={{ color: 'white' }}>
             {formatPrice(latestPrice)}
           </Text>
           <Text font="label1" color="fgPositive">
@@ -1457,7 +1450,14 @@ export const BitcoinChartWithScrubberHead = () => {
           width="100%"
           height={92}
         >
-          <Scrubber pulse />
+          <Scrubber
+            pulse
+            scrubberStyles={{
+              scrubberHead: {
+                stroke: 'white',
+              },
+            }}
+          />
         </LineChart>
       </div>
     </VStack>

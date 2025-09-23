@@ -99,6 +99,8 @@ export const Scrubber = memo<ScrubberProps>(
     hideOverlay,
     testID,
     pulse,
+    scrubberStyles,
+    scrubberClassNames,
   }) => {
     const theme = useTheme();
 
@@ -464,6 +466,8 @@ export const Scrubber = memo<ScrubberProps>(
           hideScrubberLine={hideScrubberLine}
           label={scrubberLabel}
           labelConfig={scrubberLabelConfig}
+          style={scrubberStyles?.scrubberLine}
+          className={scrubberClassNames?.scrubberLine}
         />
         {headPositions.map((scrubberHead) => {
           if (!scrubberHead) return null;
@@ -479,6 +483,8 @@ export const Scrubber = memo<ScrubberProps>(
                 seriesId={scrubberHead.targetSeries.id}
                 testID={testID ? `${testID}-${scrubberHead.targetSeries.id}-dot` : undefined}
                 pulse={pulse}
+                style={scrubberStyles?.scrubberHead}
+                className={scrubberClassNames?.scrubberHead}
               />
               {scrubberHead.label &&
                 (() => {
@@ -508,6 +514,8 @@ export const Scrubber = memo<ScrubberProps>(
                       }
                       x={finalAnchorX}
                       y={finalAnchorY}
+                      style={scrubberStyles?.scrubberHeadLabel}
+                      className={scrubberClassNames?.scrubberHeadLabel}
                     >
                       {scrubberHead.label}
                     </ScrubberHeadLabelComponent>

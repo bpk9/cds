@@ -159,7 +159,7 @@ export const ScrubberHead = memo(
           opacity={opacity}
           pulse={pulse}
           radius={radius}
-          stroke="white"
+          stroke="var(--color-bg)"
           strokeWidth={2}
           {...props}
         />

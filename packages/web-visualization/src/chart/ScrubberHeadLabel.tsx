@@ -15,6 +15,14 @@ export type ScrubberHeadLabelProps = ChartTextProps & {
    * @default 1
    */
   opacity?: number;
+  /**
+   * Custom styles to apply to the label
+   */
+  style?: React.CSSProperties;
+  /**
+   * Custom className to apply to the label
+   */
+  className?: string;
 };
 
 /**
@@ -31,6 +39,8 @@ export const ScrubberHeadLabel = memo<ScrubberHeadLabelProps>(
     onDimensionsChange,
     elevation = background !== undefined ? 1 : undefined,
     borderRadius = background !== undefined ? 200 : undefined,
+    style,
+    className,
     testID,
     dx = 0,
     ...chartTextProps
@@ -64,7 +74,7 @@ export const ScrubberHeadLabel = memo<ScrubberHeadLabelProps>(
     );
 
     return (
-      <g data-testid={testID} opacity={opacity}>
+      <g data-testid={testID} opacity={opacity} style={style} className={className}>
         <ChartText
           background={background}
           borderRadius={borderRadius}
