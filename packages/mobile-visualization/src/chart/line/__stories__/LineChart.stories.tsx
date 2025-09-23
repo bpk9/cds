@@ -24,6 +24,7 @@ import { PeriodSelector } from '../../PeriodSelector';
 import { Point } from '../../point';
 import { Scrubber, ScrubberHead } from '../../scrubber';
 import { DottedLine, GradientLine, Line, LineChart, ReferenceLine, SolidLine } from '..';
+import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 
 const defaultChartHeight = 250;
 
@@ -1078,6 +1079,59 @@ export const ForecastChart = () => {
   );
 };
 
+const ScrubberExample = () => {
+  const theme = useTheme();
+  return (
+    <LineChart
+      enableScrubbing
+      height={defaultChartHeight}
+      series={[
+        {
+          id: 'priceA',
+          data: [2400, 1398, 9800, 3908, 4800, 3800, 4300],
+          label: 'Page Views',
+          color: theme.color.accentBoldBlue,
+          curve: 'natural',
+        },
+        {
+          id: 'priceB',
+          data: [2000, 2491, 4501, 6049, 5019, 4930, 5910],
+          label: 'Unique Visitors G',
+          color: theme.color.accentBoldGreen,
+          curve: 'natural',
+        },
+        {
+          id: 'priceC',
+          data: [1000, 4910, 2300, 5910, 3940, 2940, 1940],
+          label: 'Unique Visitors P',
+          color: theme.color.accentBoldPurple,
+          curve: 'natural',
+        },
+        {
+          id: 'priceD',
+          data: [4810, 2030, 5810, 3940, 2940, 1940, 940],
+          label: 'Unique Visitors Y',
+          color: theme.color.accentBoldYellow,
+          curve: 'natural',
+        },
+      ]}
+      xAxis={{
+        range: ({ min, max }) => ({ min, max: max - 32 }),
+      }}
+      showYAxis
+      yAxis={{
+        domain: {
+          min: 0,
+        },
+        showGrid: true,
+        tickLabelFormatter: (value) => value.toLocaleString(),
+      }}
+    >
+      <Scrubber />
+    </LineChart>
+  );
+};
+
 const PeriodSelectorExample = () => {
   const tabs = [
     { id: '1H', label: '1H' },
@@ -1120,6 +1174,9 @@ const LineChartStories = () => {
       </Example>
       <Example title="Period Selector">
         <PeriodSelectorExample />
+      </Example>
+      <Example title="Multiple Scrubber Heads">
+        <ScrubberExample />
       </Example>
     </ExampleScreen>
   );
