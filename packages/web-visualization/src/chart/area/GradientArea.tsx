@@ -9,23 +9,25 @@ import type { AreaComponentProps } from './Area';
 export type GradientAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
   AreaComponentProps & {
     /**
-     * The color of the start of the gradient.
+     * The color at peak values (top/bottom of gradient).
      * @default fill or 'var(--color-fgPrimary)'
      */
-    startColor?: string;
+    peakColor?: string;
     /**
-     * The color of the end of the gradient.
-     * @default fill or 'var(--color-fgPrimary)'
+     * The color at the baseline (0 or edge closest to 0).
+     * @default peakColor or fill
      */
-    endColor?: string;
+    baselineColor?: string;
     /**
-     * Opacity of the start color.
+     * Opacity at peak values.
+     * @default 1
      */
-    startOpacity?: number;
+    peakOpacity?: number;
     /**
-     * Opacity of the end color.
+     * Opacity at the baseline.
+     * @default 0
      */
-    endOpacity?: number;
+    baselineOpacity?: number;
   };
 
 /**
@@ -36,23 +38,99 @@ export const GradientArea = memo<GradientAreaProps>(
     d,
     fill = 'var(--color-fgPrimary)',
     fillOpacity = 1,
-    startColor,
-    endColor,
-    startOpacity = 0.4 * fillOpacity,
-    endOpacity = 0,
+    peakColor,
+    baselineColor,
+    peakOpacity = 0.3,
+    baselineOpacity = 0,
     disableAnimations,
     clipRect,
+    yAxisId,
     ...pathProps
   }) => {
     const context = useChartContext();
     const patternIdRef = useRef<string>(generateRandomId());
 
+    // Get the y-scale for the specified axis (or default)
+    const yScale = context.getYScale?.(yAxisId);
+    const yRange = yScale?.range();
+    const yDomain = yScale?.domain();
+
+    // Use chart range if available, otherwise fall back to percentage
+    const useUserSpaceUnits = yRange !== undefined;
+    const gradientY1 = useUserSpaceUnits ? yRange[1] : '0%';
+    const gradientY2 = useUserSpaceUnits ? yRange[0] : '100%';
+
+    // Auto-calculate baseline position based on domain
+    let baselinePosition: number | undefined;
+    let baselinePercentage: string | undefined;
+
+    if (yScale && yDomain) {
+      const [minValue, maxValue] = yDomain;
+
+      // Determine baseline: 0 if in domain, else closest edge to 0
+      let baseline: number;
+      if (minValue >= 0) {
+        // All positive: baseline at min
+        baseline = minValue;
+      } else if (maxValue <= 0) {
+        // All negative: baseline at max
+        baseline = maxValue;
+      } else {
+        // Crosses zero: baseline at 0
+        baseline = 0;
+      }
+
+      if (useUserSpaceUnits) {
+        // Get the actual y coordinate for the baseline
+        const scaledValue = yScale(baseline);
+        if (typeof scaledValue === 'number') {
+          baselinePosition = scaledValue;
+        }
+      } else {
+        // Calculate percentage position
+        baselinePercentage = `${((maxValue - baseline) / (maxValue - minValue)) * 100}%`;
+      }
+    }
+
+    const effectivePeakColor = peakColor ?? fill;
+    const effectiveBaselineColor = baselineColor ?? fill;
+
     return (
       <>
         <defs>
-          <linearGradient id={patternIdRef.current} x1="0%" x2="0%" y1="0%" y2="100%">
-            <stop offset="0%" stopColor={startColor ?? fill} stopOpacity={startOpacity} />
-            <stop offset="100%" stopColor={endColor ?? fill} stopOpacity={endOpacity} />
+          <linearGradient
+            id={patternIdRef.current}
+            gradientUnits={useUserSpaceUnits ? 'userSpaceOnUse' : 'objectBoundingBox'}
+            x1={useUserSpaceUnits ? 0 : '0%'}
+            x2={useUserSpaceUnits ? 0 : '0%'}
+            y1={gradientY1}
+            y2={gradientY2}
+          >
+            {baselinePosition !== undefined || baselinePercentage !== undefined ? (
+              <>
+                {/* Diverging gradient: peak opacity at extremes, baseline opacity at baseline */}
+                <stop offset="0%" stopColor={effectivePeakColor} stopOpacity={peakOpacity} />
+                <stop
+                  offset={
+                    baselinePercentage ??
+                    `${((baselinePosition! - yRange![1]) / (yRange![0] - yRange![1])) * 100}%`
+                  }
+                  stopColor={effectiveBaselineColor}
+                  stopOpacity={baselineOpacity}
+                />
+                <stop offset="100%" stopColor={effectivePeakColor} stopOpacity={peakOpacity} />
+              </>
+            ) : (
+              <>
+                {/* Simple gradient from peak to baseline */}
+                <stop offset="0%" stopColor={effectivePeakColor} stopOpacity={peakOpacity} />
+                <stop
+                  offset="100%"
+                  stopColor={effectiveBaselineColor}
+                  stopOpacity={baselineOpacity}
+                />
+              </>
+            )}
           </linearGradient>
         </defs>
         <Path

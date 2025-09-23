@@ -71,10 +71,10 @@ function Test() {
         3520, 3900,
       ],
       color: 'var(--color-fgPositive)',
-      type: 'dotted',
       LineComponent: DottedLine,
     },
   ]}
+  AreaComponent={(props) => <DottedArea {...props} peakOpacity={0.4} baselineOpacity={0.4} />}
   type="dotted"
 />
 ```

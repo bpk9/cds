@@ -15,7 +15,7 @@ import {
   TabsActiveIndicator,
   type TabsActiveIndicatorProps,
 } from '@coinbase/cds-web/tabs';
-import { Text } from '@coinbase/cds-web/typography';
+import { Text, TextLabel1 } from '@coinbase/cds-web/typography';
 import { AnimatePresence, m as motion } from 'framer-motion';
 
 import {
@@ -23,6 +23,7 @@ import {
   type ChartTextChildren,
   LiveTabLabel,
   PeriodSelector,
+  PeriodSelectorActiveIndicator,
   Scrubber,
   ScrubberLine,
   useChartContext,
@@ -34,6 +35,7 @@ import { ChartHeader } from '../../ChartHeader';
 import { Point } from '../../point';
 import { ScrubberHead } from '../../ScrubberHead';
 import { DottedLine, GradientLine, Line, LineChart, ReferenceLine, SolidLine } from '..';
+import { useTabsContext } from '@coinbase/cds-common/tabs/TabsContext';
 
 export default {
   component: LineChart,
@@ -1460,6 +1462,91 @@ export const BitcoinChartWithScrubberHead = () => {
           />
         </LineChart>
       </div>
+    </VStack>
+  );
+};
+
+const BTCTab: TabComponent = memo(
+  forwardRef(
+    ({ label, ...props }: SegmentedTabProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
+      const { activeTab } = useTabsContext();
+      const isActive = activeTab?.id === props.id;
+
+      return (
+        <SegmentedTab
+          ref={ref}
+          label={
+            <TextLabel1
+              style={{
+                transition: 'color 0.2s ease',
+                color: isActive ? assets.btc.color : undefined,
+              }}
+            >
+              {label}
+            </TextLabel1>
+          }
+          {...props}
+        />
+      );
+    },
+  ),
+);
+
+const BTCActiveIndicator = memo(({ style, ...props }: TabsActiveIndicatorProps) => (
+  <PeriodSelectorActiveIndicator
+    {...props}
+    style={{ ...style, backgroundColor: `${assets.btc.color}1A` }}
+  />
+));
+
+export const AreaTypesChart = () => {
+  const tabs = [
+    { id: 'hour', label: '1H' },
+    { id: 'day', label: '1D' },
+    { id: 'week', label: '1W' },
+    { id: 'month', label: '1M' },
+    { id: 'year', label: '1Y' },
+    { id: 'all', label: 'All' },
+  ];
+  const [timePeriod, setTimePeriod] = useState<TabValue>(tabs[0]);
+
+  const data = useMemo(() => {
+    return sparklineInteractiveData[timePeriod.id as keyof typeof sparklineInteractiveData].map(
+      (d) => d.value,
+    );
+  }, [timePeriod]);
+
+  const onPeriodChange = useCallback(
+    (period: TabValue | null) => {
+      setTimePeriod(period || tabs[0]);
+    },
+    [tabs, setTimePeriod],
+  );
+
+  return (
+    <VStack gap={2}>
+      <LineChart
+        enableScrubbing
+        series={[
+          {
+            id: 'btc',
+            data,
+            color: assets.btc.color,
+          },
+        ]}
+        showArea
+        areaType="dotted"
+        height={300}
+      >
+        <Scrubber />
+      </LineChart>
+      <PeriodSelector
+        TabComponent={BTCTab}
+        TabsActiveIndicatorComponent={BTCActiveIndicator}
+        tabs={tabs}
+        activeTab={timePeriod}
+        onChange={onPeriodChange}
+      />
     </VStack>
   );
 };

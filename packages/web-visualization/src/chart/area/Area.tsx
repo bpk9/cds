@@ -18,6 +18,7 @@ export type AreaComponentProps = {
   disableAnimations?: boolean;
   stroke?: string;
   strokeWidth?: number;
+  yAxisId?: string;
 };
 
 export type AreaComponent = React.FC<AreaComponentProps>;
@@ -147,6 +148,7 @@ export const Area = memo<AreaProps>(
         fillOpacity={fillOpacity}
         stroke={stroke}
         strokeWidth={strokeWidth}
+        yAxisId={matchedSeries?.yAxisId}
       />
     );
   },

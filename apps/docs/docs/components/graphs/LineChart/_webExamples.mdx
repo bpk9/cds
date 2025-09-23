@@ -61,7 +61,7 @@ function GainLossChart() {
 
       const baselinePercentage = ((threshold - domain[0]) / (domain[1] - domain[0])) * 100;
 
-      const negativeColor = 'var(--color-bgLine)';
+      const negativeColor = 'rgb(var(--gray15))';
       const positiveColor = 'var(--color-fgPositive)';
 
       return (
@@ -450,6 +450,28 @@ todo: we need to handle showing points for any spot in the axis.
 ```
 
 ## Customization
+
+### Asset Price with Dotted Area
+
+```jsx live
+function AreaTypesChart() {
+  const
+<LineChart
+  series={[
+    {
+      id: 'btc',
+      data: [2, 5.5, 2, 8.5, 1.5, 5],
+      color: assets.btc.color,
+    },
+  ]}
+  showArea
+  areaType="dotted"
+  height={300}
+>
+  <Scrubber />
+</LineChart>
+}
+```
 
 ### Forecasting
 
