@@ -388,6 +388,7 @@ const Candlesticks = () => {
         <span ref={infoTextRef}>{initialInfo}</span>
       </Text>
       <BarChart
+        disableAnimations
         enableScrubbing
         showXAxis
         showYAxis
