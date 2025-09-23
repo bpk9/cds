@@ -14,10 +14,10 @@ export type AreaComponentProps = {
   d: SVGProps<SVGPathElement>['d'];
   fill: string;
   fillOpacity?: number;
-  clipRect?: Rect;
   disableAnimations?: boolean;
   stroke?: string;
   strokeWidth?: number;
+  yAxisId?: string;
 };
 
 export type AreaComponent = React.FC<AreaComponentProps>;
@@ -75,7 +75,7 @@ export const Area = memo<AreaProps>(
     stroke,
     strokeWidth,
   }) => {
-    const { rect, getSeries, getSeriesData, getStackedSeriesData, getXScale, getYScale, getXAxis } =
+    const { getSeries, getSeriesData, getStackedSeriesData, getXScale, getYScale, getXAxis } =
       useChartContext();
 
     // Get sourceData from series (using stacked data if available)
@@ -140,13 +140,13 @@ export const Area = memo<AreaProps>(
 
     return (
       <AreaComponent
-        clipRect={rect}
         d={area}
         disableAnimations={disableAnimations}
         fill={fill}
         fillOpacity={fillOpacity}
         stroke={stroke}
         strokeWidth={strokeWidth}
+        yAxisId={matchedSeries?.yAxisId}
       />
     );
   },

@@ -47,6 +47,9 @@ export const getAreaPath = ({
 
   const curveFunction = getPathCurveFunction(curve);
 
+  const yDomain = yScale.domain();
+  const yMin = Math.min(...yDomain);
+
   const normalizedData: Array<[number, number] | null> = data.map((item, index) => {
     if (item === null) {
       return null;
@@ -60,7 +63,7 @@ export const getAreaPath = ({
     }
 
     if (typeof item === 'number') {
-      return [0, item];
+      return [yMin, item];
     }
 
     return null;

@@ -474,8 +474,9 @@ export const BTCPriceChart = () => {
   })} (${Math.abs(calculatedPercentChange).toFixed(2)}%)`;
 
   const AreaComponent = useMemo(
-    () => (props: AreaComponentProps) =>
-      <GradientArea {...props} endColor="#ffffff" startColor="#ffffff" startOpacity={0.15} />,
+    () => (props: AreaComponentProps) => (
+      <GradientArea {...props} endColor="#ffffff" startColor="#ffffff" startOpacity={0.15} />
+    ),
     [],
   );
 
@@ -998,7 +999,6 @@ export const ForecastChart = () => {
 
       // Generate daily forecast points for 5 years
       const currentDate = new Date(lastDate);
-      currentDate.setDate(currentDate.getDate() + 1); // Start from day after last historical point
       let currentPrice = lastPrice;
 
       while (currentDate <= fiveYearsFromNow) {

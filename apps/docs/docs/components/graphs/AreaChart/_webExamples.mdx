@@ -71,10 +71,10 @@ function Test() {
         3520, 3900,
       ],
       color: 'var(--color-fgPositive)',
-      type: 'dotted',
       LineComponent: DottedLine,
     },
   ]}
+  AreaComponent={(props) => <DottedArea {...props} peakOpacity={0.4} baselineOpacity={0.4} />}
   type="dotted"
 />
 ```
@@ -93,7 +93,7 @@ When an area chart contains negative values, the baseline automatically adjusts 
       data: [24, 13, -98, 39, 48, 38, 43],
     },
   ]}
-  type="gradient"
+  AreaComponent={(props) => <SolidArea {...props} opacity={0.4} />}
   showYAxis
   yAxis={{
     showGrid: true,

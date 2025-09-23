@@ -1,11 +1,9 @@
 import { forwardRef, memo, useImperativeHandle, useRef } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
-import { AnimatePresence, m } from 'framer-motion';
 
-import { axisTickLabelsInitialAnimationVariants } from './axis';
-import { useScrubberContext } from './Chart';
-import { useChartContext } from './ChartContext';
-import { Point, type PointProps, type PointRef } from './point';
+import { useScrubberContext } from '../Chart';
+import { useChartContext } from '../ChartContext';
+import { Point, type PointProps, type PointRef } from '../point';
 
 export const dataKeyUpdateAnimationVariants = {
   initial: {
@@ -151,36 +149,18 @@ export const ScrubberHead = memo(
       const pointColor = color || targetSeries?.color || 'var(--color-fgPrimary)';
 
       return (
-        <m.g
-          animate="animate"
-          data-testid={testID}
-          exit="exit"
-          initial="initial"
-          variants={axisTickLabelsInitialAnimationVariants}
-        >
-          <AnimatePresence>
-            <m.g
-              key={dataKey ? `scrubber-head-${seriesId}-${dataKey}` : `scrubber-head-${seriesId}`}
-              animate="animate"
-              exit="exit"
-              initial="initial"
-              variants={dataKeyUpdateAnimationVariants}
-            >
-              <Point
-                ref={pointRef}
-                color={pointColor}
-                dataX={x}
-                dataY={y}
-                opacity={opacity}
-                pulse={pulse}
-                radius={radius}
-                stroke="white"
-                strokeWidth={2}
-                {...props}
-              />
-            </m.g>
-          </AnimatePresence>
-        </m.g>
+        <Point
+          ref={pointRef}
+          color={pointColor}
+          dataX={x}
+          dataY={y}
+          opacity={opacity}
+          pulse={pulse}
+          radius={radius}
+          stroke="var(--color-bg)"
+          strokeWidth={2}
+          {...props}
+        />
       );
     },
   ),

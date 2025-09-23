@@ -1,15 +1,13 @@
 import React, { memo, useRef } from 'react';
-import { useSparklineAreaOpacity } from '@coinbase/cds-common/visualizations/useSparklineAreaOpacity';
 import { generateRandomId } from '@coinbase/cds-utils';
-import { useTheme } from '@coinbase/cds-web/hooks/useTheme';
 
 import { useChartContext } from '../ChartContext';
 import { Path, type PathProps } from '../Path';
 
 import type { AreaComponentProps } from './Area';
 
-export type DottedAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
-  AreaComponentProps & {
+export type DottedAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity' | 'clipRect'> &
+  Omit<AreaComponentProps, 'clipRect'> & {
     /**
      * Size of the pattern unit (width and height).
      * @default 4
@@ -20,6 +18,21 @@ export type DottedAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
      * @default 1
      */
     dotSize?: number;
+    /**
+     * Opacity at the peak values (top/bottom of gradient).
+     * @default 0.3
+     */
+    peakOpacity?: number;
+    /**
+     * Opacity at the baseline (0 or edge closest to 0).
+     * @default 0
+     */
+    baselineOpacity?: number;
+    /**
+     * ID of the y-axis to use for gradient range.
+     * If not provided, defaults to the default y-axis.
+     */
+    yAxisId?: string;
     className?: string;
     style?: React.CSSProperties;
     /**
@@ -62,25 +75,67 @@ export const DottedArea = memo<DottedAreaProps>(
   ({
     d,
     fill,
-    // todo: fillOpacity, fix this opacity, default is normally 1 but we want useSparklineAreaOpacity
     className,
     style,
     patternSize = 4,
     dotSize = 1,
+    peakOpacity = 1,
+    baselineOpacity = 0,
+    yAxisId,
     classNames,
     styles,
     disableAnimations,
-    clipRect,
     ...pathProps
   }) => {
     const context = useChartContext();
-    const { activeColorScheme } = useTheme();
     const patternIdRef = useRef<string>(generateRandomId());
-
-    const defaultFillOpacity = useSparklineAreaOpacity(activeColorScheme);
-    const effectiveFillOpacity = defaultFillOpacity; // fillOpacity ?? defaultFillOpacity;
+    const gradientIdRef = useRef<string>(generateRandomId());
+    const maskIdRef = useRef<string>(generateRandomId());
 
     const dotCenterPosition = patternSize / 2;
+
+    // Get the y-scale for the specified axis (or default)
+    const yScale = context.getYScale?.(yAxisId);
+    const yRange = yScale?.range();
+    const yDomain = yScale?.domain();
+
+    // Use chart range if available, otherwise fall back to percentage
+    const useUserSpaceUnits = yRange !== undefined;
+
+    // Auto-calculate baseline position based on domain
+    let baselinePosition: number | undefined;
+    let baselinePercentage: string | undefined;
+
+    if (yScale && yDomain) {
+      const [minValue, maxValue] = yDomain;
+
+      // Determine baseline: 0 if in domain, else closest edge to 0
+      let baseline: number;
+      if (minValue >= 0) {
+        // All positive: baseline at min
+        baseline = minValue;
+      } else if (maxValue <= 0) {
+        // All negative: baseline at max
+        baseline = maxValue;
+      } else {
+        // Crosses zero: baseline at 0
+        baseline = 0;
+      }
+
+      if (useUserSpaceUnits) {
+        // Get the actual y coordinate for the baseline
+        const scaledValue = yScale(baseline);
+        if (typeof scaledValue === 'number') {
+          baselinePosition = scaledValue;
+        }
+      } else {
+        // Calculate percentage position
+        baselinePercentage = `${((maxValue - baseline) / (maxValue - minValue)) * 100}%`;
+      }
+    }
+
+    const gradientY1 = useUserSpaceUnits ? yRange![1] : '0%';
+    const gradientY2 = useUserSpaceUnits ? yRange![0] : '100%';
 
     return (
       <g className={className ?? classNames?.root} style={style ?? styles?.root}>
@@ -95,23 +150,56 @@ export const DottedArea = memo<DottedAreaProps>(
             x="0"
             y="0"
           >
-            <circle
-              cx={dotCenterPosition}
-              cy={dotCenterPosition}
-              fill={fill}
-              fillOpacity={effectiveFillOpacity}
-              r={dotSize}
-            />
+            <circle cx={dotCenterPosition} cy={dotCenterPosition} fill={fill} r={dotSize} />
           </pattern>
+          <linearGradient
+            id={gradientIdRef.current}
+            gradientUnits={useUserSpaceUnits ? 'userSpaceOnUse' : 'objectBoundingBox'}
+            x1={useUserSpaceUnits ? 0 : '0%'}
+            x2={useUserSpaceUnits ? 0 : '0%'}
+            y1={gradientY1}
+            y2={gradientY2}
+          >
+            {baselinePosition !== undefined || baselinePercentage !== undefined ? (
+              <>
+                {/* Diverging gradient: high opacity at extremes, low at baseline */}
+                <stop offset="0%" stopColor="white" stopOpacity={peakOpacity} />
+                <stop
+                  offset={
+                    baselinePercentage ??
+                    `${((baselinePosition! - yRange![1]) / (yRange![0] - yRange![1])) * 100}%`
+                  }
+                  stopColor="white"
+                  stopOpacity={baselineOpacity}
+                />
+                <stop offset="100%" stopColor="white" stopOpacity={peakOpacity} />
+              </>
+            ) : (
+              <>
+                {/* Simple gradient from top to bottom */}
+                <stop offset="0%" stopColor="white" stopOpacity={peakOpacity} />
+                <stop offset="100%" stopColor="white" stopOpacity={baselineOpacity} />
+              </>
+            )}
+          </linearGradient>
+          <mask id={maskIdRef.current}>
+            <Path
+              d={d}
+              fill={`url(#${gradientIdRef.current})`}
+              disableAnimations={
+                disableAnimations !== undefined ? disableAnimations : context.disableAnimations
+              }
+            />
+          </mask>
         </defs>
         <Path
           className={classNames?.path}
-          clipRect={clipRect}
           d={d}
           disableAnimations={
             disableAnimations !== undefined ? disableAnimations : context.disableAnimations
           }
           fill={`url(#${patternIdRef.current})`}
+          mask={`url(#${maskIdRef.current})`}
           style={styles?.path}
           {...pathProps}
         />

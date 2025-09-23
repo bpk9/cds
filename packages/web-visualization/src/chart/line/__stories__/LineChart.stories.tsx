@@ -7,6 +7,7 @@ import { projectPoint } from '@coinbase/cds-common/visualizations/charts/getPoin
 import type { ChartAxisScaleType } from '@coinbase/cds-common/visualizations/charts/scale';
 import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
 import { RemoteImage } from '@coinbase/cds-web/media';
+import { SectionHeader } from '@coinbase/cds-web/section-header/SectionHeader';
 import {
   SegmentedTab,
   type SegmentedTabProps,
@@ -15,15 +16,16 @@ import {
   TabsActiveIndicator,
   type TabsActiveIndicatorProps,
 } from '@coinbase/cds-web/tabs';
-import { Text } from '@coinbase/cds-web/typography';
+import { Text, TextLabel1 } from '@coinbase/cds-web/typography';
 import { AnimatePresence, m as motion } from 'framer-motion';
 
 import {
+  btcCandles,
   type ChartTextChildren,
   LiveTabLabel,
   PeriodSelector,
+  PeriodSelectorActiveIndicator,
   Scrubber,
-  ScrubberLine,
   useChartContext,
 } from '../..';
 import { Area, type AreaComponentProps, DottedArea, GradientArea } from '../../area';
@@ -31,8 +33,9 @@ import { XAxis } from '../../axis';
 import { Chart } from '../../Chart';
 import { ChartHeader } from '../../ChartHeader';
 import { Point } from '../../point';
-import { ScrubberHead } from '../../ScrubberHead';
+import { ScrubberHead } from '../../scrubber/ScrubberHead';
 import { DottedLine, GradientLine, Line, LineChart, ReferenceLine, SolidLine } from '..';
+import { useTabsContext } from '@coinbase/cds-common/tabs/TabsContext';
 
 export default {
   component: LineChart,
@@ -522,15 +525,7 @@ export const BTCPriceChart = () => {
   })} (${Math.abs(calculatedPercentChange).toFixed(2)}%)`;
 
   const AreaComponent = useMemo(
-    () => (props: AreaComponentProps) =>
-      (
-        <GradientArea
-          {...props}
-          endColor="var(--color-bg)"
-          startColor="var(--color-bg)"
-          startOpacity={0.15}
-        />
-      ),
+    () => (props: AreaComponentProps) => <GradientArea {...props} peakOpacity={0.15} />,
     [],
   );
 
@@ -559,7 +554,7 @@ export const BTCPriceChart = () => {
             {
               id: 'price',
               data: currentData,
-              color: '#000000',
+              color: 'black',
             },
           ]}
           style={{ outlineColor: 'var(--color-fg) !important' }}
@@ -581,12 +576,16 @@ export const BTCPriceChart = () => {
               />
             )}
           </AnimatePresence>
-          {/* TODO erich use scrubber component here? */}
-          <ScrubberLine label={displayDate} lineStroke="#000000" overlayColor={btcAccentColor} />
-          <ScrubberHead
+          <Scrubber
+            scrubberLabel={displayDate}
+            scrubberComponents={{
+              ScrubberLineComponent: ReferenceLine,
+            }}
+            scrubberStyles={{
+              scrubberLine: { stroke: 'black' },
+              scrubberHead: { stroke: 'white' },
+            }}
             pulse={!isHovering}
-            seriesId="price"
-            {...(!isHovering ? latestPriceCoords : {})}
           />
         </Chart>
         <Box paddingX={{ phone: 2, tablet: 4, desktop: 4 }}>
@@ -1138,13 +1137,6 @@ export const PriceChart = () => {
         ]}
         yAxis={{ domainLimit: 'strict' }}
       >
-        <ScrubberHead
-          dataKey={dataKey}
-          pulse={!isHovering}
-          seriesId="price"
-          {...latestPriceCoords}
-          opacity={isHovering ? 0 : 1}
-        />
         <Scrubber scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} />
       </LineChart>
       <Box paddingX={{ phone: 2, tablet: 4, desktop: 4 }}>
@@ -1185,7 +1177,6 @@ export const ForecastChart = () => {
 
       // Generate daily forecast points for 5 years
       const currentDate = new Date(lastDate);
-      currentDate.setDate(currentDate.getDate() + 1); // Start from day after last historical point
       let currentPrice = lastPrice;
 
       while (currentDate <= fiveYearsFromNow) {
@@ -1214,26 +1205,11 @@ export const ForecastChart = () => {
     [historicalData, forecastData],
   );
 
-  const formatPrice = useCallback((price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  }, []);
-
-  // Format x-axis labels to show years
-  const formatXAxisLabel = useCallback((timestamp: number) => {
-    return new Date(timestamp).getFullYear().toString();
-  }, []);
-
   return (
     <LineChart
       enableScrubbing
       showArea
       showXAxis
-      areaType="dotted"
       height={350}
       padding={{
         top: 24,
@@ -1272,27 +1248,358 @@ export const ForecastChart = () => {
 
 export const DataFormat = () => {
   return (
-    <LineChart
-      showArea
-      showXAxis
-      showYAxis
-      curve="natural"
-      height={300}
-      renderPoints={() => true}
-      series={[
-        {
-          id: 'line',
-          data: [2, 5.5, 2, 8.5, 1.5, 5],
-        },
-      ]}
-      xAxis={{ data: [1, 2, 3, 5, 8, 10], showLine: true, showTickMarks: true, showGrid: true }}
-      yAxis={{
-        domain: { min: 0 },
-        position: 'start',
-        showLine: true,
-        showTickMarks: true,
-        showGrid: true,
+    <VStack gap={2}>
+      <LineChart
+        enableScrubbing
+        series={[
+          {
+            id: 'line',
+            data: [2, 5.5, 2, 8.5, 1.5, 5],
+          },
+        ]}
+        height={300}
+        showArea
+        renderPoints={() => true}
+        curve="natural"
+        showXAxis
+        xAxis={{
+          data: [1, 2, 3, 5, 8, 10],
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+        showYAxis
+        yAxis={{
+          domain: { min: 0 },
+          position: 'start',
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+      >
+        <Scrubber />
+      </LineChart>
+      <LineChart
+        enableScrubbing
+        series={[
+          {
+            id: 'line',
+            data: [2, 5.5, 2, 8.5, 1.5, 5],
+          },
+        ]}
+        height={300}
+        showArea
+        renderPoints={() => true}
+        curve="natural"
+        showXAxis
+        xAxis={{
+          domain: { min: 0, max: 10 },
+          data: [1, 2, 3, 5, 8, 10],
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+        showYAxis
+        yAxis={{
+          domain: { min: 0 },
+          position: 'start',
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+      >
+        <Scrubber />
+      </LineChart>
+      <LineChart
+        enableScrubbing
+        series={[
+          {
+            id: 'line',
+            data: [2, 5.5, 2, 8.5, 1.5, 5],
+          },
+        ]}
+        height={300}
+        showArea
+        renderPoints={() => true}
+        curve="natural"
+        showXAxis
+        xAxis={{
+          domain: { min: 0, max: 20 },
+          data: [1, 2, 3, 5, 8, 10],
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+        showYAxis
+        yAxis={{
+          domain: { min: 0 },
+          position: 'start',
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+      >
+        <Scrubber />
+      </LineChart>{' '}
+      <LineChart
+        enableScrubbing
+        series={[
+          {
+            id: 'line',
+            data: [2, 5.5, 2, 8.5, 1.5, 5],
+          },
+        ]}
+        height={300}
+        showArea
+        renderPoints={() => true}
+        curve="natural"
+        showXAxis
+        xAxis={{
+          domain: { min: 5, max: 10 },
+          data: [1, 2, 3, 5, 8, 10],
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+        showYAxis
+        yAxis={{
+          domain: { min: 0 },
+          position: 'start',
+          showLine: true,
+          showTickMarks: true,
+          showGrid: true,
+        }}
+      >
+        <Scrubber />
+      </LineChart>
+    </VStack>
+  );
+};
+
+export const BitcoinChartWithScrubberHead = () => {
+  const prices = [...btcCandles].reverse().map((candle) => parseFloat(candle.close));
+  const latestPrice = prices[prices.length - 1];
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(price);
+  };
+
+  const formatPercentChange = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'percent',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price);
+  };
+
+  const percentChange = (latestPrice - prices[0]) / prices[0];
+
+  return (
+    <VStack
+      style={{
+        background:
+          'linear-gradient(0deg, rgba(0, 0, 0, 0.80) 0%, rgba(0, 0, 0, 0.80) 100%), #ED702F',
       }}
-    />
+      borderRadius={300}
+      gap={2}
+      padding={2}
+      paddingBottom={0}
+      overflow="hidden"
+    >
+      <HStack gap={2} alignItems="center">
+        <RemoteImage source={assets.btc.imageUrl} size="xxl" shape="circle" />
+        <VStack gap={0.25} flexGrow={1}>
+          <Text font="title1" style={{ color: 'white' }}>
+            BTC
+          </Text>
+          <Text font="label1" color="fgMuted">
+            Bitcoin
+          </Text>
+        </VStack>
+        <VStack gap={0.25} alignItems="flex-end">
+          <Text font="title1" style={{ color: 'white' }}>
+            {formatPrice(latestPrice)}
+          </Text>
+          <Text font="label1" color="fgPositive">
+            +{formatPercentChange(percentChange)}
+          </Text>
+        </VStack>
+      </HStack>
+      <div
+        style={{
+          marginLeft: 'calc(-1 * var(--space-2))',
+          marginRight: 'calc(-1 * var(--space-2))',
+        }}
+      >
+        <LineChart
+          padding={{ left: 0, right: 24, bottom: 0, top: 0 }}
+          series={[
+            {
+              id: 'btcPrice',
+              data: prices,
+              color: assets.btc.color,
+            },
+          ]}
+          showArea
+          width="100%"
+          height={92}
+        >
+          <Scrubber
+            pulse
+            scrubberStyles={{
+              scrubberHead: {
+                stroke: 'white',
+              },
+            }}
+          />
+        </LineChart>
+      </div>
+    </VStack>
+  );
+};
+
+const BTCTab: TabComponent = memo(
+  forwardRef(
+    ({ label, ...props }: SegmentedTabProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
+      const { activeTab } = useTabsContext();
+      const isActive = activeTab?.id === props.id;
+
+      return (
+        <SegmentedTab
+          ref={ref}
+          label={
+            <TextLabel1
+              style={{
+                transition: 'color 0.2s ease',
+                color: isActive ? assets.btc.color : undefined,
+              }}
+            >
+              {label}
+            </TextLabel1>
+          }
+          {...props}
+        />
+      );
+    },
+  ),
+);
+
+const BTCActiveIndicator = memo(({ style, ...props }: TabsActiveIndicatorProps) => (
+  <PeriodSelectorActiveIndicator
+    {...props}
+    style={{ ...style, backgroundColor: `${assets.btc.color}1A` }}
+  />
+));
+
+export const AssetPriceDotted = () => {
+  const [scrubIndex, setScrubIndex] = useState<number | null>(null);
+  const currentPrice =
+    sparklineInteractiveData.hour[sparklineInteractiveData.hour.length - 1].value;
+  const tabs = [
+    { id: 'hour', label: '1H' },
+    { id: 'day', label: '1D' },
+    { id: 'week', label: '1W' },
+    { id: 'month', label: '1M' },
+    { id: 'year', label: '1Y' },
+    { id: 'all', label: 'All' },
+  ];
+  const [timePeriod, setTimePeriod] = useState<TabValue>(tabs[0]);
+
+  const sparklineTimePeriodData = useMemo(() => {
+    return sparklineInteractiveData[timePeriod.id as keyof typeof sparklineInteractiveData];
+  }, [timePeriod]);
+
+  const sparklineTimePeriodDataValues = useMemo(() => {
+    return sparklineTimePeriodData.map((d) => d.value);
+  }, [sparklineTimePeriodData]);
+
+  const sparklineTimePeriodDataTimestamps = useMemo(() => {
+    return sparklineTimePeriodData.map((d) => d.date);
+  }, [sparklineTimePeriodData]);
+
+  const onPeriodChange = useCallback(
+    (period: TabValue | null) => {
+      setTimePeriod(period || tabs[0]);
+    },
+    [tabs, setTimePeriod],
+  );
+
+  const formatPrice = useCallback((price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(price);
+  }, []);
+
+  const formatDate = useCallback((date: Date) => {
+    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
+
+    const monthDay = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+
+    const time = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    return `${dayOfWeek}, ${monthDay}, ${time}`;
+  }, []);
+
+  const scrubberLabel: ChartTextChildren = useMemo(() => {
+    if (scrubIndex === null) return null;
+    const price = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(sparklineTimePeriodDataValues[scrubIndex]);
+    const date = formatDate(sparklineTimePeriodDataTimestamps[scrubIndex]);
+    return (
+      <>
+        <tspan style={{ fontWeight: 'bold' }}>{price} USD</tspan> {date}
+      </>
+    );
+  }, [sparklineTimePeriodDataValues, scrubIndex]);
+
+  return (
+    <VStack gap={2}>
+      <SectionHeader
+        style={{ padding: 0 }}
+        title={<Text font="title1">Bitcoin</Text>}
+        balance={<Text font="title2">{formatPrice(currentPrice)}</Text>}
+        end={
+          <VStack justifyContent="center">
+            <RemoteImage source={assets.btc.imageUrl} size="xl" shape="circle" />
+          </VStack>
+        }
+      />
+      <LineChart
+        enableScrubbing
+        onScrubberPosChange={setScrubIndex}
+        series={[
+          {
+            id: 'btc',
+            data: sparklineTimePeriodDataValues,
+            color: assets.btc.color,
+          },
+        ]}
+        showArea
+        areaType="dotted"
+        height={300}
+      >
+        <Scrubber scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} pulse />
+      </LineChart>
+      <PeriodSelector
+        TabComponent={BTCTab}
+        TabsActiveIndicatorComponent={BTCActiveIndicator}
+        tabs={tabs}
+        activeTab={timePeriod}
+        onChange={onPeriodChange}
+      />
+    </VStack>
   );
 };
