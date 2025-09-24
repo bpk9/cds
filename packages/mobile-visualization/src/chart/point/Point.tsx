@@ -131,11 +131,6 @@ export type PointConfig = {
    */
   radius?: number;
   /**
-   * Radius of the point's outer, lower-opacity ring.
-   * When pulse is enabled, defaults to average length of radius and pulseRadius, else 0;
-   */
-  outerRingRadius?: number;
-  /**
    * Radius of the pulse ring. Only used when pulse is enabled.
    * @default 16
    */
@@ -210,7 +205,6 @@ export const Point = memo(
         pulse = false,
         radius = 4,
         pulseRadius = 16,
-        outerRingRadius = pulse ? (radius + pulseRadius) / 2 : 0,
         opacity,
         onPress,
         onScrubberEnter,
@@ -227,8 +221,7 @@ export const Point = memo(
       const theme = useTheme();
       const effectiveStroke = stroke ?? theme.color.bg;
       const pulseOpacity = useRef(new Animated.Value(0)).current;
-      const scaleValue = useRef(new Animated.Value(1)).current;
-      const { getXScale, getYScale, animate } = useChartContext();
+      const { getXScale, getYScale } = useChartContext();
       const { highlightedIndex } = useHighlightContext();
 
       const xScale = getXScale(xAxisId);
@@ -352,14 +345,6 @@ export const Point = memo(
               fill={effectiveColor}
               opacity={pulse ? pulseOpacity : 0}
               r={pulseRadius}
-            />
-            {/* outer ring */}
-            <Circle
-              cx={pixelCoordinate.x}
-              cy={pixelCoordinate.y}
-              fill={color}
-              opacity={0.15}
-              r={outerRingRadius}
             />
             {/* inner point */}
             <Circle

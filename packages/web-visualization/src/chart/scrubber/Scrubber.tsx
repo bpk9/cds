@@ -21,7 +21,6 @@ import { m } from 'framer-motion';
 import { axisTickLabelsInitialAnimationVariants } from '../axis';
 import { useScrubberContext } from '../Chart';
 import { ReferenceLine, type ReferenceLineProps } from '../line';
-import type { PointProps } from '../point';
 
 import {
   ScrubberHead,
@@ -36,7 +35,7 @@ import {
  * Provides consistent API with smart defaults and component customization.
  */
 export type ScrubberProps = SharedProps &
-  Pick<PointProps, 'pulse'> & {
+  Pick<ScrubberHeadProps, 'idlePulse'> & {
     /**
      * An array of series IDs that will receive visual emphasis as the user scrubs through the chart.
      * Use this prop to restrict the scrubbing visual behavior to specific series.
@@ -120,7 +119,7 @@ export const Scrubber = memo(
         scrubberComponents,
         hideOverlay,
         testID,
-        pulse,
+        idlePulse,
         scrubberStyles,
         scrubberClassNames,
       },
@@ -176,7 +175,6 @@ export const Scrubber = memo(
         return { dataX, dataIndex };
       }, [getXScale, getXAxis, series, highlightedIndex, getStackedSeriesData, getSeriesData]);
 
-      // TODO: forecast chart is broken
       const headPositions = useMemo(() => {
         const xScale = getXScale() as ChartScaleFunction;
 
@@ -613,7 +611,7 @@ export const Scrubber = memo(
                   color={scrubberHead.targetSeries?.color}
                   dataX={scrubberHead.x}
                   dataY={scrubberHead.y}
-                  pulse={pulse}
+                  idlePulse={idlePulse}
                   seriesId={scrubberHead.targetSeries.id}
                   style={scrubberStyles?.scrubberHead}
                   testID={testID ? `${testID}-${scrubberHead.targetSeries.id}-dot` : undefined}

@@ -217,8 +217,8 @@ export const BasicLineChartWithPoints = () => {
         onScrubberEnter={() => console.log('scrubber entered')}
         radius={6}
       />
-      <Point pulse color="orange" dataX={5} dataY={50} pulseRadius={24} radius={5} />
-      <Scrubber />
+      <Point pulse color="orange" dataX={5} dataY={50} radius={5} />
+      <Scrubber idlePulse />
     </LineChart>
   );
 };
