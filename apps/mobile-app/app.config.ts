@@ -58,7 +58,6 @@ const expo: ExpoConfig = {
         android: {
           kotlinVersion: '2.0.21',
           kspVersion: '2.0.0-1.0.23',
-          extraMavenRepos: [],
           /**
            * https://docs.expo.dev/build-reference/e2e-tests/#51-patch-buildgradle
            * Temporary patch required until detox integration is first class

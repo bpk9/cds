@@ -57,6 +57,6 @@
     "@react-navigation/stack": "^6.3.16",
     "@types/react": "^18.3.12",
     "detox": "^20.14.8",
-    "react-native-safe-area-context": "^5.1.0"
+    "react-native-safe-area-context": "~5.1.0"
   }
 }
