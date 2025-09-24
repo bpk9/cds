@@ -1,13 +1,12 @@
 import React, { forwardRef, memo, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import type { SVGProps } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
-import { projectPoint } from '@coinbase/cds-common/visualizations/charts';
+import { projectPoint, useChartContext } from '@coinbase/cds-common/visualizations/charts';
 import { cx } from '@coinbase/cds-web';
 import { css } from '@linaria/core';
 import { m as motion, useAnimate } from 'framer-motion';
 
 import { useScrubberContext } from '../Chart';
-import { useChartContext } from '../ChartContext';
 import { ChartText, type ChartTextProps } from '../text';
 import type { ChartTextChildren } from '../text/ChartText';
 
@@ -222,11 +221,6 @@ export type PointProps = SharedProps &
      */
     hoverEffect?: 'scale' | 'pulse' | 'none';
     /**
-     * Whether to disable animations for this point.
-     * Overrides the chart context's disableAnimations setting.
-     */
-    disableAnimations?: boolean;
-    /**
      * Custom class names for the component.
      */
     classNames?: {
@@ -286,7 +280,6 @@ export const Point = memo(
         onClick,
         onScrubberEnter,
         hoverEffect = onClick ? 'scale' : 'none',
-        disableAnimations: disableAnimationsProp,
         className,
         style,
         classNames,
@@ -302,19 +295,12 @@ export const Point = memo(
       ref,
     ) => {
       const [scope, animate] = useAnimate();
-      const {
-        getXScale,
-        getYScale,
-        disableAnimations: disableAnimationsContext,
-      } = useChartContext();
+      const { getXScale, getYScale, animate: animateContext } = useChartContext();
       const { highlightedIndex } = useScrubberContext();
       const [isHovered, setIsHovered] = useState(false);
 
       const xScale = getXScale(xAxisId);
       const yScale = getYScale(yAxisId);
-
-      const disableAnimations =
-        disableAnimationsProp !== undefined ? disableAnimationsProp : disableAnimationsContext;
 
       // Point is interactive if onClick is provided or hoverEffect is set (and not 'none')
       const isInteractive = !!onClick || hoverEffect !== 'none';
@@ -358,7 +344,7 @@ export const Point = memo(
       const effectiveHover = isScrubbing ? isScrubberHighlighted : isHovered;
 
       const shouldShowPulse =
-        !disableAnimations && (pulse || (hoverEffect === 'pulse' && effectiveHover));
+        animateContext && (pulse || (hoverEffect === 'pulse' && effectiveHover));
 
       const containerStyle = {
         ...styles?.container,
@@ -401,7 +387,7 @@ export const Point = memo(
           ...styles?.innerPoint,
         };
 
-        return hoverEffect === 'scale' && !disableAnimations ? (
+        return hoverEffect === 'scale' && animateContext ? (
           <motion.circle
             animate={
               effectiveHover
@@ -460,7 +446,7 @@ export const Point = memo(
         pixelCoordinate.y,
         color,
         hoverEffect,
-        disableAnimations,
+        animateContext,
         effectiveHover,
         radius,
         className,
@@ -484,7 +470,7 @@ export const Point = memo(
             data-testid={testID}
             opacity={opacity}
             style={containerStyle}
-            whileTap={!disableAnimations ? { scale: 0.9 } : undefined}
+            whileTap={animateContext ? { scale: 0.9 } : undefined}
           >
             {/* pulse ring */}
             <motion.circle

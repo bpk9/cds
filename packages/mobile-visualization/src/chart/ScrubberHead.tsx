@@ -2,10 +2,10 @@ import React, { forwardRef, memo, useImperativeHandle, useRef } from 'react';
 import type { SVGProps } from 'react';
 import type { ThemeVars } from '@coinbase/cds-common/core/theme';
 import type { Rect, SharedProps } from '@coinbase/cds-common/types';
+import { useChartContext } from '@coinbase/cds-common/visualizations/charts';
 import { AnimatePresence, m } from 'framer-motion';
 
 import { useHighlightContext } from './Chart';
-import { useChartContext } from './ChartContext';
 import { Point, type PointRef } from './point';
 import type { ChartTextChildren } from './text';
 
@@ -77,11 +77,6 @@ export type ScrubberHeadProps = /*Omit<SVGProps<SVGCircleElement>, 'r' | 'opacit
      */
     labelPadding?: ThemeVars.Space;
     /**
-     * Whether to disable animations for this scrubber head.
-     * Overrides the chart context's disableAnimations setting.
-     */
-    disableAnimations?: boolean;
-    /**
      * Label text color
      * If not set, will default to the stroke for the scrubber head
      */
@@ -116,7 +111,6 @@ export const ScrubberHead = memo(
         labelBounds,
         labelSide = 'auto',
         labelPadding = 2,
-        disableAnimations: disableAnimationsProp,
         labelTextColor,
         labelBackgroundColor = 'var(--color-bg)',
         dataKey,
@@ -124,25 +118,15 @@ export const ScrubberHead = memo(
       },
       ref,
     ) => {
-      const {
-        getSeries,
-        disableAnimations: disableAnimationsContext,
-        getXScale,
-        getYScale,
-        getXAxis,
-        getYAxis,
-        getStackedSeriesData,
-        getSeriesData,
-      } = useChartContext();
+      const { getSeries, animate, getXScale, getYScale, getXAxis, getYAxis, getSeriesData } =
+        useChartContext();
       const pointRef = useRef<PointRef>(null);
-      const disableAnimations =
-        disableAnimationsProp !== undefined ? disableAnimationsProp : disableAnimationsContext;
 
       const { highlightedIndex } = useHighlightContext();
 
       // Find target series for color and data
       const targetSeries = getSeries(seriesId);
-      const sourceData = getStackedSeriesData(seriesId) || getSeriesData(seriesId);
+      const sourceData = getSeriesData(seriesId);
 
       // Get scales for this series
       const xScale = getXScale?.(targetSeries?.xAxisId);
