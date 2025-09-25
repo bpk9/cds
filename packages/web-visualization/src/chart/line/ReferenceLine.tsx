@@ -1,10 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
-import {
-  getPointOnScale,
-  useChartContext,
-  useChartDrawingAreaContext,
-} from '@coinbase/cds-common/visualizations/charts';
+import { getPointOnScale, useChartContext } from '@coinbase/cds-common/visualizations/charts';
 import { cx } from '@coinbase/cds-web';
 
 import { ChartText } from '../text';
@@ -161,8 +157,7 @@ export const ReferenceLine = memo<ReferenceLineProps>(
     classNames,
     styles,
   }) => {
-    const { getXScale, getYScale } = useChartContext();
-    const { drawingArea } = useChartDrawingAreaContext();
+    const { getXScale, getYScale, drawingArea } = useChartContext();
 
     // Merge default config with user provided config, including text-specific styles and classNames
     const finalLabelConfig: ReferenceLineLabelConfig = useMemo(

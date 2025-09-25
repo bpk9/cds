@@ -1,6 +1,6 @@
 import { memo, useCallback, useState } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
-import { useChartDrawingAreaContext } from '@coinbase/cds-common/visualizations/charts';
+import { useChartContext } from '@coinbase/cds-common/visualizations/charts';
 
 import { ChartText, type ChartTextProps } from '../text';
 
@@ -30,7 +30,7 @@ export const ScrubberHeadLabel = memo<ScrubberHeadLabelProps>(
     dx = 0,
     ...chartTextProps
   }) => {
-    const { drawingArea: chartRect } = useChartDrawingAreaContext();
+    const { drawingArea: chartRect } = useChartContext();
 
     // Track current side for auto placement
     const [currentSide, setCurrentSide] = useState<'left' | 'right'>('right');

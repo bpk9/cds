@@ -16,10 +16,7 @@ import {
   projectPoint,
   useScrubberContext,
 } from '@coinbase/cds-common/visualizations/charts';
-import {
-  useChartContext,
-  useChartDrawingAreaContext,
-} from '@coinbase/cds-common/visualizations/charts';
+import { useChartContext } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-mobile';
 
 import { ReferenceLine, type ReferenceLineProps } from '../line';
@@ -121,8 +118,8 @@ export const Scrubber = memo(
       const scrubberHeadRefs = useRefMap<ScrubberHeadRef>();
 
       const { highlightedIndex } = useScrubberContext();
-      const { getXScale, getYScale, getSeriesData, getXAxis, animate, series } = useChartContext();
-      const { drawingArea } = useChartDrawingAreaContext();
+      const { getXScale, getYScale, getSeriesData, getXAxis, animate, series, drawingArea } =
+        useChartContext();
       const getStackedSeriesData = getSeriesData; // getSeriesData now returns stacked data
 
       // Track label dimensions for collision detection

@@ -5,11 +5,7 @@ import { prices } from '@coinbase/cds-common/internal/data/prices';
 import { sparklineInteractiveData } from '@coinbase/cds-common/internal/visualizations/SparklineInteractiveData';
 import { useTabsContext } from '@coinbase/cds-common/tabs/TabsContext';
 import type { TabValue } from '@coinbase/cds-common/tabs/useTabs';
-import {
-  projectPoint,
-  useChartContext,
-  useChartDrawingAreaContext,
-} from '@coinbase/cds-common/visualizations/charts';
+import { projectPoint, useChartContext } from '@coinbase/cds-common/visualizations/charts';
 import type { ChartAxisScaleType } from '@coinbase/cds-common/visualizations/charts/scale';
 import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
 import { RemoteImage } from '@coinbase/cds-web/media';
@@ -1603,8 +1599,7 @@ export const AvailabilityChart = () => {
       yellowThresholdPercentage?: number;
       greenThresholdPercentage?: number;
     }) => {
-      const { drawingArea } = useChartDrawingAreaContext();
-      const { height, series, getYScale, getYAxis } = useChartContext();
+      const { height, series, getYScale, getYAxis, drawingArea } = useChartContext();
       const yScale = getYScale?.();
       const yAxis = getYAxis?.();
 
