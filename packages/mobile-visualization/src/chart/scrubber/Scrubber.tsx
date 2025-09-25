@@ -47,19 +47,33 @@ export type ScrubberProps = SharedProps &
     hideScrubberLine?: boolean;
 
     /**
-     * Whether to hide the overlay rect which hides future data.
+     * Whether to hide the overlay rect which obscures future data.
      */
     hideOverlay?: boolean;
 
     /**
-     * Label content for scrubber (shows above the scrubber line).
+     * Offset in pixels to extend the overlay beyond the scrubber line.
+     * @default 2
+     */
+    overlayOffset?: number;
+
+    /**
+     * Label text displayed above the scrubber line.
      */
     scrubberLabel?: ReferenceLineProps['label'];
 
     /**
-     * Label configuration for the scrubber line label
+     * Props passed to the scrubber line's label.
      */
-    scrubberLabelConfig?: ReferenceLineProps['labelConfig'];
+    scrubberLabelProps?: ReferenceLineProps['labelConfig'];
+
+    /**
+     * Props passed to each scrubber head's label.
+     */
+    scrubberHeadLabelProps?: Omit<
+      ScrubberHeadLabelProps,
+      'children' | 'x' | 'y' | 'disableRepositioning' | 'bounds' | 'onDimensionsChange'
+    >;
 
     /**
      * Custom component replacements.
@@ -92,11 +106,13 @@ export const Scrubber = memo(
         seriesIds,
         hideScrubberLine,
         scrubberLabel,
-        scrubberLabelConfig,
+        scrubberLabelProps,
         scrubberComponents,
         hideOverlay,
+        overlayOffset = 2,
         testID,
         idlePulse,
+        scrubberHeadLabelProps,
       },
       ref,
     ) => {
@@ -535,7 +551,6 @@ export const Scrubber = memo(
 
       const pixelX = dataX !== undefined ? defaultXScale(dataX) : undefined;
 
-      // todo: figure out if we should disable 'pulse' animation when scrubbing
       return (
         <G ref={scrubberGroupRef} data-component="scrubber-group" data-testid={testID}>
           {!hideOverlay &&
@@ -544,18 +559,18 @@ export const Scrubber = memo(
             pixelX !== undefined && (
               <Rect
                 fill={theme.color.bg}
-                height={drawingArea.height}
+                height={drawingArea.height + overlayOffset * 2}
                 opacity={0.8}
-                width={drawingArea.x + drawingArea.width - pixelX}
+                width={drawingArea.x + drawingArea.width - pixelX + overlayOffset}
                 x={pixelX}
-                y={drawingArea.y}
+                y={drawingArea.y - overlayOffset}
               />
             )}
           {!hideScrubberLine && highlightedIndex !== undefined && dataX !== undefined && (
             <ScrubberLineComponent
               dataX={dataX}
               label={scrubberLabel}
-              labelConfig={scrubberLabelConfig}
+              labelConfig={scrubberLabelProps}
               labelPosition="top"
             />
           )}
@@ -603,6 +618,7 @@ export const Scrubber = memo(
                         }
                         x={finalAnchorX}
                         y={finalAnchorY}
+                        {...scrubberHeadLabelProps}
                       >
                         {scrubberHead.label}
                       </ScrubberHeadLabelComponent>
