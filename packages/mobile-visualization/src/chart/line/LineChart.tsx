@@ -42,11 +42,9 @@ export type LineSeries = Omit<Series, 'data'> & {
     Pick<
       LineProps,
       | 'curve'
-      | 'onPointPress'
       | 'showArea'
       | 'areaType'
       | 'areaBaseline'
-      | 'type'
       | 'type'
       | 'LineComponent'
       | 'AreaComponent'
