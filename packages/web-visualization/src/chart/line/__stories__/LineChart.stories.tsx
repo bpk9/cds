@@ -1382,7 +1382,7 @@ export const BitcoinChartWithScrubberHead = () => {
           width="100%"
         >
           <Scrubber
-            pulse
+            idlePulse
             scrubberStyles={{
               scrubberHead: {
                 stroke: 'white',
@@ -1545,7 +1545,7 @@ export const AssetPriceDotted = () => {
           },
         ]}
       >
-        <Scrubber pulse scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} />
+        <Scrubber idlePulse scrubberLabel={scrubberLabel} scrubberLabelConfig={{ elevation: 1 }} />
       </LineChart>
       <PeriodSelector
         TabComponent={BTCTab}

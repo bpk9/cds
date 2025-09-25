@@ -24,13 +24,8 @@ import { useTheme } from '@coinbase/cds-mobile';
 
 import { ReferenceLine, type ReferenceLineProps } from '../line';
 
-import {
-  ScrubberHead,
-  ScrubberHeadLabel,
-  type ScrubberHeadLabelProps,
-  type ScrubberHeadProps,
-  type ScrubberHeadRef,
-} from './';
+import { ScrubberHead, type ScrubberHeadProps, type ScrubberHeadRef } from './ScrubberHead';
+import { ScrubberHeadLabel, type ScrubberHeadLabelProps } from './ScrubberHeadLabel';
 
 /**
  * Configuration for scrubber functionality across chart components.

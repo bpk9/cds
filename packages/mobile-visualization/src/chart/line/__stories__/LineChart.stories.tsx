@@ -1177,7 +1177,7 @@ const AssetPriceDotted = () => {
           },
         ]}
       >
-        <Scrubber pulse scrubberLabel={scrubberLabel} />
+        <Scrubber idlePulse scrubberLabel={scrubberLabel} />
       </LineChart>
       <PeriodSelector activeTab={timePeriod} onChange={onPeriodChange} tabs={tabs} />
     </VStack>
@@ -1331,7 +1331,7 @@ const BitcoinChartWithScrubberHead = () => {
           ]}
           width="100%"
         >
-          <Scrubber pulse />
+          <Scrubber idlePulse />
         </LineChart>
       </VStack>
     </Box>
