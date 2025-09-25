@@ -102,7 +102,6 @@ export const LineChart = memo(
         showArea,
         areaType,
         type,
-        onPointPress,
         LineComponent,
         AreaComponent,
         curve,
@@ -212,7 +211,6 @@ export const LineChart = memo(
                     LineComponent={LineComponent}
                     areaType={areaType}
                     curve={curve}
-                    onPointPress={onPointPress}
                     renderPoints={renderPoints}
                     seriesId={id}
                     showArea={showArea}
