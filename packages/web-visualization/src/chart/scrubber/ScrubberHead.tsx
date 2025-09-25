@@ -1,6 +1,10 @@
 import { forwardRef, memo, useCallback, useImperativeHandle, useRef } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
-import { projectPoint, useChartContext, useScrubberContext } from '@coinbase/cds-common/visualizations/charts';
+import {
+  projectPoint,
+  useChartContext,
+  useScrubberContext,
+} from '@coinbase/cds-common/visualizations/charts';
 
 import { Point, type PointProps, type PointRef } from '../point';
 
@@ -174,7 +178,7 @@ export const ScrubberHead = memo(
           <circle
             cx={pixelCoordinate.x}
             cy={pixelCoordinate.y}
-            fill={color}
+            fill={pointColor}
             opacity={0.15}
             r={innerRingRadius}
           />
