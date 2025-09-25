@@ -38,7 +38,6 @@ import { XAxis, YAxis } from '../../axis';
 import { Chart } from '../../Chart';
 import { ChartHeader } from '../../ChartHeader';
 import { Point } from '../../point';
-import { ScrubberHead } from '../../scrubber/ScrubberHead';
 import { DottedLine, GradientLine, Line, LineChart, ReferenceLine, SolidLine } from '..';
 
 export default {
@@ -318,14 +317,7 @@ export const AssetPrice = () => {
           ticks={(index) => index % (12 * 6) === 0}
         />
         <ReferenceLine dataY={parsedPrices[0]} />
-        <Scrubber />
-        <ScrubberHead
-          pulse
-          dataX={parsedPrices.length - 1}
-          dataY={parsedPrices[parsedPrices.length - 1]}
-          opacity={isHovering ? 0 : 1}
-          seriesId="price"
-        />
+        <Scrubber idlePulse />
       </LineChart>
     </VStack>
   );
@@ -570,15 +562,15 @@ export const BTCPriceChart = () => {
             )}
           </AnimatePresence>
           <Scrubber
-            pulse={!isHovering}
-            scrubberComponents={{
-              ScrubberLineComponent: ReferenceLine,
-            }}
+            idlePulse
+            // scrubberComponents={{
+            //   ScrubberLineComponent: ReferenceLine,
+            // }}
             scrubberLabel={displayDate}
-            scrubberStyles={{
-              scrubberLine: { stroke: 'black' },
-              scrubberHead: { stroke: 'white' },
-            }}
+            // scrubberStyles={{
+            //   scrubberLine: { stroke: 'black' },
+            //   scrubberHead: { stroke: 'white' },
+            // }}
           />
         </Chart>
         <Box paddingX={{ phone: 2, tablet: 4, desktop: 4 }}>
@@ -791,13 +783,6 @@ export const ColorShiftChart = () => {
             tickLabelFormatter: indexToTime,
           }}
         >
-          <ScrubberHead
-            dataKey={dataKey}
-            pulse={!isHovering}
-            seriesId="price"
-            {...latestPriceCoords}
-            opacity={isHovering ? 0 : 1}
-          />
           <Scrubber scrubberLabel={scrubberLabel} />
           <ReferenceLine
             dataY={startPrice}
