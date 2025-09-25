@@ -2,11 +2,7 @@ import React, { forwardRef, memo, useCallback, useMemo, useState } from 'react';
 import { assets } from '@coinbase/cds-common/internal/data/assets';
 import { prices } from '@coinbase/cds-common/internal/data/prices';
 import type { TabValue } from '@coinbase/cds-common/tabs/useTabs';
-import {
-  isCategoricalScale,
-  useChartContext,
-  useChartDrawingAreaContext,
-} from '@coinbase/cds-common/visualizations/charts';
+import { isCategoricalScale, useChartContext } from '@coinbase/cds-common/visualizations/charts';
 import { CellMedia, ListCell } from '@coinbase/cds-web/cells';
 import { Radio } from '@coinbase/cds-web/controls/Radio';
 import { Box, type BoxBaseProps, Divider, HStack, VStack } from '@coinbase/cds-web/layout';
