@@ -26,6 +26,16 @@ import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
 import { Box, type BoxBaseProps, type BoxProps } from '@coinbase/cds-web/layout';
 import { css } from '@linaria/core';
 
+/*
+
+ axis configs at chart level: scale type (linear, log), data array, padding
+
+ axis scale: provided by getX/YScale, created from axis config above and chart drawing area (stored in a JS Map object)
+
+ registerAxis: reserves space in the chart for the axis - consequence of registering is the drawing area of chart changes
+
+*/
+
 const focusStylesCss = css`
   &:focus {
     outline: none;
@@ -55,10 +65,9 @@ export type ChartBaseProps = BoxBaseProps & {
    */
   enableScrubbing?: boolean;
   /**
-   * Configuration for x-axis(es). Can be a single config or array of configs.
-   * If array, first axis becomes default if no id is specified.
+   * Configuration for x-axis.
    */
-  xAxis?: Partial<AxisConfigProps> | Partial<AxisConfigProps>[];
+  xAxis?: Partial<Omit<AxisConfigProps, 'id'>>;
   /**
    * Configuration for y-axis(es). Can be a single config or array of configs.
    * If array, first axis becomes default if no id is specified.
@@ -104,7 +113,11 @@ export const Chart = memo(
         [paddingInput],
       );
 
-      const xAxisConfig = useMemo(() => getAxisConfig('x', xAxisConfigInput), [xAxisConfigInput]);
+      // there can only be one x axis but the helper function always returns an array
+      const xAxisConfig = useMemo(
+        () => getAxisConfig('x', xAxisConfigInput)[0],
+        [xAxisConfigInput],
+      );
       const yAxisConfig = useMemo(() => getAxisConfig('y', yAxisConfigInput), [yAxisConfigInput]);
 
       const [highlightedIndex, setHighlightedIndex] = useState<number | undefined>(undefined);
@@ -132,18 +145,15 @@ export const Chart = memo(
         return padding;
       }, [renderedAxes]);
 
-      const totalPadding = useMemo(
-        () => ({
+      const chartRect: Rect = useMemo(() => {
+        if (chartWidth <= 0 || chartHeight <= 0) return { x: 0, y: 0, width: 0, height: 0 };
+
+        const totalPadding = {
           top: userPadding.top + axisPadding.top,
           right: userPadding.right + axisPadding.right,
           bottom: userPadding.bottom + axisPadding.bottom,
           left: userPadding.left + axisPadding.left,
-        }),
-        [userPadding, axisPadding],
-      );
-
-      const chartRect: Rect = useMemo(() => {
-        if (chartWidth <= 0 || chartHeight <= 0) return { x: 0, y: 0, width: 0, height: 0 };
+        };
 
         const availableWidth = chartWidth - totalPadding.left - totalPadding.right;
         const availableHeight = chartHeight - totalPadding.top - totalPadding.bottom;
@@ -154,29 +164,26 @@ export const Chart = memo(
           width: availableWidth > 0 ? availableWidth : 0,
           height: availableHeight > 0 ? availableHeight : 0,
         };
-      }, [chartHeight, chartWidth, totalPadding]);
+      }, [chartHeight, chartWidth, userPadding, axisPadding]);
 
       const xAxes = useMemo(() => {
         const axes = new Map<string, AxisConfig>();
         if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return axes;
 
-        xAxisConfig.forEach((axisParam) => {
-          const relevantSeries =
-            series?.filter((s) => (s.xAxisId ?? defaultAxisId) === axisParam.id) ?? [];
+        const domain = getAxisDomain(xAxisConfig, series ?? [], 'x');
+        const range = getAxisRange(xAxisConfig, chartRect, 'x');
 
-          const domain = getAxisDomain(axisParam, relevantSeries, 'x');
-          const range = getAxisRange(axisParam, chartRect, 'x');
+        const axisConfig: AxisConfig = {
+          scaleType: xAxisConfig.scaleType,
+          domain,
+          range,
+          data: xAxisConfig.data,
+          categoryPadding: xAxisConfig.categoryPadding,
+          domainLimit: xAxisConfig.domainLimit,
+        };
 
-          const axisConfig: AxisConfig = {
-            scaleType: axisParam.scaleType,
-            domain,
-            range,
-            data: axisParam.data,
-            categoryPadding: axisParam.categoryPadding,
-            domainLimit: axisParam.domainLimit,
-          };
-          axes.set(axisParam.id, axisConfig);
-        });
+        // here, id will always be equal to defaultAxisId
+        axes.set(xAxisConfig.id, axisConfig);
 
         return axes;
       }, [xAxisConfig, series, chartRect]);
@@ -572,34 +579,34 @@ export const Chart = memo(
       );
 
       return (
-        <ChartContext.Provider value={contextValue}>
-          <ScrubberContext.Provider value={scrubberContextValue}>
-            <Box
-              ref={(node) => {
-                // Handle both the internal observe ref and the forwarded ref
-                observe(node as unknown as HTMLElement);
-                if (ref) {
-                  if (typeof ref === 'function') {
-                    ref(node as unknown as SVGSVGElement);
-                  } else {
-                    ref.current = node as unknown as SVGSVGElement;
-                  }
-                }
-              }}
-              as="svg"
-              className={cx(enableScrubbing ? focusStylesCss : undefined, className)}
-              height={height}
-              onKeyDown={enableScrubbing ? handleKeyDown : undefined}
-              onMouseLeave={enableScrubbing ? handleMouseLeave : undefined}
-              onMouseMove={enableScrubbing ? handleMouseMove : undefined}
-              tabIndex={enableScrubbing ? 0 : undefined}
-              width={width}
-              {...props}
-            >
+        <Box
+          ref={(node) => {
+            // Handle both the internal observe ref and the forwarded ref
+            observe(node as unknown as HTMLElement);
+            if (ref) {
+              if (typeof ref === 'function') {
+                ref(node as unknown as SVGSVGElement);
+              } else {
+                ref.current = node as unknown as SVGSVGElement;
+              }
+            }
+          }}
+          as="svg"
+          className={cx(enableScrubbing ? focusStylesCss : undefined, className)}
+          height={height}
+          onKeyDown={enableScrubbing ? handleKeyDown : undefined}
+          onMouseLeave={enableScrubbing ? handleMouseLeave : undefined}
+          onMouseMove={enableScrubbing ? handleMouseMove : undefined}
+          tabIndex={enableScrubbing ? 0 : undefined}
+          width={width}
+          {...props}
+        >
+          <ChartContext.Provider value={contextValue}>
+            <ScrubberContext.Provider value={scrubberContextValue}>
               {children}
-            </Box>
-          </ScrubberContext.Provider>
-        </ChartContext.Provider>
+            </ScrubberContext.Provider>
+          </ChartContext.Provider>
+        </Box>
       );
     },
   ),
