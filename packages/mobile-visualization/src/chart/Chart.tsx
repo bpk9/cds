@@ -55,10 +55,9 @@ export type ChartBaseProps = {
    */
   enableScrubbing?: boolean;
   /**
-   * Configuration for x-axis(es). Can be a single config or array of configs.
-   * If array, first axis becomes default if no id is specified.
+   * Configuration for x-axis.
    */
-  xAxis?: Partial<AxisConfigProps> | Partial<AxisConfigProps>[];
+  xAxis?: Partial<Omit<AxisConfigProps, 'id'>>;
   /**
    * Configuration for y-axis(es). Can be a single config or array of configs.
    * If array, first axis becomes default if no id is specified.
@@ -120,7 +119,11 @@ export const Chart = memo(
         [paddingInput],
       );
 
-      const xAxisConfig = useMemo(() => getAxisConfig('x', xAxisConfigInput), [xAxisConfigInput]);
+      // there can only be one x axis but the helper function always returns an array
+      const xAxisConfig = useMemo(
+        () => getAxisConfig('x', xAxisConfigInput)[0],
+        [xAxisConfigInput],
+      );
       const yAxisConfig = useMemo(() => getAxisConfig('y', yAxisConfigInput), [yAxisConfigInput]);
 
       const [highlightedIndex, setHighlightedIndex] = useState<number | undefined>(undefined);
@@ -176,23 +179,22 @@ export const Chart = memo(
         const axes = new Map<string, AxisConfig>();
         if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return axes;
 
-        xAxisConfig.forEach((axisParam) => {
-          const relevantSeries =
-            series?.filter((s) => (s.xAxisId ?? defaultAxisId) === axisParam.id) ?? [];
+        const relevantSeries = series ?? [];
 
-          const domain = getAxisDomain(axisParam, relevantSeries, 'x');
-          const range = getAxisRange(axisParam, chartRect, 'x');
+        const domain = getAxisDomain(xAxisConfig, relevantSeries, 'x');
+        const range = getAxisRange(xAxisConfig, chartRect, 'x');
 
-          const axisConfig: AxisConfig = {
-            scaleType: axisParam.scaleType,
-            domain,
-            range,
-            data: axisParam.data,
-            categoryPadding: axisParam.categoryPadding,
-            domainLimit: axisParam.domainLimit,
-          };
-          axes.set(axisParam.id, axisConfig);
-        });
+        const axisConfig: AxisConfig = {
+          scaleType: xAxisConfig.scaleType,
+          domain,
+          range,
+          data: xAxisConfig.data,
+          categoryPadding: xAxisConfig.categoryPadding,
+          domainLimit: xAxisConfig.domainLimit,
+        };
+
+        // here, id will always be equal to defaultAxisId
+        axes.set(xAxisConfig.id, axisConfig);
 
         return axes;
       }, [xAxisConfig, series, chartRect]);
