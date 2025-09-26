@@ -20,10 +20,10 @@ import {
   getPadding,
   getStackedSeriesData as calculateStackedSeriesData,
   isCategoricalScale,
-  type RegisteredAxis,
   ScrubberContext,
   type ScrubberContextValue,
   type Series,
+  useTotalAxisPadding,
 } from '@coinbase/cds-common/visualizations/charts';
 import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
 import { Box } from '@coinbase/cds-mobile/layout';
@@ -127,29 +127,7 @@ export const Chart = memo(
       const yAxisConfig = useMemo(() => getAxisConfig('y', yAxisConfigInput), [yAxisConfigInput]);
 
       const [highlightedIndex, setHighlightedIndex] = useState<number | undefined>(undefined);
-      const [renderedAxes, setRenderedAxes] = useState<Map<string, RegisteredAxis>>(new Map());
-
-      const axisPadding = useMemo(() => {
-        const padding = { top: 0, right: 0, bottom: 0, left: 0 };
-
-        renderedAxes.forEach((axis) => {
-          if (axis.type === 'x') {
-            if (axis.position === 'start') {
-              padding.top += axis.size;
-            } else if (axis.position === 'end') {
-              padding.bottom += axis.size;
-            }
-          } else if (axis.type === 'y') {
-            if (axis.position === 'start') {
-              padding.left += axis.size;
-            } else if (axis.position === 'end') {
-              padding.right += axis.size;
-            }
-          }
-        });
-
-        return padding;
-      }, [renderedAxes]);
+      const { renderedAxes, registerAxis, unregisterAxis, axisPadding } = useTotalAxisPadding();
 
       const totalPadding = useMemo(
         () => ({
@@ -175,13 +153,10 @@ export const Chart = memo(
         };
       }, [chartHeight, chartWidth, totalPadding]);
 
-      const xAxes = useMemo(() => {
-        const axes = new Map<string, AxisConfig>();
-        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return axes;
+      const xAxis = useMemo(() => {
+        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return undefined;
 
-        const relevantSeries = series ?? [];
-
-        const domain = getAxisDomain(xAxisConfig, relevantSeries, 'x');
+        const domain = getAxisDomain(xAxisConfig, series ?? [], 'x');
         const range = getAxisRange(xAxisConfig, chartRect, 'x');
 
         const axisConfig: AxisConfig = {
@@ -193,10 +168,7 @@ export const Chart = memo(
           domainLimit: xAxisConfig.domainLimit,
         };
 
-        // here, id will always be equal to defaultAxisId
-        axes.set(xAxisConfig.id, axisConfig);
-
-        return axes;
+        return axisConfig;
       }, [xAxisConfig, series, chartRect]);
 
       // todo: do we need to worry about axis being set but scale being undefined?
@@ -228,25 +200,17 @@ export const Chart = memo(
         return axes;
       }, [yAxisConfig, series, chartRect]);
 
-      const xScales = useMemo(() => {
-        const scales = new Map<string, ChartScaleFunction>();
-        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return scales;
+      const xScale = useMemo(() => {
+        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0 || xAxis === undefined)
+          return undefined;
 
-        xAxes.forEach((axisConfig, axisId) => {
-          const scale = getAxisScale({
-            config: axisConfig,
-            type: 'x',
-            range: axisConfig.range,
-            dataDomain: axisConfig.domain,
-          });
-
-          if (scale) {
-            scales.set(axisId, scale);
-          }
+        return getAxisScale({
+          config: xAxis,
+          type: 'x',
+          range: xAxis.range,
+          dataDomain: xAxis.domain,
         });
-
-        return scales;
-      }, [chartRect, xAxes]);
+      }, [chartRect, xAxis]);
 
       const yScales = useMemo(() => {
         const scales = new Map<string, ChartScaleFunction>();
@@ -268,22 +232,18 @@ export const Chart = memo(
         return scales;
       }, [chartRect, yAxes]);
 
-      // todo: handle multiple scales
-      // todo: can we simplify this a lot to rely on numbers only?
       const getDataIndexFromX = useCallback(
         (mouseX: number): number => {
-          const defaultXScale = xScales.get(defaultAxisId);
-          const defaultXAxis = xAxes.get(defaultAxisId);
+          if (!xScale || !xAxis) return 0;
 
-          if (!defaultXScale || !defaultXAxis) return 0;
-
-          if (isCategoricalScale(defaultXScale)) {
-            const categories = defaultXAxis.data ?? [];
-            const bandwidth = defaultXScale.bandwidth?.() ?? 0;
+          if (isCategoricalScale(xScale)) {
+            // todo: see where else we can simply rely on scale domain values
+            const categories = xScale.domain?.() ?? xAxis.data ?? [];
+            const bandwidth = xScale.bandwidth?.() ?? 0;
             let closestIndex = 0;
             let closestDistance = Infinity;
             for (let i = 0; i < categories.length; i++) {
-              const xPos = defaultXScale(i);
+              const xPos = xScale(i);
               if (xPos !== undefined) {
                 const distance = Math.abs(mouseX - (xPos + bandwidth / 2));
                 if (distance < closestDistance) {
@@ -295,7 +255,7 @@ export const Chart = memo(
             return closestIndex;
           } else {
             // For numeric scales with axis data, find the nearest data point
-            const axisData = defaultXAxis.data;
+            const axisData = xAxis.data;
             if (axisData && Array.isArray(axisData) && typeof axisData[0] === 'number') {
               // We have numeric axis data - find the closest data point
               const numericData = axisData as number[];
@@ -304,7 +264,7 @@ export const Chart = memo(
 
               for (let i = 0; i < numericData.length; i++) {
                 const xValue = numericData[i];
-                const xPos = defaultXScale(xValue);
+                const xPos = xScale(xValue);
                 if (xPos !== undefined) {
                   const distance = Math.abs(mouseX - xPos);
                   if (distance < closestDistance) {
@@ -315,19 +275,19 @@ export const Chart = memo(
               }
               return closestIndex;
             } else {
-              const xValue = defaultXScale.invert(mouseX);
+              const xValue = xScale.invert(mouseX);
               const dataIndex = Math.round(xValue);
-              const domain = defaultXAxis.domain;
+              const domain = xAxis.domain;
               return Math.max(domain.min ?? 0, Math.min(dataIndex, domain.max ?? 0));
             }
           }
         },
-        [xScales, xAxes],
+        [xScale, xAxis],
       );
 
       const handlePositionUpdate = useCallback(
         (x: number) => {
-          if (!enableScrubbing || !series || series.length === 0 || xScales.size === 0) return;
+          if (!enableScrubbing || !series || series.length === 0) return;
 
           const dataIndex = getDataIndexFromX(x);
           if (dataIndex !== highlightedIndex) {
@@ -338,7 +298,6 @@ export const Chart = memo(
         [
           enableScrubbing,
           series,
-          xScales,
           getDataIndexFromX,
           highlightedIndex,
           onScrubberPosChange,
@@ -360,9 +319,9 @@ export const Chart = memo(
         [enableScrubbing, highlightedIndex],
       );
 
-      const getXAxis = useCallback((id?: string) => xAxes.get(id ?? defaultAxisId), [xAxes]);
+      const getXAxis = useCallback(() => xAxis, [xAxis]);
       const getYAxis = useCallback((id?: string) => yAxes.get(id ?? defaultAxisId), [yAxes]);
-      const getXScale = useCallback((id?: string) => xScales.get(id ?? defaultAxisId), [xScales]);
+      const getXScale = useCallback(() => xScale, [xScale]);
       const getYScale = useCallback((id?: string) => yScales.get(id ?? defaultAxisId), [yScales]);
       const getSeries = useCallback(
         (seriesId?: string) => series?.find((s) => s.id === seriesId),
@@ -382,30 +341,6 @@ export const Chart = memo(
         },
         [stackedDataMap],
       );
-
-      const registerAxis = useCallback(
-        (id: string, type: 'x' | 'y', position: 'start' | 'end', size: number) => {
-          setRenderedAxes((prev) => {
-            const newMap = new Map(prev);
-            newMap.set(id, {
-              id,
-              type,
-              position,
-              size,
-            });
-            return newMap;
-          });
-        },
-        [],
-      );
-
-      const unregisterAxis = useCallback((id: string) => {
-        setRenderedAxes((prev) => {
-          const newMap = new Map(prev);
-          newMap.delete(id);
-          return newMap;
-        });
-      }, []);
 
       const getAxisBounds = useCallback(
         (axisId: string): Rect | undefined => {
