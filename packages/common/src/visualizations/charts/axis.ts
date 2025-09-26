@@ -143,7 +143,10 @@ export const getAxisScale = ({
 };
 
 /**
- * Gets axis config and returns an array of axis configs with IDs
+ * Formats the array of user-provided axis configs with default values and validates axis ids.
+ * Ensures at least one axis config exists if no input is provided.
+ * Requires specific axis ids when there are more than 1 axes.
+ * Defaults the axis id for a single axis config if there is no id.
  * @param type - the type of axis, 'x' or 'y'
  * @param axes - array of axis configs or single axis config
  * @param defaultId - the default id to use for the axis
@@ -157,16 +160,26 @@ export const getAxisConfig = (
   defaultScaleType: ChartAxisScaleType = defaultAxisScaleType,
 ): AxisConfigProps[] => {
   const defaultDomainLimit = type === 'x' ? 'strict' : 'nice';
-  if (!axes)
+  if (!axes) {
     return [{ id: defaultId, scaleType: defaultScaleType, domainLimit: defaultDomainLimit }];
+  }
+
   if (Array.isArray(axes)) {
-    return axes.map((axis) => ({
-      id: defaultId,
+    const axesLength = axes.length;
+    // forces id to be defined on every input config when there are multiple axes
+    if (axesLength > 1 && axes.some(({ id }) => id === undefined)) {
+      throw new Error('When defining multiple axes, each must have a unique id');
+    }
+
+    return axes.map(({ id, ...axis }) => ({
+      // defaults the axis id if onlly a single axis is provided
+      id: axesLength > 1 ? (id ?? defaultAxisId) : (id as string),
       scaleType: defaultScaleType,
       domainLimit: defaultDomainLimit,
       ...axis,
     }));
   }
+
   // Single axis config
   return [{ id: defaultId, scaleType: defaultScaleType, domainLimit: defaultDomainLimit, ...axes }];
 };
