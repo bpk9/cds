@@ -76,6 +76,11 @@ export type ScrubberProps = SharedProps &
     >;
 
     /**
+     * Stroke color for the scrubber line.
+     */
+    scrubberLineStroke?: ReferenceLineProps['stroke'];
+
+    /**
      * Custom styles for scrubber elements.
      */
     styles?: {
@@ -123,6 +128,7 @@ export const Scrubber = memo(
         seriesIds,
         hideScrubberLine,
         scrubberLabel,
+        scrubberLineStroke,
         scrubberLabelProps,
         scrubberComponents,
         hideOverlay,
@@ -610,6 +616,7 @@ export const Scrubber = memo(
               label={scrubberLabel}
               labelConfig={scrubberLabelProps}
               labelPosition="top"
+              stroke={scrubberLineStroke}
               style={styles?.scrubberLine}
             />
           )}

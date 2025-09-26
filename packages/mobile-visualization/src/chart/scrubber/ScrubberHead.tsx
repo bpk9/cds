@@ -190,7 +190,8 @@ export const ScrubberHead = memo(
             dataX={x}
             dataY={y}
             opacity={opacity}
-            pulse={idlePulse}
+            pulse={idlePulse && highlightedIndex === undefined}
+            pulseRadius={pulseRadius}
             radius={radius}
             stroke={theme.color.bg}
             strokeWidth={2}

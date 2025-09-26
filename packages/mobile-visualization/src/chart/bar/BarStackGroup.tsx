@@ -38,10 +38,6 @@ export type BarStackGroupProps = {
    */
   BarComponent?: BarComponent;
   /**
-   * Default bar type.
-   */
-  type?: BarProps['type'];
-  /**
    * Default opacity of the bar.
    */
   fillOpacity?: number;

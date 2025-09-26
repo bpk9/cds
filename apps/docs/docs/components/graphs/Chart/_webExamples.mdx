@@ -46,7 +46,7 @@ When you desire a more custom chart, you can use the `Chart` component and build
 ### Price with Volume
 
 ```jsx live
-function BasicExample() {
+function PriceWithVolume() {
   const [scrubIndex, setScrubIndex] = useState(null);
   const btcData = btcCandles
     .slice(0, 180)
@@ -171,7 +171,7 @@ function EarningsHistory() {
     const { getSeries, getSeriesData, getXScale, getYScale } = useChartContext();
     const series = getSeries(seriesId);
     const data = getSeriesData(seriesId);
-    const xScale = getXScale?.(series?.xAxisId);
+    const xScale = getXScale?.();
     const yScale = getYScale?.(series?.yAxisId);
 
     if (!xScale || !yScale || !data || !isCategoricalScale(xScale)) return null;

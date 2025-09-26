@@ -1,61 +1,76 @@
-import React, { memo, useEffect, useMemo, useRef } from 'react';
-import Reanimated, {
-  Easing,
-  useAnimatedProps,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
-import { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
+import React, { memo, useMemo } from 'react';
 import type { ThemeVars } from '@coinbase/cds-common';
-import { getBarPath, useChartContext } from '@coinbase/cds-common/visualizations/charts';
+import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
-import { generateRandomId } from '@coinbase/cds-utils';
 
-const AnimatedRect = Reanimated.createAnimatedComponent(Rect);
+import { DefaultBar } from './';
 
 export type BarComponentProps = {
+  /**
+   * X coordinate of the bar (left edge).
+   */
+  x: number;
+  /**
+   * Y coordinate of the bar (top edge).
+   */
+  y: number;
+  /**
+   * Width of the bar.
+   */
+  width: number;
+  /**
+   * Height of the bar.
+   */
+  height: number;
+  /**
+   * Border radius in pixels.
+   * @todo: make this be themevars.borderRadius
+   */
+  borderRadius: number;
+  /**
+   * Whether to round the top of the bar.
+   * @todo: make this optional
+   */
+  roundTop: boolean;
+  /**
+   * Whether to round the bottom of the bar.
+   * @todo: make this optional
+   */
+  roundBottom: boolean;
+  /**
+   * Y coordinate of the baseline/origin.
+   * @todo: make this optional
+   */
+  originY: number;
+  /**
+   * The x-axis data value for this bar
+   * @todo: pull this from x axis types
+   */
+  dataX?: number | string;
+  /**
+   * The y-axis data value for this bar
+   */
+  dataY?: number | [number, number] | null;
+  /**
+   * The path data for the bar shape.
+   */
   d: string;
-  fill: string;
+  /**
+   * Fill color for the bar.
+   */
+  fill?: string;
+  /**
+   * Fill opacity for the bar.
+   */
   fillOpacity?: number;
-  clipRect?: Rect;
+  /**
+   * Stroke color for the bar outline.
+   */
   stroke?: string;
+  /**
+   * Stroke width for the bar outline.
+   */
   strokeWidth?: number;
-  /**
-   * The actual data value for this bar (optional, for custom components).
-   */
-  dataValue?: number | [number, number] | null;
-  /**
-   * The category index for this bar (optional, for custom components).
-   */
-  categoryIndex?: number;
-  /**
-   * The y scale function from context (optional, for custom components).
-   */
-  yScale?: any;
-  /**
-   * The series ID this bar belongs to (optional, for custom components).
-   */
-  seriesId?: string;
-  /**
-   * The x position of this bar (optional, for custom components).
-   */
-  x?: number;
-  /**
-   * The y position of this bar (optional, for custom components).
-   */
-  y?: number;
-  /**
-   * The width of this bar (optional, for custom components).
-   */
-  width?: number;
-  /**
-   * The height of this bar (optional, for custom components).
-   */
-  height?: number;
-  /**
-   * The y-origin for animations (baseline position).
-   */
-  yOrigin?: number;
 };
 
 export type BarComponent = React.FC<BarComponentProps>;
@@ -78,15 +93,21 @@ export type BarProps = {
    */
   height: number;
   /**
+   * Y coordinate of the baseline/origin.
+   */
+  originY?: number;
+  /**
+   * The x-axis data value for this bar.
+   */
+  dataX?: number | string;
+  /**
+   * The y-axis data value for this bar.
+   */
+  dataY?: number | [number, number] | null;
+  /**
    * Component to render the bar.
-   * Takes precedence over the type prop if provided.
    */
   BarComponent?: BarComponent;
-  /**
-   * The type of bar to render.
-   * @default 'solid'
-   */
-  type?: 'solid' | 'gradient' | 'dotted';
   /**
    * The color of the bar.
    * @default theme.color.fgPrimary
@@ -112,32 +133,12 @@ export type BarProps = {
   borderRadius?: ThemeVars.BorderRadius;
   roundTop?: boolean;
   roundBottom?: boolean;
-  /**
-   * The actual data value for this bar (optional, for custom components).
-   */
-  dataValue?: number | [number, number] | null;
-  /**
-   * The category index for this bar (optional, for custom components).
-   */
-  categoryIndex?: number;
-  /**
-   * The y scale function from context (optional, for custom components).
-   */
-  yScale?: any;
-  /**
-   * The series ID this bar belongs to (optional, for custom components).
-   */
-  seriesId?: string;
-  /**
-   * The y-origin for animations (baseline position).
-   */
-  yOrigin?: number;
 };
 
 /**
  * Simple bar component that renders a single bar at the specified position.
  *
- * This component is intentionally kept simple - it just renders a bar at the given
+ * This component is intentionally kept simple - it just renders a static bar at the given
  * x, y, width, height coordinates. Complex positioning logic (like handling stacks,
  * groups, gaps, etc.) should be handled by parent components like BarChart or BarStack.
  *
@@ -152,135 +153,57 @@ export const Bar = memo<BarProps>(
     y,
     width,
     height,
-    type = 'solid',
-    BarComponent: SelectedBarComponent,
+    originY,
+    dataX,
+    dataY,
+    BarComponent = DefaultBar,
     fill,
     fillOpacity = 1,
     stroke,
     strokeWidth,
     borderRadius = 100,
-    roundTop,
-    roundBottom,
-    dataValue,
-    categoryIndex,
-    yScale,
-    seriesId,
-    yOrigin,
+    roundTop = true,
+    roundBottom = true,
   }) => {
     const theme = useTheme();
-    const { animate } = useChartContext();
-    const clipPathId = useRef(generateRandomId()).current;
 
     // Use theme color as default if no fill is provided
     const effectiveFill = fill ?? theme.color.fgPrimary;
 
-    // Animation values
-    const baseY = yOrigin ?? y + height;
-
-    // Initialize shared values
-    const animatedHeight = useSharedValue(0);
-    const animatedY = useSharedValue(baseY);
-    const hasInitialized = useSharedValue(false);
-
-    // Set up animation with proper worklet
-    useEffect(() => {
-      'worklet';
-
-      if (!animate) {
-        // Set values immediately when animations are disabled
-        animatedHeight.value = height;
-        animatedY.value = y;
-        hasInitialized.value = true;
-      } else {
-        // Determine if this is initial mount or update
-        const isInitialMount = !hasInitialized.value;
-        hasInitialized.value = true;
-
-        if (isInitialMount) {
-          // Initial animation: start from near-zero height at bottom
-          animatedHeight.value = 0.01;
-          animatedY.value = baseY;
-
-          // Animate to full size
-          animatedHeight.value = withTiming(height, {
-            duration: 600,
-            easing: Easing.out(Easing.cubic),
-          });
-          animatedY.value = withTiming(y, {
-            duration: 600,
-            easing: Easing.out(Easing.cubic),
-          });
-        } else {
-          // Update animation: smoothly transition to new values
-          animatedHeight.value = withTiming(height, {
-            duration: 300,
-            easing: Easing.inOut(Easing.cubic),
-          });
-          animatedY.value = withTiming(y, {
-            duration: 300,
-            easing: Easing.inOut(Easing.cubic),
-          });
-        }
-      }
-    }, [height, y, baseY, animate, animatedHeight, animatedY, hasInitialized]);
-
-    const animatedProps = useAnimatedProps(() => {
-      return {
-        y: animatedY.value,
-        height: animatedHeight.value,
-      };
-    });
+    const borderRadiusPixels = useMemo(
+      () => (borderRadius ? theme.borderRadius[borderRadius] : 0),
+      [borderRadius, theme.borderRadius],
+    );
 
     const barPath = useMemo(() => {
-      return getBarPath(
-        x,
-        y,
-        width,
-        height,
-        theme.borderRadius[borderRadius],
-        !!roundTop,
-        !!roundBottom,
-      );
-    }, [x, y, width, height, theme.borderRadius, borderRadius, roundTop, roundBottom]);
+      return getBarPath(x, y, width, height, borderRadiusPixels, roundTop, roundBottom);
+    }, [x, y, width, height, borderRadiusPixels, roundTop, roundBottom]);
+
+    const effectiveOriginY = originY ?? y + height;
 
     if (!barPath) {
       return null;
     }
 
-    // For bars with animations, use an animated rect with clipping
-    if (!animate) {
-      return (
-        <G>
-          <Defs>
-            <ClipPath id={clipPathId}>
-              <Path d={barPath} />
-            </ClipPath>
-          </Defs>
-          <AnimatedRect
-            animatedProps={animatedProps}
-            clipPath={`url(#${clipPathId})`}
-            fill={effectiveFill}
-            fillOpacity={fillOpacity}
-            stroke={stroke}
-            strokeWidth={strokeWidth}
-            width={width}
-            x={x}
-          />
-        </G>
-      );
-    }
-
-    // For static bars, use a simple path
+    // Always use the BarComponent for rendering
     return (
-      <Path
+      <BarComponent
+        borderRadius={borderRadiusPixels}
         d={barPath}
+        dataX={dataX}
+        dataY={dataY}
         fill={effectiveFill}
         fillOpacity={fillOpacity}
+        height={height}
+        originY={effectiveOriginY}
+        roundBottom={roundBottom}
+        roundTop={roundTop}
         stroke={stroke}
         strokeWidth={strokeWidth}
+        width={width}
+        x={x}
+        y={y}
       />
     );
   },
 );
-
-Bar.displayName = 'Bar';

@@ -27,12 +27,9 @@ import {
 } from '@coinbase/cds-common/visualizations/charts';
 import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
 import { Box } from '@coinbase/cds-mobile/layout';
+import { debounce } from '@coinbase/cds-mobile/utils/debounce';
 
-const styles = StyleSheet.create({
-  container: {
-    overflow: 'visible',
-  },
-});
+import { ChartPanGestureHandler } from './ChartPanGestureHandler';
 
 export type ChartBaseProps = {
   /**
@@ -110,7 +107,6 @@ export const Chart = memo(
     ) => {
       const [containerLayout, onContainerLayout] = useLayout();
 
-      // Use provided dimensions or fall back to measured layout
       const chartWidth = typeof width === 'number' ? width : containerLayout.width;
       const chartHeight = typeof height === 'number' ? height : containerLayout.height;
 
@@ -295,13 +291,7 @@ export const Chart = memo(
             onScrubberPosChange?.(dataIndex);
           }
         },
-        [
-          enableScrubbing,
-          series,
-          getDataIndexFromX,
-          highlightedIndex,
-          onScrubberPosChange,
-        ],
+        [enableScrubbing, series, getDataIndexFromX, highlightedIndex, onScrubberPosChange],
       );
 
       const handleInteractionEnd = useCallback(() => {
@@ -441,25 +431,6 @@ export const Chart = memo(
         ],
       );
 
-      const panGesture = useMemo(() => {
-        if (!enableScrubbing) return;
-
-        return Gesture.Pan()
-          .activateAfterLongPress(110)
-          .onStart((event) => {
-            runOnJS(handlePositionUpdate)(event.x);
-          })
-          .onUpdate((event) => {
-            runOnJS(handlePositionUpdate)(event.x);
-          })
-          .onEnd(() => {
-            runOnJS(handleInteractionEnd)();
-          })
-          .onTouchesCancelled(() => {
-            runOnJS(handleInteractionEnd)();
-          });
-      }, [enableScrubbing, handlePositionUpdate, handleInteractionEnd]);
-
       const containerStyles = useMemo(() => {
         const dynamicStyles: any = {};
         if (typeof width === 'string') {
@@ -469,7 +440,7 @@ export const Chart = memo(
           dynamicStyles.height = height;
         }
 
-        return [styles.container, style, dynamicStyles];
+        return [style, dynamicStyles];
       }, [style, width, height]);
 
       const chartContent = (
@@ -485,8 +456,14 @@ export const Chart = memo(
       return (
         <ChartContext.Provider value={contextValue}>
           <ScrubberContext.Provider value={scrubberContextValue}>
-            {panGesture ? (
-              <GestureDetector gesture={panGesture}>{chartContent}</GestureDetector>
+            {enableScrubbing ? (
+              <ChartPanGestureHandler
+                allowOverflowGestures
+                onScrub={handlePositionUpdate}
+                onScrubEnd={handleInteractionEnd}
+              >
+                {chartContent}
+              </ChartPanGestureHandler>
             ) : (
               chartContent
             )}

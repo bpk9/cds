@@ -11,10 +11,10 @@ import type { StackComponent } from './DefaultStackComponent';
 
 export type BarPlotProps = {
   /**
-   * Array of series configurations to render.
+   * Array of series IDs to render.
    * If not provided, renders all series in the chart.
    */
-  series?: BarSeries[];
+  seriesIds?: string[];
   /**
    * Padding between bar groups (0-1).
    * @default 0.1
@@ -24,10 +24,6 @@ export type BarPlotProps = {
    * Default component to render individual bars.
    */
   BarComponent?: BarComponent;
-  /**
-   * Default bar type.
-   */
-  type?: BarProps['type'];
   /**
    * Default opacity of the bar.
    */
@@ -76,10 +72,9 @@ export type BarPlotProps = {
  */
 export const BarPlot = memo<BarPlotProps>(
   ({
-    series,
+    seriesIds,
     barPadding = 0.1,
     BarComponent: defaultBarComponent,
-    type: defaultType,
     fillOpacity: defaultFillOpacity,
     stroke: defaultStroke,
     strokeWidth: defaultStrokeWidth,
@@ -90,8 +85,17 @@ export const BarPlot = memo<BarPlotProps>(
     barMinSize,
     stackMinSize,
   }) => {
-    const { series: targetSeries, drawingArea } = useChartContext();
+    const { series: allSeries, drawingArea } = useChartContext();
     const clipPathId = useRef(generateRandomId()).current;
+
+    const targetSeries = useMemo(() => {
+      // Then filter by seriesIds if provided
+      if (seriesIds !== undefined) {
+        return allSeries.filter((s: any) => seriesIds.includes(s.id));
+      }
+
+      return allSeries;
+    }, [allSeries, seriesIds]);
 
     const stackGroups = useMemo(() => {
       const groups = new Map<
@@ -158,7 +162,6 @@ export const BarPlot = memo<BarPlotProps>(
               stroke={defaultStroke}
               strokeWidth={defaultStrokeWidth}
               totalStacks={stackGroups.length}
-              type={defaultType}
               yAxisId={group.yAxisId}
             />
           ))}
