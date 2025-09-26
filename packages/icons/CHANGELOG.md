@@ -8,6 +8,20 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+
+
+### 🚀 Added (9):
+
+- instantUnstakingClock
+- auto
+- creatorCoin
+- allocation
+- baseVerification
+- distribution
+- disabledPhone
+- config
+- location
+
 ## 5.3.0 (9/18/2025 PST)
 
 - Prepare for open source release.

@@ -8,6 +8,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+### 🚀 Added
+
+Generated with `yarn nx run illustrations:sync-illustrations`
+
+#### Pictogram
+
+- coinbaseOneProductInvestWeekly
+
+#### Spot Icon
+
+- coinbaseOneProductInvestWeekly
+
+#### Spot Rectangle
+
+- fiatInterest
+
 ## 4.21.1 (9/23/2025 PST)
 
 #### 🐞 Fixes
