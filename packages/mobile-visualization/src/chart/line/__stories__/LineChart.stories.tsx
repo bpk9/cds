@@ -278,7 +278,7 @@ export const AssetPrice = () => {
         showArea
         height={defaultChartHeight}
         onScrubberPosChange={onScrubberPosChange}
-        padding={{ top: 24, bottom: 52, left: 0, right: 0 }}
+        padding={{ top: 3, bottom: 7, left: 0, right: 0 }}
         series={[
           {
             id: 'price',
@@ -512,7 +512,7 @@ export const ColorShiftChart = () => {
         dataKey={dataKey}
         height={defaultChartHeight}
         onScrubberPosChange={onScrubberPosChange}
-        padding={{ top: 48, left: 0, right: 0, bottom: 0 }}
+        padding={{ top: 6, left: 0, right: 0, bottom: 0 }}
         series={[
           {
             id: 'price',
@@ -714,7 +714,7 @@ export const PriceChart = () => {
         dataKey={dataKey}
         height={defaultChartHeight}
         onScrubberPosChange={onScrubberPosChange}
-        padding={{ left: 0, right: 24, bottom: 24, top: 24 }}
+        padding={{ left: 0, right: 3, bottom: 3, top: 3 }}
         series={[
           {
             id: 'price',
@@ -830,7 +830,7 @@ export const ForecastChart = () => {
       areaType="dotted"
       height={defaultChartHeight}
       padding={{
-        top: 32,
+        top: 4,
         left: 0,
         right: 0,
         bottom: 0,
@@ -990,7 +990,6 @@ const AssetPriceDotted = () => {
         areaType="dotted"
         height={defaultChartHeight}
         onScrubberPosChange={setScrubIndex}
-        padding={{ right: 16 }}
         series={[
           {
             id: 'btc',
@@ -1083,7 +1082,7 @@ const GainLossChart = () => {
     <Chart
       enableScrubbing
       height={defaultChartHeight}
-      padding={{ top: 12, bottom: 12, left: 0, right: 0 }}
+      padding={{ top: 1.5, bottom: 1.5, left: 0, right: 0 }}
       series={[
         {
           id: 'prices',
@@ -1149,7 +1148,7 @@ const BitcoinChartWithScrubberHead = () => {
         <LineChart
           showArea
           height={64}
-          padding={{ left: 0, right: 24, bottom: 0, top: 15 }}
+          padding={{ left: 0, right: 3, bottom: 0, top: 2 }}
           series={[
             {
               id: 'btcPrice',

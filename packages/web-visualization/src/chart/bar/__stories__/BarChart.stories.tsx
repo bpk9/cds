@@ -67,12 +67,7 @@ const PositiveAndNegativeCashFlow = () => {
   ];
 
   return (
-    <Chart
-      height={420}
-      padding={32}
-      series={series}
-      xAxis={{ data: categories, scaleType: 'band' }}
-    >
+    <Chart height={420} padding={4} series={series} xAxis={{ data: categories, scaleType: 'band' }}>
       <XAxis />
       <YAxis
         showGrid
@@ -113,7 +108,7 @@ const FiatAndStablecoinBalance = () => {
       stacked
       barMinSize={1}
       height={420}
-      padding={32}
+      padding={4}
       series={series}
       stackGap={0.25}
       stackMinSize={2}

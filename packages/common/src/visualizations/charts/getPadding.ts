@@ -1,15 +1,17 @@
+import type { ThemeVars } from '../../core/theme';
+
 export type ChartPadding = {
-  top: number;
-  left: number;
-  bottom: number;
-  right: number;
+  top: ThemeVars.Space;
+  left: ThemeVars.Space;
+  bottom: ThemeVars.Space;
+  right: ThemeVars.Space;
 };
 
 export const defaultChartPadding: ChartPadding = {
-  top: 32,
-  left: 8,
-  bottom: 8,
-  right: 8,
+  top: 4,
+  left: 2,
+  bottom: 2,
+  right: 2,
 };
 
 /**
@@ -19,7 +21,7 @@ export const defaultChartPadding: ChartPadding = {
  * @returns The calculated padding.
  */
 export const getPadding = (
-  padding?: number | Partial<ChartPadding>,
+  padding?: ThemeVars.Space | Partial<ChartPadding>,
   defaults?: ChartPadding,
 ): ChartPadding => {
   const baseDefaults = defaults ?? {

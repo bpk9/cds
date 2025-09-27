@@ -3,10 +3,10 @@ import type { View } from 'react-native';
 import { Circle, type CircleProps, G, Path, Rect } from 'react-native-svg';
 import { assets } from '@coinbase/cds-common/internal/data/assets';
 import { sparklineInteractiveData } from '@coinbase/cds-common/internal/visualizations/SparklineInteractiveData';
-import { useChartContext } from '../../ChartProvider';
 import { useTheme } from '@coinbase/cds-mobile';
 import { Example, ExampleScreen } from '@coinbase/cds-mobile/examples/ExampleScreen';
 
+import { useChartContext } from '../../ChartProvider';
 import { ChartText } from '../../text';
 import { LineChart } from '../LineChart';
 import { ReferenceLine } from '../ReferenceLine';
@@ -198,7 +198,7 @@ const DraggablePriceTarget = () => {
         animate={false}
         curve="monotone"
         height={250}
-        padding={{ top: 16, bottom: 16, left: 8, right: 80 }}
+        padding={{ top: 2, bottom: 2, left: 8, right: 10 }}
         series={[
           {
             id: 'prices',
@@ -258,7 +258,7 @@ const ReferenceLineStories = () => {
         <LineChart
           curve="monotone"
           height={250}
-          padding={{ right: 32, top: 0, left: 0, bottom: 0 }}
+          padding={{ right: 4, top: 0, left: 0, bottom: 0 }}
           series={[
             {
               id: 'prices',

@@ -263,7 +263,7 @@ const PriceTargetChart = () => {
       animate={false}
       curve="monotone"
       height={250}
-      padding={{ top: 16, bottom: 16, left: 8, right: 80 }}
+      padding={{ top: 2, bottom: 2, left: 1, right: 10 }}
       series={[
         {
           id: 'prices',
@@ -296,7 +296,7 @@ export const All = () => {
           showArea
           curve="monotone"
           height={250}
-          padding={{ right: 32 }}
+          padding={{ right: 4 }}
           series={[
             {
               id: 'prices',
@@ -312,7 +312,7 @@ export const All = () => {
           showArea
           curve="monotone"
           height={250}
-          padding={{ right: 32 }}
+          padding={{ right: 4 }}
           series={[
             {
               id: 'prices',
@@ -337,7 +337,7 @@ export const All = () => {
         <LineChart
           curve="monotone"
           height={250}
-          padding={{ right: 32 }}
+          padding={{ right: 4 }}
           series={[
             {
               id: 'prices',

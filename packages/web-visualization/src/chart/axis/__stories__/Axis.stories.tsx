@@ -85,7 +85,7 @@ const Simple = () => {
       showXAxis
       showYAxis
       height={400}
-      padding={32}
+      padding={4}
       series={[
         {
           id: 'pageViews',

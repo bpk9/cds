@@ -189,7 +189,7 @@ const PredictionMarket = () => {
         enableScrubbing
         height={300}
         onScrubberPosChange={updateScrubberLabel}
-        padding={{ top: 40, right: 0, bottom: 20, left: 0 }}
+        padding={{ top: 5, right: 0, bottom: 4, left: 0 }}
         paddingEnd={2}
         series={seriesConfig}
         xAxis={{

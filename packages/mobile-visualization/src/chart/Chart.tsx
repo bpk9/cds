@@ -3,6 +3,7 @@ import { StyleSheet, type View, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { Svg } from 'react-native-svg';
+import type { ThemeVars } from '@coinbase/cds-common/core/theme';
 import type { Rect } from '@coinbase/cds-common/types';
 import {
   type AxisConfig,
@@ -25,6 +26,7 @@ import {
   useTotalAxisPadding,
 } from '@coinbase/cds-common/visualizations/charts';
 import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
+import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { Box } from '@coinbase/cds-mobile/layout';
 import { debounce } from '@coinbase/cds-mobile/utils/debounce';
 
@@ -62,9 +64,8 @@ export type ChartBaseProps = {
   yAxis?: Partial<AxisConfigProps> | Partial<AxisConfigProps>[];
   /**
    * Padding around the entire chart (outside the axes).
-   * This creates space outside of axes rather than between axes and the drawing area.
    */
-  padding?: number | Partial<ChartPadding>;
+  padding?: ThemeVars.Space | Partial<ChartPadding>;
   /**
    * Callback fired when the highlighted item changes.
    * Receives the dataIndex of the highlighted item or null when no item is highlighted.
@@ -105,16 +106,22 @@ export const Chart = memo(
       },
       ref,
     ) => {
+      const theme = useTheme();
       const [containerLayout, onContainerLayout] = useLayout();
       const internalSvgRef = useRef<Svg>(null);
 
       const chartWidth = typeof width === 'number' ? width : containerLayout.width;
       const chartHeight = typeof height === 'number' ? height : containerLayout.height;
 
-      const userPadding = useMemo(
-        () => getPadding(paddingInput, defaultChartPadding),
-        [paddingInput],
-      );
+      const userPadding = useMemo(() => {
+        const paddingWithDefaults = getPadding(paddingInput, defaultChartPadding);
+        return {
+          top: theme.space[paddingWithDefaults.top],
+          right: theme.space[paddingWithDefaults.right],
+          bottom: theme.space[paddingWithDefaults.bottom],
+          left: theme.space[paddingWithDefaults.left],
+        };
+      }, [paddingInput, theme.space]);
 
       // there can only be one x axis but the helper function always returns an array
       const xAxisConfig = useMemo(

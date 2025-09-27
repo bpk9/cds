@@ -305,7 +305,7 @@ const BTCPriceChart = () => {
           height={350}
           onScrubberPosChange={onScrubberPosChange}
           overflow="visible"
-          padding={{ left: 0, right: 20, bottom: 0, top: 40 }}
+          padding={{ left: 0, right: 2, bottom: 0, top: 4 }}
           series={[
             {
               id: 'price',
@@ -478,7 +478,7 @@ const ColorShiftChart = () => {
           height={350}
           onScrubberPosChange={onScrubberPosChange}
           overflow="visible"
-          padding={{ top: 48, left: 0, right: 0, bottom: 0 }}
+          padding={{ top: 6, left: 0, right: 0, bottom: 0 }}
           series={[
             {
               id: 'price',
@@ -691,7 +691,7 @@ const PriceChart = () => {
         height={372}
         onScrubberPosChange={onScrubberPosChange}
         overflow="visible"
-        padding={{ left: 0, right: 24, bottom: 24, top: 24 }}
+        padding={{ left: 0, right: 3, bottom: 3, top: 3 }}
         series={[
           {
             id: 'price',
@@ -861,9 +861,9 @@ function ForecastAssetPrice() {
       onScrubberPosChange={setScrubIndex}
       overflow="visible"
       padding={{
-        top: 36,
-        left: 16,
-        right: 16,
+        top: 5,
+        left: 2,
+        right: 2,
         bottom: 0,
       }}
       series={[
@@ -961,7 +961,7 @@ const BitcoinChartWithScrubberHead = () => {
         <LineChart
           showArea
           height={92}
-          padding={{ left: 0, right: 24, bottom: 0, top: 0 }}
+          padding={{ left: 0, right: 3, bottom: 0, top: 0 }}
           series={[
             {
               id: 'btcPrice',
@@ -1183,7 +1183,6 @@ const AvailabilityChart = () => {
       accessibilityLabel={accessibilityLabel}
       height={300}
       onScrubberPosChange={setScrubIndex}
-      padding={{ left: 16, right: 16 }}
       series={[
         {
           id: 'availability',
@@ -1310,7 +1309,7 @@ const GainLossChart = () => {
     <Chart
       enableScrubbing
       height={250}
-      padding={{ top: 12, bottom: 12, left: 0, right: 0 }}
+      padding={{ top: 1.5, bottom: 1.5, left: 0, right: 0 }}
       series={[
         {
           id: 'prices',
@@ -1487,7 +1486,7 @@ const MultipleSeriesChart = () => {
       accessibilityLabel={accessibilityLabel}
       height={400}
       onScrubberPosChange={setScrubIndex}
-      padding={{ left: 12 }}
+      padding={{ left: 1.5 }}
       series={[
         {
           id: 'pageViews',
@@ -1663,7 +1662,6 @@ const AssetPriceDotted = memo(() => {
         height={300}
         onScrubberPosChange={setScrubIndex}
         overflow="visible"
-        padding={{ left: 16, right: 16 }}
         series={[
           {
             id: 'btc',

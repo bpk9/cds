@@ -1,4 +1,5 @@
 import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
+import type { ThemeVars } from '@coinbase/cds-common/core/theme';
 import type { Rect } from '@coinbase/cds-common/types';
 import {
   type AxisConfig,
@@ -19,6 +20,7 @@ import {
 } from '@coinbase/cds-common/visualizations/charts';
 import { cx } from '@coinbase/cds-web';
 import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
+import { useTheme } from '@coinbase/cds-web/hooks/useTheme';
 import { Box, type BoxBaseProps, type BoxProps } from '@coinbase/cds-web/layout';
 
 import { ScrubberProvider } from './scrubber/ScrubberProvider';
@@ -52,9 +54,8 @@ export type ChartBaseProps = BoxBaseProps & {
   yAxis?: Partial<AxisConfigProps> | Partial<AxisConfigProps>[];
   /**
    * Padding around the entire chart (outside the axes).
-   * This creates space outside of axes rather than between axes and the drawing area.
    */
-  padding?: number | Partial<ChartPadding>;
+  padding?: ThemeVars.Space | Partial<ChartPadding>;
   /**
    * Callback fired when the highlighted item changes.
    * Receives the dataIndex of the highlighted item or null when no item is highlighted.
@@ -83,13 +84,19 @@ export const Chart = memo(
       },
       ref,
     ) => {
+      const theme = useTheme();
       const { observe, width: chartWidth, height: chartHeight } = useDimensions();
       const internalSvgRef = useRef<SVGSVGElement>(null);
 
-      const userPadding = useMemo(
-        () => getPadding(paddingInput, defaultChartPadding),
-        [paddingInput],
-      );
+      const userPadding = useMemo(() => {
+        const paddingWithDefaults = getPadding(paddingInput, defaultChartPadding);
+        return {
+          top: theme.space[paddingWithDefaults.top],
+          right: theme.space[paddingWithDefaults.right],
+          bottom: theme.space[paddingWithDefaults.bottom],
+          left: theme.space[paddingWithDefaults.left],
+        };
+      }, [paddingInput, theme.space]);
 
       // there can only be one x axis but the helper function always returns an array
       const xAxisConfig = useMemo(
