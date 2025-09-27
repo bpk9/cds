@@ -1,8 +1,8 @@
 import { memo, useCallback, useState } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
-import { useChartContext } from '../ChartProvider';
 import { useTheme } from '@coinbase/cds-mobile';
 
+import { useChartContext } from '../ChartProvider';
 import { ChartText, type ChartTextProps } from '../text';
 
 export type ScrubberHeadLabelProps = ChartTextProps & {
@@ -22,7 +22,7 @@ export const ScrubberHeadLabel = memo<ScrubberHeadLabelProps>(
     preferredSide = 'auto',
     background,
     color,
-    padding = 12,
+    padding = 1.5,
     onDimensionsChange,
     elevation = background !== undefined ? 1 : undefined,
     borderRadius = background !== undefined ? 200 : undefined,
