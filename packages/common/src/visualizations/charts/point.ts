@@ -1,8 +1,9 @@
-import { type ChartScaleFunction, isCategoricalScale, isNumericScale } from './scale';
+import { type ChartScaleFunction, isCategoricalScale, isLogScale, isNumericScale } from './scale';
 
 /**
  * Get a point from a data value and a scale.
  * @note for categorical scales, the point will be centered within the band.
+ * @note for log scales, zero and negative values are clamped to a small positive value.
  * @param data - the data value.
  * @param scale - the scale function.
  * @returns the pixel value (defaulting to 0 if data value is not defined in scale).
@@ -14,11 +15,18 @@ export const getPointOnScale = (dataValue: number, scale: ChartScaleFunction): n
     return bandStart + bandwidth / 2;
   }
 
-  return scale(dataValue) ?? 0;
+  // For log scales, ensure the value is positive
+  let adjustedValue = dataValue;
+  if (isLogScale(scale) && dataValue <= 0) {
+    adjustedValue = 0.001; // Use a small positive value for log scales
+  }
+
+  return scale(adjustedValue) ?? 0;
 };
 
 /**
  * Projects a data point to pixel coordinates using the chart scale.
+ * Automatically handles log scale transformations for zero/negative values.
  *
  * @example
  * ```typescript

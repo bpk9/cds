@@ -34,6 +34,15 @@ export const isNumericScale = (scale: ChartScaleFunction): scale is NumericScale
 };
 
 /**
+ * Type guard to check if a scale is logarithmic.
+ */
+export const isLogScale = (
+  scale: ChartScaleFunction,
+): scale is ScaleLogarithmic<number, number, never> => {
+  return scale !== undefined && 'base' in scale && typeof (scale as any).base === 'function';
+};
+
+/**
  * Create a numeric scale (linear or logarithmic)
  * @returns A numeric scale function
  */
