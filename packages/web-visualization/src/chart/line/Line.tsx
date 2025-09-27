@@ -2,9 +2,9 @@ import React, { memo, useMemo } from 'react';
 import type { SVGProps } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import { type ChartPathCurveType, getLinePath } from '@coinbase/cds-common/visualizations/charts';
-import { useChartContext } from '@coinbase/cds-common/visualizations/charts';
 
 import { Area, type AreaComponent } from '../area';
+import { useChartContext } from '../ChartProvider';
 import { Point, type PointConfig, type RenderPointsParams } from '../point/Point';
 
 import { DottedLine } from './DottedLine';
@@ -115,9 +115,9 @@ export const Line = memo<LineProps>(
       return getSeriesData(seriesId) || null;
     }, [seriesId, getSeriesData]);
 
-    const xAxis = getXAxis?.();
-    const xScale = getXScale?.();
-    const yScale = getYScale?.(matchedSeries?.yAxisId);
+    const xAxis = getXAxis();
+    const xScale = getXScale();
+    const yScale = getYScale(matchedSeries?.yAxisId);
 
     // Convert sourceData to number array (line only supports numbers, not tuples)
     // If data is stacked (tuples), extract the actual values from [baseline, actualValue] format

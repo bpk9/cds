@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react';
 import { G } from 'react-native-svg';
 import type { SharedProps } from '@coinbase/cds-common/types';
-import { getPointOnScale, useChartContext } from '@coinbase/cds-common/visualizations/charts';
+import { getPointOnScale } from '@coinbase/cds-common/visualizations/charts';
+import { useChartContext } from '../ChartProvider';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 
 import { ChartText } from '../text';
@@ -127,7 +128,7 @@ export const ReferenceLine = memo<ReferenceLineProps>(
     );
     // Horizontal reference line logic
     if (dataY !== undefined) {
-      const yScale = getYScale?.(yAxisId);
+      const yScale = getYScale(yAxisId);
 
       // Don't render if we don't have a scale
       if (!yScale) {
@@ -175,7 +176,7 @@ export const ReferenceLine = memo<ReferenceLineProps>(
 
     // Vertical reference line logic
     if (dataX !== undefined) {
-      const xScale = getXScale?.();
+      const xScale = getXScale();
 
       // Don't render if we don't have scales
       if (!xScale) {

@@ -5,8 +5,6 @@ import { prices } from '@coinbase/cds-common/internal/data/prices';
 import { sparklineInteractiveData } from '@coinbase/cds-common/internal/visualizations/SparklineInteractiveData';
 import { useTabsContext } from '@coinbase/cds-common/tabs/TabsContext';
 import type { TabValue } from '@coinbase/cds-common/tabs/useTabs';
-import { projectPoint, useChartContext } from '@coinbase/cds-common/visualizations/charts';
-import type { ChartAxisScaleType } from '@coinbase/cds-common/visualizations/charts/scale';
 import { useTheme } from '@coinbase/cds-web';
 import { CellMedia, ListCell } from '@coinbase/cds-web/cells';
 import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
@@ -34,6 +32,7 @@ import {
 import { Area, type AreaComponentProps, DottedArea, GradientArea } from '../../area';
 import { XAxis, YAxis } from '../../axis';
 import { Chart } from '../../Chart';
+import { useChartContext } from '../../ChartProvider';
 import { Point } from '../../point';
 import { DottedLine, GradientLine, Line, LineChart, ReferenceLine, SolidLine } from '..';
 
@@ -1137,8 +1136,8 @@ const AvailabilityChart = () => {
       greenThresholdPercentage?: number;
     }) => {
       const { height, series, getYScale, getYAxis, drawingArea } = useChartContext();
-      const yScale = getYScale?.();
-      const yAxis = getYAxis?.();
+      const yScale = getYScale();
+      const yAxis = getYAxis();
 
       if (!series || !drawingArea || !yScale) return null;
 
@@ -1249,7 +1248,7 @@ const GainLossChart = () => {
   const ChartDefs = ({ threshold = 0 }) => {
     const { getYScale } = useChartContext();
     // get the default y-axis scale
-    const yScale = getYScale?.();
+    const yScale = getYScale();
 
     if (yScale) {
       const domain = yScale.domain();

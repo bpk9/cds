@@ -1,6 +1,6 @@
 import React, { memo, useRef } from 'react';
 import { Circle, Defs, G, LinearGradient, Mask, Pattern, Stop } from 'react-native-svg';
-import { useChartContext } from '@coinbase/cds-common/visualizations/charts';
+import { useChartContext } from '../ChartProvider';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { generateRandomId } from '@coinbase/cds-utils';
 
@@ -55,7 +55,7 @@ export const DottedArea = memo<DottedAreaProps>(
     const dotCenterPosition = patternSize / 2;
 
     // Get the y-scale for the specified axis (or default)
-    const yScale = context.getYScale?.(yAxisId);
+    const yScale = context.getYScale(yAxisId);
     const yRange = yScale?.range();
     const yDomain = yScale?.domain();
 

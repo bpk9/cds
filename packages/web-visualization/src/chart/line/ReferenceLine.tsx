@@ -1,8 +1,9 @@
 import React, { memo, useMemo } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
-import { getPointOnScale, useChartContext } from '@coinbase/cds-common/visualizations/charts';
+import { getPointOnScale } from '@coinbase/cds-common/visualizations/charts';
 import { cx } from '@coinbase/cds-web';
 
+import { useChartContext } from '../ChartProvider';
 import { ChartText } from '../text';
 import type { ChartTextChildren, ChartTextProps } from '../text/ChartText';
 
@@ -182,7 +183,7 @@ export const ReferenceLine = memo<ReferenceLineProps>(
 
     // Horizontal reference line logic
     if (dataY !== undefined) {
-      const yScale = getYScale?.(yAxisId);
+      const yScale = getYScale(yAxisId);
 
       // Don't render if we don't have a scale
       if (!yScale) {
@@ -231,7 +232,7 @@ export const ReferenceLine = memo<ReferenceLineProps>(
 
     // Vertical reference line logic
     if (dataX !== undefined) {
-      const xScale = getXScale?.();
+      const xScale = getXScale();
 
       // Don't render if we don't have scales
       if (!xScale) {

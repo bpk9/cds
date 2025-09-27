@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
-import { isCategoricalScale, useChartContext } from '@coinbase/cds-common/visualizations/charts';
+import { isCategoricalScale } from '@coinbase/cds-common/visualizations/charts';
 import { Switch } from '@coinbase/cds-web/controls';
 
 import { XAxis, YAxis } from '../axis';
+import { useChartContext } from '../ChartProvider';
 import { LineChart } from '../line/LineChart';
 import { ChartText, SmartChartTextGroup, type TextLabelData } from '../text';
 
@@ -471,7 +472,7 @@ export const InteractiveSmartChartTextGroup = () => {
     const [bboxMap, setBboxMap] = useState<
       Map<number, { x: number; y: number; width: number; height: number }>
     >(new Map());
-    const xScale = getXScale?.();
+    const xScale = getXScale();
 
     const labelsData = useMemo((): TextLabelData[] => {
       if (!xScale) return [];

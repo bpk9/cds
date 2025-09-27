@@ -3,9 +3,9 @@ import { Circle } from 'react-native-svg';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import {
   projectPoint,
-  useChartContext,
   useScrubberContext,
 } from '@coinbase/cds-common/visualizations/charts';
+import { useChartContext } from '../ChartProvider';
 import { useTheme } from '@coinbase/cds-mobile';
 
 import { Point, type PointProps, type PointRef } from '../point';
@@ -96,8 +96,8 @@ export const ScrubberHead = memo(
       const sourceData = getSeriesData(seriesId);
 
       // Get scales for this series
-      const xScale = getXScale?.();
-      const yScale = getYScale?.(targetSeries?.yAxisId);
+      const xScale = getXScale();
+      const yScale = getYScale(targetSeries?.yAxisId);
 
       const getPixelCoordinate = useCallback(
         (dataX: number, dataY: number) => {

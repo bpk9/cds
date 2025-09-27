@@ -1,7 +1,7 @@
 import React, { memo, useRef } from 'react';
-import { useChartContext } from '@coinbase/cds-common/visualizations/charts';
 import { generateRandomId } from '@coinbase/cds-utils';
 
+import { useChartContext } from '../ChartProvider';
 import { Path, type PathProps } from '../Path';
 
 import type { AreaComponentProps } from './Area';
@@ -50,7 +50,7 @@ export const GradientArea = memo<GradientAreaProps>(
     const patternIdRef = useRef<string>(generateRandomId());
 
     // Get the y-scale for the specified axis (or default)
-    const yScale = context.getYScale?.(yAxisId);
+    const yScale = context.getYScale(yAxisId);
     const yRange = yScale?.range();
     const yDomain = yScale?.domain();
 

@@ -4,8 +4,8 @@ import type { ThemeVars } from '@coinbase/cds-common';
 import {
   getAxisTicksData,
   isCategoricalScale,
-  useChartContext,
 } from '@coinbase/cds-common/visualizations/charts';
+import { useChartContext } from '../ChartProvider';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 
 import { DottedLine } from '../line';
@@ -54,8 +54,8 @@ export const YAxis = memo<YAxisProps>(
     const { animate, getYScale, getYAxis, registerAxis, unregisterAxis, getAxisBounds } =
       useChartContext();
 
-    const yScale = getYScale?.(axisId);
-    const yAxis = getYAxis?.(axisId);
+    const yScale = getYScale(axisId);
+    const yAxis = getYAxis(axisId);
 
     const axisBounds = getAxisBounds(registrationId);
 

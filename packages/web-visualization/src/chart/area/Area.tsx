@@ -1,8 +1,8 @@
 import React, { memo, useMemo } from 'react';
 import type { SVGProps } from 'react';
 import { type ChartPathCurveType, getAreaPath } from '@coinbase/cds-common/visualizations/charts';
-import { useChartContext } from '@coinbase/cds-common/visualizations/charts';
 
+import { useChartContext } from '../ChartProvider';
 import { DottedArea } from './DottedArea';
 import { GradientArea } from './GradientArea';
 import { SolidArea } from './SolidArea';
@@ -82,9 +82,9 @@ export const Area = memo<AreaProps>(
     }, [seriesId, getSeriesData]);
 
     // Get scales and axes for this series
-    const xAxis = getXAxis?.();
-    const xScale = getXScale?.();
-    const yScale = getYScale?.(matchedSeries?.yAxisId);
+    const xAxis = getXAxis();
+    const xScale = getXScale();
+    const yScale = getYScale(matchedSeries?.yAxisId);
 
     const area = useMemo(() => {
       if (!sourceData || sourceData.length === 0 || !xScale || !yScale) return '';

@@ -2,10 +2,10 @@ import { forwardRef, memo, useCallback, useImperativeHandle, useRef } from 'reac
 import type { SharedProps } from '@coinbase/cds-common/types';
 import {
   projectPoint,
-  useChartContext,
   useScrubberContext,
 } from '@coinbase/cds-common/visualizations/charts';
 
+import { useChartContext } from '../ChartProvider';
 import { Point, type PointProps, type PointRef } from '../point';
 
 export const dataKeyUpdateAnimationVariants = {
@@ -93,8 +93,8 @@ export const ScrubberHead = memo(
       const sourceData = getSeriesData(seriesId);
 
       // Get scales for this series
-      const xScale = getXScale?.();
-      const yScale = getYScale?.(targetSeries?.yAxisId);
+      const xScale = getXScale();
+      const yScale = getYScale(targetSeries?.yAxisId);
 
       const getPixelCoordinate = useCallback(
         (dataX: number, dataY: number) => {

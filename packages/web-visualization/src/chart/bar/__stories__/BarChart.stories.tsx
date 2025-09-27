@@ -1,15 +1,12 @@
 import React, { memo, useId } from 'react';
 import { candles as btcCandles } from '@coinbase/cds-common/internal/data/candles';
-import {
-  isCategoricalScale,
-  ScrubberContext,
-  useChartContext,
-} from '@coinbase/cds-common/visualizations/charts';
+import { isCategoricalScale, ScrubberContext } from '@coinbase/cds-common/visualizations/charts';
 import { VStack } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
 
 import { Chart } from '../..';
 import { XAxis, YAxis } from '../../axis';
+import { useChartContext } from '../../ChartProvider';
 import { ReferenceLine, SolidLine, type SolidLineProps } from '../../line';
 import { PeriodSelector } from '../../PeriodSelector';
 import { Scrubber } from '../../scrubber';
@@ -198,8 +195,8 @@ const tabs: TimePeriodTab[] = [
 const ScrubberRect = memo(() => {
   const { getXScale, getYScale } = useChartContext();
   const { highlightedIndex } = React.useContext(ScrubberContext) ?? {};
-  const xScale = getXScale?.();
-  const yScale = getYScale?.();
+  const xScale = getXScale();
+  const yScale = getYScale();
 
   if (!xScale || !yScale || highlightedIndex === undefined || !isCategoricalScale(xScale))
     return null;
@@ -238,7 +235,7 @@ const Candlesticks = () => {
   const CandlestickBarComponent = memo<BarComponentProps>(
     ({ x, y, width, height, originY, dataX, ...props }) => {
       const { getYScale } = useChartContext();
-      const yScale = getYScale?.();
+      const yScale = getYScale();
 
       const wickX = x + width / 2;
 
