@@ -449,6 +449,11 @@ export const routes = [
       require('@coinbase/cds-mobile/media/__stories__/RemoteImageGroup.stories').default,
   },
   {
+    key: 'RollingNumber',
+    getComponent: () =>
+      require('@coinbase/cds-mobile/numbers/__stories__/RollingNumber.stories').default,
+  },
+  {
     key: 'SearchInput',
     getComponent: () =>
       require('@coinbase/cds-mobile/controls/__stories__/SearchInput.stories').default,
