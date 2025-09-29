@@ -155,7 +155,7 @@ export const ListCell: ListCellComponent = memo(
                 className={multiline ? overflowCss : undefined}
                 color="fgMuted"
                 display="block"
-                font="body"
+                font={layoutVariant === 'supercompact' ? 'label2' : 'body'}
                 overflow={multiline ? undefined : 'truncate'}
               >
                 {description}
