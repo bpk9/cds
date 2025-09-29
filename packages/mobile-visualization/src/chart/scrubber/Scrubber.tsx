@@ -5,7 +5,6 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import Reanimated, {
@@ -34,6 +33,43 @@ const AnimatedG = Reanimated.createAnimatedComponent(G);
 const AnimatedRect = Reanimated.createAnimatedComponent(Rect);
 const AnimatedLine = Reanimated.createAnimatedComponent(Line);
 
+type FadeInGroupProps = {
+  children: React.ReactNode;
+};
+
+const FadeInGroup = memo(
+  forwardRef<React.ComponentRef<typeof G>, FadeInGroupProps>(({ children }, ref) => {
+    const { animate } = useCartesianChartContext();
+
+    const opacity = useSharedValue(0);
+
+    const animatedProps = useAnimatedProps(() => ({
+      opacity: opacity.value,
+    }));
+
+    useEffect(() => {
+      if (animate) {
+        opacity.value = withDelay(
+          850,
+          withTiming(1, {
+            duration: 150,
+          }),
+        );
+      } else {
+        opacity.value = 1;
+      }
+    }, [animate, opacity]);
+
+    return (
+      <AnimatedG ref={ref} animatedProps={animatedProps}>
+        {children}
+      </AnimatedG>
+    );
+  }),
+);
+
+FadeInGroup.displayName = 'FadeInGroup';
+
 /**
  * Configuration for scrubber functionality across chart components.
  * Provides consistent API with smart defaults and component customization.
@@ -48,10 +84,9 @@ export type ScrubberProps = SharedProps &
     seriesIds?: string[];
 
     /**
-     * Hide scrubber line (vertical line at current position).
-     * @default false
+     * Hides the scrubber line
      */
-    hideScrubberLine?: boolean;
+    hideLine?: boolean;
 
     /**
      * Whether to hide the overlay rect which obscures future data.
@@ -59,7 +94,8 @@ export type ScrubberProps = SharedProps &
     hideOverlay?: boolean;
 
     /**
-     * Offset in pixels to extend the overlay beyond the scrubber line.
+     * Offset of the overlay rect relative to the drawing area.
+     * Useful for when scrubbing over lines, where the stroke width would cause part of the line to be visible.
      * @default 2
      */
     overlayOffset?: number;
@@ -67,9 +103,7 @@ export type ScrubberProps = SharedProps &
     /**
      * Label text displayed above the scrubber line.
      */
-    scrubberLabel?:
-      | ReferenceLineProps['label']
-      | ((dataIndex: number) => ReferenceLineProps['label']);
+    label?: ReferenceLineProps['label'] | ((dataIndex: number) => ReferenceLineProps['label']);
 
     /**
      * Props passed to the scrubber line's label.
@@ -79,7 +113,7 @@ export type ScrubberProps = SharedProps &
     /**
      * Stroke color for the scrubber line.
      */
-    scrubberLineStroke?: ReferenceLineProps['stroke'];
+    lineStroke?: ReferenceLineProps['stroke'];
 
     /**
      * Props passed to each scrubber head's label.
@@ -90,13 +124,19 @@ export type ScrubberProps = SharedProps &
     >;
 
     /**
-     * Custom component replacements.
+     * Custom component for the scrubber head.
      */
-    scrubberComponents?: {
-      ScrubberHeadComponent?: React.ComponentType<ScrubberHeadProps>;
-      ScrubberHeadLabelComponent?: React.ComponentType<ScrubberHeadLabelProps>;
-      ScrubberLineComponent?: React.ComponentType<ReferenceLineProps>;
-    };
+    HeadComponent?: React.ComponentType<ScrubberHeadProps>;
+
+    /**
+     * Custom component for the scrubber head label.
+     */
+    HeadLabelComponent?: React.ComponentType<ScrubberHeadLabelProps>;
+
+    /**
+     * Custom component for the scrubber line.
+     */
+    LineComponent?: React.ComponentType<ReferenceLineProps>;
   };
 
 type LabelDimensions = {
@@ -118,11 +158,13 @@ export const Scrubber = memo(
     (
       {
         seriesIds,
-        hideScrubberLine,
-        scrubberLabel,
-        scrubberLineStroke,
+        hideLine,
+        label,
+        lineStroke,
         scrubberLabelProps,
-        scrubberComponents,
+        HeadComponent,
+        HeadLabelComponent,
+        LineComponent,
         hideOverlay,
         overlayOffset = 2,
         testID,
@@ -132,11 +174,7 @@ export const Scrubber = memo(
       ref,
     ) => {
       const theme = useTheme();
-      const scrubberGroupRef = useRef<React.ComponentRef<typeof G>>(null);
       const scrubberHeadRefs = useRefMap<ScrubberHeadRef>();
-
-      // Animation for initial fade-in
-      const opacity = useSharedValue(0);
 
       // Animated values for scrubber line and overlay positions
       const scrubberLineX = useSharedValue(0);
@@ -144,14 +182,11 @@ export const Scrubber = memo(
       const overlayWidth = useSharedValue(0);
 
       const { scrubberPosition: scrubberPosition } = useScrubberContext();
-      const { getXScale, getYScale, getSeriesData, getXAxis, animate, series, drawingArea } =
+      const { getXScale, getYScale, getSeriesData, getXAxis, series, drawingArea } =
         useCartesianChartContext();
       const getStackedSeriesData = getSeriesData; // getSeriesData now returns stacked data
 
       // Animated props for fade-in effect
-      const animatedProps = useAnimatedProps(() => ({
-        opacity: opacity.value,
-      }));
 
       // Animated props for scrubber line
       const scrubberLineAnimatedProps = useAnimatedProps(() => ({
@@ -164,21 +199,6 @@ export const Scrubber = memo(
         x: overlayX.value,
         width: overlayWidth.value,
       }));
-
-      // Trigger initial fade-in animation
-      useEffect(() => {
-        if (animate) {
-          // Match web's timing: 850ms delay, 150ms fade-in
-          opacity.value = withDelay(
-            850,
-            withTiming(1, {
-              duration: 150,
-            }),
-          );
-        } else {
-          opacity.value = 1;
-        }
-      }, [animate, opacity]);
 
       // Track label dimensions for collision detection
       const [labelDimensions, setLabelDimensions] = useState<Map<string, LabelDimensions>>(
@@ -597,12 +617,12 @@ export const Scrubber = memo(
       const pixelX = dataX !== undefined && defaultXScale ? defaultXScale(dataX) : undefined;
 
       const memoizedScrubberLabel: ReferenceLineProps['label'] = useMemo(() => {
-        if (typeof scrubberLabel === 'function') {
+        if (typeof label === 'function') {
           if (dataIndex === undefined) return undefined;
-          return scrubberLabel(dataIndex);
+          return label(dataIndex);
         }
-        return scrubberLabel;
-      }, [scrubberLabel, dataIndex]);
+        return label;
+      }, [label, dataIndex]);
 
       // Update scrubber line and overlay positions using animated values
       useEffect(() => {
@@ -617,10 +637,9 @@ export const Scrubber = memo(
       if (!defaultXScale || !defaultYScale) return null;
 
       // Use custom components if provided
-      const ScrubberLineComponent = scrubberComponents?.ScrubberLineComponent ?? ReferenceLine;
-      const ScrubberHeadComponent = scrubberComponents?.ScrubberHeadComponent ?? ScrubberHead;
-      const ScrubberHeadLabelComponent =
-        scrubberComponents?.ScrubberHeadLabelComponent ?? ScrubberHeadLabel;
+      const ScrubberLineComponent = LineComponent ?? ReferenceLine;
+      const ScrubberHeadComponent = HeadComponent ?? ScrubberHead;
+      const ScrubberHeadLabelComponent = HeadLabelComponent ?? ScrubberHeadLabel;
 
       // Wrap content in AnimatedG only if animation is enabled
       const content = (
@@ -637,13 +656,13 @@ export const Scrubber = memo(
                 y={drawingArea.y - overlayOffset}
               />
             )}
-          {!hideScrubberLine && scrubberPosition !== undefined && dataX !== undefined && (
+          {!hideLine && scrubberPosition !== undefined && dataX !== undefined && (
             <ScrubberLineComponent
               dataX={dataX}
               label={memoizedScrubberLabel}
               labelConfig={scrubberLabelProps}
               labelPosition="top"
-              stroke={scrubberLineStroke}
+              stroke={lineStroke}
             />
           )}
           {headPositions.map((scrubberHead: any) => {
@@ -702,11 +721,7 @@ export const Scrubber = memo(
         </>
       );
 
-      return (
-        <G ref={scrubberGroupRef} data-testid={testID}>
-          {animate ? <AnimatedG animatedProps={animatedProps}>{content}</AnimatedG> : content}
-        </G>
-      );
+      return <FadeInGroup>{content}</FadeInGroup>;
     },
   ),
 );

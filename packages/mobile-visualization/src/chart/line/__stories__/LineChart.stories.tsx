@@ -1,6 +1,6 @@
 import { forwardRef, memo, useCallback, useId, useMemo, useState } from 'react';
 import type { View } from 'react-native';
-import { Defs, G, LinearGradient, Stop } from 'react-native-svg';
+import { Defs, LinearGradient, Stop, TSpan } from 'react-native-svg';
 import { assets } from '@coinbase/cds-common/internal/data/assets';
 import { candles as btcCandles } from '@coinbase/cds-common/internal/data/candles';
 import { prices } from '@coinbase/cds-common/internal/data/prices';
@@ -190,16 +190,10 @@ export const BasicLineChartWithPoints = () => {
         label="testing 123"
         labelConfig={{
           color: '#10b981',
-          elevation: 1,
         }}
         labelPosition="center"
       />
-      <ReferenceLine
-        dataY={60}
-        label="testing 123"
-        labelConfig={{ elevation: 1 }}
-        labelPosition="left"
-      />
+      <ReferenceLine dataY={60} label="testing 123" labelPosition="left" />
       <Point color="orange" dataX={5} dataY={50} radius={5} />
     </LineChart>
   );
@@ -521,7 +515,6 @@ export const ColorShiftChart = () => {
           dataY={startPrice}
           label={`$${startPrice}`}
           labelConfig={{
-            elevation: 1,
             textAnchor: 'start',
           }}
           labelPosition="right"
@@ -993,7 +986,7 @@ const AssetPriceDotted = () => {
           },
         ]}
       >
-        <Scrubber idlePulse scrubberLabel={scrubberLabel} />
+        <Scrubber idlePulse label={scrubberLabel} />
       </LineChart>
       <PeriodSelector
         TabComponent={BTCTab}
@@ -1106,7 +1099,7 @@ const AssetPriceDottedNonMemoized = () => {
           },
         ]}
       >
-        <Scrubber scrubberLabel={scrubberLabel} />
+        <Scrubber label={scrubberLabel} />
       </LineChart>
       <PeriodSelector
         TabComponent={BTCTab}
@@ -1214,7 +1207,6 @@ const AssetPriceMultipleDotted = () => {
             data: sparklineTimePeriodDataValues,
             color: assets.btc.color,
           },
-
           {
             id: 'eth',
             data: sparklineTimePeriodDataValues.map((d) => d * 0.75),
@@ -1566,6 +1558,38 @@ const LineChartStories = () => {
 const AssetPriceScreen = () => {
   return (
     <ExampleScreen>
+      <Example title="Basic">
+        <LineChart
+          enableScrubbing
+          showArea
+          showYAxis
+          curve="monotone"
+          height={defaultChartHeight}
+          series={[
+            {
+              id: 'prices',
+              data: sampleData,
+            },
+          ]}
+          yAxis={{
+            showGrid: true,
+          }}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example title="Simple">
+        <LineChart
+          curve="monotone"
+          height={defaultChartHeight}
+          series={[
+            {
+              id: 'prices',
+              data: sampleData,
+            },
+          ]}
+        />
+      </Example>
       <Example title="Data Formats">
         <LineChart
           enableScrubbing
@@ -1593,14 +1617,14 @@ const AssetPriceScreen = () => {
           <Scrubber />
         </LineChart>
       </Example>
-      <Example title="Asset Price Dotted Memoized">
-        <AssetPriceDotted />
-      </Example>
       <Example title="Asset Price Dotted">
-        <AssetPriceDottedNonMemoized />
+        <AssetPriceDotted />
       </Example>
       <Example title="Asset Price Multiple Dotted">
         <AssetPriceMultipleDotted />
+      </Example>
+      <Example title="Asset Price Dotted (Old)">
+        <AssetPriceDottedNonMemoized />
       </Example>
     </ExampleScreen>
   );
