@@ -9,6 +9,7 @@ import { useTheme } from '@coinbase/cds-web';
 import { CellMedia, ListCell } from '@coinbase/cds-web/cells';
 import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
 import { RemoteImage } from '@coinbase/cds-web/media';
+import { RollingNumber } from '@coinbase/cds-web/numbers';
 import { SectionHeader } from '@coinbase/cds-web/section-header/SectionHeader';
 import {
   SegmentedTab,
@@ -1564,11 +1565,7 @@ const tabs = [
 
 const AssetPriceDotted = memo(() => {
   const [scrubIndex, setScrubIndex] = useState<number | undefined>();
-  const currentPrice =
-    sparklineInteractiveData.hour[sparklineInteractiveData.hour.length - 1].value;
-
   const [timePeriod, setTimePeriod] = useState<TabValue>(tabs[0]);
-
   const sparklineTimePeriodData = useMemo(() => {
     return sparklineInteractiveData[timePeriod.id as keyof typeof sparklineInteractiveData];
   }, [timePeriod]);
@@ -1576,6 +1573,7 @@ const AssetPriceDotted = memo(() => {
   const sparklineTimePeriodDataValues = useMemo(() => {
     return sparklineTimePeriodData.map((d) => d.value);
   }, [sparklineTimePeriodData]);
+  const currentPrice = sparklineTimePeriodDataValues[sparklineTimePeriodDataValues.length - 1];
 
   const sparklineTimePeriodDataTimestamps = useMemo(() => {
     return sparklineTimePeriodData.map((d) => d.date);
@@ -1639,14 +1637,20 @@ const AssetPriceDotted = memo(() => {
   return (
     <VStack gap={2}>
       <SectionHeader
-        balance={<Text font="title2">{formatPrice(currentPrice)}</Text>}
+        balance={
+          <RollingNumber
+            color="fgMuted"
+            font="display3"
+            format={{ style: 'currency', currency: 'USD' }}
+            value={currentPrice}
+          />
+        }
         end={
           <VStack justifyContent="center">
             <RemoteImage shape="circle" size="xl" source={assets.btc.imageUrl} />
           </VStack>
         }
-        style={{ padding: 0 }}
-        title={<Text font="title1">Bitcoin</Text>}
+        title={<Text font="label1">Bitcoin</Text>}
       />
       <LineChart
         enableScrubbing
