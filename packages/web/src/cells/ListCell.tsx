@@ -53,6 +53,7 @@ export type ListCellBaseProps = Polymorphic.ExtendableProps<
     multiline?: boolean;
     /** Title of content. Max 1 line (with description) or 2 lines (without), otherwise will truncate. */
     title?: React.ReactNode;
+    layoutVariant?: 'padded' | 'compact' | 'supercompact';
   }
 >;
 
@@ -91,13 +92,20 @@ export const ListCell: ListCellComponent = memo(
         innerSpacing,
         outerSpacing,
         detailWidth,
+        layoutVariant = compact ? 'compact' : 'padded',
         ...props
       }: ListCellProps<AsComponent>,
       ref?: Polymorphic.Ref<AsComponent>,
     ) => {
       const Component = (as ?? listCellDefaultElement) satisfies React.ElementType;
 
-      const minHeight = compact ? compactListHeight : listHeight;
+      const minHeight =
+        layoutVariant === 'compact'
+          ? compactListHeight
+          : layoutVariant === 'padded'
+            ? listHeight
+            : undefined;
+
       const accessoryType = selected && !disableSelectionAccessory ? 'selected' : accessory;
 
       const end = useMemo(() => {
