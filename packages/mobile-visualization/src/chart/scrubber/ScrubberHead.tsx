@@ -1,5 +1,10 @@
 import { forwardRef, memo, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import Reanimated, { useAnimatedProps, useSharedValue, withSpring } from 'react-native-reanimated';
+import Reanimated, {
+  useAnimatedProps,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { Circle, G } from 'react-native-svg';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import { projectPoint, useScrubberContext } from '@coinbase/cds-common/visualizations/charts';
@@ -62,7 +67,8 @@ export const ScrubberHead = memo(
     ) => {
       const theme = useTheme();
       const pointRef = useRef<PointRef>(null);
-      const { getSeries, getXScale, getYScale, getSeriesData, animate } = useCartesianChartContext();
+      const { getSeries, getXScale, getYScale, getSeriesData, animate } =
+        useCartesianChartContext();
       const { scrubberPosition: scrubberPosition } = useScrubberContext();
 
       const targetSeries = getSeries(seriesId);
@@ -174,14 +180,12 @@ export const ScrubberHead = memo(
             animatedY.value = targetPosition.y;
             wasScrubbing.current = false;
           } else if (animate) {
-            // Idle state with data update - animate to new position
-            animatedX.value = withSpring(targetPosition.x, {
-              damping: 20,
-              stiffness: 300,
+            // Idle state with data update - animate to new position (matching Path animation timing)
+            animatedX.value = withTiming(targetPosition.x, {
+              duration: 300,
             });
-            animatedY.value = withSpring(targetPosition.y, {
-              damping: 20,
-              stiffness: 300,
+            animatedY.value = withTiming(targetPosition.y, {
+              duration: 300,
             });
           } else {
             // Idle but no animation - snap to position
