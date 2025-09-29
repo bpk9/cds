@@ -9,7 +9,6 @@ export * from './sparkline-interactive/SparklineInteractiveHoverDate';
 export * from './sparkline-interactive/SparklineInteractiveLineVertical';
 export * from './sparkline-interactive/SparklineInteractiveMarkerDates';
 export * from './sparkline-interactive/SparklineInteractiveMinMax';
-export * from './sparkline-interactive/SparklineInteractiveNew';
 export * from './sparkline-interactive/SparklineInteractivePanGestureHandler';
 export * from './sparkline-interactive/SparklineInteractivePaths';
 export * from './sparkline-interactive/SparklineInteractivePeriodSelector';

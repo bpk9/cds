@@ -24,7 +24,10 @@ import isEqual from 'lodash/isEqual';
 import isObject from 'lodash/isObject';
 
 import { SparklineAccessibleView } from './SparklineAccessibleView';
-import { SparklineInteractiveHoverDate } from './SparklineInteractiveHoverDate';
+import {
+  SparklineInteractiveHoverDate,
+  type SparklineInteractiveHoverDateRefProps,
+} from './SparklineInteractiveHoverDate';
 import { SparklineInteractiveLineVertical } from './SparklineInteractiveLineVertical';
 import { SparklineInteractiveMarkerDates } from './SparklineInteractiveMarkerDates';
 import { SparklineInteractiveMinMax } from './SparklineInteractiveMinMax';
@@ -205,10 +208,6 @@ function BelowChartWithGeneric<Period extends string>({
 }
 
 const BelowChart = memo(BelowChartWithGeneric) as typeof BelowChartWithGeneric;
-
-export type SparklineInteractiveHoverDateRefProps<Period extends string> = {
-  update: (params: ChartScrubParams<Period>) => void;
-};
 
 function SparklineInteractiveContentWithGeneric<Period extends string>({
   data,
