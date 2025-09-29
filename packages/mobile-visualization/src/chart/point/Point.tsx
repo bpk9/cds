@@ -179,6 +179,11 @@ export type PointConfig = {
    * If provided, overrides `label` and `labelConfig`.
    */
   renderLabel?: (params: { x: number; y: number; dataX: number; dataY: number }) => React.ReactNode;
+  /**
+   * Accessibility label for screen readers to describe the point.
+   * If not provided, a default label will be generated using the data coordinates.
+   */
+  accessibilityLabel?: string;
 };
 
 export type PointProps = SharedProps &
@@ -219,6 +224,7 @@ export const Point = memo(
         onScrubberEnter,
         stroke,
         strokeWidth = 2,
+        accessibilityLabel,
         label,
         labelConfig,
         renderLabel,
@@ -372,7 +378,6 @@ export const Point = memo(
       return (
         <>
           <G opacity={opacity} testID={testID}>
-            {/* pulse ring - using native animated props for optimal performance */}
             {shouldPulse && (
               <AnimatedCircle
                 animatedProps={pulseAnimatedProps}
@@ -381,8 +386,8 @@ export const Point = memo(
                 fill={effectiveColor}
               />
             )}
-            {/* inner point */}
             <Circle
+              accessibilityLabel={accessibilityLabel}
               cx={pixelCoordinate.x}
               cy={pixelCoordinate.y}
               fill={effectiveColor}
