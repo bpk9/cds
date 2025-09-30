@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 8.14.0 (9/30/2025 PST)
+
+#### 🚀 Updates
+
+- Add new Select component. [[#21](https://github.com/coinbase/cds/pull/21)]
+
 ## 8.13.2 (10/1/2025 PST)
 
 #### 🐞 Fixes
