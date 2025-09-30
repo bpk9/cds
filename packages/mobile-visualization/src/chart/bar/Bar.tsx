@@ -1,5 +1,4 @@
 import React, { memo, useMemo } from 'react';
-import type { ThemeVars } from '@coinbase/cds-common';
 import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 
@@ -23,8 +22,7 @@ export type BarComponentProps = {
    */
   height: number;
   /**
-   * Border radius in pixels.
-   * @todo: make this be themevars.borderRadius
+   * Border radius of the bar.
    */
   borderRadius: number;
   /**
@@ -127,10 +125,10 @@ export type BarProps = {
    */
   strokeWidth?: number;
   /**
-   * Border radius from theme (e.g., 100, 200, etc.).
-   * @default 100
+   * Border radius for the bar in pixels.
+   * @default 4
    */
-  borderRadius?: ThemeVars.BorderRadius;
+  borderRadius?: number;
   roundTop?: boolean;
   roundBottom?: boolean;
 };
@@ -161,7 +159,7 @@ export const Bar = memo<BarProps>(
     fillOpacity = 1,
     stroke,
     strokeWidth,
-    borderRadius = 100,
+    borderRadius = 4,
     roundTop = true,
     roundBottom = true,
   }) => {
@@ -170,10 +168,7 @@ export const Bar = memo<BarProps>(
     // Use theme color as default if no fill is provided
     const effectiveFill = fill ?? theme.color.fgPrimary;
 
-    const borderRadiusPixels = useMemo(
-      () => (borderRadius ? theme.borderRadius[borderRadius] : 0),
-      [borderRadius, theme.borderRadius],
-    );
+    const borderRadiusPixels = useMemo(() => borderRadius ?? 0, [borderRadius]);
 
     const barPath = useMemo(() => {
       return getBarPath(x, y, width, height, borderRadiusPixels, roundTop, roundBottom);

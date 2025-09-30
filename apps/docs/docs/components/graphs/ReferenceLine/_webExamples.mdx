@@ -96,8 +96,8 @@ You can adjust the style of the label using the `labelConfig` prop.
     label="Liquidation"
     labelConfig={{
       dx: 4,
-      borderRadius: 100,
-      padding: { top: 0.5, bottom: 0.5, left: 1, right: 1 },
+      borderRadius: 4,
+      inset: 8,
       textAnchor: 'start',
       color: 'rgb(var(--yellow70))',
       background: 'var(--color-accentSubtleYellow)',
@@ -267,7 +267,7 @@ function DraggablePriceTarget() {
             label={dollarLabel}
             labelConfig={{
               background: color,
-              borderRadius: 100,
+              borderRadius: 4,
               color: 'white',
               dx: -8,
               font: 'label1',

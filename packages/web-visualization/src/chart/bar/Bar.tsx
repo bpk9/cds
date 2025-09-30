@@ -1,8 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import type { SVGProps } from 'react';
-import type { ThemeVars } from '@coinbase/cds-common';
 import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
-import { useTheme } from '@coinbase/cds-web';
 
 import { DefaultBar } from './';
 
@@ -130,10 +128,10 @@ export type BarProps = {
    */
   strokeWidth?: number;
   /**
-   * Border radius from theme (e.g., 100, 200, etc.).
-   * @default 100
+   * Border radius for the bar in pixels.
+   * @default 4
    */
-  borderRadius?: ThemeVars.BorderRadius;
+  borderRadius?: number;
   roundTop?: boolean;
   roundBottom?: boolean;
 };
@@ -164,15 +162,13 @@ export const Bar = memo<BarProps>(
     fillOpacity = 1,
     stroke,
     strokeWidth,
-    borderRadius = 100,
+    borderRadius = 4,
     roundTop = true,
     roundBottom = true,
   }) => {
-    const theme = useTheme();
-
     const borderRadiusPixels = useMemo(
-      () => (borderRadius ? theme.borderRadius[borderRadius] : 0),
-      [borderRadius, theme.borderRadius],
+      () => borderRadius ?? 0,
+      [borderRadius],
     );
 
     const barPath = useMemo(() => {

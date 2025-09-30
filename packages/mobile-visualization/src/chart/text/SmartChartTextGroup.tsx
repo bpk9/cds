@@ -36,7 +36,7 @@ export type SmartChartTextGroupProps = {
    */
   labels: TextLabelData[];
   /**
-   * Minimum gap between labels in pixels
+   * Minimum gap between labels
    * @default 8
    */
   minGap?: number;

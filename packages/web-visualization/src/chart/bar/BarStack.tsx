@@ -1,5 +1,4 @@
 import React, { memo, useMemo } from 'react';
-import type { ThemeVars } from '@coinbase/cds-common';
 
 import { useCartesianChartContext } from '../ChartProvider';
 
@@ -33,10 +32,10 @@ export type BarStackComponentProps = {
    */
   categoryIndex: number;
   /**
-   * Border radius from theme (e.g., 100, 200, etc.).
-   * @default 100
+   * Border radius for the bar in pixels.
+   * @default 4
    */
-  borderRadius?: ThemeVars.BorderRadius;
+  borderRadius?: number;
   /**
    * Whether to round the top corners.
    */
@@ -101,7 +100,7 @@ export type BarStackProps = {
    */
   strokeWidth?: number;
   /**
-   * Default border radius from theme.
+   * Default border radius in pixels.
    */
   borderRadius?: BarProps['borderRadius'];
   /**

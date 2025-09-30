@@ -1,7 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { G, Rect as SvgRect, Text, type TextProps } from 'react-native-svg';
-import type { ThemeVars } from '@coinbase/cds-common';
 import type { Rect, SharedProps } from '@coinbase/cds-common/types';
 import { type ChartInset, getChartInset } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
@@ -71,8 +70,11 @@ export type ChartTextProps = SharedProps &
      * Only affects the background, text position remains unchanged.
      */
     inset?: number | ChartInset;
-    // override box responsive style
-    borderRadius?: ThemeVars.BorderRadius;
+    /**
+     * Border radius for the background rectangle.
+     * @default 4
+     */
+    borderRadius?: number;
   };
 
 type ChartTextVisibleProps = {
@@ -85,7 +87,7 @@ type ChartTextVisibleProps = {
   fontWeight: TextProps['fontWeight'];
   textDimensions: Rect;
   fill: string;
-  borderRadius?: ThemeVars.BorderRadius;
+  borderRadius?: number;
   inset?: number | ChartInset;
   dx?: TextProps['dx'];
   dy?: TextProps['dy'];

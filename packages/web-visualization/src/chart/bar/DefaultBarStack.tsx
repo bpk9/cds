@@ -1,8 +1,6 @@
 import React, { memo, useMemo, useRef } from 'react';
-import type { ThemeVars } from '@coinbase/cds-common';
 import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
 import { generateRandomId } from '@coinbase/cds-utils';
-import { useTheme } from '@coinbase/cds-web';
 import { m } from 'framer-motion';
 
 import { useCartesianChartContext } from '../ChartProvider';
@@ -34,38 +32,21 @@ export const DefaultBarStack = memo<DefaultBarStackProps>(
     height,
     x,
     y,
-    borderRadius = 100,
+    borderRadius = 4,
     roundTop = true,
     roundBottom = true,
     yOrigin,
   }) => {
-    const theme = useTheme();
     const { animate } = useCartesianChartContext();
     const clipPathId = useRef(generateRandomId()).current;
 
     const clipPathData = useMemo(() => {
-      return getBarPath(
-        x,
-        y,
-        width,
-        height,
-        theme.borderRadius[borderRadius],
-        roundTop,
-        roundBottom,
-      );
-    }, [x, y, width, height, theme.borderRadius, borderRadius, roundTop, roundBottom]);
+      return getBarPath(x, y, width, height, borderRadius, roundTop, roundBottom);
+    }, [x, y, width, height, borderRadius, roundTop, roundBottom]);
 
     const initialClipPathData = useMemo(() => {
-      return getBarPath(
-        x,
-        yOrigin ?? y + height,
-        width,
-        1,
-        theme.borderRadius[borderRadius],
-        roundTop,
-        roundBottom,
-      );
-    }, [x, yOrigin, y, height, width, theme.borderRadius, borderRadius, roundTop, roundBottom]);
+      return getBarPath(x, yOrigin ?? y + height, width, 1, borderRadius, roundTop, roundBottom);
+    }, [x, yOrigin, y, height, width, borderRadius, roundTop, roundBottom]);
 
     return (
       <>

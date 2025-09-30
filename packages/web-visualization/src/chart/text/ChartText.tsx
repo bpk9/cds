@@ -1,5 +1,4 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import type { ThemeVars } from '@coinbase/cds-common';
 import type { ElevationLevels, Rect, SharedProps } from '@coinbase/cds-common/types';
 import { type ChartInset, getChartInset } from '@coinbase/cds-common/visualizations/charts';
 import { cx, useTheme } from '@coinbase/cds-web';
@@ -95,8 +94,11 @@ export type ChartTextProps = SharedProps &
       text?: string;
       backgroundRect?: string;
     };
-    // override box responsive style
-    borderRadius?: ThemeVars.BorderRadius;
+    /**
+     * Border radius for the background rectangle.
+     * @default 4
+     */
+    borderRadius?: number;
   };
 
 export const ChartText = memo<ChartTextProps>(
@@ -255,8 +257,8 @@ export const ChartText = memo<ChartTextProps>(
                 : undefined
             }
             height={backgroundRectDimensions?.height}
-            rx={borderRadius ? theme.borderRadius[borderRadius] : undefined}
-            ry={borderRadius ? theme.borderRadius[borderRadius] : undefined}
+            rx={borderRadius}
+            ry={borderRadius}
             style={styles?.backgroundRect}
             width={backgroundRectDimensions?.width}
             x={backgroundRectDimensions?.x}

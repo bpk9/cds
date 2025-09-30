@@ -55,7 +55,7 @@ export type AxisBaseProps = {
    */
   GridLineComponent?: LineComponent;
   /**
-   * Minimum gap between tick labels in pixels.
+   * Minimum gap between tick labels.
    * Labels will be hidden if they are closer than this gap.
    * @default 4
    */

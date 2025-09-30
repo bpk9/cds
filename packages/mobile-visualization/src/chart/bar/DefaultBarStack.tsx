@@ -1,10 +1,8 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { runOnJS, useAnimatedReaction, useSharedValue, withTiming } from 'react-native-reanimated';
 import { ClipPath, Defs, G, Path } from 'react-native-svg';
-import type { ThemeVars } from '@coinbase/cds-common';
 import { usePreviousValue } from '@coinbase/cds-common/hooks/usePreviousValue';
 import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
-import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { generateRandomId } from '@coinbase/cds-utils';
 import * as interpolate from 'd3-interpolate-path';
 
@@ -26,43 +24,26 @@ export const DefaultBarStack = memo<DefaultBarStackProps>(
     height,
     x,
     y,
-    borderRadius = 100,
+    borderRadius = 4,
     roundTop = true,
     roundBottom = true,
     yOrigin,
   }) => {
     const pathRef = useRef<Path | null>(null);
-    const theme = useTheme();
     const { animate } = useCartesianChartContext();
     const clipPathId = useRef(generateRandomId()).current;
 
     const animationProgress = useSharedValue(0);
 
     const targetClipPath = useMemo(() => {
-      return getBarPath(
-        x,
-        y,
-        width,
-        height,
-        theme.borderRadius[borderRadius],
-        roundTop,
-        roundBottom,
-      );
-    }, [x, y, width, height, theme.borderRadius, borderRadius, roundTop, roundBottom]);
+      return getBarPath(x, y, width, height, borderRadius, roundTop, roundBottom);
+    }, [x, y, width, height, borderRadius, roundTop, roundBottom]);
 
     const previousClipPath = usePreviousValue(targetClipPath);
 
     const initialClipPath = useMemo(() => {
-      return getBarPath(
-        x,
-        yOrigin ?? y + height,
-        width,
-        1,
-        theme.borderRadius[borderRadius],
-        roundTop,
-        roundBottom,
-      );
-    }, [x, yOrigin, y, height, width, theme.borderRadius, borderRadius, roundTop, roundBottom]);
+      return getBarPath(x, yOrigin ?? y + height, width, 1, borderRadius, roundTop, roundBottom);
+    }, [x, yOrigin, y, height, width, borderRadius, roundTop, roundBottom]);
 
     const fromClipPath = useMemo(() => {
       if (!animate) return targetClipPath;

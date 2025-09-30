@@ -61,18 +61,15 @@ export type BarStackGroupProps = {
    */
   roundBaseline?: boolean;
   /**
-   * Gap between bars in the stack in pixels.
-   * @default 0
+   * Gap between bars in the stack.
    */
   stackGap?: number;
   /**
-   * Minimum size for individual bars in the stack in pixels.
-   * @default 0
+   * Minimum size for individual bars in the stack.
    */
   barMinSize?: number;
   /**
-   * Minimum size for the entire stack in pixels.
-   * @default 0
+   * Minimum size for the entire stack.
    */
   stackMinSize?: number;
   /**

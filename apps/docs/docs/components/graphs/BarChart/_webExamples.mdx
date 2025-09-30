@@ -302,14 +302,14 @@ function MonthlyGainsByAsset() {
 
 ## Border Radius
 
-Bars have a default border radius of `100`. You can change this by setting the `borderRadius` prop on the chart.
+Bars have a default border radius of `4` pixels. You can change this by setting the `borderRadius` prop on the chart.
 
 Stacks will only round the top corners of touching bars.
 
 ```jsx live
 <BarChart
   stacked
-  borderRadius={1000}
+  borderRadius={16}
   height={300}
   maxWidth={400}
   inset={0}
@@ -345,7 +345,7 @@ You can also round the baseline of the bars by setting the `roundBaseline` prop 
 <BarChart
   roundBaseline
   stacked
-  borderRadius={1000}
+  borderRadius={16}
   height={300}
   maxWidth={400}
   inset={0}
@@ -470,7 +470,7 @@ function MonthlyRewards() {
         <Bar
           roundBottom
           roundTop
-          borderRadius={1000}
+          borderRadius={16}
           fill="var(--color-bgTertiary)"
           height={diameter}
           width={diameter}
@@ -489,7 +489,7 @@ function MonthlyRewards() {
       showXAxis
       stacked
       BarStackComponent={CustomBarStackComponent}
-      borderRadius={1000}
+      borderRadius={16}
       height={300}
       inset={0}
       series={series}
@@ -860,7 +860,7 @@ function MonthlyRewards() {
         <Bar
           roundBottom
           roundTop
-          borderRadius={1000}
+          borderRadius={16}
           stroke="var(--color-fg)"
           strokeWidth={4}
           height={props.height}
@@ -879,7 +879,7 @@ function MonthlyRewards() {
       roundBaseline
       stacked
       BarStackComponent={CustomBarStackComponent}
-      borderRadius={1000}
+      borderRadius={16}
       height={300}
       maxWidth={400}
       inset={0}
