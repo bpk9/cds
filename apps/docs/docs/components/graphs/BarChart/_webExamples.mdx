@@ -805,14 +805,14 @@ function Candlesticks() {
         showXAxis
         showYAxis
         BarComponent={CandlestickBarComponent}
-        BarStackComponent={({ 
-          children, 
-          yOrigin, 
-          roundTop, 
-          roundBottom, 
-          borderRadius, 
+        BarStackComponent={({
+          children,
+          yOrigin,
+          roundTop,
+          roundBottom,
+          borderRadius,
           categoryIndex,
-          ...props 
+          ...props
         }) => <g {...props}>{children}</g>}
         animate={false}
         borderRadius={0}
