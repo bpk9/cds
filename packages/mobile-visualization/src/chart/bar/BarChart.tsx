@@ -182,7 +182,7 @@ export const BarChart = memo(
           xAxis={xAxisConfig}
           yAxis={yAxisConfig}
         >
-          {showXAxis && <XAxis position="bottom" {...xAxisVisualProps} />}
+          {showXAxis && <XAxis {...xAxisVisualProps} />}
           {showYAxis && <YAxis axisId={yAxisId} position="left" {...yAxisVisualProps} />}
           <BarPlot
             BarComponent={BarComponent}

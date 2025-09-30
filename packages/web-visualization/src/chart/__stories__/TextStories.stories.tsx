@@ -306,7 +306,7 @@ export const InteractiveChartText = () => {
           }}
           width={CHART_WIDTH}
         >
-          <XAxis position="bottom" showGrid={true} showLine={true} showTickMarks={true} />
+          <XAxis showGrid={true} showLine={true} showTickMarks={true} />
           <YAxis position="left" showGrid={true} showLine={true} showTickMarks={true} />
           <ChartText
             borderRadius={200}
@@ -642,7 +642,6 @@ export const InteractiveSmartChartTextGroup = () => {
         >
           {/* Axes with grid lines but no labels */}
           <XAxis
-            position="bottom"
             showGrid={true}
             showLine={true}
             showTickMarks={false}

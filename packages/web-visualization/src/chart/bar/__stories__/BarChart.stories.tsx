@@ -465,7 +465,6 @@ export const All = () => {
             showLine
             showTickMarks
             axisId="profit"
-            position="right"
             requestedTickCount={5}
             tickLabelFormatter={(value) => `$${value}k`}
           />

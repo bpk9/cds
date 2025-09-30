@@ -279,7 +279,7 @@ export const ChartText = memo<ChartTextProps>(
             x={x}
             y={y}
           >
-            {children}
+            <tspan>{children}</tspan>
           </Text>
         </motion.g>
       </Box>

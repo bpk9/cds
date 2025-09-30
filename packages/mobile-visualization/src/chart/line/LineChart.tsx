@@ -189,7 +189,7 @@ export const LineChart = memo(
             yAxis={yAxisConfig}
           >
             {/* Render axes first for grid lines to appear behind everything else */}
-            {showXAxis && <XAxis position="bottom" {...xAxisVisualProps} />}
+            {showXAxis && <XAxis {...xAxisVisualProps} />}
             {showYAxis && <YAxis axisId={yAxisId} position="left" {...yAxisVisualProps} />}
             {hasData &&
               series?.map(({ id, data, label, color, yAxisId, ...linePropsFromSeries }) => (

@@ -174,7 +174,7 @@ export const AreaChart = memo(
           xAxis={xAxisConfig}
           yAxis={yAxisConfig}
         >
-          {showXAxis && <XAxis position="bottom" {...xAxisVisualProps} />}
+          {showXAxis && <XAxis {...xAxisVisualProps} />}
           {showYAxis && <YAxis axisId={yAxisId} position="left" {...yAxisVisualProps} />}
           {series?.map(
             ({

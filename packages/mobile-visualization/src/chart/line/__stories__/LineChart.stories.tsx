@@ -283,7 +283,6 @@ export const AssetPrice = () => {
         xAxis={{ domain: { min: 0, max: pricePointsPerHour * 24 } }}
       >
         <XAxis
-          position="bottom"
           tickLabelFormatter={(index) => indexToTime(index).slice(0, -3)}
           ticks={(index) => index % (12 * 6) === 0}
         />

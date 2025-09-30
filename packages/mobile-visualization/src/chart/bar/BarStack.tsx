@@ -614,7 +614,8 @@ export const BarStack = memo<BarStackProps>(
 
           // Apply new positions to all bars
           allBars = allBars.map((bar) => {
-            const newPos = newPositions.get(bar.seriesId)!;
+            const newPos = newPositions.get(bar.seriesId);
+            if (!newPos) return bar;
             return {
               ...bar,
               height: newPos.height,

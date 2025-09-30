@@ -87,7 +87,6 @@ const CustomYAxis = memo(() => {
     <YAxis
       showGrid
       GridLineComponent={SolidLine}
-      position="right"
       requestedTickCount={2}
       tickLabelFormatter={(value) => `${Math.round(value)}%`}
     />

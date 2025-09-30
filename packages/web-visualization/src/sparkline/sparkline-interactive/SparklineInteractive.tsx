@@ -439,7 +439,6 @@ export const SparklineInteractive = memo(
         >
           <XAxis
             height={axisSize}
-            position="bottom"
             style={{
               opacity: isScrubbing || !showBottomPeriodSelector ? 1 : 0,
               transition: 'opacity 0.2s ease-in-out',

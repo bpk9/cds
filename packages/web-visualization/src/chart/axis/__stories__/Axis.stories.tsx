@@ -208,7 +208,6 @@ const TimeOfDayAxesExample = () => {
         showGrid
         showLine
         showTickMarks
-        position="bottom"
         tickLabelFormatter={timeOfDayFormatter}
         ticks={timeOfDayTicks}
       />
@@ -236,7 +235,7 @@ const MultipleYAxesExample = () => (
       { id: 'logAxis', scaleType: 'log' },
     ]}
   >
-    <XAxis showLine showTickMarks position="bottom" />
+    <XAxis showLine showTickMarks />
     <YAxis showLine showTickMarks axisId="logAxis" position="left" />
     <YAxis showLine showTickMarks axisId="linearAxis" position="left" />
     <Line curve="natural" seriesId="linear" />
@@ -283,7 +282,7 @@ const DomainLimitType = ({ limit }: { limit: 'nice' | 'strict' }) => {
     >
       <Line showArea curve="natural" seriesId="growthLinear" />
       <Line showArea curve="natural" seriesId="growthExponential" />
-      <XAxis showLine position="bottom" />
+      <XAxis showLine />
       <YAxis
         showLine
         showTickMarks
@@ -297,7 +296,6 @@ const DomainLimitType = ({ limit }: { limit: 'nice' | 'strict' }) => {
         showLine
         showTickMarks
         axisId="linear"
-        position="right"
         tickLabelFormatter={(value) => value.toLocaleString()}
         width={70}
       />
