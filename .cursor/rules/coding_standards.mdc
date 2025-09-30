@@ -41,7 +41,6 @@ This section outlines the coding standards and best practices for contributing t
 - Every property of a component's props API must have JSDoc comments
 - Components must export their prop types: a `BaseProps` and `Props` (e.g. `ButtonBaseProps`, `ButtonProps`). For most cases, `BaseProps` will contain all the properties while `Props` will be assigned to `BaseProps`.
 - React component files should follow the same basic structure:
-
   1. Imports: define imports at the top of the file
   2. Static Styles: define component default styles using the platform-appropriate method
   3. Type definitions: define TypeScript types for the component's props
@@ -67,6 +66,16 @@ This section outlines the coding standards and best practices for contributing t
       propb: number;
     };
   ```
+
+## Custom Component Architecture
+
+When building components that support customization through replaceable sub-components:
+
+1. Type definition: Use `React.FC` - e.g., `type SlideButtonHandleComponent = React.FC<SlideButtonHandleProps>`
+2. Props hierarchy: `ComponentProps` (required) → `DefaultComponentBaseProps` (equals ComponentProps) → `DefaultComponentProps` (adds platform-specific: style, className)
+3. Prop naming: `[Feature]Component` with `@default Default[Feature]`
+4. Default components: Prefix with `Default` (e.g., `DefaultSlideButtonHandle`)
+5. File organization: Separate files for defaults, re-export from `index.ts`
 
 ## React Hooks & Utility Functions
 
