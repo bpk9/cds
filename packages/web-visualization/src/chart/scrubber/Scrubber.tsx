@@ -257,7 +257,7 @@ export const Scrubber = memo(
       ]);
 
       // todo: the inset around the label shouldn't be needed for this collision calculation since the ChatText onDimensionsChange will report the bounding box that includes the inset
-      const labelInset = 8; // pixels
+      const labelInset = 4; // pixels
       const minLabelGap = 4; // pixels
 
       // Calculate optimal label positioning strategy
