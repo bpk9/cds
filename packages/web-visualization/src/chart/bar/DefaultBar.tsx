@@ -1,13 +1,23 @@
 import React, { memo, useMemo } from 'react';
-import type { SVGProps } from 'react';
 import { getBarPath } from '@coinbase/cds-common/visualizations/charts';
-import { m as motion, type MotionProps } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 
 import { useCartesianChartContext } from '../ChartProvider';
 
 import type { BarComponentProps } from './Bar';
 
-export type DefaultBarProps = BarComponentProps;
+export type DefaultBarBaseProps = BarComponentProps;
+
+export type DefaultBarProps = DefaultBarBaseProps & {
+  /**
+   * Custom class name for the bar.
+   */
+  className?: string;
+  /**
+   * Custom styles for the bar.
+   */
+  style?: React.CSSProperties;
+};
 
 /**
  * Default bar component that renders a solid bar with animation.
@@ -23,8 +33,9 @@ export const DefaultBar = memo<DefaultBarProps>(
     d,
     fill = 'var(--color-fgPrimary)',
     fillOpacity = 1,
-    stroke,
-    strokeWidth,
+    dataX,
+    dataY,
+    ...props
   }) => {
     const { animate } = useCartesianChartContext();
     const initialPath = useMemo(() => {
@@ -35,24 +46,19 @@ export const DefaultBar = memo<DefaultBarProps>(
       return getBarPath(x, initialY, width, minHeight, borderRadius, roundTop, roundBottom);
     }, [animate, x, originY, width, borderRadius, roundTop, roundBottom]);
 
-    const pathProps: SVGProps<SVGPathElement> & MotionProps = {
-      fill,
-      fillOpacity,
-      stroke,
-      strokeWidth,
-    };
-
     if (animate && initialPath) {
       return (
         <motion.path
-          {...pathProps}
+          {...props}
           animate={{ d }}
+          fill={fill}
+          fillOpacity={fillOpacity}
           initial={{ d: initialPath }}
           transition={{ type: 'spring', duration: 1, bounce: 0 }}
         />
       );
     }
 
-    return <path {...pathProps} d={d} />;
+    return <path {...props} d={d} fill={fill} fillOpacity={fillOpacity} />;
   },
 );

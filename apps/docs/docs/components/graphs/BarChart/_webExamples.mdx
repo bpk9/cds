@@ -445,7 +445,7 @@ You can pass in `null` or `0` values to not render a bar for that data point.
 />
 ```
 
-You can also use the `StackComponent` prop to render an empty circle for zero values.
+You can also use the `BarStackComponent` prop to render an empty circle for zero values.
 
 ```jsx live
 function MonthlyRewards() {
@@ -463,7 +463,7 @@ function MonthlyRewards() {
     { id: 'green', data: green, color: '#33c481' },
   ];
 
-  const CustomStackComponent = ({ children, ...props }: StackComponentProps) => {
+  const CustomBarStackComponent = ({ children, ...props }: BarStackComponentProps) => {
     if (props.height === 0) {
       const diameter = props.width;
       return (
@@ -480,7 +480,7 @@ function MonthlyRewards() {
       );
     }
 
-    return <DefaultStackComponent {...props}>{children}</DefaultStackComponent>;
+    return <DefaultBarStack {...props}>{children}</DefaultBarStack>;
   };
 
   return (
@@ -488,7 +488,7 @@ function MonthlyRewards() {
       roundBaseline
       showXAxis
       stacked
-      StackComponent={CustomStackComponent}
+      BarStackComponent={CustomBarStackComponent}
       borderRadius={1000}
       height={300}
       padding={0}
@@ -704,16 +704,13 @@ function Candlesticks() {
   const infoTextId = useId();
   const infoTextRef = React.useRef<HTMLSpanElement>(null);
   const selectedIndexRef = React.useRef<number | null>(null);
-  const stockData = btcCandles.slice(0, 90)
-    .reverse();
-  const min = Math.min(...stockData.map((data) => parseFloat(data.low)));
+  const stockData = useMemo(() => btcCandles.slice(0, 90)
+    .reverse(), []);
+  const min = useMemo(() => Math.min(...stockData.map((data) => parseFloat(data.low))), [stockData]);
 
-  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+  const ThinSolidLine = memo((props) => <SolidLine {...props} strokeWidth={1} />);
 
-  const candlesData = stockData.map((data) => [parseFloat(data.low), parseFloat(data.high)]) as [
-    number,
-    number,
-  ][];
+  const candlesData = useMemo(() => stockData.map((data) => [parseFloat(data.low), parseFloat(data.high)]), [stockData]);
 
   const CandlestickBarComponent = memo<BarComponentProps>(
     ({ x, y, width, height, originY, dataX, ...props }) => {
@@ -722,7 +719,9 @@ function Candlesticks() {
 
       const wickX = x + width / 2;
 
-      const timePeriodValue = stockData[dataX as number];
+      const timePeriodValue = stockData[dataX];
+
+      if (!timePeriodValue) return;
 
       const open = parseFloat(timePeriodValue.open);
       const close = parseFloat(timePeriodValue.close);
@@ -744,14 +743,14 @@ function Candlesticks() {
     },
   );
 
-  const formatPrice = React.useCallback((price: string) => {
+  const formatPrice = React.useCallback((price) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
     }).format(parseFloat(price));
   }, []);
 
-  const formatVolume = React.useCallback((volume: string) => {
+  const formatVolume = React.useCallback((volume) => {
     const volumeInThousands = parseFloat(volume) / 1000;
     return (
       new Intl.NumberFormat('en-US', {
@@ -763,8 +762,8 @@ function Candlesticks() {
   }, []);
 
   const formatTime = React.useCallback(
-    (index: number | null) => {
-      if (index === null || index >= stockData.length) return '';
+    (index) => {
+      if (index === undefined || index === null) return '';
       const ts = parseInt(stockData[index].start);
       return new Date(ts * 1000).toLocaleDateString('en-US', {
         month: 'short',
@@ -775,11 +774,11 @@ function Candlesticks() {
   );
 
   const updateInfoText = React.useCallback(
-    (index: number | null) => {
+    (index) => {
       if (!infoTextRef.current) return;
 
       const text =
-        index !== null
+        index !== undefined && index !== null
           ? `Open: ${formatPrice(stockData[index].open)}, Close: ${formatPrice(
               stockData[index].close,
             )}, Volume: ${formatVolume(stockData[index].volume)}`
@@ -806,7 +805,15 @@ function Candlesticks() {
         showXAxis
         showYAxis
         BarComponent={CandlestickBarComponent}
-        StackComponent={({ children, ...props }) => <g {...props}>{children}</g>}
+        BarStackComponent={({ 
+          children, 
+          yOrigin, 
+          roundTop, 
+          roundBottom, 
+          borderRadius, 
+          categoryIndex,
+          ...props 
+        }) => <g {...props}>{children}</g>}
         animate={false}
         borderRadius={0}
         height={400}
@@ -844,11 +851,11 @@ function Candlesticks() {
 
 #### Outlined Stacks
 
-You can set the `StackComponent` prop to render a custom component for stacks.
+You can set the `BarStackComponent` prop to render a custom component for stacks.
 
 ```jsx live
 function MonthlyRewards() {
-  const CustomStackComponent = ({ children, ...props }: StackComponentProps) => {
+  const CustomBarStackComponent = ({ children, ...props }: BarStackComponentProps) => {
     return (
       <>
         <Bar
@@ -863,7 +870,7 @@ function MonthlyRewards() {
           y={props.y}
           clip
         />
-        <DefaultStackComponent {...props}>{children}</DefaultStackComponent>
+        <DefaultBarStack {...props}>{children}</DefaultBarStack>
       </>
     );
   };
@@ -872,7 +879,7 @@ function MonthlyRewards() {
     <BarChart
       roundBaseline
       stacked
-      StackComponent={CustomStackComponent}
+      BarStackComponent={CustomBarStackComponent}
       borderRadius={1000}
       height={300}
       maxWidth={400}

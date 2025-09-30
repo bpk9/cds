@@ -23,7 +23,12 @@ export type BarSeries = Series &
 export type BarChartProps = Omit<CartesianChartProps, 'xAxis' | 'yAxis' | 'series'> &
   Pick<
     BarPlotProps,
-    'barPadding' | 'StackComponent' | 'roundBaseline' | 'stackGap' | 'barMinSize' | 'stackMinSize'
+    | 'barPadding'
+    | 'BarStackComponent'
+    | 'roundBaseline'
+    | 'stackGap'
+    | 'barMinSize'
+    | 'stackMinSize'
   > &
   Pick<BarProps, 'BarComponent' | 'fillOpacity' | 'stroke' | 'strokeWidth' | 'borderRadius'> & {
     /**
@@ -72,7 +77,7 @@ export const BarChart = memo(
         strokeWidth,
         borderRadius,
         roundBaseline,
-        StackComponent,
+        BarStackComponent,
         stackGap,
         barMinSize,
         stackMinSize,
@@ -177,7 +182,7 @@ export const BarChart = memo(
           {showYAxis && <YAxis axisId={yAxisId} position="end" {...yAxisVisualProps} />}
           <BarPlot
             BarComponent={BarComponent}
-            StackComponent={StackComponent}
+            BarStackComponent={BarStackComponent}
             barMinSize={barMinSize}
             barPadding={barPadding}
             borderRadius={borderRadius}

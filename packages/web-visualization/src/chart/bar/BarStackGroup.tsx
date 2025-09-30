@@ -7,8 +7,8 @@ import { useCartesianChartContext } from '../ChartProvider';
 
 import type { BarComponent, BarProps } from './Bar';
 import type { BarSeries } from './BarChart';
+import type { BarStackComponent } from './BarStack';
 import { BarStack } from './BarStack';
-import type { StackComponent } from './DefaultStackComponent';
 
 // todo: simplify props by reusing from other types
 export type BarStackGroupProps = {
@@ -70,9 +70,9 @@ export type BarStackGroupProps = {
   /**
    * Custom component to render the stack container.
    * Can be used to add clip paths, outlines, or other custom styling.
-   * @default DefaultStackComponent
+   * @default DefaultBarStack
    */
-  StackComponent?: StackComponent;
+  BarStackComponent?: BarStackComponent;
 };
 
 /**

@@ -12,7 +12,8 @@ import { PeriodSelector } from '../../PeriodSelector';
 import { Scrubber } from '../../scrubber';
 import { BarChart } from '../BarChart';
 import { BarPlot } from '../BarPlot';
-import { DefaultStackComponent, type StackComponentProps } from '../DefaultStackComponent';
+import { type BarStackComponentProps } from '../BarStack';
+import { DefaultBarStack } from '../DefaultBarStack';
 import { Bar, type BarComponentProps } from '..';
 
 export default {
@@ -137,7 +138,7 @@ const MonthlyRewards = () => {
     { id: 'green', data: green, color: '#33c481' },
   ];
 
-  const CustomStackComponent = ({ children, ...props }: StackComponentProps) => {
+  const CustomBarStackComponent = ({ children, ...props }: BarStackComponentProps) => {
     if (props.height === 0) {
       const diameter = props.width;
       return (
@@ -154,7 +155,7 @@ const MonthlyRewards = () => {
       );
     }
 
-    return <DefaultStackComponent {...props}>{children}</DefaultStackComponent>;
+    return <DefaultBarStack {...props}>{children}</DefaultBarStack>;
   };
 
   return (
@@ -162,7 +163,7 @@ const MonthlyRewards = () => {
       roundBaseline
       showXAxis
       stacked
-      StackComponent={CustomStackComponent}
+      BarStackComponent={CustomBarStackComponent}
       borderRadius={1000}
       height={300}
       padding={0}
@@ -333,7 +334,7 @@ const Candlesticks = () => {
         showXAxis
         showYAxis
         BarComponent={CandlestickBarComponent}
-        StackComponent={({ children, ...props }) => <g {...props}>{children}</g>}
+        BarStackComponent={({ children, ...props }) => <g {...props}>{children}</g>}
         animate={false}
         aria-labelledby={infoTextId}
         borderRadius={0}

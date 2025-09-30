@@ -16,7 +16,9 @@ import { useCartesianChartContext } from '../ChartProvider';
 
 import type { BarComponentProps } from './Bar';
 
-export type DefaultBarProps = BarComponentProps;
+export type DefaultBarBaseProps = BarComponentProps;
+
+export type DefaultBarProps = DefaultBarBaseProps;
 
 /**
  * Default bar component that renders a solid bar with animation.

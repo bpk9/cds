@@ -8,8 +8,8 @@ import { useCartesianChartContext } from '../ChartProvider';
 
 import type { BarComponent, BarProps } from './Bar';
 import type { BarSeries } from './BarChart';
+import type { BarStackComponent } from './BarStack';
 import { BarStackGroup } from './BarStackGroup';
-import type { StackComponent } from './DefaultStackComponent';
 
 export type BarPlotProps = {
   /**
@@ -61,9 +61,9 @@ export type BarPlotProps = {
   /**
    * Custom component to render the stack container.
    * Can be used to add clip paths, outlines, or other custom styling.
-   * @default DefaultStackComponent
+   * @default DefaultBarStack
    */
-  StackComponent?: StackComponent;
+  BarStackComponent?: BarStackComponent;
 };
 
 /**
@@ -82,7 +82,7 @@ export const BarPlot = memo<BarPlotProps>(
     strokeWidth: defaultStrokeWidth,
     borderRadius: defaultBorderRadius,
     roundBaseline,
-    StackComponent,
+    BarStackComponent,
     stackGap,
     barMinSize,
     stackMinSize,
@@ -151,7 +151,7 @@ export const BarPlot = memo<BarPlotProps>(
             <BarStackGroup
               key={group.stackId}
               BarComponent={defaultBarComponent}
-              StackComponent={StackComponent}
+              BarStackComponent={BarStackComponent}
               barMinSize={barMinSize}
               barPadding={barPadding}
               borderRadius={defaultBorderRadius}

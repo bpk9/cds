@@ -7,7 +7,53 @@ import { useCartesianChartContext } from '../ChartProvider';
 
 import { Bar, type BarComponent, type BarProps } from './Bar';
 import type { BarSeries } from './BarChart';
-import { DefaultStackComponent, type StackComponent } from './DefaultStackComponent';
+import { DefaultBarStack } from './DefaultBarStack';
+
+export type BarStackComponentProps = {
+  /**
+   * The x position of the stack.
+   */
+  x: number;
+  /**
+   * The y position of the stack.
+   */
+  y: number;
+  /**
+   * The width of the stack.
+   */
+  width: number;
+  /**
+   * The height of the stack.
+   */
+  height: number;
+  /**
+   * The bar elements to render within the stack.
+   */
+  children: React.ReactNode;
+  /**
+   * The index of the category this stack belongs to.
+   */
+  categoryIndex: number;
+  /**
+   * Border radius from theme (e.g., 100, 200, etc.).
+   * @default 100
+   */
+  borderRadius?: ThemeVars.BorderRadius;
+  /**
+   * Whether to round the top corners.
+   */
+  roundTop?: boolean;
+  /**
+   * Whether to round the bottom corners.
+   */
+  roundBottom?: boolean;
+  /**
+   * The y-origin for animations (baseline position).
+   */
+  yOrigin?: number;
+};
+
+export type BarStackComponent = React.FC<BarStackComponentProps>;
 
 // todo: simplify props by reusing from other types
 export type BarStackProps = {
@@ -63,9 +109,9 @@ export type BarStackProps = {
   /**
    * Custom component to render the stack container.
    * Can be used to add clip paths, outlines, or other custom styling.
-   * @default DefaultStackComponent
+   * @default DefaultBarStack
    */
-  StackComponent?: StackComponent;
+  BarStackComponent?: BarStackComponent;
   /**
    * Whether to round the baseline of a bar (where the value is 0).
    */
@@ -102,7 +148,7 @@ export const BarStack = memo<BarStackProps>(
     stroke: defaultStroke,
     strokeWidth: defaultStrokeWidth,
     borderRadius,
-    StackComponent = DefaultStackComponent,
+    BarStackComponent = DefaultBarStack,
     stackGap,
     barMinSize,
     stackMinSize,
@@ -637,7 +683,7 @@ export const BarStack = memo<BarStackProps>(
     const stackRoundTop = roundBaseline || stackRect.y !== baseline;
 
     return (
-      <StackComponent
+      <BarStackComponent
         borderRadius={borderRadius}
         categoryIndex={categoryIndex}
         height={stackRect.height}
@@ -649,7 +695,7 @@ export const BarStack = memo<BarStackProps>(
         yOrigin={yOrigin}
       >
         {barElements}
-      </StackComponent>
+      </BarStackComponent>
     );
   },
 );
