@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import type { ThemeVars } from '@coinbase/cds-common';
 import type { ElevationLevels, Rect, SharedProps } from '@coinbase/cds-common/types';
-import { type ChartPadding, getPadding } from '@coinbase/cds-common/visualizations/charts';
+import { type ChartInset, getChartInset } from '@coinbase/cds-common/visualizations/charts';
 import { cx, useTheme } from '@coinbase/cds-web';
 import { Box, type BoxProps } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
@@ -79,10 +79,10 @@ export type ChartTextProps = SharedProps &
      */
     onDimensionsChange?: (rect: Rect) => void;
     /**
-     * Padding around the text content for the background rect.
+     * Inset around the text content for the background rect.
      * Only affects the background, text position remains unchanged.
      */
-    padding?: ThemeVars.Space | ChartPadding;
+    inset?: number | ChartInset;
     style?: React.CSSProperties;
     styles?: {
       root?: React.CSSProperties;
@@ -120,7 +120,7 @@ export const ChartText = memo<ChartTextProps>(
     color = 'var(--color-fgMuted)',
     background = elevation && elevation > 0 ? 'var(--color-bg)' : 'transparent',
     borderRadius,
-    padding: paddingInput,
+    inset: insetInput,
     onDimensionsChange,
     style,
     styles,
@@ -143,20 +143,14 @@ export const ChartText = memo<ChartTextProps>(
         return null;
       }
 
-      const paddingWithTheme = getPadding(paddingInput);
-      const padding = {
-        top: theme.space[paddingWithTheme.top],
-        right: theme.space[paddingWithTheme.right],
-        bottom: theme.space[paddingWithTheme.bottom],
-        left: theme.space[paddingWithTheme.left],
-      };
+      const inset = getChartInset(insetInput);
       return {
-        x: textBBox.x - padding.left,
-        y: textBBox.y - padding.top,
-        width: textBBox.width + padding.left + padding.right,
-        height: textBBox.height + padding.top + padding.bottom,
+        x: textBBox.x - inset.left,
+        y: textBBox.y - inset.top,
+        width: textBBox.width + inset.left + inset.right,
+        height: textBBox.height + inset.top + inset.bottom,
       };
-    }, [textBBox, paddingInput, theme.space]);
+    }, [textBBox, insetInput]);
 
     const overflowAmount = useMemo(() => {
       if (disableRepositioning) {

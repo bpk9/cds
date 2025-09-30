@@ -9,7 +9,7 @@ import type {
   Placement,
 } from '@coinbase/cds-common/types';
 import { getAccessibleColor } from '@coinbase/cds-common/utils/getAccessibleColor';
-import { defaultChartPadding } from '@coinbase/cds-common/visualizations/charts';
+import { defaultChartInset } from '@coinbase/cds-common/visualizations/charts';
 import { emptyArray, noop } from '@coinbase/cds-utils';
 import { cx, useTheme } from '@coinbase/cds-web';
 import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
@@ -29,7 +29,7 @@ export type SparklineInteractiveDefaultFallback = Pick<
 
 const mobileLayoutBreakpoint = 650;
 const axisSize = 52;
-const chartPaddingTop = defaultChartPadding.top;
+const chartInsetTop = defaultChartInset.top;
 
 export type SparklineInteractiveBaseProps<Period extends string> = {
   /**
@@ -219,7 +219,7 @@ export const SparklineInteractive = memo(
 
     const sparklineInteractiveHeight = useMemo(() => {
       const innerHeight = compact ? chartCompactHeight : chartHeight;
-      return innerHeight + chartPaddingTop + axisSize;
+      return innerHeight + chartInsetTop + axisSize;
     }, [compact]);
 
     const isMobileLayout = containerWidth > 0 && containerWidth < mobileLayoutBreakpoint;
@@ -419,8 +419,8 @@ export const SparklineInteractive = memo(
           fallback={fallback}
           fallbackType={fallbackType}
           height={sparklineInteractiveHeight}
+          inset={{ left: 0, right: 0, top: chartInsetTop, bottom: 0 }}
           onScrubberPositionChange={handleHighlightChange}
-          padding={{ left: 0, right: 0, top: chartPaddingTop, bottom: 0 }}
           series={series}
           showArea={fill}
           style={{
@@ -438,8 +438,8 @@ export const SparklineInteractive = memo(
           }}
         >
           <XAxis
-            position="end"
-            size={axisSize}
+            height={axisSize}
+            position="bottom"
             style={{
               opacity: isScrubbing || !showBottomPeriodSelector ? 1 : 0,
               transition: 'opacity 0.2s ease-in-out',

@@ -22,7 +22,7 @@ export const ScrubberHeadLabel = memo<ScrubberHeadLabelProps>(
     background = 'white',
     color = 'var(--color-fgPrimary)',
     opacity = 1,
-    padding = 1,
+    inset = 1,
     onDimensionsChange,
     elevation = background !== undefined ? 1 : undefined,
     borderRadius = background !== undefined ? 200 : undefined,
@@ -67,8 +67,8 @@ export const ScrubberHeadLabel = memo<ScrubberHeadLabelProps>(
         dx={spacing}
         elevation={elevation}
         font="label1"
+        inset={inset}
         onDimensionsChange={handleDimensionsChange}
-        padding={padding}
         testID={testID}
         textAnchor={side === 'right' ? 'start' : 'end'}
         {...chartTextProps}

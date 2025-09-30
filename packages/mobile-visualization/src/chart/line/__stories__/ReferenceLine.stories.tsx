@@ -134,7 +134,7 @@ const DraggablePriceTarget = () => {
               borderRadius: 100,
               color: 'white',
               dx: -8,
-              padding: { top: 5, bottom: 5, left: 10, right: 10 },
+              inset: { top: 5, bottom: 5, left: 10, right: 10 },
               textAnchor: 'end',
             }}
             labelPosition="right"
@@ -198,7 +198,7 @@ const DraggablePriceTarget = () => {
         animate={false}
         curve="monotone"
         height={250}
-        padding={{ top: 2, bottom: 2, left: 8, right: 10 }}
+        inset={{ top: 16, bottom: 16, left: 64, right: 80 }}
         series={[
           {
             id: 'prices',
@@ -212,7 +212,7 @@ const DraggablePriceTarget = () => {
           LineComponent={SolidLine}
           dataY={priceData[priceData.length - 1]}
           label={formatPrice(priceData[priceData.length - 1])}
-          labelConfig={{ dx: 16, textAnchor: 'start' }}
+          labelConfig={{ dx: 16, textAnchor: 'start', inset: 0 }}
         />
         <DraggableReferenceLine
           baselineAmount={priceData[priceData.length - 1]}
@@ -245,12 +245,12 @@ const ReferenceLineStories = () => {
           <ReferenceLine
             dataX={4}
             label="Vertical Reference Line"
-            labelConfig={{ textAnchor: 'start', dx: 4 }}
+            labelConfig={{ textAnchor: 'start', dx: 4, inset: 0 }}
           />
           <ReferenceLine
             dataY={70}
             label="Horizontal Reference Line"
-            labelConfig={{ alignmentBaseline: 'text-bottom', dy: -4 }}
+            labelConfig={{ alignmentBaseline: 'text-bottom', dy: -4, inset: 0 }}
           />
         </LineChart>
       </Example>
@@ -258,7 +258,7 @@ const ReferenceLineStories = () => {
         <LineChart
           curve="monotone"
           height={250}
-          padding={{ right: 4, top: 0, left: 0, bottom: 0 }}
+          inset={{ right: 32, top: 0, left: 0, bottom: 0 }}
           series={[
             {
               id: 'prices',
@@ -272,7 +272,7 @@ const ReferenceLineStories = () => {
             labelConfig={{
               dx: 4,
               borderRadius: 100,
-              padding: { top: 4, bottom: 4, left: 8, right: 8 },
+              inset: { top: 4, bottom: 4, left: 8, right: 8 },
               textAnchor: 'start',
               color: `rgb(${theme.spectrum.yellow70})`,
               background: theme.color.accentSubtleYellow,

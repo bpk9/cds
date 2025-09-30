@@ -60,15 +60,21 @@ export type BarStackGroupProps = {
    * Whether to round the baseline of a bar (where the value is 0).
    */
   roundBaseline?: boolean;
-  stackGap?: ThemeVars.Space;
   /**
-   * Minimum size for individual bars in the stack.
+   * Gap between bars in the stack in pixels.
+   * @default 0
    */
-  barMinSize?: ThemeVars.Space;
+  stackGap?: number;
   /**
-   * Minimum size for the entire stack.
+   * Minimum size for individual bars in the stack in pixels.
+   * @default 0
    */
-  stackMinSize?: ThemeVars.Space;
+  barMinSize?: number;
+  /**
+   * Minimum size for the entire stack in pixels.
+   * @default 0
+   */
+  stackMinSize?: number;
   /**
    * Custom component to render the stack container.
    * Can be used to add clip paths, outlines, or other custom styling.

@@ -117,7 +117,7 @@ export type PointLabelConfig = Pick<
   | 'fontWeight'
   | 'color'
   | 'elevation'
-  | 'padding'
+  | 'inset'
   | 'background'
   | 'borderRadius'
   | 'disableRepositioning'

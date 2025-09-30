@@ -197,7 +197,7 @@ function CustomGridLineExample() {
   return (
     <CartesianChart
       height={420}
-      padding={4}
+      inset={32}
       series={series}
       xAxis={{ data: categories, scaleType: 'band' }}
     >
@@ -357,7 +357,7 @@ This is the default behavior for YAxis, and defaults to `5`.
 </CartesianChart>
 ```
 
-`tickInterval`, which accepts `ThemeVars.Space`, will measure the available space and try to create evenly spaced ticks. It will always include the first and last values of the domain.
+`tickInterval`, which accepts pixels, will measure the available space and try to create evenly spaced ticks. It will always include the first and last values of the domain.
 
 ```jsx live
 <CartesianChart
@@ -370,7 +370,7 @@ This is the default behavior for YAxis, and defaults to `5`.
     },
   ]}
 >
-  <YAxis position="end" showLine showTickMarks showGrid tickInterval={1} />
+  <YAxis position="end" showLine showTickMarks showGrid tickInterval={8} />
   <Line seriesId="prices" curve="monotone" showArea />
   <Scrubber />
 </CartesianChart>
@@ -378,7 +378,7 @@ This is the default behavior for YAxis, and defaults to `5`.
 
 ### Tick Marks
 
-You can show tick marks on the axis using the `showTickMarks` prop. You can also customize the tick mark size using the `tickMarkSize` prop, which accepts `ThemeVars.Space`.
+You can show tick marks on the axis using the `showTickMarks` prop. You can also customize the tick mark size using the `tickMarkSize` prop, which accepts pixels.
 
 ```jsx live
 function YAxisTickMarksExample() {
@@ -400,7 +400,7 @@ function YAxisTickMarksExample() {
           },
         ]}
       >
-        <YAxis position="end" showLine showTickMarks={showTickMarks} tickMarkSize={2} showGrid />
+        <YAxis position="end" showLine showTickMarks={showTickMarks} tickMarkSize={16} showGrid />
         <Line seriesId="prices" curve="monotone" showArea />
         <Scrubber />
       </CartesianChart>

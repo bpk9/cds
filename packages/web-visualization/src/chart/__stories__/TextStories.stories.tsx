@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
-import { type ChartPadding, isCategoricalScale } from '@coinbase/cds-common/visualizations/charts';
+import { type ChartInset, isCategoricalScale } from '@coinbase/cds-common/visualizations/charts';
 import { Switch } from '@coinbase/cds-web/controls';
 
 import { XAxis, YAxis } from '../axis';
@@ -65,8 +65,8 @@ export const InteractiveChartText = () => {
     [isChartFocused],
   );
 
-  const chartTextPadding: ChartPadding = useMemo(
-    () => ({ top: 1, right: 1.5, bottom: 1, left: 1.5 }),
+  const chartTextInset: ChartInset = useMemo(
+    () => ({ top: 8, right: 12, bottom: 8, left: 12 }),
     [],
   );
 
@@ -306,8 +306,8 @@ export const InteractiveChartText = () => {
           }}
           width={CHART_WIDTH}
         >
-          <XAxis position="end" showGrid={true} showLine={true} showTickMarks={true} />
-          <YAxis position="start" showGrid={true} showLine={true} showTickMarks={true} />
+          <XAxis position="bottom" showGrid={true} showLine={true} showTickMarks={true} />
+          <YAxis position="left" showGrid={true} showLine={true} showTickMarks={true} />
           <ChartText
             borderRadius={200}
             color="var(--color-fgPrimary)"
@@ -316,8 +316,8 @@ export const InteractiveChartText = () => {
             dy={offsetY}
             elevation={1}
             font="label1"
+            inset={chartTextInset}
             onDimensionsChange={(rect) => setBbox(rect)}
-            padding={chartTextPadding}
             styles={{
               text: hideWithDisplayNone ? { display: 'none' } : undefined,
               backgroundRect: hideWithDisplayNone ? { display: 'none' } : undefined,
@@ -642,14 +642,14 @@ export const InteractiveSmartChartTextGroup = () => {
         >
           {/* Axes with grid lines but no labels */}
           <XAxis
-            position="end"
+            position="bottom"
             showGrid={true}
             showLine={true}
             showTickMarks={false}
             tickLabelFormatter={() => ''} // Hide axis labels
           />
           <YAxis
-            position="start"
+            position="left"
             showGrid={true}
             showLine={true}
             showTickMarks={false}

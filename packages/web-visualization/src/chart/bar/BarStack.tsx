@@ -1,6 +1,5 @@
 import React, { memo, useMemo } from 'react';
 import type { ThemeVars } from '@coinbase/cds-common';
-import { useTheme } from '@coinbase/cds-web';
 
 import { useCartesianChartContext } from '../ChartProvider';
 
@@ -116,17 +115,20 @@ export type BarStackProps = {
    */
   roundBaseline?: boolean;
   /**
-   * Gap between bars in the stack.
+   * Gap between bars in the stack in pixels.
+   * @default 0
    */
-  stackGap?: ThemeVars.Space;
+  stackGap?: number;
   /**
-   * Minimum size for individual bars in the stack.
+   * Minimum size for individual bars in the stack in pixels.
+   * @default 0
    */
-  barMinSize?: ThemeVars.Space;
+  barMinSize?: number;
   /**
-   * Minimum size for the entire stack.
+   * Minimum size for the entire stack in pixels.
+   * @default 0
    */
-  stackMinSize?: ThemeVars.Space;
+  stackMinSize?: number;
 };
 
 /**
@@ -152,12 +154,11 @@ export const BarStack = memo<BarStackProps>(
     stackMinSize,
     roundBaseline,
   }) => {
-    const theme = useTheme();
     const { getSeriesData, getXAxis } = useCartesianChartContext();
 
-    const stackGapPx = stackGap ? theme.space[stackGap] : 0;
-    const barMinSizePx = barMinSize ? theme.space[barMinSize] : 0;
-    const stackMinSizePx = stackMinSize ? theme.space[stackMinSize] : 0;
+    const stackGapPx = stackGap;
+    const barMinSizePx = barMinSize;
+    const stackMinSizePx = stackMinSize;
 
     const xAxis = getXAxis();
 
@@ -263,7 +264,7 @@ export const BarStack = memo<BarStackProps>(
       });
 
       // Apply proportional gap distribution to maintain total stack height
-      if (stackGapPx > 0 && allBars.length > 1) {
+      if (stackGapPx && allBars.length > 1) {
         // Separate bars by baseline side
         const barsAboveBaseline = allBars.filter((bar) => {
           const [bottom, top] = (bar.dataY as [number, number]).sort((a, b) => a - b);
@@ -341,7 +342,7 @@ export const BarStack = memo<BarStackProps>(
       }
 
       // Apply barMinSize constraints
-      if (barMinSizePx > 0) {
+      if (barMinSizePx) {
         // First, expand bars that need it and track the expansion
         const expandedBars = allBars.map((bar, index) => {
           if (bar.height < barMinSizePx) {
@@ -472,12 +473,12 @@ export const BarStack = memo<BarStackProps>(
 
             const shouldRoundTop =
               index === bars.length - 1 ||
-              (a.shouldApplyGap && stackGapPx > 0) ||
+              (a.shouldApplyGap && stackGapPx) ||
               (!a.shouldApplyGap && barAfter && barAfter.y + barAfter.height !== a.y);
 
             const shouldRoundBottom =
               index === 0 ||
-              (a.shouldApplyGap && stackGapPx > 0) ||
+              (a.shouldApplyGap && stackGapPx) ||
               (!a.shouldApplyGap && barBefore && barBefore.y !== a.y + a.height);
 
             return {
@@ -499,7 +500,7 @@ export const BarStack = memo<BarStackProps>(
       };
 
       // Apply stackMinSize constraints
-      if (stackMinSizePx > 0) {
+      if (stackMinSizePx) {
         if (allBars.length === 1 && stackBounds.height < stackMinSizePx) {
           // For single bars (non-stacked), treat stackMinSize like barMinSize
 

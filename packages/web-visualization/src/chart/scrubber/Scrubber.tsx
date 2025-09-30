@@ -16,7 +16,6 @@ import {
   projectPoint,
   useScrubberContext,
 } from '@coinbase/cds-common/visualizations/charts';
-import { useTheme } from '@coinbase/cds-web';
 import { m as motion } from 'framer-motion';
 
 import { axisTickLabelsInitialAnimationVariants } from '../axis';
@@ -147,7 +146,6 @@ export const Scrubber = memo(
       },
       ref,
     ) => {
-      const theme = useTheme();
       const scrubberGroupRef = useRef<SVGGElement>(null);
       const scrubberHeadRefs = useRefMap<ScrubberHeadRef>();
 
@@ -258,9 +256,9 @@ export const Scrubber = memo(
         getYScale,
       ]);
 
-      // todo: the padding around the label shouldn't be needed for this collision calculation since the ChatText onDimensionsChange will report the bounding box that includes the padding
-      const labelPadding = 0.5;
-      const minLabelGap = 0.25;
+      // todo: the inset around the label shouldn't be needed for this collision calculation since the ChatText onDimensionsChange will report the bounding box that includes the inset
+      const labelInset = 8; // pixels
+      const minLabelGap = 4; // pixels
 
       // Calculate optimal label positioning strategy
       const labelPositioning = useMemo(() => {
@@ -285,7 +283,7 @@ export const Scrubber = memo(
         let globalSide: 'left' | 'right' = 'right';
 
         // Check if any labels would overflow on the right side
-        const paddingPx = theme.space[labelPadding];
+        const insetPx = labelInset;
         const anchorRadius = 10; // Same as used in ScrubberHeadLabel
         const bufferPx = 5; // Small buffer to prevent premature switching
 
@@ -294,9 +292,9 @@ export const Scrubber = memo(
           globalSide = 'right'; // Default to right if bounds are invalid
         } else {
           // Check if labels would overflow when positioned on the right side
-          // Account for anchor radius and padding when calculating right edge
+          // Account for anchor radius and inset when calculating right edge
           const wouldOverflow = sortedDimensions.some((dim) => {
-            const labelRightEdge = dim.preferredX + anchorRadius + paddingPx + dim.width + bufferPx;
+            const labelRightEdge = dim.preferredX + anchorRadius + insetPx + dim.width + bufferPx;
             return labelRightEdge > drawingArea.x + drawingArea.width;
           });
 
@@ -304,7 +302,7 @@ export const Scrubber = memo(
         }
 
         // Natural positioning with collision detection
-        const minGap = theme.space[minLabelGap];
+        const minGap = minLabelGap;
 
         // Initialize all labels at their preferred positions
         for (const dim of sortedDimensions) {
@@ -513,7 +511,7 @@ export const Scrubber = memo(
         }
 
         return { strategy: globalSide, adjustments };
-      }, [headPositions, labelDimensions, theme.space, minLabelGap, drawingArea]);
+      }, [headPositions, labelDimensions, drawingArea]);
 
       // Callback for labels to register their dimensions
       const registerLabelDimensions = useCallback(
@@ -649,6 +647,7 @@ export const Scrubber = memo(
                         className={classNames?.headLabel}
                         color={dotStroke}
                         dx={16}
+                        inset={labelInset}
                         onDimensionsChange={({ width, height }) =>
                           registerLabelDimensions(
                             scrubberHead.targetSeries.id,
@@ -658,7 +657,6 @@ export const Scrubber = memo(
                             scrubberHead.pixelY,
                           )
                         }
-                        padding={labelPadding}
                         preferredSide={finalSide}
                         style={styles?.headLabel}
                         testID={

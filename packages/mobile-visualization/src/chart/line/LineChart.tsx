@@ -2,8 +2,8 @@ import React, { forwardRef, memo, useMemo } from 'react';
 import { View } from 'react-native';
 import {
   type AxisConfigProps,
-  defaultChartPadding,
-  getPadding,
+  defaultChartInset,
+  getChartInset,
   type Series,
 } from '@coinbase/cds-common/visualizations/charts';
 import { chartFallbackNegative, chartFallbackPositive } from '@coinbase/cds-lottie-files';
@@ -105,7 +105,7 @@ export const LineChart = memo(
         showYAxis,
         xAxis,
         yAxis,
-        padding: userPadding,
+        inset: userInset,
         children,
         enableScrubbing,
         fallback,
@@ -115,9 +115,9 @@ export const LineChart = memo(
       },
       ref,
     ) => {
-      const calculatedPadding = useMemo(
-        () => getPadding(userPadding, defaultChartPadding),
-        [userPadding],
+      const calculatedInset = useMemo(
+        () => getChartInset(userInset, defaultChartInset),
+        [userInset],
       );
 
       // Check if we have valid data across all series
@@ -183,14 +183,14 @@ export const LineChart = memo(
             {...chartProps}
             ref={ref}
             enableScrubbing={enableScrubbing}
-            padding={calculatedPadding}
+            inset={calculatedInset}
             series={chartSeries}
             xAxis={xAxisConfig}
             yAxis={yAxisConfig}
           >
             {/* Render axes first for grid lines to appear behind everything else */}
-            {showXAxis && <XAxis position="end" {...xAxisVisualProps} />}
-            {showYAxis && <YAxis axisId={yAxisId} position="end" {...yAxisVisualProps} />}
+            {showXAxis && <XAxis position="bottom" {...xAxisVisualProps} />}
+            {showYAxis && <YAxis axisId={yAxisId} position="left" {...yAxisVisualProps} />}
             {hasData &&
               series?.map(({ id, data, label, color, yAxisId, ...linePropsFromSeries }) => (
                 <Line

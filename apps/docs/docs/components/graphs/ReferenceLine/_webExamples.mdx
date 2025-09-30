@@ -83,7 +83,7 @@ You can adjust the style of the label using the `labelConfig` prop.
 <LineChart
   curve="monotone"
   height={250}
-  padding={{ right: 0.5 }}
+  inset={{ right: 4 }}
   series={[
     {
       id: 'prices',
@@ -336,7 +336,7 @@ function DraggablePriceTarget() {
         showArea
         curve="monotone"
         height={300}
-        padding={{ top: 10, bottom: 4, left: 0.5, right: 10 }}
+        inset={{ top: 80, bottom: 32, left: 4, right: 80 }}
         series={[
           {
             id: 'prices',

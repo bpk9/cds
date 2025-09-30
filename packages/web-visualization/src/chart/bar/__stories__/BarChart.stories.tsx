@@ -70,7 +70,7 @@ const PositiveAndNegativeCashFlow = () => {
   return (
     <CartesianChart
       height={420}
-      padding={4}
+      inset={32}
       series={series}
       xAxis={{ data: categories, scaleType: 'band' }}
     >
@@ -112,12 +112,12 @@ const FiatAndStablecoinBalance = () => {
     <BarChart
       showXAxis
       stacked
-      barMinSize={1}
+      barMinSize={8}
       height={420}
-      padding={4}
+      inset={32}
       series={series}
-      stackGap={0.25}
-      stackMinSize={2}
+      stackGap={2}
+      stackMinSize={16}
       xAxis={{ data: categories }}
     />
   );
@@ -166,10 +166,10 @@ const MonthlyRewards = () => {
       BarStackComponent={CustomBarStackComponent}
       borderRadius={1000}
       height={300}
-      padding={0}
+      inset={0}
       series={series}
       showYAxis={false}
-      stackMinSize={3}
+      stackMinSize={24}
       width={403}
       xAxis={{
         tickLabelFormatter: (index) => {
@@ -352,7 +352,7 @@ const Candlesticks = () => {
         yAxis={{
           domain: { min },
           tickLabelFormatter: formatPrice,
-          size: 80,
+          width: 80,
           showGrid: true,
           GridLineComponent: ThinSolidLine,
         }}
@@ -406,7 +406,7 @@ export const All = () => {
             showGrid: true,
             showTickMarks: true,
             showLine: true,
-            tickMarkSize: 1.5,
+            tickMarkSize: 12,
             domain: { max: 50 },
           }}
         />
@@ -456,16 +456,16 @@ export const All = () => {
             showLine
             showTickMarks
             axisId="revenue"
-            position="start"
+            position="left"
             requestedTickCount={5}
-            size={60}
             tickLabelFormatter={(value) => `$${value}k`}
+            width={60}
           />
           <YAxis
             showLine
             showTickMarks
             axisId="profit"
-            position="end"
+            position="right"
             requestedTickCount={5}
             tickLabelFormatter={(value) => `$${value}k`}
           />

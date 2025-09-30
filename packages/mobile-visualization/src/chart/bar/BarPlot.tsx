@@ -47,17 +47,20 @@ export type BarPlotProps = {
    */
   roundBaseline?: boolean;
   /**
-   * Gap between bars in the stack.
+   * Gap between bars in the stack in pixels.
+   * @default 0
    */
-  stackGap?: ThemeVars.Space;
+  stackGap?: number;
   /**
-   * Minimum size for individual bars in the stack.
+   * Minimum size for individual bars in the stack in pixels.
+   * @default 0
    */
-  barMinSize?: ThemeVars.Space;
+  barMinSize?: number;
   /**
-   * Minimum size for the entire stack.
+   * Minimum size for the entire stack in pixels.
+   * @default 0
    */
-  stackMinSize?: ThemeVars.Space;
+  stackMinSize?: number;
   /**
    * Custom component to render the stack container.
    * Can be used to add clip paths, outlines, or other custom styling.

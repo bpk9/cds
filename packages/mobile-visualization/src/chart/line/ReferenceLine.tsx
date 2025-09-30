@@ -22,7 +22,7 @@ export type ReferenceLineLabelConfig = Pick<
   | 'fontSize'
   | 'fontWeight'
   | 'color'
-  | 'padding'
+  | 'inset'
   | 'background'
   | 'borderRadius'
   | 'disableRepositioning'
@@ -120,7 +120,7 @@ export const ReferenceLine = memo<ReferenceLineProps>(
         borderRadius: 200,
         color: theme.color.fgMuted,
         elevation: 0,
-        padding: { top: 1, bottom: 1, left: 1.5, right: 1.5 },
+        inset: { top: 8, bottom: 8, left: 12, right: 12 },
         ...labelConfig,
       }),
       [labelConfig, theme.color.fgMuted],

@@ -84,7 +84,7 @@ function CompactLineChart() {
               {...dimensions}
               enableScrubbing={false}
               overflow="visible"
-              padding={0}
+              inset={0}
               series={[
                 {
                   id: 'btc',
@@ -113,7 +113,7 @@ function CompactLineChart() {
               showArea
               enableScrubbing={false}
               overflow="visible"
-              padding={0}
+              inset={0}
               series={[
                 {
                   id: 'btc',
@@ -142,7 +142,7 @@ function CompactLineChart() {
               showArea
               enableScrubbing={false}
               overflow="visible"
-              padding={0}
+              inset={0}
               series={[
                 {
                   id: 'btc',
@@ -171,7 +171,7 @@ function CompactLineChart() {
               showArea
               enableScrubbing={false}
               overflow="visible"
-              padding={0}
+              inset={0}
               series={[
                 {
                   id: 'btc',
@@ -287,7 +287,7 @@ function GainLossChart() {
           color: solidColor,
         },
       ]}
-      padding={{ top: 1.5, bottom: 1.5, left: 2, right: 0 }}
+      inset={{ top: 12, bottom: 12, left: 16, right: 0 }}
       onHighlightChange={(dataIndex) => setHighlightedItem(dataIndex)}
       accessibilityLabel={accessibilityLabel}
     >
@@ -344,7 +344,7 @@ function MultipleSeriesChart() {
         data: pages,
         ticks: true,
       }}
-      padding={{ left: 1.5 }}
+      inset={{ left: 12 }}
       showYAxis
       yAxis={{
         domain: {
@@ -539,7 +539,7 @@ function LiveAssetPrice() {
           color: assets.btc.color,
         },
       ]}
-      padding={{ right: 8 }}
+      inset={{ right: 64 }}
       accessibilityLabel={accessibilityLabel}
     >
       <Scrubber ref={scrubberRef} scrubberLabelProps={{ elevation: 1 }} />
@@ -588,7 +588,7 @@ function DataFormatChart() {
         showTickMarks: true,
         showGrid: true,
       }}
-      padding={2}
+      inset={16}
       accessibilityLabel={accessibilityLabel}
     >
       <Scrubber hideOverlay />
@@ -751,7 +751,7 @@ const BTCActiveIndicator = memo(({ style, ...props }: TabsActiveIndicatorProps) 
         height={300}
         style={{ outlineColor: assets.btc.color }}
         accessibilityLabel={scrubberLabel}
-        padding={{ left: 2, right: 2 }}
+        inset={{ left: 16, right: 16 }}
       >
         <Scrubber label={scrubberLabel} scrubberLabelProps={{ elevation: 1 }} idlePulse />
       </LineChart>
@@ -894,10 +894,10 @@ function ForecastAssetPrice() {
       showXAxis
       AreaComponent={AreaComponent}
       height={350}
-      padding={{
-        top: 4,
-        left: 2,
-        right: 2,
+      inset={{
+        top: 32,
+        left: 16,
+        right: 16,
         bottom: 0,
       }}
       series={[
@@ -921,7 +921,7 @@ function ForecastAssetPrice() {
             year: 'numeric',
           });
         },
-        tickInterval: 2,
+        tickInterval: 16,
       }}
       accessibilityLabel={scrubberLabel}
       AreaComponent={(props) => <DottedArea {...props} peakOpacity={0.4} baselineOpacity={0.4} />}
@@ -1040,7 +1040,7 @@ function AvailabilityChart() {
       yAxis={{
         domain: ({ min, max }) => ({ min: Math.max(min - 2, 0), max: Math.min(max + 2, 100) }),
       }}
-      padding={{ left: 2, right: 2 }}
+      inset={{ left: 16, right: 16 }}
       accessibilityLabel={accessibilityLabel}
     >
       <ChartDefs />
@@ -1054,7 +1054,7 @@ function AvailabilityChart() {
         showGrid
         showLine
         showTickMarks
-        position="start"
+        position="left"
         tickLabelFormatter={(value) => `${value}%`}
       />
       <Line
@@ -1106,7 +1106,7 @@ function BitcoinChartWithScrubberHead() {
       }}
       borderRadius={300}
       gap={2}
-      padding={2}
+      inset={16}
       paddingBottom={0}
       overflow="hidden"
     >
@@ -1136,7 +1136,7 @@ function BitcoinChartWithScrubberHead() {
         }}
       >
         <LineChart
-          padding={{ left: 0, right: 3, bottom: 0, top: 0 }}
+          inset={{ left: 0, right: 24, bottom: 0, top: 0 }}
           series={[
             {
               id: 'btcPrice',

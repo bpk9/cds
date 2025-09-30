@@ -285,7 +285,7 @@ function MonthlyGainsByAsset() {
           color: assets.btc.color,
         },
       ]}
-      stackGap={0.5}
+      stackGap={4}
       stacked
       showYAxis
       yAxis={{
@@ -312,7 +312,7 @@ Stacks will only round the top corners of touching bars.
   borderRadius={1000}
   height={300}
   maxWidth={400}
-  padding={0}
+  inset={0}
   series={[
     { id: 'purple', data: [null, 6, 8, 10, 7, 6, 6, 8, 9, 12, 10, 4], color: '#b399ff' },
     { id: 'blue', data: [null, 10, 12, 11, 10, 9, 10, 11, 7, 4, 12, 18], color: '#4f7cff' },
@@ -348,7 +348,7 @@ You can also round the baseline of the bars by setting the `roundBaseline` prop 
   borderRadius={1000}
   height={300}
   maxWidth={400}
-  padding={0}
+  inset={0}
   series={[
     { id: 'purple', data: [null, 6, 8, 10, 7, 6, 6, 8, 9, 12, 10, 4], color: '#b399ff' },
     { id: 'blue', data: [null, 10, 12, 11, 10, 9, 10, 11, 7, 4, 12, 18], color: '#4f7cff' },
@@ -397,7 +397,7 @@ function PositiveAndNegativeCashFlow() {
   return (
     <BarChart
       height={420}
-      padding={4}
+      inset={32}
       series={series}
       xAxis={{ data: categories }}
       stacked
@@ -439,7 +439,7 @@ You can pass in `null` or `0` values to not render a bar for that data point.
     showGrid: true,
     showTickMarks: true,
     showLine: true,
-    tickMarkSize: 1.5,
+    tickMarkSize: 12,
     domain: { max: 50 },
   }}
 />
@@ -491,10 +491,10 @@ function MonthlyRewards() {
       BarStackComponent={CustomBarStackComponent}
       borderRadius={1000}
       height={300}
-      padding={0}
+      inset={0}
       series={series}
       showYAxis={false}
-      stackMinSize={3}
+      stackMinSize={24}
       width={403}
       xAxis={{
         tickLabelFormatter: (index) => {
@@ -549,7 +549,7 @@ There are two ways to control the spacing between bars. You can set the `barPadd
 
 To better emphasize small values, you can set the `stackMinSize` or `barMinSize` prop to control the minimum size for entire stacks or individual bar.
 It is recommended to only use `stackMinSize` for stacked charts and `barMinSize` for non-stacked charts.
-Both properties accept `ThemeVars.Space` values.
+Both properties accept pixel values.
 
 #### Minimum Stack Size
 
@@ -570,7 +570,7 @@ You can set the `stackMinSize` prop to control the minimum size for entire stack
       color: 'var(--color-fgNegative)',
     },
   ]}
-  stackMinSize={2}
+  stackMinSize={16}
   stacked
   showYAxis
   yAxis={{
@@ -605,10 +605,10 @@ You can also set the `barMinSize` prop to control the minimum size for individua
     showGrid: true,
     showTickMarks: true,
     showLine: true,
-    tickMarkSize: 1.5,
+    tickMarkSize: 12,
     domain: { max: 50 },
   }}
-  barMinSize={4}
+  barMinSize={32}
 />
 ```
 
@@ -883,7 +883,7 @@ function MonthlyRewards() {
       borderRadius={1000}
       height={300}
       maxWidth={400}
-      padding={0}
+      inset={0}
       series={[
         { id: 'purple', data: [null, 6, 8, 10, 7, 6, 6, 8, 9, 12, 10, 4], color: '#b399ff' },
         { id: 'blue', data: [null, 10, 12, 11, 10, 9, 10, 11, 7, 4, 12, 18], color: '#4f7cff' },

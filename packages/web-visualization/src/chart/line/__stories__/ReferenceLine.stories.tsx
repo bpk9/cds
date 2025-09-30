@@ -198,7 +198,7 @@ const DraggableReferenceLine = memo(
             color: 'white',
             dx: -8,
             font: 'label1',
-            padding: { top: 5, bottom: 5, left: 10, right: 10 },
+            inset: { top: 5, bottom: 5, left: 10, right: 10 },
             textAnchor: 'end',
           }}
           labelPosition="right"
@@ -263,7 +263,7 @@ const PriceTargetChart = () => {
       animate={false}
       curve="monotone"
       height={250}
-      padding={{ top: 2, bottom: 2, left: 1, right: 10 }}
+      inset={{ top: 16, bottom: 16, left: 8, right: 80 }}
       series={[
         {
           id: 'prices',
@@ -277,7 +277,7 @@ const PriceTargetChart = () => {
         LineComponent={SolidLine}
         dataY={priceData[priceData.length - 1]}
         label={formatPrice(priceData[priceData.length - 1])}
-        labelConfig={{ dx: 16, textAnchor: 'start' }}
+        labelConfig={{ dx: 16, textAnchor: 'start', inset: 0 }}
       />
       <DraggableReferenceLine
         baselineAmount={priceData[priceData.length - 1]}
@@ -296,7 +296,7 @@ export const All = () => {
           showArea
           curve="monotone"
           height={250}
-          padding={{ right: 4 }}
+          inset={{ right: 32 }}
           series={[
             {
               id: 'prices',
@@ -304,7 +304,11 @@ export const All = () => {
             },
           ]}
         >
-          <ReferenceLine dataY={50} label="$50" labelConfig={{ dx: 16, textAnchor: 'start' }} />
+          <ReferenceLine
+            dataY={50}
+            label="$50"
+            labelConfig={{ dx: 16, textAnchor: 'start', inset: 0 }}
+          />
         </LineChart>
       </Example>
       <Example title="Price Reference Line">
@@ -312,7 +316,7 @@ export const All = () => {
           showArea
           curve="monotone"
           height={250}
-          padding={{ right: 4 }}
+          inset={{ right: 32 }}
           series={[
             {
               id: 'prices',
@@ -337,7 +341,7 @@ export const All = () => {
         <LineChart
           curve="monotone"
           height={250}
-          padding={{ right: 4 }}
+          inset={{ right: 32 }}
           series={[
             {
               id: 'prices',
@@ -351,7 +355,7 @@ export const All = () => {
             labelConfig={{
               dx: 4,
               borderRadius: 100,
-              padding: { top: 4, bottom: 4, left: 8, right: 8 },
+              inset: { top: 4, bottom: 4, left: 8, right: 8 },
               textAnchor: 'start',
               color: 'rgb(var(--yellow70))',
               background: 'var(--color-accentSubtleYellow)',
@@ -366,7 +370,7 @@ export const All = () => {
             labelConfig={{
               dx: -4,
               borderRadius: 100,
-              padding: { top: 2, bottom: 2, left: 4, right: 4 },
+              inset: { top: 2, bottom: 2, left: 4, right: 4 },
               textAnchor: 'end',
               color: 'rgb(var(--yellow70))',
               background: 'var(--color-bg)',

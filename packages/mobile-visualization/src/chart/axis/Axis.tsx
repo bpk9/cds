@@ -55,15 +55,11 @@ export type AxisBaseProps = {
    */
   GridLineComponent?: LineComponent;
   /**
-   * Minimum gap between tick labels in theme space units.
+   * Minimum gap between tick labels in pixels.
    * Labels will be hidden if they are closer than this gap.
-   * @default 0.5
+   * @default 4
    */
-  minTickLabelGap?: ThemeVars.Space;
-  /**
-   * The position of the axis relative to the chart's drawing area.
-   */
-  position?: 'start' | 'end';
+  minTickLabelGap?: number;
   /**
    * Requested number of ticks to display.
    * This value is passed into d3 and may not be respected.
@@ -87,15 +83,10 @@ export type AxisBaseProps = {
    */
   showTickMarks?: boolean;
   /**
-   * Size of the axis. This value is inclusive of the padding.
-   * @default 32 for x-axis, 44 for y-axis
+   * Size of the tick marks in pixels.
+   * @default 4
    */
-  size?: number;
-  /**
-   * Size of the tick marks in theme space units.
-   * @default 0.5
-   */
-  tickMarkSize?: ThemeVars.Space;
+  tickMarkSize?: number;
   /**
    * Custom tick configuration for the axis.
    * When provided, this overrides the `requestedTickCount` property.
@@ -133,18 +124,18 @@ export type AxisBaseProps = {
    */
   tickLabelFormatter?: (value: any) => ChartTextChildren;
   /**
-   * Space between the axis tick mark and labels.
+   * Space between the axis tick mark and labels in pixels.
    * If tick marks are not shown, this is the gap between the axis and the chart.
-   * @default 0.25 for x-axis, 1 for y-axis
+   * @default 2 for x-axis, 8 for y-axis
    */
-  tickMarkLabelGap?: ThemeVars.Space;
+  tickMarkLabelGap?: number;
   /**
-   * Interval at which to show ticks
+   * Interval at which to show ticks in pixels.
    * When provided, calculates tick count based on available space.
    * @note this property is overridden by the `requestedTickCount` and `ticks` properties.
-   * @default 8 (for x-axis)
+   * @default 32 (for x-axis)
    */
-  tickInterval?: ThemeVars.Space;
+  tickInterval?: number;
 };
 
 export type AxisProps = AxisBaseProps & {

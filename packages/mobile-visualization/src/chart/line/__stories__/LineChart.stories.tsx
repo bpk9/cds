@@ -190,6 +190,7 @@ export const BasicLineChartWithPoints = () => {
         label="testing 123"
         labelConfig={{
           color: '#10b981',
+          inset: 0,
         }}
         labelPosition="center"
       />
@@ -270,8 +271,8 @@ export const AssetPrice = () => {
       <LineChart
         showArea
         height={defaultChartHeight}
+        inset={{ top: 4, bottom: 8, left: 0, right: 0 }}
         onScrubberPositionChange={onScrubberPositionChange}
-        padding={{ top: 3, bottom: 7, left: 0, right: 0 }}
         series={[
           {
             id: 'price',
@@ -282,7 +283,7 @@ export const AssetPrice = () => {
         xAxis={{ domain: { min: 0, max: pricePointsPerHour * 24 } }}
       >
         <XAxis
-          position="end"
+          position="bottom"
           tickLabelFormatter={(index) => indexToTime(index).slice(0, -3)}
           ticks={(index) => index % (12 * 6) === 0}
         />
@@ -379,7 +380,7 @@ export const ChartScale = () => {
           requestedTickCount: 5,
           tickLabelFormatter: (value) => value.toLocaleString(),
           showGrid: true,
-          size: 70,
+          width: 70,
         }}
       />
     </VStack>
@@ -500,8 +501,8 @@ export const ColorShiftChart = () => {
         showArea
         showXAxis
         height={defaultChartHeight}
+        inset={{ top: 6, left: 0, right: 0, bottom: 0 }}
         onScrubberPositionChange={onScrubberPositionChange}
-        padding={{ top: 6, left: 0, right: 0, bottom: 0 }}
         series={[
           {
             id: 'price',
@@ -516,6 +517,7 @@ export const ColorShiftChart = () => {
           label={`$${startPrice}`}
           labelConfig={{
             textAnchor: 'start',
+            inset: 0,
           }}
           labelPosition="right"
           stroke={chartActiveColor}
@@ -686,7 +688,7 @@ export const PriceChart = () => {
 
   return (
     <VStack gap={3} width="100%">
-      {/*<HStack alignItems="flex-start" gap={3} justifyContent="space-between" padding={4}>
+      {/*<HStack alignItems="flex-start" gap={3} justifyContent="space-between" inset={32}>
         <CartesianChartHeader
           description={formattedPrice}
           title={<Text font="headline">Ethereum</Text>}
@@ -697,8 +699,8 @@ export const PriceChart = () => {
       <LineChart
         showArea
         height={defaultChartHeight}
+        inset={{ left: 0, right: 3, bottom: 3, top: 3 }}
         onScrubberPositionChange={onScrubberPositionChange}
-        padding={{ left: 0, right: 3, bottom: 3, top: 3 }}
         series={[
           {
             id: 'price',
@@ -813,7 +815,7 @@ export const ForecastChart = () => {
       showXAxis
       areaType="dotted"
       height={defaultChartHeight}
-      padding={{
+      inset={{
         top: 4,
         left: 0,
         right: 0,
@@ -835,7 +837,7 @@ export const ForecastChart = () => {
       xAxis={{
         data: allDataPoints.map((d) => d.date.getTime()),
         tickLabelFormatter: formatXAxisLabel,
-        tickInterval: 4,
+        tickInterval: 32,
       }}
     >
       <Scrubber />
@@ -1303,7 +1305,7 @@ const GainLossChart = () => {
     <CartesianChart
       enableScrubbing
       height={defaultChartHeight}
-      padding={{ top: 1.5, bottom: 1.5, left: 0, right: 0 }}
+      inset={{ top: 1.5, bottom: 1.5, left: 0, right: 0 }}
       series={[
         {
           id: 'prices',
@@ -1369,7 +1371,7 @@ const BitcoinChartWithScrubberHead = () => {
         <LineChart
           showArea
           height={64}
-          padding={{ left: 0, right: 3, bottom: 0, top: 2 }}
+          inset={{ left: 0, right: 3, bottom: 0, top: 2 }}
           series={[
             {
               id: 'btcPrice',
@@ -1518,7 +1520,7 @@ const LineChartStories = () => {
           xAxis={{ data: [1, 2, 3, 5, 8, 10], showLine: true, showTickMarks: true, showGrid: true }}
           yAxis={{
             domain: { min: 0 },
-            position: 'start',
+            position: 'left',
             showLine: true,
             showTickMarks: true,
             showGrid: true,
@@ -1608,7 +1610,7 @@ const AssetPriceScreen = () => {
           xAxis={{ data: [1, 2, 3, 5, 8, 10], showLine: true, showTickMarks: true, showGrid: true }}
           yAxis={{
             domain: { min: 0 },
-            position: 'start',
+            position: 'left',
             showLine: true,
             showTickMarks: true,
             showGrid: true,

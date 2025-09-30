@@ -304,9 +304,9 @@ const BTCPriceChart = () => {
         <CartesianChart
           enableScrubbing
           height={350}
+          inset={{ bottom: 0, right: 16, left: 0, top: 32 }}
           onScrubberPositionChange={onScrubberPositionChange}
           overflow="visible"
-          padding={{ left: 0, right: 2, bottom: 0, top: 4 }}
           series={[
             {
               id: 'price',
@@ -324,6 +324,7 @@ const BTCPriceChart = () => {
             lineStroke="black"
             scrubberLabelProps={{
               color: 'black',
+              inset: 0,
             }}
             styles={{
               head: {
@@ -473,9 +474,9 @@ const ColorShiftChart = () => {
           showArea
           showXAxis
           height={350}
+          inset={{ bottom: 0, right: 0, left: 0, top: 48 }}
           onScrubberPositionChange={onScrubberPositionChange}
           overflow="visible"
-          padding={{ top: 6, left: 0, right: 0, bottom: 0 }}
           series={[
             {
               id: 'price',
@@ -499,6 +500,7 @@ const ColorShiftChart = () => {
                 currentPrice - startPrice > 0
                   ? 'var(--color-bgPositive)'
                   : 'var(--color-bgNegative)',
+              inset: 0,
             }}
             labelPosition="right"
             stroke={
@@ -682,9 +684,9 @@ const PriceChart = () => {
         enableScrubbing
         showArea
         height={372}
+        inset={{ left: 0, right: 24, bottom: 24, top: 24 }}
         onScrubberPositionChange={onScrubberPositionChange}
         overflow="visible"
-        padding={{ left: 0, right: 3, bottom: 3, top: 3 }}
         series={[
           {
             id: 'price',
@@ -700,6 +702,7 @@ const PriceChart = () => {
                     position: 'top',
                     dy: -16,
                     color: 'var(--color-bgPositive)',
+                    padding: 0,
                   },
                 };
               }
@@ -713,6 +716,7 @@ const PriceChart = () => {
                     position: 'bottom',
                     dy: 16,
                     color: 'var(--color-bgNegative)',
+                    padding: 0,
                   },
                 };
               }
@@ -721,7 +725,7 @@ const PriceChart = () => {
         ]}
         yAxis={{ domainLimit: 'strict' }}
       >
-        <Scrubber label={scrubberLabel} scrubberLabelProps={{ elevation: 1 }} />
+        <Scrubber label={scrubberLabel} scrubberLabelProps={{ elevation: 1, inset: 0 }} />
       </LineChart>
       <Box paddingX={{ phone: 2, tablet: 4, desktop: 4 }}>
         <PeriodSelector
@@ -851,14 +855,9 @@ function ForecastAssetPrice() {
       accessibilityLabel={accessibilityLabel}
       animate={false}
       height={350}
+      inset={{ bottom: 0, right: 16, left: 16, top: 40 }}
       onScrubberPositionChange={setScrubIndex}
       overflow="visible"
-      padding={{
-        top: 5,
-        left: 2,
-        right: 2,
-        bottom: 0,
-      }}
       series={[
         {
           id: 'historical',
@@ -881,10 +880,10 @@ function ForecastAssetPrice() {
             year: 'numeric',
           });
         },
-        tickInterval: 2,
+        tickInterval: 16,
       }}
     >
-      <Scrubber label={scrubberLabel} scrubberLabelProps={{ elevation: 1 }} />
+      <Scrubber label={scrubberLabel} scrubberLabelProps={{ elevation: 1, inset: 0 }} />
     </LineChart>
   );
 }
@@ -954,7 +953,7 @@ const BitcoinChartWithScrubberHead = () => {
         <LineChart
           showArea
           height={92}
-          padding={{ left: 0, right: 3, bottom: 0, top: 0 }}
+          inset={{ bottom: 0, right: 24, left: 0, top: 0 }}
           series={[
             {
               id: 'btcPrice',
@@ -1071,7 +1070,7 @@ const LiveAssetPrice = () => {
         },
       ]}
     >
-      <Scrubber ref={scrubberRef} scrubberLabelProps={{ elevation: 1 }} />
+      <Scrubber ref={scrubberRef} scrubberLabelProps={{ elevation: 1, inset: 0 }} />
     </LineChart>
   );
 };
@@ -1204,7 +1203,7 @@ const AvailabilityChart = () => {
         showGrid
         showLine
         showTickMarks
-        position="start"
+        position="left"
         tickLabelFormatter={(value) => `${value}%`}
       />
       <Line
@@ -1305,7 +1304,7 @@ const GainLossChart = () => {
     <CartesianChart
       enableScrubbing
       height={250}
-      padding={{ top: 1.5, bottom: 1.5, left: 0, right: 0 }}
+      inset={{ bottom: 12, right: 0, left: 0, top: 12 }}
       series={[
         {
           id: 'prices',
@@ -1481,8 +1480,8 @@ const MultipleSeriesChart = () => {
       showYAxis
       accessibilityLabel={accessibilityLabel}
       height={400}
+      inset={{ left: 12 }}
       onScrubberPositionChange={setScrubIndex}
-      padding={{ left: 1.5 }}
       series={[
         {
           id: 'pageViews',
@@ -1670,7 +1669,7 @@ const AssetPriceDotted = memo(() => {
         ]}
         style={{ outlineColor: assets.btc.color }}
       >
-        <Scrubber idlePulse label={scrubberLabel} scrubberLabelProps={{ elevation: 1 }} />
+        <Scrubber idlePulse label={scrubberLabel} scrubberLabelProps={{ elevation: 1, inset: 0 }} />
       </LineChart>
       <PeriodSelector
         TabComponent={BTCTab}
@@ -1806,7 +1805,7 @@ export const All = () => {
           }}
           yAxis={{
             domain: { min: 0 },
-            position: 'start',
+            position: 'left',
             showLine: true,
             showTickMarks: true,
             showGrid: true,

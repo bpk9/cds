@@ -52,7 +52,7 @@ const PositiveAndNegativeCashFlow = () => {
   return (
     <CartesianChart
       height={420}
-      padding={4}
+      inset={32}
       series={series}
       xAxis={{ data: categories, scaleType: 'band' }}
     >
@@ -94,12 +94,12 @@ const FiatAndStablecoinBalance = () => {
     <BarChart
       showXAxis
       stacked
-      barMinSize={1}
+      barMinSize={8}
       height={defaultChartProps}
-      padding={4}
+      inset={32}
       series={series}
-      stackGap={0.25}
-      stackMinSize={2}
+      stackGap={2}
+      stackMinSize={16}
       xAxis={{ data: categories }}
     />
   );
@@ -150,10 +150,10 @@ const MonthlyRewards = () => {
       BarStackComponent={CustomStackComponent}
       borderRadius={1000}
       height={defaultChartProps}
-      padding={0}
+      inset={0}
       series={series}
       showYAxis={false}
-      stackMinSize={3}
+      stackMinSize={24}
       xAxis={{
         tickLabelFormatter: (index) => {
           return months[index];
@@ -202,16 +202,16 @@ const MultipleYAxes = () => {
         showLine
         showTickMarks
         axisId="revenue"
-        position="start"
+        position="left"
         requestedTickCount={5}
-        size={60}
         tickLabelFormatter={(value) => `$${value}k`}
+        width={60}
       />
       <YAxis
         showLine
         showTickMarks
         axisId="profit"
-        position="end"
+        position="right"
         requestedTickCount={5}
         tickLabelFormatter={(value) => `$${value}k`}
       />
@@ -246,7 +246,7 @@ const UpdatingChartValues = () => {
           showGrid: true,
           showTickMarks: true,
           showLine: true,
-          tickMarkSize: 1.5,
+          tickMarkSize: 12,
         }}
       />
       <Button onPress={() => setData((data) => data.map((d) => d + 10))}>Update Data</Button>

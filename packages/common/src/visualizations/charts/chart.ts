@@ -1,7 +1,5 @@
 import { stack as d3Stack, stackOffsetDiverging, stackOrderNone } from 'd3-shape';
 
-import type { ThemeVars } from '../../core/theme';
-
 export const defaultStackId = 'DEFAULT_STACK_ID';
 
 export type AxisBounds = {
@@ -264,30 +262,30 @@ export const getChartRange = (
   return range;
 };
 
-export type ChartPadding = {
-  top: ThemeVars.Space;
-  left: ThemeVars.Space;
-  bottom: ThemeVars.Space;
-  right: ThemeVars.Space;
+export type ChartInset = {
+  top: number;
+  left: number;
+  bottom: number;
+  right: number;
 };
 
-export const defaultChartPadding: ChartPadding = {
-  top: 4,
-  left: 2,
-  bottom: 2,
-  right: 2,
+export const defaultChartInset: ChartInset = {
+  top: 32,
+  left: 16,
+  bottom: 16,
+  right: 16,
 };
 
 /**
- * Normalize padding to include all sides with a value.
- * @param padding - The padding to get.
+ * Normalize inset to include all sides with a value.
+ * @param inset - The inset to get.
  * @param defaults - Optional complete default values to use instead of 0.
- * @returns The calculated padding.
+ * @returns The calculated inset.
  */
-export const getPadding = (
-  padding?: ThemeVars.Space | Partial<ChartPadding>,
-  defaults?: ChartPadding,
-): ChartPadding => {
+export const getChartInset = (
+  inset?: number | Partial<ChartInset>,
+  defaults?: ChartInset,
+): ChartInset => {
   const baseDefaults = defaults ?? {
     top: 0,
     left: 0,
@@ -295,19 +293,19 @@ export const getPadding = (
     right: 0,
   };
 
-  if (typeof padding === 'number') {
+  if (typeof inset === 'number') {
     return {
-      top: padding,
-      left: padding,
-      bottom: padding,
-      right: padding,
+      top: inset,
+      left: inset,
+      bottom: inset,
+      right: inset,
     };
   }
 
   return {
-    top: padding?.top ?? baseDefaults.top,
-    left: padding?.left ?? baseDefaults.left,
-    bottom: padding?.bottom ?? baseDefaults.bottom,
-    right: padding?.right ?? baseDefaults.right,
+    top: inset?.top ?? baseDefaults.top,
+    left: inset?.left ?? baseDefaults.left,
+    bottom: inset?.bottom ?? baseDefaults.bottom,
+    right: inset?.right ?? baseDefaults.right,
   };
 };

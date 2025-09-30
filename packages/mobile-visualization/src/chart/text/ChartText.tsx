@@ -3,7 +3,7 @@ import type { LayoutChangeEvent } from 'react-native';
 import { G, Rect as SvgRect, Text, type TextProps } from 'react-native-svg';
 import type { ThemeVars } from '@coinbase/cds-common';
 import type { Rect, SharedProps } from '@coinbase/cds-common/types';
-import { type ChartPadding, getPadding } from '@coinbase/cds-common/visualizations/charts';
+import { type ChartInset, getChartInset } from '@coinbase/cds-common/visualizations/charts';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 
 import { useCartesianChartContext } from '../ChartProvider';
@@ -67,10 +67,10 @@ export type ChartTextProps = SharedProps &
      */
     onDimensionsChange?: (rect: Rect) => void;
     /**
-     * Padding around the text content for the background rect.
+     * Inset around the text content for the background rect.
      * Only affects the background, text position remains unchanged.
      */
-    padding?: ThemeVars.Space | ChartPadding;
+    inset?: number | ChartInset;
     // override box responsive style
     borderRadius?: ThemeVars.BorderRadius;
   };
@@ -86,7 +86,7 @@ type ChartTextVisibleProps = {
   textDimensions: Rect;
   fill: string;
   borderRadius?: ThemeVars.BorderRadius;
-  padding?: ThemeVars.Space | ChartPadding;
+  inset?: number | ChartInset;
   dx?: TextProps['dx'];
   dy?: TextProps['dy'];
 };
@@ -102,20 +102,20 @@ const ChartTextVisible = memo<ChartTextVisibleProps>(
     fontWeight,
     fill,
     borderRadius,
-    padding: paddingInput,
+    inset: insetInput,
     textDimensions,
     dx,
     dy,
   }) => {
-    const padding = useMemo(() => getPadding(paddingInput), [paddingInput]);
+    const inset = useMemo(() => getChartInset(insetInput), [insetInput]);
 
     const rectHeight = useMemo(
-      () => textDimensions.height + padding.top + padding.bottom,
-      [textDimensions, padding],
+      () => textDimensions.height + inset.top + inset.bottom,
+      [textDimensions, inset],
     );
     const rectWidth = useMemo(
-      () => textDimensions.width + padding.left + padding.right,
-      [textDimensions, padding],
+      () => textDimensions.width + inset.left + inset.right,
+      [textDimensions, inset],
     );
 
     return (
@@ -127,8 +127,8 @@ const ChartTextVisible = memo<ChartTextVisibleProps>(
             rx={borderRadius}
             ry={borderRadius}
             width={rectWidth}
-            x={textDimensions.x - padding.left}
-            y={textDimensions.y - padding.top}
+            x={textDimensions.x - inset.left}
+            y={textDimensions.y - inset.top}
           />
         )}
         <Text
@@ -166,7 +166,7 @@ export const ChartText = memo<ChartTextProps>(
     color,
     background = 'transparent',
     borderRadius,
-    padding: paddingInput,
+    inset: insetInput,
     onDimensionsChange,
     opacity = 1,
   }) => {
@@ -201,14 +201,14 @@ export const ChartText = memo<ChartTextProps>(
         return null;
       }
 
-      const padding = getPadding(paddingInput);
+      const inset = getChartInset(insetInput);
       return {
-        x: textBBox.x - padding.left,
-        y: textBBox.y - padding.top,
-        width: textBBox.width + padding.left + padding.right,
-        height: textBBox.height + padding.top + padding.bottom,
+        x: textBBox.x - inset.left,
+        y: textBBox.y - inset.top,
+        width: textBBox.width + inset.left + inset.right,
+        height: textBBox.height + inset.top + inset.bottom,
       };
-    }, [textBBox, paddingInput]);
+    }, [textBBox, insetInput]);
 
     const overflowAmount = useMemo(() => {
       if (disableRepositioning) {
@@ -294,7 +294,7 @@ export const ChartText = memo<ChartTextProps>(
               fontFamily={fontFamily}
               fontSize={fontSize}
               fontWeight={fontWeight}
-              padding={paddingInput}
+              inset={insetInput}
               textAnchor={textAnchor}
               textDimensions={textSize}
             >

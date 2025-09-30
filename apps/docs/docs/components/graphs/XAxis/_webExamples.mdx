@@ -67,7 +67,7 @@ You can pass in either an object (AxisBounds) with `min` and `max` properties (b
     domain: ({ min, max }) => ({ min: min - 5, max: max + 5 }),
   }}
 >
-  <XAxis position="end" showLine showTickMarks showGrid tickInterval={2} />
+  <XAxis position="end" showLine showTickMarks showGrid tickInterval={16} />
   <Line seriesId="prices" curve="monotone" showArea />
 </CartesianChart>
 ```
@@ -480,7 +480,7 @@ Using `requestedTickCount` will use [D3's ticks function](https://d3js.org/d3-ar
 </CartesianChart>
 ```
 
-`tickInterval`, which accepts `ThemeVars.Space`, will measure the available space and try to create evenly spaced ticks. It will always include the first and last values of the domain.
+`tickInterval`, which accepts pixels, will measure the available space and try to create evenly spaced ticks. It will always include the first and last values of the domain.
 
 ```jsx live
 <CartesianChart
@@ -493,7 +493,7 @@ Using `requestedTickCount` will use [D3's ticks function](https://d3js.org/d3-ar
     },
   ]}
 >
-  <XAxis position="end" showLine showTickMarks showGrid tickInterval={2} />
+  <XAxis position="end" showLine showTickMarks showGrid tickInterval={16} />
   <Line seriesId="prices" curve="monotone" showArea />
   <Scrubber />
 </CartesianChart>
@@ -501,7 +501,7 @@ Using `requestedTickCount` will use [D3's ticks function](https://d3js.org/d3-ar
 
 ### Tick Marks
 
-You can show tick marks on the axis using the `showTickMarks` prop. You can also customize the tick mark size using the `tickMarkSize` prop, which accepts `ThemeVars.Space`.
+You can show tick marks on the axis using the `showTickMarks` prop. You can also customize the tick mark size using the `tickMarkSize` prop, which accepts pixels.
 
 ```jsx live
 function XAxisTickMarksExample() {
@@ -526,7 +526,7 @@ function XAxisTickMarksExample() {
           data: ['April 1', 'April 2', 'April 3', 'April 4', 'April 5', 'April 6', 'April 7'],
         }}
       >
-        <XAxis position="end" showLine showTickMarks={showTickMarks} tickMarkSize={2} showGrid />
+        <XAxis position="end" showLine showTickMarks={showTickMarks} tickMarkSize={16} showGrid />
         <Line seriesId="prices" curve="monotone" showArea />
         <Scrubber />
       </CartesianChart>

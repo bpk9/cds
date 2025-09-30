@@ -117,17 +117,20 @@ export type BarStackProps = {
    */
   roundBaseline?: boolean;
   /**
-   * Gap between bars in the stack.
+   * Gap between bars in the stack in pixels.
+   * @default 0
    */
-  stackGap?: ThemeVars.Space;
+  stackGap?: number;
   /**
-   * Minimum size for individual bars in the stack.
+   * Minimum size for individual bars in the stack in pixels.
+   * @default 0
    */
-  barMinSize?: ThemeVars.Space;
+  barMinSize?: number;
   /**
-   * Minimum size for the entire stack.
+   * Minimum size for the entire stack in pixels.
+   * @default 0
    */
-  stackMinSize?: ThemeVars.Space;
+  stackMinSize?: number;
 };
 
 /**
@@ -157,9 +160,9 @@ export const BarStack = memo<BarStackProps>(
     const theme = useTheme();
     const { getSeriesData, getXAxis } = useCartesianChartContext();
 
-    const stackGapPx = stackGap ? theme.space[stackGap] : 0;
-    const barMinSizePx = barMinSize ? theme.space[barMinSize] : 0;
-    const stackMinSizePx = stackMinSize ? theme.space[stackMinSize] : 0;
+    const stackGapPx = stackGap ?? 0;
+    const barMinSizePx = barMinSize ?? 0;
+    const stackMinSizePx = stackMinSize ?? 0;
 
     const xAxis = getXAxis();
 

@@ -465,7 +465,7 @@ function CustomizableAssetPriceExample() {
     return (
       <VStack gap={2}>
         <SectionHeader
-          padding={0}
+          inset={0}
           title={<Text font="label1">Asset Price</Text>}
           balance={<RollingNumber format={{ style: 'currency', currency: 'USD' }} font="display3" color="fgMuted" value={currentTimePrice} />}
           end={isMobile ? undefined : (
