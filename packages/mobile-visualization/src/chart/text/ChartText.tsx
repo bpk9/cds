@@ -86,7 +86,7 @@ type ChartTextVisibleProps = {
   fontSize: TextProps['fontSize'];
   fontWeight: TextProps['fontWeight'];
   textDimensions: Rect;
-  fill: string;
+  fill?: string;
   borderRadius?: number;
   inset?: number | ChartInset;
   dx?: TextProps['dx'];
@@ -109,6 +109,7 @@ const ChartTextVisible = memo<ChartTextVisibleProps>(
     dx,
     dy,
   }) => {
+    const theme = useTheme();
     const inset = useMemo(() => getChartInset(insetInput), [insetInput]);
 
     const rectHeight = useMemo(
@@ -137,7 +138,7 @@ const ChartTextVisible = memo<ChartTextVisibleProps>(
           alignmentBaseline={alignmentBaseline}
           dx={dx}
           dy={dy}
-          fill={fill}
+          fill={fill ?? theme.color.fgMuted}
           fontFamily={fontFamily}
           fontSize={fontSize}
           fontWeight={fontWeight}
@@ -172,7 +173,6 @@ export const ChartText = memo<ChartTextProps>(
     onDimensionsChange,
     opacity = 1,
   }) => {
-    const theme = useTheme();
     const { width: chartWidth, height: chartHeight } = useCartesianChartContext();
 
     const fullChartBounds = useMemo(
@@ -283,16 +283,18 @@ export const ChartText = memo<ChartTextProps>(
     }, []);
 
     return (
-      <G opacity={isDimensionsReady ? opacity : 0} testID={testID}>
+      <G opacity={isDimensionsReady ? opacity : 0}>
         {textSize && (
-          <G transform={`translate(${x + overflowAmount.x}, ${y + overflowAmount.y})`}>
+          <G
+            transform={[{ translateX: x + overflowAmount.x }, { translateY: y + overflowAmount.y }]}
+          >
             <ChartTextVisible
               alignmentBaseline={alignmentBaseline}
               background={background}
               borderRadius={borderRadius}
               dx={dx}
               dy={dy}
-              fill={color ?? theme.color.fgMuted}
+              fill={color}
               fontFamily={fontFamily}
               fontSize={fontSize}
               fontWeight={fontWeight}
