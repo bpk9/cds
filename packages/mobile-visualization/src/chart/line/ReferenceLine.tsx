@@ -116,10 +116,9 @@ export const ReferenceLine = memo<ReferenceLineProps>(
     // Merge default config with user provided config
     const finalLabelConfig: ReferenceLineLabelConfig = useMemo(
       () => ({
-        dominantBaseline: 'central',
+        alignmentBaseline: 'central',
         borderRadius: 200,
         color: theme.color.fgMuted,
-        elevation: 0,
         inset: { top: 8, bottom: 8, left: 12, right: 12 },
         ...labelConfig,
       }),
@@ -139,12 +138,12 @@ export const ReferenceLine = memo<ReferenceLineProps>(
       const getLabelX = () => {
         switch (labelPosition as 'left' | 'center' | 'right') {
           case 'left':
-            return drawingArea.x + 8;
+            return drawingArea.x;
           case 'center':
             return drawingArea.x + drawingArea.width / 2;
           case 'right':
           default:
-            return drawingArea.x + drawingArea.width - 5;
+            return drawingArea.x + drawingArea.width;
         }
       };
 
@@ -187,12 +186,12 @@ export const ReferenceLine = memo<ReferenceLineProps>(
       const getLabelY = () => {
         switch (labelPosition as 'top' | 'center' | 'bottom') {
           case 'top':
-            return 24;
+            return drawingArea.y;
           case 'center':
             return drawingArea.y + drawingArea.height / 2;
           case 'bottom':
           default:
-            return drawingArea.y + drawingArea.height - 24;
+            return drawingArea.y + drawingArea.height;
         }
       };
 
