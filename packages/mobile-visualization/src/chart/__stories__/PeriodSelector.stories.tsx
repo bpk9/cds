@@ -1,5 +1,5 @@
 import { forwardRef, memo, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { assets } from '@coinbase/cds-common/internal/data/assets';
 import { useTabsContext } from '@coinbase/cds-common/tabs/TabsContext';
 import type { TabValue } from '@coinbase/cds-common/tabs/useTabs';
@@ -39,7 +39,7 @@ const MinWidthPeriodSelectorExample = () => {
   return (
     <PeriodSelector
       activeTab={activeTab}
-      gap={2}
+      gap={0.5}
       onChange={(tab) => setActiveTab(tab)}
       tabs={tabs}
       width="fit-content"
@@ -102,49 +102,35 @@ const TooManyPeriodsSelectorExample = () => {
 
   const activeBackground = useMemo(() => (!isLive ? 'bgPrimaryWash' : 'bgNegativeWash'), [isLive]);
 
-  const gradientOverlayStyles = useMemo(
-    () => [
-      {
-        position: 'absolute' as const,
-        right: 0,
-        bottom: 0,
-        top: 0,
-        width: theme.space[4],
-        backgroundColor: theme.color.bgPrimary,
-        opacity: 0.8,
-      },
-    ],
-    [theme.space, theme.color.bgPrimary],
-  );
-
+  // todo: icon button cannot have a height lower than 40px - and our PeriodSelector is 36px
+  // We can fix this by making IconButton more extensible
   return (
-    <HStack
-      alignItems="center"
-      justifyContent="space-between"
-      maxWidth="100%"
-      overflow="hidden"
-      width="100%"
-    >
-      <Box flexGrow={1} overflow="hidden" position="relative">
-        <Box overflow="scroll" paddingEnd={2}>
-          <PeriodSelector
-            activeBackground={activeBackground}
-            activeTab={activeTab}
-            gap={1}
-            justifyContent="flex-start"
-            onChange={setActiveTab}
-            tabs={tabs}
-            width="fit-content"
-          />
-        </Box>
-        <View pointerEvents="none" style={gradientOverlayStyles} />
-      </Box>
-      {/* todo - better way to handle height? https://www.figma.com/design/sbeD5oRL9OL5hbIzaqzL7T/Line-Charts----Sparkline?node-id=5947-13669&t=7esgu5dzBls0bZNV-4 */}
+    <HStack alignItems="center" maxWidth="100%" width="100%">
+      <ScrollView
+        horizontal
+        contentContainerStyle={{
+          display: 'flex',
+          flexDirection: 'row',
+          paddingEnd: theme.space[2],
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        showsHorizontalScrollIndicator={false}
+      >
+        <PeriodSelector
+          activeBackground={activeBackground}
+          activeTab={activeTab}
+          gap={1}
+          justifyContent="flex-start"
+          onChange={setActiveTab}
+          tabs={tabs}
+          width="fit-content"
+        />
+      </ScrollView>
       <IconButton
         compact
         accessibilityLabel="Configure chart"
         flexShrink={0}
-        height={36}
         name="filter"
         variant="secondary"
       />
@@ -178,13 +164,16 @@ const BTCTab: TabComponent = memo(
 
     const textColor = isActive ? btcColor : undefined;
 
-    // todo: see if there is a simpler way for us to transition colors here
-    // previous attempt included adding styles and classNames props which didn't work with MotionText
-    // Another option is to create a new periodselectortab component
     return (
       <SegmentedTab
         ref={ref}
-        label={<TextLabel1 dangerouslySetColor={textColor}>{label}</TextLabel1>}
+        label={
+          typeof label === 'string' ? (
+            <TextLabel1 style={{ color: textColor }}>{label}</TextLabel1>
+          ) : (
+            label
+          )
+        }
         {...props}
       />
     );
@@ -193,7 +182,12 @@ const BTCTab: TabComponent = memo(
 
 const ColoredPeriodSelectorExample = () => {
   const tabs = [
-    { id: '1H', label: <LiveTabLabel dangerouslySetColor={btcColor} /> },
+    {
+      id: '1H',
+      label: (
+        <LiveTabLabel styles={{ text: { color: btcColor }, dot: { backgroundColor: btcColor } }} />
+      ),
+    },
     { id: '1D', label: '1D' },
     { id: '1W', label: '1W' },
     { id: '1M', label: '1M' },

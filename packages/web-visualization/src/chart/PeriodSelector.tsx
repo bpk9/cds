@@ -1,4 +1,5 @@
 import React, { forwardRef, memo, useMemo } from 'react';
+import { cx } from '@coinbase/cds-web';
 import type { Polymorphic } from '@coinbase/cds-web/core/polymorphism';
 import { Box } from '@coinbase/cds-web/layout';
 import {
@@ -70,6 +71,24 @@ export type LiveTabLabelBaseProps = TextBaseProps & {
    * Whether to disable the pulse animation.
    */
   disablePulse?: boolean;
+  /**
+   * Style overrides for different parts of the component
+   */
+  styles?: {
+    /** Style for the dot */
+    dot?: React.CSSProperties;
+    /** Style for the text */
+    text?: React.CSSProperties;
+  };
+  /**
+   * ClassName overrides for different parts of the component
+   */
+  classNames?: {
+    /** ClassName for the dot */
+    dot?: string;
+    /** ClassName for the text */
+    text?: string;
+  };
 };
 
 export type LiveTabLabelProps<AsComponent extends React.ElementType> = Polymorphic.Props<
@@ -104,6 +123,9 @@ export const LiveTabLabel: LiveTabLabelComponent = memo(
         font = 'label1',
         hideDot,
         disablePulse,
+        styles,
+        classNames,
+        className,
         ...props
       }: LiveTabLabelProps<AsComponent>,
       ref?: Polymorphic.Ref<AsComponent>,
@@ -122,16 +144,19 @@ export const LiveTabLabel: LiveTabLabelComponent = memo(
           ref={ref}
           alignItems={alignItems}
           as={Component}
+          className={cx(className, classNames?.text)}
           color={color}
           display={display}
           font={font}
+          style={styles?.text}
           {...props}
         >
           {!hideDot && (
             <motion.span
               animate={!disablePulse && pulseAnimation}
-              className={dotBaseCss}
+              className={cx(dotBaseCss, classNames?.dot)}
               initial={{ opacity: 1 }}
+              style={styles?.dot}
             />
           )}
           {label}

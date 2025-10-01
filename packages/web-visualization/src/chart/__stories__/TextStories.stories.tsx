@@ -311,17 +311,13 @@ export const InteractiveChartText = () => {
           <ChartText
             borderRadius={200}
             color="var(--color-fgPrimary)"
-            verticalAlignment={
-              dominantBaseline === 'hanging'
-                ? 'top'
-                : dominantBaseline === 'alphabetic'
-                  ? 'bottom'
-                  : 'middle'
-            }
             dx={offsetX}
             dy={offsetY}
             elevation={1}
             font="label1"
+            horizontalAlignment={
+              textAnchor === 'start' ? 'left' : textAnchor === 'end' ? 'right' : 'center'
+            }
             inset={chartTextInset}
             onDimensionsChange={(rect) => setBbox(rect)}
             styles={{
@@ -329,8 +325,12 @@ export const InteractiveChartText = () => {
               backgroundRect: hideWithDisplayNone ? { display: 'none' } : undefined,
             }}
             testID="test-text"
-            horizontalAlignment={
-              textAnchor === 'start' ? 'left' : textAnchor === 'end' ? 'right' : 'center'
+            verticalAlignment={
+              dominantBaseline === 'hanging'
+                ? 'top'
+                : dominantBaseline === 'alphabetic'
+                  ? 'bottom'
+                  : 'middle'
             }
             x={textX}
             y={textY}

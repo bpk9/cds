@@ -291,19 +291,8 @@ export const Scrubber = memo(
         return label;
       }, [label, dataIndex]);
 
-      console.log('[Scrubber] Main render:', {
-        scrubberPosition,
-        dataIndex,
-        dataX,
-        pixelX,
-        beaconPositionsCount: beaconPositions.length,
-        hideOverlay,
-        hideLine,
-      });
-
       if (!defaultXScale || !defaultYScale) return null;
 
-      // Wrap content in AnimatedG only if animation is enabled
       const content = (
         <>
           {!hideOverlay &&
@@ -359,7 +348,6 @@ export const Scrubber = memo(
                 dataX={scrubberBeacon.x}
                 dataY={scrubberBeacon.y}
                 idlePulse={idlePulse}
-                // OPTIMIZATION: Pass pre-calculated pixel coordinates
                 pixelX={scrubberBeacon.pixelX}
                 pixelY={scrubberBeacon.pixelY}
                 seriesId={scrubberBeacon.targetSeries.id}

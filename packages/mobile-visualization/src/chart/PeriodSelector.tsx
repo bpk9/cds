@@ -1,7 +1,9 @@
 import React, { forwardRef, memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
+import { Box } from '@coinbase/cds-mobile/layout';
 import {
   SegmentedTabs,
   type SegmentedTabsProps,
@@ -84,43 +86,50 @@ export type LiveTabLabelBaseProps = TextBaseProps & {
    */
   hideDot?: boolean;
   /**
-   * Style prop for customization
+   * Style overrides for different parts of the component
    */
-  style?: any;
+  styles?: {
+    /** Style for the root container */
+    root?: StyleProp<ViewStyle>;
+    /** Style for the dot */
+    dot?: StyleProp<ViewStyle>;
+    /** Style for the text */
+    text?: StyleProp<TextStyle>;
+  };
 };
 
 export type LiveTabLabelProps = LiveTabLabelBaseProps;
 
-const styles = StyleSheet.create({
-  liveContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-});
+const defaultRootStyle: ViewStyle = {
+  flexDirection: 'row',
+  alignItems: 'center',
+};
 
 export const LiveTabLabel = memo(
   forwardRef<View, LiveTabLabelProps>(
-    ({ color = 'fgNegative', label = 'LIVE', font = 'label1', hideDot, style, ...props }, ref) => {
+    ({ color = 'fgNegative', label = 'LIVE', font = 'label1', hideDot, styles, ...props }, ref) => {
       const theme = useTheme();
 
-      const colorKey = color as keyof typeof theme.color;
-      const textColor = theme.color[colorKey] || color;
-
       const dotStyle = useMemo(
-        () => ({
-          width: theme.space[1],
-          height: theme.space[1],
-          borderRadius: 1000,
-          marginRight: theme.space[0.75],
-          backgroundColor: textColor,
-        }),
-        [theme.space, textColor],
+        () => [
+          {
+            width: theme.space[1],
+            height: theme.space[1],
+            borderRadius: 1000,
+            marginRight: theme.space[0.75],
+            backgroundColor: color && theme.color[color],
+          },
+          styles?.dot,
+        ],
+        [theme.space, theme.color, color, styles?.dot],
       );
 
+      const containerStyle = useMemo(() => [defaultRootStyle, styles?.root], [styles?.root]);
+
       return (
-        <View ref={ref} style={[styles.liveContainer, style]}>
+        <View ref={ref} style={containerStyle}>
           {!hideDot && <View style={dotStyle} />}
-          <Text color={color} font={font} {...props}>
+          <Text color={color} font={font} style={styles?.text} {...props}>
             {label}
           </Text>
         </View>

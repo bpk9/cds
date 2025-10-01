@@ -1347,8 +1347,8 @@ const CompactLineChart = () => {
             <LineChart
               {...dimensions}
               enableScrubbing={false}
+              inset={0}
               overflow="visible"
-              padding={0}
               series={[
                 {
                   id: 'btc',
@@ -1376,8 +1376,8 @@ const CompactLineChart = () => {
               {...dimensions}
               showArea
               enableScrubbing={false}
+              inset={0}
               overflow="visible"
-              padding={0}
               series={[
                 {
                   id: 'btc',
@@ -1405,8 +1405,8 @@ const CompactLineChart = () => {
               {...dimensions}
               showArea
               enableScrubbing={false}
+              inset={0}
               overflow="visible"
-              padding={0}
               series={[
                 {
                   id: 'btc',
@@ -1434,8 +1434,8 @@ const CompactLineChart = () => {
               {...dimensions}
               showArea
               enableScrubbing={false}
+              inset={0}
               overflow="visible"
-              padding={0}
               series={[
                 {
                   id: 'btc',

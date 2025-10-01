@@ -508,7 +508,7 @@ const SparklineInteractiveComponent = <Period extends string>({
           {children}
           <Scrubber
             label={formatHoverDateForPeriod}
-            labelProps={{ dy: -9, alignmentBaseline: 'middle' }}
+            labelProps={{ dy: -9, verticalAlignment: 'middle' }}
             lineStroke={sparklineColor}
             seriesIds={[]}
           />
@@ -516,7 +516,7 @@ const SparklineInteractiveComponent = <Period extends string>({
         {!hasData && (
           <Box
             alignItems="center"
-            height="100%"
+            bottom={70}
             justifyContent="center"
             position="absolute"
             top={0}
