@@ -1,170 +1,92 @@
-import React, { memo, useCallback, useMemo } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-import type { LayoutChangeEvent } from 'react-native';
-import { periodLabelMap } from '@coinbase/cds-common/tokens/sparkline';
-import { getAccessibleColor } from '@coinbase/cds-common/utils/getAccessibleColor';
-import { useHorizontallyScrollingPressables } from '@coinbase/cds-mobile/hooks/useHorizontallyScrollingPressables';
-import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
-import { Box } from '@coinbase/cds-mobile/layout/Box';
-import { HStack } from '@coinbase/cds-mobile/layout/HStack';
-import { OverflowGradient } from '@coinbase/cds-mobile/layout/OverflowGradient';
-import { Pressable } from '@coinbase/cds-mobile/system/Pressable';
-import { TextLabel1 } from '@coinbase/cds-mobile/typography';
-import { Haptics } from '@coinbase/cds-mobile/utils/haptics';
+import React, { forwardRef, memo, useMemo } from 'react';
+import { useTabsContext } from '@coinbase/cds-common/tabs/TabsContext';
+import type { TabComponent, TabsActiveIndicatorProps } from '@coinbase/cds-mobile/tabs';
+import { SegmentedTab, type SegmentedTabProps } from '@coinbase/cds-mobile/tabs/SegmentedTab';
+import { Text } from '@coinbase/cds-mobile/typography/Text';
 
-import { useSparklineInteractiveContext } from './SparklineInteractiveProvider';
+import {
+  PeriodSelector,
+  PeriodSelectorActiveIndicator,
+  type PeriodSelectorProps,
+} from '../../chart/PeriodSelector';
 
-export type SparklineInteractivePeriodSelectorProps<Period extends string> = {
-  selectedPeriod: Period;
-  setSelectedPeriod: (period: Period) => void;
-  periods: { label: string; value: Period }[];
-  color: string;
+export type SparklineInteractivePeriodSelectorProps = Omit<PeriodSelectorProps, 'color'> & {
+  /**
+   * The color to use for the active tab and indicator.
+   */
+  color?: string;
 };
 
-export type SparklineInteractivePeriodProps<Period extends string> = {
-  period: { label: string; value: Period };
-  selectedPeriod: Period;
-  setSelectedPeriod: SparklineInteractivePeriodSelectorProps<Period>['setSelectedPeriod'];
-  color: string;
-};
+/**
+ * SparklineInteractivePeriodSelector is a specialized version of PeriodSelector
+ * that supports custom color theming for the active state.
+ */
+export const SparklineInteractivePeriodSelector = memo(
+  forwardRef(
+    (
+      { color, ...props }: SparklineInteractivePeriodSelectorProps,
+      ref: React.ForwardedRef<any>,
+    ) => {
+      // Create custom active indicator with the provided color
+      const CustomActiveIndicator = useMemo(() => {
+        if (!color) return PeriodSelectorActiveIndicator;
 
-function SparklineInteractivePeriodWithGeneric<Period extends string>({
-  period,
-  selectedPeriod,
-  setSelectedPeriod,
-  getLayoutHandler,
-  color,
-}: SparklineInteractivePeriodProps<Period> & {
-  getLayoutHandler: (id: string) => ({ nativeEvent: { layout } }: LayoutChangeEvent) => void;
-}) {
-  const isSelected = period.value === selectedPeriod;
-  const periodLabel = periodLabelMap[period.label] ?? period.label;
-  const periodHint = useMemo(
-    () =>
-      isSelected
-        ? `Currently showing data for the ${periodLabel} timeframe`
-        : `Show data for the ${periodLabel} timeframe`,
-    [isSelected, periodLabel],
-  );
+        return memo(({ style, ...indicatorProps }: TabsActiveIndicatorProps) => (
+          <PeriodSelectorActiveIndicator
+            {...indicatorProps}
+            style={[
+              style,
+              {
+                backgroundColor: color,
+                opacity: 0.2,
+              },
+            ]}
+          />
+        ));
+      }, [color]);
 
-  const handleOnPress = useCallback(() => {
-    void Haptics.lightImpact();
-    setSelectedPeriod(period.value);
-  }, [period, setSelectedPeriod]);
-  const theme = useTheme();
+      // Create custom tab component with the provided color for active state
+      const CustomTab: TabComponent = useMemo(() => {
+        if (!color) {
+          // If no custom color, use default PeriodSelector tab behavior
+          return memo(
+            forwardRef((tabProps: SegmentedTabProps, tabRef: React.ForwardedRef<any>) => (
+              <SegmentedTab ref={tabRef} activeColor="fgPrimary" font="label1" {...tabProps} />
+            )),
+          );
+        }
 
-  const textStyle = useMemo(
-    () => ({
-      color: isSelected ? color : theme.color.fgMuted,
-    }),
-    [color, isSelected, theme.color.fgMuted],
-  );
+        return memo(
+          forwardRef(
+            ({ label, style, ...tabProps }: SegmentedTabProps, tabRef: React.ForwardedRef<any>) => {
+              const { activeTab } = useTabsContext();
+              const isActive = activeTab?.id === tabProps.id;
 
-  const accessibilityState = useMemo(
-    () => ({
-      selected: isSelected,
-    }),
-    [isSelected],
-  );
+              return (
+                <SegmentedTab
+                  ref={tabRef}
+                  label={
+                    <Text font="label1" style={{ color: isActive ? color : undefined }}>
+                      {label}
+                    </Text>
+                  }
+                  style={style}
+                  {...tabProps}
+                />
+              );
+            },
+          ),
+        );
+      }, [color]);
 
-  return (
-    <Box
-      key={period.value}
-      alignItems="center"
-      justifyContent="center"
-      onLayout={getLayoutHandler(period.value)}
-      paddingY={2}
-    >
-      <Pressable
-        accessibilityHint={periodHint}
-        accessibilityLabel={periodLabel}
-        accessibilityState={accessibilityState}
-        background={isSelected ? 'bgPrimaryWash' : 'bg'}
-        borderColor="transparent"
-        borderRadius={1000}
-        onPress={handleOnPress}
-      >
-        <TextLabel1 paddingX={2} paddingY={1} style={textStyle}>
-          {period.label}
-        </TextLabel1>
-      </Pressable>
-    </Box>
-  );
-}
-
-const periodSelectorStyles = StyleSheet.create({
-  scrollViewContainer: {
-    flexGrow: 1,
-  },
-  hStackContainer: {
-    flex: 1,
-  },
-});
-
-const SparklineInteractivePeriod = memo(
-  SparklineInteractivePeriodWithGeneric,
-) as typeof SparklineInteractivePeriodWithGeneric;
-
-export const SparklineInteractivePeriodSelector = <Period extends string>({
-  selectedPeriod,
-  setSelectedPeriod,
-  periods,
-  color,
-}: SparklineInteractivePeriodSelectorProps<Period>) => {
-  const theme = useTheme();
-  const accessibleForeground =
-    color !== 'auto'
-      ? color
-      : getAccessibleColor({
-          background: theme.color.bg,
-          foreground: 'auto',
-        });
-  const { markerOpacity } = useSparklineInteractiveContext();
-  const {
-    scrollRef,
-    isScrollContentOverflowing,
-    isScrollContentOffscreenRight,
-    handleScroll,
-    handleScrollContainerLayout,
-    handleScrollContentSizeChange,
-    getPressableLayoutHandler,
-  } = useHorizontallyScrollingPressables(selectedPeriod);
-
-  const opacity = markerOpacity.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 0],
-  });
-
-  return (
-    <Box animated background="bg" opacity={opacity}>
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        contentContainerStyle={periodSelectorStyles.scrollViewContainer}
-        onContentSizeChange={handleScrollContentSizeChange}
-        onLayout={handleScrollContainerLayout}
-        onScroll={handleScroll}
-        scrollEventThrottle={1}
-        showsHorizontalScrollIndicator={false}
-      >
-        <HStack
-          justifyContent="space-between"
-          padding={0}
-          style={periodSelectorStyles.hStackContainer}
-        >
-          {periods.map((period) => (
-            <SparklineInteractivePeriod
-              key={period.value}
-              color={accessibleForeground}
-              getLayoutHandler={getPressableLayoutHandler}
-              period={period}
-              selectedPeriod={selectedPeriod}
-              setSelectedPeriod={setSelectedPeriod}
-            />
-          ))}
-        </HStack>
-      </ScrollView>
-      {isScrollContentOverflowing && isScrollContentOffscreenRight && <OverflowGradient />}
-    </Box>
-  );
-};
+      return (
+        <PeriodSelector
+          ref={ref}
+          TabComponent={CustomTab}
+          TabsActiveIndicatorComponent={CustomActiveIndicator}
+          {...props}
+        />
+      );
+    },
+  ),
+);

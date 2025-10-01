@@ -131,11 +131,6 @@ export const ScrubberBeacon = memo(
       const targetPosition = useMemo(() => {
         // If pixel coordinates provided directly, use them (OPTIMIZATION)
         if (directPixelX !== undefined && directPixelY !== undefined) {
-          console.log('[ScrubberBeacon] Using pre-calculated pixels (OPTIMIZED):', {
-            seriesId,
-            pixelX: directPixelX,
-            pixelY: directPixelY,
-          });
           return { x: directPixelX, y: directPixelY };
         }
 

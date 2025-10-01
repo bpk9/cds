@@ -1,14 +1,20 @@
-import React, { memo, useState } from 'react';
-import { TSpan } from 'react-native-svg';
+import React, { memo, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { G, Line as SvgLine, Rect as SvgRect } from 'react-native-svg';
+import { candles as btcCandles } from '@coinbase/cds-common/internal/data/candles';
+import { isCategoricalScale, ScrubberContext } from '@coinbase/cds-common/visualizations/charts';
 import { Button } from '@coinbase/cds-mobile/buttons';
 import { Example, ExampleScreen } from '@coinbase/cds-mobile/examples/ExampleScreen';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { VStack } from '@coinbase/cds-mobile/layout';
+import { Text } from '@coinbase/cds-mobile/typography/Text';
 
 import { XAxis, YAxis } from '../../axis';
 import { CartesianChart } from '../../CartesianChart';
+import { useCartesianChartContext } from '../../ChartProvider';
 import { ReferenceLine, SolidLine, type SolidLineProps } from '../../line';
-import { Bar } from '../Bar';
+import { PeriodSelector } from '../../PeriodSelector';
+import { Scrubber } from '../../scrubber';
+import { Bar, type BarComponentProps } from '../Bar';
 import { BarChart } from '../BarChart';
 import { BarPlot } from '../BarPlot';
 import type { BarStackComponentProps } from '../BarStack';
@@ -16,21 +22,7 @@ import { DefaultBarStack } from '../DefaultBarStack';
 
 const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
 
-const defaultChartProps = 250;
-
-/**
- * todo examples
- * simple
- * have an outline on stacks
- * have a custom stripe pattern for a bar with outline
- * dotted with outline
- * bar chart with lines on top
- * stack gap and all related examples with border radius
- * Showcase example legend and even a popover would be great
- * Showcase a highlighted background maybe even that
- * handle bar plot needing to know about x and/or y scale so we can only render those
- * ignore any series that aren't in that scale and only factor in the series provided when handling # of different stacks per category
- */
+const defaultChartHeight = 250;
 
 const PositiveAndNegativeCashFlow = () => {
   const theme = useTheme();
@@ -69,6 +61,7 @@ const PositiveAndNegativeCashFlow = () => {
 };
 
 const FiatAndStablecoinBalance = () => {
+  const theme = useTheme();
   const categories = Array.from({ length: 31 }, (_, i) => `3/${i + 1}`);
 
   const usd = [
@@ -85,8 +78,8 @@ const FiatAndStablecoinBalance = () => {
   ];
 
   const series = [
-    { id: 'BRL', data: brl, color: '#10b981' },
-    { id: 'USDC', data: usdc, color: '#3b82f6' },
+    { id: 'BRL', data: brl, color: theme.color.accentBoldGreen },
+    { id: 'USDC', data: usdc, color: theme.color.accentBoldBlue },
     { id: 'USD', data: usd, color: '#5b6cff' },
   ];
 
@@ -95,7 +88,7 @@ const FiatAndStablecoinBalance = () => {
       showXAxis
       stacked
       barMinSize={8}
-      height={defaultChartProps}
+      height={420}
       inset={32}
       series={series}
       stackGap={2}
@@ -108,7 +101,6 @@ const FiatAndStablecoinBalance = () => {
 const MonthlyRewards = () => {
   const theme = useTheme();
   const months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-  const currentMonth = 7;
   const purple = [null, 6, 8, 10, 7, 6, 6, 8, null, null, null, null];
   const blue = [null, 10, 12, 11, 10, 9, 10, 11, null, null, null, null];
   const cyan = [null, 7, 10, 12, 11, 10, 8, 11, null, null, null, null];
@@ -121,7 +113,7 @@ const MonthlyRewards = () => {
     { id: 'green', data: green, color: '#33c481' },
   ];
 
-  const CustomStackComponent = ({ children, ...props }: BarStackComponentProps) => {
+  const CustomBarStackComponent = ({ children, ...props }: BarStackComponentProps) => {
     if (props.height === 0) {
       const diameter = props.width;
       return (
@@ -147,9 +139,9 @@ const MonthlyRewards = () => {
       roundBaseline
       showXAxis
       stacked
-      BarStackComponent={CustomStackComponent}
+      BarStackComponent={CustomBarStackComponent}
       borderRadius={1000}
-      height={defaultChartProps}
+      height={300}
       inset={0}
       series={series}
       showYAxis={false}
@@ -168,7 +160,7 @@ const MultipleYAxes = () => {
   const theme = useTheme();
   return (
     <CartesianChart
-      height={defaultChartProps}
+      height={defaultChartHeight}
       series={[
         {
           id: 'revenue',
@@ -227,7 +219,7 @@ const UpdatingChartValues = () => {
       <BarChart
         showXAxis
         showYAxis
-        height={defaultChartProps}
+        height={defaultChartHeight}
         series={[
           {
             id: 'weekly-data',
@@ -253,6 +245,194 @@ const UpdatingChartValues = () => {
   );
 };
 
+type TimePeriod = 'week' | 'month' | 'year';
+type TimePeriodTab = { id: TimePeriod; label: string };
+
+const tabs: TimePeriodTab[] = [
+  { id: 'week', label: '1W' },
+  { id: 'month', label: '1M' },
+  { id: 'year', label: '1Y' },
+];
+
+const ScrubberRect = memo(() => {
+  const theme = useTheme();
+  const { getXScale, getYScale } = useCartesianChartContext();
+  const { scrubberPosition } = useContext(ScrubberContext) ?? {};
+  const xScale = getXScale();
+  const yScale = getYScale();
+
+  if (!xScale || !yScale || scrubberPosition === undefined || !isCategoricalScale(xScale))
+    return null;
+
+  const yScaleDomain = yScale.range();
+  const [yMax, yMin] = yScaleDomain;
+
+  const barWidth = xScale.bandwidth();
+
+  return (
+    <SvgRect
+      fill={theme.color.bgLine}
+      height={yMax - yMin}
+      width={barWidth}
+      x={xScale(scrubberPosition)}
+      y={yMin}
+    />
+  );
+});
+
+const Candlesticks = () => {
+  const theme = useTheme();
+  const selectedIndexRef = useRef<number | undefined>(undefined);
+  const [timePeriod, setTimePeriod] = useState<TimePeriodTab>(tabs[0]);
+  const [infoText, setInfoText] = useState('');
+
+  const stockData = btcCandles
+    .slice(0, timePeriod.id === 'week' ? 7 : timePeriod.id === 'month' ? 30 : btcCandles.length)
+    .reverse();
+  const min = Math.min(...stockData.map((data) => parseFloat(data.low)));
+
+  const candlesData = stockData.map((data) => [parseFloat(data.low), parseFloat(data.high)]) as [
+    number,
+    number,
+  ][];
+
+  const CandlestickBarComponent = memo<BarComponentProps>(
+    ({ x, y, width, height, originY, dataX, ...props }) => {
+      const { getYScale } = useCartesianChartContext();
+      const yScale = getYScale();
+
+      const wickX = x + width / 2;
+
+      const timePeriodValue = stockData[dataX as number];
+
+      const open = parseFloat(timePeriodValue.open);
+      const close = parseFloat(timePeriodValue.close);
+
+      const bullish = open < close;
+      const color = bullish ? theme.color.fgPositive : theme.color.fgNegative;
+      const openY = yScale?.(open) ?? 0;
+      const closeY = yScale?.(close) ?? 0;
+
+      const bodyHeight = Math.abs(openY - closeY);
+      const bodyY = openY < closeY ? openY : closeY;
+
+      return (
+        <G>
+          <SvgLine stroke={color} strokeWidth={1} x1={wickX} x2={wickX} y1={y} y2={y + height} />
+          <SvgRect fill={color} height={bodyHeight} width={width} x={x} y={bodyY} />
+        </G>
+      );
+    },
+  );
+
+  const formatPrice = useCallback((price: string) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(parseFloat(price));
+  }, []);
+
+  const formatVolume = useCallback((volume: string) => {
+    const volumeInThousands = parseFloat(volume) / 1000;
+    return (
+      new Intl.NumberFormat('en-US', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(volumeInThousands) + 'k'
+    );
+  }, []);
+
+  const formatTime = useCallback(
+    (index: number | null) => {
+      if (index === null || index >= stockData.length) return '';
+      const ts = parseInt(stockData[index].start);
+      return new Date(ts * 1000).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+    },
+    [stockData],
+  );
+
+  const updateInfoText = useCallback(
+    (index: number | undefined) => {
+      const text =
+        index !== undefined
+          ? `Open: ${formatPrice(stockData[index].open)}, Close: ${formatPrice(
+              stockData[index].close,
+            )}, Volume: ${formatVolume(stockData[index].volume)}`
+          : formatPrice(stockData[stockData.length - 1].close);
+
+      setInfoText(text);
+      selectedIndexRef.current = index;
+    },
+    [stockData, formatPrice, formatVolume],
+  );
+
+  // Initial value for the info text
+  const initialInfo = useMemo(
+    () => formatPrice(stockData[stockData.length - 1].close),
+    [formatPrice, stockData],
+  );
+
+  // Update text when stockData changes (on timePeriod change)
+  React.useEffect(() => {
+    updateInfoText(selectedIndexRef.current);
+  }, [stockData, updateInfoText]);
+
+  return (
+    <VStack gap={2}>
+      <Text font="headline">{infoText || initialInfo}</Text>
+      <BarChart
+        enableScrubbing
+        showXAxis
+        showYAxis
+        BarComponent={CandlestickBarComponent}
+        BarStackComponent={({ children, ...props }) => <G {...props}>{children}</G>}
+        animate={false}
+        borderRadius={0}
+        height={400}
+        onScrubberPositionChange={updateInfoText}
+        series={[
+          {
+            id: 'stock-prices',
+            data: candlesData,
+          },
+        ]}
+        xAxis={{
+          tickLabelFormatter: formatTime,
+        }}
+        yAxis={{
+          domain: { min },
+          tickLabelFormatter: formatPrice,
+          width: 80,
+          showGrid: true,
+          GridLineComponent: ThinSolidLine,
+        }}
+      >
+        {timePeriod.id === 'year' ? (
+          <Scrubber
+            hideOverlay
+            LineComponent={(props) => <ReferenceLine {...props} LineComponent={ThinSolidLine} />}
+            seriesIds={[]}
+          />
+        ) : (
+          <ScrubberRect />
+        )}
+      </BarChart>
+      <PeriodSelector
+        activeTab={timePeriod}
+        onChange={(tab) => {
+          if (tab === null) return;
+          setTimePeriod(tab as TimePeriodTab);
+        }}
+        tabs={tabs}
+      />
+    </VStack>
+  );
+};
+
 const BarChartStories = () => {
   return (
     <ExampleScreen>
@@ -270,6 +450,9 @@ const BarChartStories = () => {
       </Example>
       <Example title="Multiple Y Axes">
         <MultipleYAxes />
+      </Example>
+      <Example title="Candlestick Chart">
+        <Candlesticks />
       </Example>*/}
     </ExampleScreen>
   );

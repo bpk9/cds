@@ -41,7 +41,7 @@ const DefaultFallback = memo(
 
 const mobileLayoutBreakpoint = 650;
 const axisSize = 52;
-const chartInsetTop = defaultChartInset.top;
+const chartInsetTop = 24;
 
 export type SparklineInteractiveBaseProps<Period extends string> = {
   /**
@@ -479,7 +479,11 @@ export const SparklineInteractive = memo(
               tickLabelFormatter={formatAxisDate}
             />
             {children}
-            <Scrubber label={scrubberLabel} seriesIds={showScrubberBeacon ? ['main'] : []} />
+            <Scrubber
+              label={scrubberLabel}
+              scrubberLabelProps={{ dy: -chartInsetTop / 2, dominantBaseline: 'middle' }}
+              seriesIds={showScrubberBeacon ? ['main'] : []}
+            />
           </LineChart>
           {!hasData && !disableFallback && (
             <Box

@@ -1,4 +1,4 @@
-import { forwardRef, memo, useCallback, useId, useMemo, useRef, useState } from 'react';
+import { forwardRef, memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { View } from 'react-native';
 import { Defs, LinearGradient, Stop, TSpan } from 'react-native-svg';
 import { assets } from '@coinbase/cds-common/internal/data/assets';
@@ -23,13 +23,14 @@ import { SegmentedTab, type SegmentedTabProps } from '@coinbase/cds-mobile/tabs/
 import { TextLabel1 } from '@coinbase/cds-mobile/typography';
 import { Text } from '@coinbase/cds-mobile/typography/Text';
 
-import { Area, DottedArea } from '../../area';
+import { Area, DottedArea, GradientArea } from '../../area';
 import { XAxis, YAxis } from '../../axis';
 import { CartesianChart } from '../../CartesianChart';
 import { useCartesianChartContext } from '../../ChartProvider';
 import { PeriodSelector, PeriodSelectorActiveIndicator } from '../../PeriodSelector';
 import { Point } from '../../point';
 import { Scrubber, type ScrubberRef } from '../../scrubber';
+import { ScrubberBeacon } from '../../scrubber/ScrubberBeacon';
 import type { ChartTextChildren } from '../../text';
 import { GradientLine, Line, LineChart, ReferenceLine } from '..';
 
@@ -1436,6 +1437,323 @@ const ScrubberWithImperativeHandle = () => {
   );
 };
 
+const BTCPriceChart = () => {
+  const tabs = [
+    { id: 'hour', label: '1H' },
+    { id: 'day', label: '1D' },
+    { id: 'week', label: '1W' },
+    { id: 'month', label: '1M' },
+    { id: 'year', label: '1Y' },
+    { id: 'all', label: 'All' },
+  ];
+  const [activeTab, setActiveTab] = useState<TabValue | null>(tabs[0]);
+  const [highlightedItem, setHighlightedItem] = useState<number | undefined>();
+
+  const currentPriceData = activeTab
+    ? sparklineInteractiveData[activeTab.id as keyof typeof sparklineInteractiveData]
+    : sparklineInteractiveData.hour;
+
+  const currentData = useMemo(
+    () => [...currentPriceData.map((price) => price.value)],
+    [currentPriceData],
+  );
+  const currentTimestamps = useMemo(
+    () => [...currentPriceData.map((price) => price.date.toISOString())],
+    [currentPriceData],
+  );
+  const currentPrice = currentData[currentData.length - 1];
+  const startPrice = currentData[0];
+
+  const onScrubberPositionChange = useCallback((item?: number) => {
+    setHighlightedItem(item);
+  }, []);
+
+  const displayPrice =
+    highlightedItem !== null && highlightedItem !== undefined
+      ? currentData[highlightedItem]
+      : currentPrice;
+
+  const btcAccentColor = '#F0A73C';
+
+  const { displayDate } = useMemo(() => {
+    return calculateTrendData(
+      highlightedItem,
+      currentData,
+      currentTimestamps,
+      startPrice,
+      currentPrice,
+      activeTab?.id || 'hour',
+    );
+  }, [highlightedItem, currentData, currentTimestamps, startPrice, currentPrice, activeTab]);
+
+  const formattedPrice = `$${displayPrice.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+  const AreaComponent = useMemo(
+    () => (props: any) => <GradientArea {...props} peakOpacity={0.15} />,
+    [],
+  );
+
+  const BeaconComponent = useCallback(
+    (props: any) => <ScrubberBeacon {...props} stroke={btcAccentColor} />,
+    [btcAccentColor],
+  );
+
+  return (
+    <Box
+      borderRadius={300}
+      overflow="hidden"
+      style={{ backgroundColor: btcAccentColor }}
+      width="100%"
+    >
+      <VStack gap={3} width="100%">
+        <HStack alignItems="flex-start" gap={3} justifyContent="space-between" padding={4}>
+          <VStack flexGrow={1} gap={1}>
+            <Text font="title1">Coinbase Wrapped BTC</Text>
+            <Text font="title2">{formattedPrice}</Text>
+          </VStack>
+          <VStack justifyContent="center">
+            <RemoteImage shape="circle" size="xxl" source={assets.btc.imageUrl} />
+          </VStack>
+        </HStack>
+        <CartesianChart
+          enableScrubbing
+          height={200}
+          inset={{ bottom: 0, right: 3, left: 0, top: 6 }}
+          onScrubberPositionChange={onScrubberPositionChange}
+          series={[
+            {
+              id: 'price',
+              data: currentData,
+              color: 'black',
+            },
+          ]}
+          width="100%"
+        >
+          <Line showArea AreaComponent={AreaComponent} seriesId="price" strokeWidth={3} />
+          <Scrubber
+            idlePulse
+            BeaconComponent={BeaconComponent}
+            label={displayDate}
+            lineStroke="black"
+            scrubberLabelProps={{
+              color: 'black',
+            }}
+          />
+        </CartesianChart>
+        <Box padding={2}>
+          <PeriodSelector activeTab={activeTab} onChange={(tab) => setActiveTab(tab)} tabs={tabs} />
+        </Box>
+      </VStack>
+    </Box>
+  );
+};
+
+const LiveAssetPrice = () => {
+  const scrubberRef = useRef<ScrubberRef>(null);
+
+  const initialData = useMemo(() => {
+    return sparklineInteractiveData.hour.map((d) => d.value);
+  }, []);
+
+  const [priceData, setPriceData] = useState(initialData);
+
+  const lastDataPointTimeRef = useRef(Date.now());
+  const updateCountRef = useRef(0);
+
+  const intervalSeconds = 3600 / initialData.length;
+
+  const maxPercentChange = Math.abs(initialData[initialData.length - 1] - initialData[0]) * 0.05;
+
+  useEffect(() => {
+    const priceUpdateInterval = setInterval(
+      () => {
+        setPriceData((currentData) => {
+          const newData = [...currentData];
+          const lastPrice = newData[newData.length - 1];
+
+          const priceChange = (Math.random() - 0.5) * maxPercentChange;
+          const newPrice = Math.round((lastPrice + priceChange) * 100) / 100;
+
+          // Check if we should roll over to a new data point
+          const currentTime = Date.now();
+          const timeSinceLastPoint = (currentTime - lastDataPointTimeRef.current) / 1000;
+
+          if (timeSinceLastPoint >= intervalSeconds) {
+            // Time for a new data point - remove first, add new at end
+            lastDataPointTimeRef.current = currentTime;
+            newData.shift(); // Remove oldest data point
+            newData.push(newPrice); // Add new data point
+            updateCountRef.current = 0;
+          } else {
+            // Just update the last data point
+            newData[newData.length - 1] = newPrice;
+            updateCountRef.current++;
+          }
+
+          return newData;
+        });
+
+        // Pulse the scrubber on each update
+        scrubberRef.current?.pulse();
+      },
+      2000 + Math.random() * 1000,
+    );
+
+    return () => clearInterval(priceUpdateInterval);
+  }, [intervalSeconds, maxPercentChange]);
+
+  return (
+    <LineChart
+      enableScrubbing
+      showArea
+      height={defaultChartHeight}
+      series={[
+        {
+          id: 'btc',
+          data: priceData,
+          color: assets.btc.color,
+        },
+      ]}
+    >
+      <Scrubber ref={scrubberRef} />
+    </LineChart>
+  );
+};
+
+const availabilityEvents = [
+  {
+    date: new Date('2022-01-01'),
+    availability: 79,
+  },
+  {
+    date: new Date('2022-01-03'),
+    availability: 81,
+  },
+  {
+    date: new Date('2022-01-04'),
+    availability: 82,
+  },
+  {
+    date: new Date('2022-01-06'),
+    availability: 91,
+  },
+  {
+    date: new Date('2022-01-07'),
+    availability: 92,
+  },
+  {
+    date: new Date('2022-01-10'),
+    availability: 86,
+  },
+];
+
+const AvailabilityChart = () => {
+  const theme = useTheme();
+  const [scrubIndex, setScrubIndex] = useState<number | undefined>();
+
+  const ChartDefs = memo(
+    ({
+      yellowThresholdPercentage = 85,
+      greenThresholdPercentage = 90,
+    }: {
+      yellowThresholdPercentage?: number;
+      greenThresholdPercentage?: number;
+    }) => {
+      const { getYScale, getYAxis } = useCartesianChartContext();
+      const yScale = getYScale();
+      const yAxis = getYAxis();
+
+      if (!yScale) return null;
+
+      const rangeBounds = yAxis?.domain;
+      const rangeMin = rangeBounds?.min ?? 0;
+      const rangeMax = rangeBounds?.max ?? 100;
+
+      // Calculate the Y positions in the chart coordinate system
+      const yellowThresholdY = yScale(yellowThresholdPercentage) ?? 0;
+      const greenThresholdY = yScale(greenThresholdPercentage) ?? 0;
+      const minY = yScale(rangeMax) ?? 0; // Top of chart (max value)
+      const maxY = yScale(rangeMin) ?? 0; // Bottom of chart (min value)
+
+      // Calculate percentages based on actual chart positions
+      const yellowThreshold = ((yellowThresholdY - minY) / (maxY - minY)) * 100;
+      const greenThreshold = ((greenThresholdY - minY) / (maxY - minY)) * 100;
+
+      return (
+        <Defs>
+          <LinearGradient
+            gradientUnits="userSpaceOnUse"
+            id="availabilityGradient"
+            x1="0%"
+            x2="0%"
+            y1={minY}
+            y2={maxY}
+          >
+            <Stop offset="0%" stopColor={theme.color.fgPositive} />
+            <Stop offset={`${greenThreshold}%`} stopColor={theme.color.fgPositive} />
+            <Stop offset={`${greenThreshold}%`} stopColor={theme.color.fgWarning} />
+            <Stop offset={`${yellowThreshold}%`} stopColor={theme.color.fgWarning} />
+            <Stop offset={`${yellowThreshold}%`} stopColor={theme.color.fgNegative} />
+            <Stop offset="100%" stopColor={theme.color.fgNegative} />
+          </LinearGradient>
+        </Defs>
+      );
+    },
+  );
+
+  return (
+    <CartesianChart
+      enableScrubbing
+      height={defaultChartHeight}
+      onScrubberPositionChange={setScrubIndex}
+      series={[
+        {
+          id: 'availability',
+          data: availabilityEvents.map((event) => event.availability),
+          color: 'url(#availabilityGradient)',
+        },
+      ]}
+      xAxis={{
+        data: availabilityEvents.map((event) => event.date.getTime()),
+      }}
+      yAxis={{
+        domain: ({ min, max }: { min: number; max: number }) => ({
+          min: Math.max(min - 2, 0),
+          max: Math.min(max + 2, 100),
+        }),
+      }}
+    >
+      <ChartDefs />
+      <XAxis
+        showGrid
+        showLine
+        showTickMarks
+        tickLabelFormatter={(value) => new Date(value).toLocaleDateString()}
+      />
+      <YAxis
+        showGrid
+        showLine
+        showTickMarks
+        position="left"
+        tickLabelFormatter={(value) => `${value}%`}
+      />
+      <Line
+        curve="stepAfter"
+        renderPoints={() => ({
+          fill: theme.color.bg,
+          stroke: 'url(#availabilityGradient)',
+          strokeWidth: 2,
+        })}
+        seriesId="availability"
+      />
+      <Scrubber overlayOffset={10} />
+    </CartesianChart>
+  );
+};
+
 const sampleData = [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58];
 
 const LineChartStories = () => {
@@ -1477,6 +1795,9 @@ const LineChartStories = () => {
       </Example>
       <Example title="Gain/Loss">
         <GainLossChart />
+      </Example>
+      <Example title="BTC Price Chart">
+        <BTCPriceChart />
       </Example>
       <Example title="Price Chart">
         <PriceChart />
@@ -1604,6 +1925,12 @@ const LineChartStories = () => {
       <Example title="Period Selector">
         <PeriodSelectorExample />
       </Example>
+      <Example title="Live Asset Price">
+        <LiveAssetPrice />
+      </Example>
+      <Example title="Availability Chart">
+        <AvailabilityChart />
+      </Example>
     </ExampleScreen>
   );
 };
@@ -1681,6 +2008,18 @@ const AssetPriceScreen = () => {
       </Example>
       <Example title="Asset Price Dotted (Old)">
         <AssetPriceDottedNonMemoized />
+      </Example>
+      <Example title="BTC Price Chart">
+        <BTCPriceChart />
+      </Example>
+      <Example title="Gain/Loss">
+        <GainLossChart />
+      </Example>
+      <Example title="Live Asset Price">
+        <LiveAssetPrice />
+      </Example>
+      <Example title="Availability Chart">
+        <AvailabilityChart />
       </Example>
     </ExampleScreen>
   );

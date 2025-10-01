@@ -4,30 +4,14 @@ import { assets } from '@coinbase/cds-common/internal/data/assets';
 import { useTabsContext } from '@coinbase/cds-common/tabs/TabsContext';
 import type { TabValue } from '@coinbase/cds-common/tabs/useTabs';
 import { IconButton } from '@coinbase/cds-mobile/buttons';
+import { Example, ExampleScreen } from '@coinbase/cds-mobile/examples/ExampleScreen';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { Box, HStack, VStack } from '@coinbase/cds-mobile/layout';
 import { type TabComponent, type TabsActiveIndicatorProps } from '@coinbase/cds-mobile/tabs';
 import { SegmentedTab, type SegmentedTabProps } from '@coinbase/cds-mobile/tabs/SegmentedTab';
-import { TextHeadline, TextLabel1 } from '@coinbase/cds-mobile/typography';
+import { TextLabel1 } from '@coinbase/cds-mobile/typography';
 
 import { LiveTabLabel, PeriodSelector, PeriodSelectorActiveIndicator } from '../PeriodSelector';
-
-export default {
-  component: PeriodSelector,
-  title: 'Components/Chart/PeriodSelector',
-};
-
-const Example: React.FC<
-  React.PropsWithChildren<{ title: string; description?: string | React.ReactNode }>
-> = ({ children, title, description }) => {
-  return (
-    <VStack gap={2}>
-      <TextHeadline>{title}</TextHeadline>
-      {description}
-      {children}
-    </VStack>
-  );
-};
 
 const PeriodSelectorExample = () => {
   const tabs = [
@@ -251,12 +235,29 @@ const ColoredExcludingLivePeriodSelectorExample = () => {
   );
 };
 
-export const All = () => {
+const PeriodSelectorStories = () => {
   return (
-    <VStack gap={2}>
+    <ExampleScreen>
       <Example title="Basic Example">
         <PeriodSelectorExample />
       </Example>
-    </VStack>
+      <Example title="Min Width Period Selector">
+        <MinWidthPeriodSelectorExample />
+      </Example>
+      <Example title="Live Period Selector">
+        <LivePeriodSelectorExample />
+      </Example>
+      <Example title="Period Selector with Overflow & Button">
+        <TooManyPeriodsSelectorExample />
+      </Example>
+      <Example title="Colored Period Selector">
+        <ColoredPeriodSelectorExample />
+      </Example>
+      <Example title="Colored Excluding Live Period Selector">
+        <ColoredExcludingLivePeriodSelectorExample />
+      </Example>
+    </ExampleScreen>
   );
 };
+
+export default PeriodSelectorStories;

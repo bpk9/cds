@@ -3,31 +3,31 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { SparklineInteractivePeriodSelector } from '../SparklineInteractivePeriodSelector';
 
-const periods = [
+const tabs = [
   {
+    id: '1h',
     label: '1H',
-    value: '1h',
   },
   {
+    id: '1d',
     label: '1D',
-    value: '1d',
   },
   {
+    id: '1w',
     label: '1W',
-    value: '1w',
   },
 ];
 
-const setSelectedPeriodSpy = jest.fn();
+const onChangeSpy = jest.fn();
 
 const SparklineInteractivePeriodSelectorExample = () => {
   return (
     <DefaultThemeProvider>
       <SparklineInteractivePeriodSelector
+        activeTab={tabs[1]}
         color="blue"
-        periods={periods}
-        selectedPeriod="1d"
-        setSelectedPeriod={setSelectedPeriodSpy}
+        onChange={onChangeSpy}
+        tabs={tabs}
       />
     </DefaultThemeProvider>
   );
@@ -35,23 +35,23 @@ const SparklineInteractivePeriodSelectorExample = () => {
 
 describe('SparklineInteractivePeriodSelector', () => {
   afterEach(() => {
-    setSelectedPeriodSpy.mockClear();
+    onChangeSpy.mockClear();
   });
 
   it('renders period buttons', () => {
     render(<SparklineInteractivePeriodSelectorExample />);
 
-    expect(screen.getAllByRole('button')).toHaveLength(periods.length);
+    expect(screen.getAllByRole('button')).toHaveLength(tabs.length);
     expect(screen.getByText('1H')).toBeTruthy();
     expect(screen.getByText('1D')).toBeTruthy();
-    expect(screen.getByText('1D')).toBeTruthy();
+    expect(screen.getByText('1W')).toBeTruthy();
   });
 
-  it('calls setSelectedPeriod when period button is pressed', () => {
+  it('calls onChange when period button is pressed', () => {
     render(<SparklineInteractivePeriodSelectorExample />);
 
     fireEvent.press(screen.getAllByRole('button')[0]);
 
-    expect(setSelectedPeriodSpy).toHaveBeenCalledTimes(1);
+    expect(onChangeSpy).toHaveBeenCalledTimes(1);
   });
 });

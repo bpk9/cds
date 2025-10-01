@@ -41,7 +41,6 @@ const RNAnimatedLine = Animated.createAnimatedComponent(Line);
 
 const AnimatedRect = memo(
   forwardRef<Rect, RectProps>((props, ref) => {
-    console.log('[AnimatedRect] Render:', props);
     return <Rect ref={ref} {...props} />;
   }),
 );
@@ -71,7 +70,6 @@ const ScrubberOverlay = memo(
 
     // Callback to update native props (called from worklet)
     const updateOverlay = useCallback((x: number, width: number) => {
-      console.log('[ScrubberOverlay] setNativeProps:', { x, width });
       rectRef.current?.setNativeProps({
         x,
         width,
@@ -90,12 +88,9 @@ const ScrubberOverlay = memo(
 
     // Update shared values when pixelX changes
     useEffect(() => {
-      console.log('[ScrubberOverlay] Effect - updating shared values:', { pixelX });
       animatedX.value = pixelX;
       animatedWidth.value = drawingArea.x + drawingArea.width - pixelX + overlayOffset;
     }, [pixelX, drawingArea.x, drawingArea.width, overlayOffset, animatedX, animatedWidth]);
-
-    console.log('[ScrubberOverlay] Render (should be rare):', { pixelX });
 
     return (
       <AnimatedRect
@@ -183,7 +178,7 @@ export type ScrubberProps = SharedProps &
     /**
      * Props passed to the scrubber line's label.
      */
-    scrubberLabelProps?: ReferenceLineProps['labelConfig'];
+    scrubberLabelProps?: Partial<ReferenceLineProps['labelConfig']>;
 
     /**
      * Stroke color for the scrubber line.
@@ -317,19 +312,6 @@ export const Scrubber = memo(
             })
             .filter((beacon: any) => beacon !== undefined) ?? [];
 
-        console.log('[Scrubber] beaconPositions calculated:', {
-          dataIndex,
-          dataX,
-          count: positions.length,
-          positions: positions.map((p) => ({
-            seriesId: p?.targetSeries.id,
-            dataX: p?.x,
-            dataY: p?.y,
-            pixelX: p?.pixelX,
-            pixelY: p?.pixelY,
-          })),
-        });
-
         return positions;
       }, [
         getXScale,
@@ -410,8 +392,12 @@ export const Scrubber = memo(
               <G>
                 {/* Vertical line */}
                 <RNAnimatedLine
-                  stroke={theme.color.fgMuted}
-                  strokeWidth={1}
+                  stroke={lineStroke ?? theme.color.fgMuted}
+                  strokeDasharray="0 4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  vectorEffect="non-scaling-stroke"
                   x1={overlayAnimatedX}
                   x2={overlayAnimatedX}
                   y1={drawingArea.y - overlayOffset}

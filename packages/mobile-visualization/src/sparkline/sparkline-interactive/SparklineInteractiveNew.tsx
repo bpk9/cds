@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
+import { G } from 'react-native-svg';
 import type { ThemeVars } from '@coinbase/cds-common/core/theme';
 import { chartCompactHeight, chartHeight } from '@coinbase/cds-common/tokens/sparkline';
 import type { Placement } from '@coinbase/cds-common/types';
@@ -18,6 +19,7 @@ import { Box, VStack } from '@coinbase/cds-mobile/layout';
 import { emptyArray, noop } from '@coinbase/cds-utils';
 import isObject from 'lodash/isObject';
 
+import { Point } from '../../chart';
 import { XAxis } from '../../chart/axis';
 import { LineChart, type LineSeries } from '../../chart/line';
 import { Scrubber } from '../../chart/scrubber';
@@ -310,15 +312,31 @@ const SparklineInteractiveComponent = <Period extends string>({
     return { minPoint: minPt, maxPoint: maxPt };
   }, [dataForPeriod, hasData]);
 
-  const updatePeriod = useCallback(
-    (period: Period) => {
-      if (isObject(data) && period !== selectedPeriod) {
-        setSelectedPeriod(period);
-        onPeriodChanged?.(period);
+  const handlePeriodChange = useCallback(
+    (tab: { id: string } | null) => {
+      if (tab && tab.id) {
+        const period = tab.id as Period;
+
+        if (isObject(data) && period !== selectedPeriod) {
+          setSelectedPeriod(period);
+          onPeriodChanged?.(period);
+        }
       }
     },
     [data, selectedPeriod, onPeriodChanged],
   );
+
+  const { tabs, activeTab } = useMemo(() => {
+    const tabsArray = periods.map((period) => ({
+      id: period.value,
+      label: period.label,
+    }));
+
+    return {
+      tabs: tabsArray,
+      activeTab: tabsArray.find((tab) => tab.id === selectedPeriod) || null,
+    };
+  }, [periods, selectedPeriod]);
 
   const handleScrub = useCallback(
     (params: ChartScrubParams<Period>) => {
@@ -349,15 +367,15 @@ const SparklineInteractiveComponent = <Period extends string>({
 
   const chartHorizontalGutter = useMemo(() => theme.space[gutter], [theme.space, gutter]);
 
+  // Calculate the period selector gutter - use timePeriodGutter if provided, otherwise use chart gutter
+  const periodSelectorGutter = useMemo(
+    () => (timePeriodGutter !== undefined ? theme.space[timePeriodGutter] : chartHorizontalGutter),
+    [timePeriodGutter, theme.space, chartHorizontalGutter],
+  );
+
   const rootStyles = useMemo(() => {
-    return [
-      !disableHorizontalPadding && {
-        paddingHorizontal: chartHorizontalGutter,
-      },
-      style,
-      styles?.root,
-    ];
-  }, [style, styles?.root, chartHorizontalGutter, disableHorizontalPadding]);
+    return [style, styles?.root];
+  }, [style, styles?.root]);
 
   // Extract values and dates once to avoid repeated mapping
   const { values, dates } = useMemo(() => {
@@ -411,18 +429,6 @@ const SparklineInteractiveComponent = <Period extends string>({
     ];
   }, [values, sparklineColor, yAxisBounds]);
 
-  /*console.log(
-    'render count',
-    renderCount.current,
-    'time period',
-    selectedPeriod,
-    'data',
-    dataForPeriod.length,
-    dataForPeriod.slice(0, 10),
-    series,
-  );*/
-  console.log('loading sparkline');
-
   const formatPriceAtIndex = useCallback(
     (index: number) => {
       if (!dataForPeriod[index]) return '';
@@ -445,7 +451,7 @@ const SparklineInteractiveComponent = <Period extends string>({
   );
 
   return (
-    <Box paddingX={disableHorizontalPadding ? 0 : gutter} style={rootStyles}>
+    <Box style={rootStyles}>
       {header}
       <VStack position="relative">
         <LineChart
@@ -453,7 +459,12 @@ const SparklineInteractiveComponent = <Period extends string>({
           areaType={fillType}
           enableScrubbing={!disableScrubbing}
           height={height}
-          inset={{ left: 2, right: 2, top: 18, bottom: 0 }}
+          inset={{
+            left: disableHorizontalPadding ? 0 : chartHorizontalGutter,
+            right: disableHorizontalPadding ? 0 : chartHorizontalGutter,
+            top: !hideMinMaxLabel ? 38 : 18,
+            bottom: 0,
+          }}
           onScrubberPositionChange={onScrubberPositionChange}
           series={series}
           showArea={fill}
@@ -464,36 +475,37 @@ const SparklineInteractiveComponent = <Period extends string>({
           yAxis={{
             domain: yAxisBounds,
             domainLimit: 'strict',
+            range: !hideMinMaxLabel ? ({ min, max }) => ({ min, max: max - 20 }) : undefined,
           }}
         >
           {!hideMinMaxLabel && maxPoint && (
-            <XAxis
-              height={20}
+            <Point
+              dataX={maxPoint.index}
+              dataY={maxPoint.value}
+              label={formatPriceAtIndex(maxPoint.index)}
+              labelConfig={{ position: 'top', dy: -12 }}
               opacity={isScrubbing ? 0 : 1}
-              position="top"
-              tickLabelFormatter={formatPriceAtIndex}
-              ticks={[maxPoint.index]}
+              radius={0}
             />
           )}
           {!hideMinMaxLabel && minPoint && (
-            <XAxis
-              height={20}
+            <Point
+              dataX={minPoint.index}
+              dataY={minPoint.value}
+              label={formatPriceAtIndex(minPoint.index)}
+              labelConfig={{ position: 'bottom', dy: 12 }}
               opacity={isScrubbing ? 0 : 1}
-              tickLabelFormatter={formatPriceAtIndex}
-              ticks={[minPoint.index]}
+              radius={0}
             />
           )}
-          <XAxis
-            height={axisHeight}
-            opacity={isScrubbing || hidePeriodSelector ? 1 : 0}
-            tickLabelFormatter={formatAxisDate}
-            tickMarkSize={16}
-          />
+          <G opacity={isScrubbing || hidePeriodSelector ? 1 : 0}>
+            <XAxis height={axisHeight} tickLabelFormatter={formatAxisDate} tickMarkSize={16} />
+          </G>
           {children}
           <Scrubber
             label={formatHoverDateForPeriod}
             lineStroke={sparklineColor}
-            scrubberLabelProps={{ inset: 0, background: '#ff00001a' }}
+            scrubberLabelProps={{ dy: -9, alignmentBaseline: 'middle', background: '#ff00001a' }}
             seriesIds={showScrubberBeacon ? ['main'] : []}
           />
         </LineChart>
@@ -514,15 +526,15 @@ const SparklineInteractiveComponent = <Period extends string>({
             pointerEvents={isScrubbing ? 'none' : 'auto'}
             style={[
               componentStyles.periodSelectorContainer,
-              timePeriodGutter ? { paddingHorizontal: theme.space[timePeriodGutter] } : undefined,
+              !disableHorizontalPadding && { paddingHorizontal: periodSelectorGutter },
               { opacity: periodSelectorOpacity },
             ]}
           >
             <SparklineInteractivePeriodSelector
+              activeTab={activeTab}
               color={color}
-              periods={periods}
-              selectedPeriod={selectedPeriod}
-              setSelectedPeriod={updatePeriod}
+              onChange={handlePeriodChange}
+              tabs={tabs}
             />
           </Animated.View>
         )}

@@ -189,6 +189,27 @@ function BelowChartWithGeneric<Period extends string>({
     return {};
   }, [theme.space, timePeriodGutter]);
 
+  const handlePeriodChange = useCallback(
+    (tab: { id: string } | null) => {
+      if (tab && tab.id) {
+        setSelectedPeriod(tab.id as Period);
+      }
+    },
+    [setSelectedPeriod],
+  );
+
+  const { tabs, activeTab } = useMemo(() => {
+    const tabsArray = periods.map((period) => ({
+      id: period.value,
+      label: period.label,
+    }));
+
+    return {
+      tabs: tabsArray,
+      activeTab: tabsArray.find((tab) => tab.id === selectedPeriod) || null,
+    };
+  }, [periods, selectedPeriod]);
+
   return (
     <View style={style}>
       <SparklineInteractiveMarkerDates
@@ -198,10 +219,10 @@ function BelowChartWithGeneric<Period extends string>({
         timePeriodGutter={timePeriodGutter}
       />
       <SparklineInteractivePeriodSelector
+        activeTab={activeTab}
         color={color}
-        periods={periods}
-        selectedPeriod={selectedPeriod}
-        setSelectedPeriod={setSelectedPeriod}
+        onChange={handlePeriodChange}
+        tabs={tabs}
       />
     </View>
   );
