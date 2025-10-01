@@ -127,10 +127,6 @@ export type SparklineInteractiveBaseProps<Period extends string> = {
    */
   lineType?: 'solid' | 'dotted' | 'gradient';
   children?: React.ReactNode;
-  /**
-   * Shows the scrubber beacon
-   */
-  showScrubberBeacon?: boolean;
 };
 
 export type SparklineInteractiveProps<Period extends string> =
@@ -239,7 +235,6 @@ const SparklineInteractiveComponent = <Period extends string>({
   children,
   compact,
   gutter = 3,
-  showScrubberBeacon,
 }: SparklineInteractiveProps<Period>) => {
   const renderCount = useRef(-1);
   renderCount.current++;
@@ -253,13 +248,14 @@ const SparklineInteractiveComponent = <Period extends string>({
   const isScreenReaderEnabled = useScreenReaderStatus();
 
   // Animate period selector opacity based on scrubbing state
+
   useEffect(() => {
     Animated.timing(periodSelectorOpacity, {
-      toValue: isScrubbing ? 0 : 1,
+      toValue: !hidePeriodSelector && !isScrubbing ? 1 : 0,
       duration: 200,
       useNativeDriver: true,
     }).start();
-  }, [isScrubbing, periodSelectorOpacity]);
+  }, [periodSelectorOpacity, hidePeriodSelector, isScrubbing]);
 
   const sparklineColor = useMemo(() => {
     return color !== 'auto'
@@ -374,8 +370,12 @@ const SparklineInteractiveComponent = <Period extends string>({
   );
 
   const rootStyles = useMemo(() => {
-    return [style, styles?.root];
-  }, [style, styles?.root]);
+    return [
+      !disableHorizontalPadding && { paddingHorizontal: chartHorizontalGutter },
+      style,
+      styles?.root,
+    ];
+  }, [style, styles?.root, chartHorizontalGutter, disableHorizontalPadding]);
 
   // Extract values and dates once to avoid repeated mapping
   const { values, dates } = useMemo(() => {
@@ -460,8 +460,8 @@ const SparklineInteractiveComponent = <Period extends string>({
           enableScrubbing={!disableScrubbing}
           height={height}
           inset={{
-            left: disableHorizontalPadding ? 0 : chartHorizontalGutter,
-            right: disableHorizontalPadding ? 0 : chartHorizontalGutter,
+            left: 2,
+            right: 2,
             top: !hideMinMaxLabel ? 38 : 18,
             bottom: 0,
           }}
@@ -478,35 +478,39 @@ const SparklineInteractiveComponent = <Period extends string>({
             range: !hideMinMaxLabel ? ({ min, max }) => ({ min, max: max - 20 }) : undefined,
           }}
         >
-          {!hideMinMaxLabel && maxPoint && (
-            <Point
-              dataX={maxPoint.index}
-              dataY={maxPoint.value}
-              label={formatPriceAtIndex(maxPoint.index)}
-              labelConfig={{ position: 'top', dy: -12 }}
-              opacity={isScrubbing ? 0 : 1}
-              radius={0}
-            />
-          )}
-          {!hideMinMaxLabel && minPoint && (
-            <Point
-              dataX={minPoint.index}
-              dataY={minPoint.value}
-              label={formatPriceAtIndex(minPoint.index)}
-              labelConfig={{ position: 'bottom', dy: 12 }}
-              opacity={isScrubbing ? 0 : 1}
-              radius={0}
-            />
-          )}
-          <G opacity={isScrubbing || hidePeriodSelector ? 1 : 0}>
-            <XAxis height={axisHeight} tickLabelFormatter={formatAxisDate} tickMarkSize={16} />
+          <G opacity={hidePeriodSelector || !isScrubbing ? 1 : 0}>
+            {!hideMinMaxLabel && maxPoint && (
+              <Point
+                dataX={maxPoint.index}
+                dataY={maxPoint.value}
+                label={formatPriceAtIndex(maxPoint.index)}
+                labelConfig={{ position: 'top', dy: -12 }}
+                opacity={isScrubbing ? 0 : 1}
+                radius={0}
+              />
+            )}
+            {!hideMinMaxLabel && minPoint && (
+              <Point
+                dataX={minPoint.index}
+                dataY={minPoint.value}
+                label={formatPriceAtIndex(minPoint.index)}
+                labelConfig={{ position: 'bottom', dy: 12 }}
+                opacity={isScrubbing ? 0 : 1}
+                radius={0}
+              />
+            )}
           </G>
+          {!hidePeriodSelector && (
+            <G opacity={isScrubbing ? 1 : 0}>
+              <XAxis height={axisHeight} tickLabelFormatter={formatAxisDate} tickMarkSize={16} />
+            </G>
+          )}
           {children}
           <Scrubber
             label={formatHoverDateForPeriod}
             lineStroke={sparklineColor}
-            scrubberLabelProps={{ dy: -9, alignmentBaseline: 'middle', background: '#ff00001a' }}
-            seriesIds={showScrubberBeacon ? ['main'] : []}
+            scrubberLabelProps={{ dy: -9, alignmentBaseline: 'middle' }}
+            seriesIds={[]}
           />
         </LineChart>
         {!hasData && (

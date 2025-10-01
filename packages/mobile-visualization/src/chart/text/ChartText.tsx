@@ -16,14 +16,7 @@ export type ChartTextChildren = string | null | undefined;
 export type ChartTextProps = SharedProps &
   Pick<
     TextProps,
-    | 'textAnchor'
-    | 'alignmentBaseline'
-    | 'dx'
-    | 'dy'
-    | 'fontSize'
-    | 'fontFamily'
-    | 'fontWeight'
-    | 'opacity'
+    'textAnchor' | 'alignmentBaseline' | 'dx' | 'dy' | 'fontSize' | 'fontWeight' | 'opacity'
   > & {
     /**
      * The text color.
@@ -82,7 +75,6 @@ type ChartTextVisibleProps = {
   background: string;
   textAnchor: TextProps['textAnchor'];
   alignmentBaseline: TextProps['alignmentBaseline'];
-  fontFamily: TextProps['fontFamily'];
   fontSize: TextProps['fontSize'];
   fontWeight: TextProps['fontWeight'];
   textDimensions: Rect;
@@ -99,7 +91,6 @@ const ChartTextVisible = memo<ChartTextVisibleProps>(
     background,
     textAnchor,
     alignmentBaseline,
-    fontFamily,
     fontSize,
     fontWeight,
     fill,
@@ -139,7 +130,6 @@ const ChartTextVisible = memo<ChartTextVisibleProps>(
           dx={dx}
           dy={dy}
           fill={fill ?? theme.color.fgMuted}
-          fontFamily={fontFamily}
           fontSize={fontSize}
           fontWeight={fontWeight}
           textAnchor={textAnchor}
@@ -163,7 +153,6 @@ export const ChartText = memo<ChartTextProps>(
     disableRepositioning = false,
     bounds,
     testID,
-    fontFamily,
     fontSize = 12,
     fontWeight,
     color,
@@ -283,12 +272,14 @@ export const ChartText = memo<ChartTextProps>(
         if (nodeHandle !== null) {
           UIManager.measure(nodeHandle, (x, y, width, height) => {
             if (width > 0 && height > 0) {
-              setTextSize({ x, y, width, height });
+              if (!textSize || textSize.width !== width || textSize.height !== height) {
+                setTextSize({ x, y, width, height });
+              }
             }
           });
         }
       }
-    }, [measurementRef, children]);
+    }, [measurementRef, children, textSize]);
 
     return (
       <G opacity={isDimensionsReady ? opacity : 0}>
@@ -303,7 +294,6 @@ export const ChartText = memo<ChartTextProps>(
               dx={dx}
               dy={dy}
               fill={color}
-              fontFamily={fontFamily}
               fontSize={fontSize}
               fontWeight={fontWeight}
               inset={insetInput}
@@ -320,7 +310,6 @@ export const ChartText = memo<ChartTextProps>(
           dx={dx}
           dy={dy}
           fill="transparent"
-          fontFamily={fontFamily}
           fontSize={fontSize}
           fontWeight={fontWeight}
           opacity={0}

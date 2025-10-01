@@ -18,7 +18,6 @@ export type ReferenceLineLabelConfig = Pick<
   ChartTextProps,
   | 'dx'
   | 'dy'
-  | 'fontFamily'
   | 'fontSize'
   | 'fontWeight'
   | 'color'

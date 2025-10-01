@@ -168,7 +168,6 @@ export type PointLabelConfig = Pick<
   ChartTextProps,
   | 'dx'
   | 'dy'
-  | 'fontFamily'
   | 'fontSize'
   | 'fontWeight'
   | 'color'

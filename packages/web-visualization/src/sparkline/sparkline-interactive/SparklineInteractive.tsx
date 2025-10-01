@@ -142,10 +142,6 @@ export type SparklineInteractiveBaseProps<Period extends string> = {
   periodSelectorPlacement?: Extract<Placement, 'above' | 'below'>;
   /** Scales the sparkline to show more or less variance. Use a number less than 1 for less variance and a number greater than 1 for more variance. If you use a number greater than 1 it may clip the boundaries of the sparkline. */
   yAxisScalingFactor?: number;
-  /**
-   * Shows the scrubber beacon
-   */
-  showScrubberBeacon?: boolean;
 };
 
 export type SparklineInteractiveProps<Period extends string> =
@@ -224,7 +220,6 @@ export const SparklineInteractive = memo(
     styles,
     headerTestID,
     children,
-    showScrubberBeacon,
   }: SparklineInteractiveProps<Period>) => {
     const theme = useTheme();
     const [isScrubbing, setIsScrubbing] = useState(false);
@@ -482,7 +477,7 @@ export const SparklineInteractive = memo(
             <Scrubber
               label={scrubberLabel}
               scrubberLabelProps={{ dy: -chartInsetTop / 2, dominantBaseline: 'middle' }}
-              seriesIds={showScrubberBeacon ? ['main'] : []}
+              seriesIds={[]}
             />
           </LineChart>
           {!hasData && !disableFallback && (
