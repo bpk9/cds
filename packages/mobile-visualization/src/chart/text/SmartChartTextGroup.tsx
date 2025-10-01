@@ -76,7 +76,6 @@ const EPSILON_PX = 0.5;
  */
 export const SmartChartTextGroup = memo<SmartChartTextGroupProps>(
   ({ labels, minGap = 8, prioritizeEndLabels = true, chartTextProps }) => {
-    const theme = useTheme();
     const minGapPx = minGap;
     const [boundingBoxes, setBoundingBoxes] = useState<Map<string, Rect>>(new Map());
     const { onDimensionsChange: propsOnDimensionsChange, ...restChartTextProps } =

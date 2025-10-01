@@ -1,5 +1,5 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import type { LayoutChangeEvent } from 'react-native';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { findNodeHandle, type LayoutChangeEvent, UIManager } from 'react-native';
 import { G, Rect as SvgRect, Text, type TextProps } from 'react-native-svg';
 import type { Rect, SharedProps } from '@coinbase/cds-common/types';
 import { type ChartInset, getChartInset } from '@coinbase/cds-common/visualizations/charts';
@@ -173,6 +173,7 @@ export const ChartText = memo<ChartTextProps>(
     onDimensionsChange,
     opacity = 1,
   }) => {
+    const measurementRef = useRef<Text>(null);
     const { width: chartWidth, height: chartHeight } = useCartesianChartContext();
 
     const fullChartBounds = useMemo(
@@ -276,11 +277,18 @@ export const ChartText = memo<ChartTextProps>(
       }
     }, [reportedRect, onDimensionsChange]);
 
-    const onLayout = useCallback((event: LayoutChangeEvent) => {
-      if (event.nativeEvent.layout.width > 0 && event.nativeEvent.layout.height > 0) {
-        setTextSize(event.nativeEvent.layout);
+    useEffect(() => {
+      if (measurementRef.current) {
+        const nodeHandle = findNodeHandle(measurementRef.current);
+        if (nodeHandle !== null) {
+          UIManager.measure(nodeHandle, (x, y, width, height) => {
+            if (width > 0 && height > 0) {
+              setTextSize({ x, y, width, height });
+            }
+          });
+        }
       }
-    }, []);
+    }, [measurementRef]);
 
     return (
       <G opacity={isDimensionsReady ? opacity : 0}>
@@ -307,6 +315,7 @@ export const ChartText = memo<ChartTextProps>(
           </G>
         )}
         <Text
+          ref={measurementRef}
           alignmentBaseline={alignmentBaseline}
           dx={dx}
           dy={dy}
@@ -314,7 +323,6 @@ export const ChartText = memo<ChartTextProps>(
           fontFamily={fontFamily}
           fontSize={fontSize}
           fontWeight={fontWeight}
-          onLayout={onLayout}
           opacity={0}
           textAnchor={textAnchor}
         >
