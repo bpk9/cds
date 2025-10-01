@@ -1,7 +1,5 @@
-// codegen:start {preset: barrel, include: [./*.tsx, ./*/*.tsx], exclude: [./__stories__/*.tsx, ./__tests__/*.tsx, ./__figma__/*.tsx, ./generateSparklineWithId.ts]}
 export * from './Counter';
 export * from './Sparkline';
-export * from './sparkline-interactive-header/SparklineInteractiveHeader';
 export * from './sparkline-interactive/SparklineAccessibleView';
 export * from './sparkline-interactive/SparklineInteractive';
 export * from './sparkline-interactive/SparklineInteractiveAnimatedPath';
@@ -14,7 +12,7 @@ export * from './sparkline-interactive/SparklineInteractivePaths';
 export * from './sparkline-interactive/SparklineInteractivePeriodSelector';
 export * from './sparkline-interactive/SparklineInteractiveProvider';
 export * from './sparkline-interactive/SparklineInteractiveTimeseriesPaths';
+export * from './sparkline-interactive-header/SparklineInteractiveHeader';
 export * from './SparklineArea';
 export * from './SparklineAreaPattern';
 export * from './SparklineGradient';
-// codegen:end

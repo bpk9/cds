@@ -34,7 +34,14 @@ export type XAxisBaseProps = AxisBaseProps & {
   height?: number;
 };
 
-export type XAxisProps = AxisProps & XAxisBaseProps;
+export type XAxisProps = AxisProps &
+  XAxisBaseProps & {
+    /**
+     * Opacity of the axis.
+     * @default 1
+     */
+    opacity?: number;
+  };
 
 export const XAxis = memo<XAxisProps>(
   ({
@@ -55,6 +62,7 @@ export const XAxis = memo<XAxisProps>(
     showLine,
     tickMarkSize = 4,
     tickInterval = 32,
+    opacity = 1,
     ...props
   }) => {
     const theme = useTheme();
@@ -238,7 +246,7 @@ export const XAxis = memo<XAxisProps>(
     if (!xScale) return;
 
     return (
-      <G data-axis="x" data-position={position} {...props}>
+      <G data-axis="x" data-position={position} opacity={opacity} {...props}>
         {showGrid && (
           <AnimatedG animatedProps={animate ? gridAnimatedStyle : undefined}>
             {ticksData.map((tick, index) => {

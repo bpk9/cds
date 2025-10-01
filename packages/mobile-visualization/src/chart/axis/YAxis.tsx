@@ -46,7 +46,14 @@ export type YAxisBaseProps = AxisBaseProps & {
   width?: number;
 };
 
-export type YAxisProps = AxisProps & YAxisBaseProps;
+export type YAxisProps = AxisProps &
+  YAxisBaseProps & {
+    /**
+     * Opacity of the axis.
+     * @default 1
+     */
+    opacity?: number;
+  };
 
 export const YAxis = memo<YAxisProps>(
   ({
@@ -68,6 +75,7 @@ export const YAxis = memo<YAxisProps>(
     showLine,
     tickMarkSize = 4,
     tickInterval,
+    opacity = 1,
     ...props
   }) => {
     const theme = useTheme();
@@ -242,7 +250,7 @@ export const YAxis = memo<YAxisProps>(
     if (!yScale) return;
 
     return (
-      <G data-axis="y" data-position={position} {...props}>
+      <G data-axis="y" data-position={position} opacity={opacity} {...props}>
         {showGrid && (
           <AnimatedG animatedProps={animate ? gridAnimatedStyle : undefined}>
             {ticksData.map((tick, index) => {
