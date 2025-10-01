@@ -418,8 +418,6 @@ const SparklineInteractiveComponent = <Period extends string>({
     series,
   );
 
-  // todo: handle fallback
-
   const formatPriceAtIndex = useCallback(
     (index: number) => {
       if (!dataForPeriod[index]) return '';
@@ -489,6 +487,18 @@ const SparklineInteractiveComponent = <Period extends string>({
             seriesIds={[]}
           />
         </LineChart>
+        {!hasData && (
+          <Box
+            alignItems="center"
+            height="100%"
+            justifyContent="center"
+            position="absolute"
+            top={0}
+            width="100%"
+          >
+            {fallback ?? <DefaultFallback fallbackType={fallbackType} />}
+          </Box>
+        )}
         {!hidePeriodSelector && (
           <Animated.View
             pointerEvents={isScrubbing ? 'none' : 'auto'}
