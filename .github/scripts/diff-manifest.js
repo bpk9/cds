@@ -135,8 +135,7 @@ const formatSection = (title, items) => {
  * @returns {string} The formatted markdown comment.
  */
 const formatComment = (manifest, newItems, updatedItems, removedItems) => {
-  let comment = `<!-- manifest-diff-comment:${manifest} -->\n`;
-  comment += `### Changes for \`${manifest}\`\n\n`;
+  let comment = `## Changes for \`${manifest}\`\n\n`;
 
   comment += formatSection('🚀 Added', newItems);
   comment += formatSection('🐞 Updated', updatedItems);

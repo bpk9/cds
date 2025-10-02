@@ -52,11 +52,10 @@ jobs:
 
   post-comment:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
     needs: generate-diff
     if: needs.generate-diff.outputs.diff_exists == 'true'
+    permissions:
+      pull-requests: write
     steps:
       - name: Download diff artifact
         uses: actions/download-artifact@v4
@@ -75,12 +74,12 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.diff_content.outputs.body }}
-          edit-mode: replace
-          comment-author: github-actions[bot]
-          body-includes: '<!-- manifest-diff-comment:'
+          unique-key-input: manifest-diff-comment
 
   manual-verification:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: post-comment
     environment:
       name: manifest-review
