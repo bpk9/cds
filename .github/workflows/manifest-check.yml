@@ -75,6 +75,9 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.diff_content.outputs.body }}
+          edit-mode: replace
+          comment-author: github-actions[bot]
+          body-includes: '<!-- manifest-diff-comment:'
 
   manual-verification:
     runs-on: ubuntu-latest
