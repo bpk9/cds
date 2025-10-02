@@ -14,8 +14,7 @@ const getChangedManifests = () => {
     .split('\n')
     .filter(
       (file) =>
-        file === 'packages/icons/manifest.json' ||
-        file === 'packages/illustrations/manifest.json',
+        file === 'packages/icons/manifest.json' || file === 'packages/illustrations/manifest.json',
     );
   console.log('Found changed manifest files:', files);
   return files;
@@ -109,22 +108,22 @@ const compareManifests = (manifestPath, baseContent, headContent) => {
  * @returns {string} The formatted markdown section.
  */
 const formatSection = (title, items) => {
-    let section = '';
-    const keys = Object.keys(items).filter((key) => items[key] && items[key].length > 0);
-    if (keys.length > 0) {
-      section += `### ${title}\n\n`;
-      for (const key of keys) {
-        if (key !== 'Icons') {
-          const formattedKey = key
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, (str) => str.toUpperCase());
-          section += `#### ${formattedKey}\n\n`;
-        }
-        section += `- ${items[key].join('\n- ')}\n\n`;
+  let section = '';
+  const keys = Object.keys(items).filter((key) => items[key] && items[key].length > 0);
+  if (keys.length > 0) {
+    section += `### ${title}\n\n`;
+    for (const key of keys) {
+      if (key !== 'Icons') {
+        const formattedKey = key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, (str) => str.toUpperCase());
+        section += `#### ${formattedKey}\n\n`;
       }
+      section += `- ${items[key].join('\n- ')}\n\n`;
     }
-    return section;
-  };
+  }
+  return section;
+};
 
 /**
  * Formats the entire comment for a given manifest file.
