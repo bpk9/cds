@@ -179,6 +179,7 @@ const DefaultSelectControlComponent = memo(
             ? {
                 hoveredBackground: 'rgba(0, 0, 0, 0)',
                 hoveredOpacity: 1,
+                pressedBackground: 'rgba(0, 0, 0, 0)',
                 ...blendStyles,
               }
             : blendStyles,
