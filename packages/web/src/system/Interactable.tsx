@@ -27,6 +27,7 @@ import {
   interactablePressedBorderColor,
   interactablePressedOpacity,
 } from './interactableCSSProperties';
+import { getInteractablePaletteClass } from './interactablePaletteClassRegistry';
 
 const baseCss = css`
   appearance: none;
@@ -205,17 +206,27 @@ export const Interactable: InteractableComponent = forwardRef<
     const Component = (as ?? interactableDefaultElement) satisfies React.ElementType;
     const theme = useTheme();
 
-    const interactableStyle = useMemo(
-      () => ({
-        ...getInteractableStyles({
+    const computedVars = useMemo(
+      () =>
+        getInteractableStyles({
           theme,
           background,
           blendStyles,
           borderColor,
         }),
-        ...style,
-      }),
-      [style, background, theme, blendStyles, borderColor],
+      [theme, background, blendStyles, borderColor],
+    );
+
+    const hasOverrides = Boolean(blendStyles && Object.keys(blendStyles).length > 0);
+
+    const paletteVarsClass = useMemo(
+      () => (!hasOverrides ? getInteractablePaletteClass(computedVars) : undefined),
+      [hasOverrides, computedVars],
+    );
+
+    const interactableStyle = useMemo(
+      () => (hasOverrides ? { ...computedVars, ...style } : style),
+      [hasOverrides, computedVars, style],
     );
 
     return (
@@ -231,6 +242,7 @@ export const Interactable: InteractableComponent = forwardRef<
           block && blockCss,
           transparentWhileInactive && transparentWhileInactiveCss,
           transparentWhilePressed && transparentActiveCss,
+          paletteVarsClass,
           className,
         )}
         disabled={disabled}
