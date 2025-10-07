@@ -14,6 +14,7 @@ export const InputChip = memo(
       invertColorScheme = true,
       testID = 'input-chip',
       invertColorScheme = true,
+      testID = 'input-chip',
       ...props
     }: InputChipProps,
     ref: React.ForwardedRef<HTMLButtonElement>,
