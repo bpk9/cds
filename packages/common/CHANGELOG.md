@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 8.14.0 (10/7/2025 PST)
+
+#### 🚀 Updates
+
+- Add useMultiSelect hook to use with new Select component. [[#21](https://github.com/coinbase/cds/pull/21)]
+
 ## 8.13.7 (10/6/2025 PST)
 
 This is an artificial version bump with no new change.
