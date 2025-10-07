@@ -10,7 +10,9 @@ export const InputChip = memo(
   forwardRef(function InputChip(
     {
       value,
+      label = value,
       accessibilityLabel = typeof value === 'string' ? `Remove ${value}` : 'Remove option',
+      invertColorScheme = true,
       testID = 'input-chip',
       ...props
     }: InputChipProps,
@@ -19,7 +21,6 @@ export const InputChip = memo(
     return (
       <Chip
         ref={ref}
-        inverted
         accessibilityLabel={accessibilityLabel}
         end={
           <Icon
@@ -29,9 +30,10 @@ export const InputChip = memo(
             testID={testID ? `${testID}-close-icon` : 'input-chip-close-icon'}
           />
         }
+        invertColorScheme={invertColorScheme}
         {...props}
       >
-        {value}
+        {label}
       </Chip>
     );
   }),
