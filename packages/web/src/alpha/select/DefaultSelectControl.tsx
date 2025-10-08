@@ -185,6 +185,7 @@ const DefaultSelectControlComponent = memo(
             <InputChip
               key={option.value}
               data-selected-value
+              accessibilityLabel={`${removeSelectedOptionAccessibilityLabel} ${option.label ?? option.description ?? option.value ?? ''}`}
               disabled={option.disabled}
               invertColorScheme={false}
               label={option.label ?? option.description ?? option.value ?? ''}

@@ -512,6 +512,7 @@ const SelectBase = memo(
         placeholder,
         helperText,
         hiddenSelectedOptionsLabel,
+        removeSelectedOptionAccessibilityLabel,
         compact,
         label,
         labelVariant,
