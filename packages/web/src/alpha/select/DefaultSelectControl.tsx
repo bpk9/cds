@@ -24,6 +24,14 @@ const noFocusOutlineCss = css`
   }
 `;
 
+const noFocusOutlineCss = css`
+  &:focus,
+  &:focus-visible,
+  &:focus-within {
+    outline: none;
+  }
+`;
+
 const variantColor: Record<string, ThemeVars.Color> = {
   foreground: 'fg',
   positive: 'fgPositive',
