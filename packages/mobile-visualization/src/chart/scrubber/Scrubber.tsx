@@ -181,12 +181,9 @@ export const Scrubber = memo(
               }
 
               if (dataY !== undefined) {
-                const resolvedLabel = typeof s.label === 'function' ? s.label(dataIndex) : s.label;
-
                 return {
                   x: dataX,
                   y: dataY,
-                  label: resolvedLabel,
                   targetSeries: s,
                 };
               }
