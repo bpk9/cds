@@ -1,5 +1,5 @@
 import { forwardRef, memo, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, type View } from 'react-native';
+import { type View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -18,16 +18,6 @@ import {
 } from './RollingNumber';
 
 const AnimatedText = Animated.createAnimatedComponent(Text);
-
-const baseStylesheet = StyleSheet.create({
-  digitContainer: {
-    alignItems: 'center',
-    overflow: 'visible',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-});
-
 /**
  * Note that the DefaultRollingNumberDigit component implementation is different in web
  * and mobile due to different animation libraries and the performance issue in mobile.
@@ -70,30 +60,19 @@ export const DefaultRollingNumberDigit: RollingNumberDigitComponent = memo(
         transform: [{ translateY: position.value }],
       }));
 
-      const containerStyle = useMemo(
-        () => [baseStylesheet.digitContainer, animatedStyle, style, styles?.root],
-        [animatedStyle, style, styles?.root],
+      const maskStyle = useMemo(() => ({ height: digitHeight }), [digitHeight]);
+
+      const digitStackStyle = useMemo(
+        () => [animatedStyle, { height: digitHeight * 10 }, style, styles?.root, styles?.text],
+        [animatedStyle, digitHeight, style, styles?.root, styles?.text],
       );
 
       return (
-        <RollingNumberMaskComponent ref={ref} {...props}>
-          <Animated.View style={containerStyle}>
-            {digits.map((digit) => (
-              <AnimatedText
-                key={digit}
-                style={[
-                  {
-                    position: digit === 0 ? 'relative' : 'absolute',
-                    top: digit * digitHeight,
-                  },
-                  styles?.text,
-                ]}
-                {...textProps}
-              >
-                {digit}
-              </AnimatedText>
-            ))}
-          </Animated.View>
+        <RollingNumberMaskComponent ref={ref} {...props} style={maskStyle}>
+          <AnimatedText style={digitStackStyle} {...textProps}>
+            {/* We are doing it this way instead of a VStack because it's more performant, the color animation is applied 1 time instead of 10 */}
+            {digits.join('\n')}
+          </AnimatedText>
         </RollingNumberMaskComponent>
       );
     },

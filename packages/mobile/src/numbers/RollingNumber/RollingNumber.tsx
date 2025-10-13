@@ -437,7 +437,7 @@ export const RollingNumber = memo(
 
       const handleMeasureDigits = (e: LayoutChangeEvent) => {
         const { layout } = e.nativeEvent;
-        setDigitHeight(layout.height);
+        setDigitHeight(Math.floor(layout.height));
       };
 
       const textProps = useMemo(
