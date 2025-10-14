@@ -80,20 +80,20 @@ export const DefaultSelectControlComponent = memo(
         focusedVariant,
       );
 
-      const helperTextNode = useMemo(
-        () =>
-          typeof helperText === 'string' ? (
-            <HelperText
-              color={variant ? variantColor[variant] : 'fgMuted'}
-              style={styles?.controlHelperTextNode}
-            >
-              {helperText}
-            </HelperText>
-          ) : (
-            helperText
-          ),
-        [helperText, variant, styles?.controlHelperTextNode],
-      );
+  const helperTextNode = useMemo(
+    () =>
+      typeof helperText === 'string' ? (
+        <HelperText
+          color={variant ? variantColor[variant] : 'fgMuted'}
+          style={styles?.controlHelperTextNode}
+        >
+          {helperText}
+        </HelperText>
+      ) : (
+        helperText
+      ),
+    [helperText, variant, styles?.controlHelperTextNode],
+  );
 
       const labelNode = useMemo(
         () =>
@@ -274,15 +274,55 @@ export const DefaultSelectControlComponent = memo(
           borderFocusedStyle={borderFocusedStyle}
           borderStyle={borderUnfocusedStyle}
           disabled={disabled}
-          endNode={endNode}
-          focused={open}
-          helperTextNode={helperTextNode}
-          inputNode={inputNode}
-          labelNode={shouldShowCompactLabel ? null : labelNode}
-          labelVariant={labelVariant}
-          variant={variant}
-          {...props}
-        />
+          onPress={() => setOpen((s) => !s)}
+          style={styles?.controlLabelNode}
+        >
+          <InputLabel
+            alignSelf={labelVariant === 'inside' ? 'flex-start' : undefined}
+            color="fg"
+            paddingX={labelVariant === 'inside' ? 2 : 0}
+            paddingY={shouldShowCompactLabel || labelVariant === 'inside' ? 0 : 0.5}
+          >
+            {label}
+          </InputLabel>
+        </Pressable>
+      ) : (
+        label
+      ),
+    [disabled, label, labelVariant, setOpen, shouldShowCompactLabel, styles?.controlLabelNode],
+  );
+
+  const valueNode = useMemo(() => {
+    if (hasValue && isMultiSelect) {
+      const valuesToShow =
+        value.length <= maxSelectedOptionsToShow
+          ? (value as string[])
+          : (value as string[]).slice(0, maxSelectedOptionsToShow);
+      const optionsToShow = valuesToShow
+        .map((value) => options.find((option) => option.value === value))
+        .filter(Boolean) as SelectOption<T>[];
+      return (
+        <HStack flexWrap="wrap" gap={1}>
+          {optionsToShow.map((option) => (
+            <InputChip
+              key={option.value}
+              accessibilityLabel={`${removeSelectedOptionAccessibilityLabel} ${option.label ?? option.description ?? option.value ?? ''}`}
+              disabled={option.disabled}
+              invertColorScheme={false}
+              label={option.label ?? option.description ?? option.value ?? ''}
+              maxWidth={200}
+              onPress={(event) => {
+                event?.stopPropagation();
+                onChange?.(option.value as ValueType);
+              }}
+            />
+          ))}
+          {value.length - maxSelectedOptionsToShow > 0 && (
+            <Chip>
+              <Text font="headline">{`+${value.length - maxSelectedOptionsToShow} ${hiddenSelectedOptionsLabel}`}</Text>
+            </Chip>
+          )}
+        </HStack>
       );
     },
   ),
