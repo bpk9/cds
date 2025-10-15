@@ -317,7 +317,7 @@ const DefaultSelectDropdownComponent = memo(
     <AnimatePresence>
       {open && (
         <Box
-          ref={ref as React.Ref<HTMLDivElement>}
+          ref={ref}
           aria-label={accessibilityLabel}
           aria-multiselectable={isMultiSelect}
           className={className}
