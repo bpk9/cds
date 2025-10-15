@@ -692,6 +692,34 @@ function Candlesticks() {
 
   const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
 
+  // Custom line component that renders a rect to highlight the entire bandwidth
+  const BandwidthHighlight = memo(({ d, stroke }) => {
+    const { getXScale, drawingArea, getXAxis } = useCartesianChartContext();
+    const { scrubberPosition } = useScrubberContext();
+    const xScale = getXScale();
+    const xAxis = getXAxis();
+
+    if (!xScale || scrubberPosition === undefined) return
+
+    const xPos = xScale(scrubberPosition);
+
+    if (xPos === undefined) return
+
+    return (
+      <rect
+        fill={stroke}
+        height={drawingArea.height}
+        width={xScale.bandwidth()}
+        x={xPos}
+        y={drawingArea.y}
+      />
+    );
+  });
+
+  const BandwidthReferenceLine = memo<ReferenceLineProps>((props) => (
+    <ReferenceLine {...props} LineComponent={BandwidthHighlight} />
+  ));
+
   const candlesData = stockData.map((data) => [parseFloat(data.low), parseFloat(data.high)]) as [
     number,
     number,
@@ -813,12 +841,10 @@ function Candlesticks() {
         aria-labelledby={infoTextId}
       >
         <Scrubber
-            hideOverlay
-            LineComponent={(props) => (
-              <ReferenceLine {...props} LineComponent={ThinSolidLine} />
-            )}
-            seriesIds={[]}
-          />
+          hideOverlay
+          LineComponent={BandwidthReferenceLine}
+          seriesIds={[]}
+        />
       </BarChart>
     </VStack>
   );
