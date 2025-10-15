@@ -8,14 +8,37 @@ import { MDXArticle } from '@site/src/components/page/MDXArticle';
 To install the CDS library for React web applications, run the following command:
 
 ```bash
-npm install @coinbase/cds-web framer-motion@^10
+npm install @coinbase/cds-web
 ```
 
 Alternatively, if you are using Yarn:
 
 ```bash
-yarn add @coinbase/cds-web framer-motion@^10
+yarn add @coinbase/cds-web
 ```
+
+### Install peer dependencies
+
+CDS requires the following peer dependencies:
+- `react@^18.3.1`
+- `react-dom@^18.3.1`
+- `framer-motion@^10.18.0`
+
+Install them with:
+
+```bash
+npm install react@^18 react-dom@^18 framer-motion@^10
+```
+
+Or with Yarn:
+
+```bash
+yarn add react@^18 react-dom@^18 framer-motion@^10
+```
+
+:::note
+Most React projects already have `react` and `react-dom` installed. You may only need to install `framer-motion`.
+:::
 
 </MDXArticle>
 </MDXSection>
