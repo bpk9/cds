@@ -436,13 +436,13 @@ const SelectBase = memo(
       const open = openProp ?? openInternal;
       const setOpen = setOpenProp ?? setOpenInternal;
 
-      if (
-        (typeof openProp === 'undefined' && typeof setOpenProp !== 'undefined') ||
-        (typeof openProp !== 'undefined' && typeof setOpenProp === 'undefined')
-      )
-        throw Error(
-          'Select component must be fully controlled or uncontrolled: "open" and "setOpen" props must be provided together or not at all',
-        );
+  if (
+    (typeof openProp === 'undefined' && typeof setOpenProp !== 'undefined') ||
+    (typeof openProp !== 'undefined' && typeof setOpenProp === 'undefined')
+  )
+    throw Error(
+      'Select component must be fully controlled or uncontrolled: "open" and "setOpen" props must be provided together or not at all',
+    );
 
       const rootStyles = useMemo(() => {
         return [style, styles?.root];

@@ -381,10 +381,10 @@ const DefaultSelectDropdownComponent = memo(
     ) => {
       const isMultiSelect = type === 'multi';
 
-      const isAllOptionsSelected = isMultiSelect
-        ? (value as string[]).length === options.filter((o) => o.value !== null).length
-        : false;
-      const isSomeOptionsSelected = isMultiSelect ? (value as string[]).length > 0 : false;
+  const isAllOptionsSelected = isMultiSelect
+    ? (value as string[]).length === options.filter((o) => o.value !== null).length
+    : false;
+  const isSomeOptionsSelected = isMultiSelect ? (value as string[]).length > 0 : false;
 
       const toggleSelectAll = useCallback(() => {
         if (isAllOptionsSelected) onChange(null);
@@ -398,9 +398,9 @@ const DefaultSelectDropdownComponent = memo(
         [onChange],
       );
 
-      const indeterminate = useMemo(() => {
-        return !isAllOptionsSelected && isSomeOptionsSelected ? true : false;
-      }, [isAllOptionsSelected, isSomeOptionsSelected]);
+  const indeterminate = useMemo(() => {
+    return !isAllOptionsSelected && isSomeOptionsSelected ? true : false;
+  }, [isAllOptionsSelected, isSomeOptionsSelected]);
 
       const SelectAllOption = useMemo(
         () => (
