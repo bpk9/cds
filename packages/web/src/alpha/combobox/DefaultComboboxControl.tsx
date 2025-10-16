@@ -15,8 +15,7 @@ import { HStack } from '../../layout/HStack';
 import { VStack } from '../../layout/VStack';
 import { AnimatedCaret } from '../../motion/AnimatedCaret';
 import { Pressable } from '../../system/Pressable';
-import { findClosestNonDisabledNodeIndex } from '../../utils/findClosestNonDisabledNodeIndex';
-import type { SelectOption, SelectType } from '../select/Select';
+import type { SelectOption } from '../select/Select';
 
 const noFocusOutlineCss = css`
   &:focus,
@@ -272,10 +271,7 @@ const DefaultComboboxControlComponent = <T extends string = string>(
         style={styles?.controlInputNode}
         width="100%"
       >
-        {/* Chips container */}
         {chipsNode}
-
-        {/* Text input */}
         <HStack alignItems="center" width="100%">
           {!!startNode && (
             <HStack
