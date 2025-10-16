@@ -1,32 +1,17 @@
-import {
-  forwardRef,
-  memo,
-  useCallback,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, memo, useCallback, useMemo, useState } from 'react';
 import type { SharedAccessibilityProps } from '@coinbase/cds-common';
-import { flip, useFloating, type UseFloatingReturn } from '@floating-ui/react-dom';
 import Fuse from 'fuse.js';
 
-import { useClickOutside } from '../../hooks/useClickOutside';
-import { useHasMounted } from '../../hooks/useHasMounted';
-import { Portal } from '../../overlays/Portal';
-import { modalContainerId } from '../../overlays/PortalProvider';
 import type { InteractableBlendStyles } from '../../system/Interactable';
-import { DefaultSelectAllOption } from '../select/DefaultSelectAllOption';
-import { DefaultSelectDropdown } from '../select/DefaultSelectDropdown';
-import { DefaultSelectEmptyDropdownContents } from '../select/DefaultSelectEmptyDropdownContents';
-import { DefaultSelectOption } from '../select/DefaultSelectOption';
 import {
   defaultAccessibilityRoles,
+  Select,
   type SelectDropdownComponent,
   type SelectDropdownProps,
   type SelectEmptyDropdownContentComponent,
   type SelectOption,
   type SelectOptionComponent,
+  type SelectRef,
 } from '../select/Select';
 
 import {
@@ -189,10 +174,7 @@ export type ComboboxProps<T extends string = string> = ComboboxBaseProps<T> & {
   };
 };
 
-export type ComboboxRef = HTMLElement &
-  Pick<ComboboxProps, 'open' | 'setOpen'> & {
-    refs: UseFloatingReturn['refs'];
-  };
+export type ComboboxRef = SelectRef;
 
 type ComboboxComponent = <T extends string = string>(
   props: ComboboxProps<T> & { ref?: React.Ref<ComboboxRef> },
@@ -205,8 +187,8 @@ const ComboboxBase = memo(
         value,
         options,
         onChange,
-        open: openProp,
-        setOpen: setOpenProp,
+        open,
+        setOpen,
         disabled,
         disableClickOutsideClose,
         placeholder,
@@ -234,11 +216,11 @@ const ComboboxBase = memo(
         onSearch: onSearchProp,
         defaultSearchText = '',
         filterFunction,
-        SelectOptionComponent = DefaultSelectOption,
-        SelectAllOptionComponent = DefaultSelectAllOption,
-        SelectDropdownComponent = DefaultSelectDropdown,
+        SelectOptionComponent,
+        SelectAllOptionComponent,
+        SelectDropdownComponent,
         ComboboxControlComponent = DefaultComboboxControl,
-        SelectEmptyDropdownContentsComponent = DefaultSelectEmptyDropdownContents as SelectEmptyDropdownContentComponent,
+        SelectEmptyDropdownContentsComponent,
         style,
         styles,
         className,
@@ -248,21 +230,8 @@ const ComboboxBase = memo(
       }: ComboboxProps<T>,
       ref: React.Ref<ComboboxRef>,
     ) => {
-      const hasMounted = useHasMounted();
-      const [openInternal, setOpenInternal] = useState(defaultOpen ?? false);
-      const open = openProp ?? openInternal;
-      const setOpen = setOpenProp ?? setOpenInternal;
-
       const [searchTextInternal, setSearchTextInternal] = useState(defaultSearchText);
       const searchText = searchTextProp ?? searchTextInternal;
-
-      if (
-        (typeof openProp === 'undefined' && typeof setOpenProp !== 'undefined') ||
-        (typeof openProp !== 'undefined' && typeof setOpenProp === 'undefined')
-      )
-        throw Error(
-          'Combobox component must be fully controlled or uncontrolled: "open" and "setOpen" props must be provided together or not at all',
-        );
 
       if (
         (typeof searchTextProp === 'undefined' && typeof onSearchProp !== 'undefined') ||
@@ -272,41 +241,9 @@ const ComboboxBase = memo(
           'Combobox component must be fully controlled or uncontrolled: "searchText" and "onSearch" props must be provided together or not at all',
         );
 
-      const rootStyles = useMemo(
-        () => ({
-          ...style,
-          ...styles?.root,
-        }),
-        [style, styles?.root],
-      );
-
-      const { refs, floatingStyles } = useFloating({
-        open,
-        middleware: [flip()],
-      });
-
-      useClickOutside(() => !disableClickOutsideClose && setOpen(false), {
-        ref: refs.floating,
-        excludeRefs: [refs.reference as React.MutableRefObject<HTMLElement>],
-      });
-
-      const containerRef = useRef<HTMLElement>(null);
-
-      useImperativeHandle(ref, () =>
-        Object.assign(containerRef.current as HTMLElement, {
-          open,
-          setOpen,
-          refs,
-        }),
-      );
-
-      const handleSearch = useCallback(
-        (event: React.ChangeEvent<HTMLInputElement>) => {
-          setSearchTextInternal(event.target.value);
-          setOpen(true);
-        },
-        [setOpen],
-      );
+      const handleSearch = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTextInternal(event.target.value);
+      }, []);
 
       const onSearch = onSearchProp ?? handleSearch;
 
@@ -325,105 +262,64 @@ const ComboboxBase = memo(
         return fuse.search(searchText).map((result) => result.item);
       }, [filterFunction, fuse, options, searchText]);
 
-      return (
-        <div
-          ref={containerRef as React.RefObject<HTMLDivElement>}
-          className={classNames?.root ?? className}
-          data-testid={testID}
-          style={rootStyles}
-        >
-          <ComboboxControlComponent
-            ref={refs.setReference}
-            accessibilityLabel={accessibilityLabel}
-            ariaHaspopup={accessibilityRoles?.dropdown}
-            classNames={{
-              controlStartNode: classNames?.controlStartNode,
-              controlInputNode: classNames?.controlInputNode,
-              controlValueNode: classNames?.controlValueNode,
-              controlLabelNode: classNames?.controlLabelNode,
-              controlHelperTextNode: classNames?.controlHelperTextNode,
-              controlEndNode: classNames?.controlEndNode,
-            }}
-            compact={compact}
-            disabled={disabled}
-            endNode={endNode}
-            helperText={helperText}
-            hiddenSelectedOptionsLabel={hiddenSelectedOptionsLabel}
-            label={label}
-            labelVariant={labelVariant}
-            maxSelectedOptionsToShow={maxSelectedOptionsToShow}
-            onChange={onChange}
-            onSearch={onSearch}
-            open={open}
-            options={options}
-            placeholder={placeholder}
-            removeSelectedOptionAccessibilityLabel={removeSelectedOptionAccessibilityLabel}
-            searchText={searchText}
-            setOpen={setOpen}
-            startNode={startNode}
-            styles={{
-              controlStartNode: styles?.controlStartNode,
-              controlInputNode: styles?.controlInputNode,
-              controlValueNode: styles?.controlValueNode,
-              controlLabelNode: styles?.controlLabelNode,
-              controlHelperTextNode: styles?.controlHelperTextNode,
-              controlEndNode: styles?.controlEndNode,
-            }}
-            testID={testID}
-            value={value}
-            variant={variant}
-          />
-          <Portal containerId={modalContainerId}>
-            <SelectDropdownComponent
-              ref={refs.setFloating}
-              SelectAllOptionComponent={SelectAllOptionComponent}
-              SelectEmptyDropdownContentsComponent={SelectEmptyDropdownContentsComponent}
-              SelectOptionComponent={SelectOptionComponent}
-              accessibilityLabel={accessibilityLabel}
-              accessibilityRoles={accessibilityRoles}
-              accessory={accessory}
-              classNames={{
-                root: classNames?.dropdown,
-                option: classNames?.option,
-                optionCell: classNames?.optionCell,
-                optionContent: classNames?.optionContent,
-                optionLabel: classNames?.optionLabel,
-                optionDescription: classNames?.optionDescription,
-                selectAllDivider: classNames?.selectAllDivider,
-                emptyContentsContainer: classNames?.emptyContentsContainer,
-                emptyContentsText: classNames?.emptyContentsText,
-              }}
-              clearAllLabel={clearAllLabel}
-              compact={compact}
-              controlRef={refs.reference as React.MutableRefObject<HTMLElement>}
-              detail={detail}
-              disabled={disabled}
-              emptyOptionsLabel={emptyOptionsLabel}
-              hideSelectAll={hideSelectAll}
-              label={label}
-              media={media}
-              onChange={onChange}
-              open={hasMounted && open}
-              options={filteredOptions}
-              selectAllLabel={selectAllLabel}
-              setOpen={setOpen}
-              styles={{
-                root: { ...floatingStyles, ...styles?.dropdown },
-                option: styles?.option,
-                optionBlendStyles: styles?.optionBlendStyles,
-                optionCell: styles?.optionCell,
-                optionContent: styles?.optionContent,
-                optionLabel: styles?.optionLabel,
-                optionDescription: styles?.optionDescription,
-                selectAllDivider: styles?.selectAllDivider,
-                emptyContentsContainer: styles?.emptyContentsContainer,
-                emptyContentsText: styles?.emptyContentsText,
-              }}
-              type="multi"
-              value={value}
+      // Create a wrapper control component that injects search-specific props
+      // and adapts SelectControlProps to ComboboxControlProps
+      const ComboboxControlWrapper = useMemo(
+        () =>
+          forwardRef<HTMLElement>((controlProps: any, controlRef) => (
+            <ComboboxControlComponent
+              {...controlProps}
+              ref={controlRef}
+              onSearch={onSearch}
+              searchText={searchText}
             />
-          </Portal>
-        </div>
+          )) as any,
+        [ComboboxControlComponent, onSearch, searchText],
+      );
+
+      return (
+        <Select
+          ref={ref}
+          SelectAllOptionComponent={SelectAllOptionComponent}
+          SelectControlComponent={ComboboxControlWrapper}
+          SelectDropdownComponent={SelectDropdownComponent}
+          SelectEmptyDropdownContentsComponent={SelectEmptyDropdownContentsComponent}
+          SelectOptionComponent={SelectOptionComponent}
+          accessibilityLabel={accessibilityLabel}
+          accessibilityRoles={accessibilityRoles}
+          accessory={accessory}
+          className={className}
+          classNames={classNames}
+          clearAllLabel={clearAllLabel}
+          compact={compact}
+          defaultOpen={defaultOpen}
+          detail={detail}
+          disableClickOutsideClose={disableClickOutsideClose}
+          disabled={disabled}
+          emptyOptionsLabel={emptyOptionsLabel}
+          endNode={endNode}
+          helperText={helperText}
+          hiddenSelectedOptionsLabel={hiddenSelectedOptionsLabel}
+          hideSelectAll={hideSelectAll}
+          label={label}
+          labelVariant={labelVariant}
+          maxSelectedOptionsToShow={maxSelectedOptionsToShow}
+          media={media}
+          onChange={onChange}
+          open={open}
+          options={filteredOptions}
+          placeholder={placeholder}
+          removeSelectedOptionAccessibilityLabel={removeSelectedOptionAccessibilityLabel}
+          selectAllLabel={selectAllLabel}
+          setOpen={setOpen}
+          startNode={startNode}
+          style={style}
+          styles={styles}
+          testID={testID}
+          type="multi"
+          value={value}
+          variant={variant}
+        />
       );
     },
   ),
