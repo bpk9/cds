@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 8.17.3 (10/20/2025 PST)
+
+#### 🐞 Fixes
+
+- Fixed issue when TabbedChips scrolls to wrong position. [[#117](https://github.com/coinbase/cds/pull/117)]
+
 ## 8.17.2 ((10/16/2025, 03:16 PM PST))
 
 This is an artificial version bump with no new change.

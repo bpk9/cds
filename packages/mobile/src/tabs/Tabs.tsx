@@ -65,6 +65,7 @@ export type TabsProps<T extends string = string> = {
   /** The array of tabs data. Each tab may optionally define a custom Component to render. */
   tabs: (TabValue<T> & {
     Component?: TabComponent<T>;
+    /** Allow the tab to be measured for side effects, eg. scrolling to active tab */
     onLayout?: (event: LayoutChangeEvent) => void;
   })[];
   /** The default Component to render each tab. */
