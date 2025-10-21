@@ -1,6 +1,6 @@
 import React, { memo, StrictMode, useCallback, useMemo, useState } from 'react';
-import { Platform } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Platform, Text, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import type { ColorScheme } from '@coinbase/cds-common/core/theme';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { PortalProvider } from '@coinbase/cds-mobile/overlays/PortalProvider';
@@ -63,7 +63,36 @@ const App = memo(() => {
           <PortalProvider>
             <StatusBar hidden={!__DEV__} />
             <NavigationContainer linking={linking} onReady={handleOnReady}>
-              <Playground routes={codegenRoutes} setColorScheme={setColorScheme} />
+              <SafeAreaView
+                style={{
+                  backgroundColor: 'grey',
+                  width: '100%',
+                  height: '100%',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  padding: 16,
+                  paddingBottom: 0,
+                  // paddingBottom: ,
+                  // position: 'relative',
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: 'white',
+                    width: '100%',
+                    height: 340,
+                    borderRadius: 32,
+                    // position: 'absolute',
+                    // bottom: 0,
+                    // left: 0,
+                    // right: 0,
+                  }}
+                >
+                  <View style={{ padding: 24 }}>
+                    <Text>Hello</Text>
+                  </View>
+                </View>
+              </SafeAreaView>
             </NavigationContainer>
           </PortalProvider>
         </CdsSafeAreaProvider>
