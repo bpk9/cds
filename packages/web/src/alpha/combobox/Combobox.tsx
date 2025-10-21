@@ -267,21 +267,6 @@ const ComboboxBase = memo(
         return fuse.search(searchText).map((result) => result.item);
       }, [filterFunction, fuse, options, searchText]);
 
-      // Create a wrapper control component that injects search-specific props
-      // and adapts SelectControlProps to ComboboxControlProps
-      const ComboboxControlWrapper = useMemo(
-        () =>
-          forwardRef<HTMLElement>((controlProps: any, controlRef) => (
-            <ComboboxControlComponent
-              {...controlProps}
-              ref={controlRef}
-              onSearch={onSearch}
-              searchText={searchText}
-            />
-          )) as any,
-        [ComboboxControlComponent, onSearch, searchText],
-      );
-
       return (
         <div>
           <DefaultComboboxControl
