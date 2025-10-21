@@ -608,7 +608,7 @@ const SelectBase = memo(
         testID,
         ...props
       }: SelectProps<Type, T>,
-      ref: React.Ref<View>,
+      ref: React.Ref<SelectRef>,
     ) => {
       const [openInternal, setOpenInternal] = useState(defaultOpen ?? false);
       const open = openProp ?? openInternal;
@@ -622,10 +622,9 @@ const SelectBase = memo(
           'Select component must be fully controlled or uncontrolled: "open" and "setOpen" props must be provided together or not at all',
         );
 
-      const containerRef = useRef<any>(null);
-
+      const containerRef = useRef<View>(null);
       useImperativeHandle(ref, () =>
-        Object.assign(containerRef.current, {
+        Object.assign(containerRef.current as View, {
           open,
           setOpen,
           refs: { reference: containerRef, floating: null },
