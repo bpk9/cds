@@ -2,12 +2,10 @@ import React, { forwardRef } from 'react';
 import type { Table } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
-import { type TableProps } from '../Table';
-
 import { DataTableBody } from './DataTableBody';
 import { DataTableHead } from './DataTableHead';
 
-export type DataTableProps = Omit<TableProps, 'children'> & {
+export type DataTableProps = React.HTMLAttributes<HTMLTableElement> & {
   table: Table<any>;
 };
 
@@ -42,7 +40,6 @@ export const DataTable = forwardRef<HTMLTableElement, DataTableProps>(
     return (
       <div
         ref={tableContainerRef}
-        className="container"
         style={{
           overflow: 'auto', //our scrollable table container
           position: 'relative', //needed for sticky header
@@ -50,7 +47,7 @@ export const DataTable = forwardRef<HTMLTableElement, DataTableProps>(
         }}
       >
         {/* Even though we're still using sematic table tags, we must use CSS grid and flexbox for dynamic row heights */}
-        <table style={{ display: 'grid' }}>
+        <table ref={ref} style={{ display: 'grid' }} {...props}>
           <DataTableHead
             columnVirtualizer={columnVirtualizer}
             table={table}
