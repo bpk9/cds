@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useMultiSelect } from '@coinbase/cds-common/select/useMultiSelect';
 
 import { VStack } from '../../../layout/VStack';
 import type { SelectOption } from '../../select/Select';
@@ -28,27 +29,13 @@ const exampleOptions: SelectOption[] = [
 ];
 
 export const Default = () => {
-  const [value, setValue] = useState<string[]>(['apple', 'banana']);
-
-  const handleChange = useCallback((newValue: string | string[]) => {
-    if (Array.isArray(newValue)) {
-      setValue(newValue);
-    } else {
-      // Toggle the value
-      setValue((prev) => {
-        if (prev.includes(newValue)) {
-          return prev.filter((v) => v !== newValue);
-        }
-        return [...prev, newValue];
-      });
-    }
-  }, []);
+  const { value, onChange } = useMultiSelect({ initialValue: ['apple', 'banana'] });
 
   return (
     <VStack gap={4} width={400}>
       <Combobox
         label="Fruits"
-        onChange={handleChange}
+        onChange={onChange}
         options={exampleOptions}
         placeholder="Search fruits..."
         value={value}
@@ -104,8 +91,8 @@ export const ControlledSearch = () => {
     }
   }, []);
 
-  const handleSearch = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(event.target.value);
+  const handleSearch = useCallback((searchText: string) => {
+    setSearchText(searchText);
   }, []);
 
   return (
