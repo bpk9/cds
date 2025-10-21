@@ -162,18 +162,27 @@ const DefaultComboboxControlComponent = <T extends string = string>(
   const handleInputClick = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
-      setOpen(true);
+      setOpen(!open);
     },
-    [setOpen],
+    [open, setOpen],
   );
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      console.log('handleInputChange', event.target.value);
       event.stopPropagation();
       onSearch(event.target.value);
     },
     [onSearch],
+  );
+
+  const handleInputKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      event.stopPropagation();
+      if (event.key === 'Enter') {
+        setOpen(!open);
+      }
+    },
+    [open, setOpen],
   );
 
   const helperTextNode = useMemo(
@@ -310,11 +319,13 @@ const DefaultComboboxControlComponent = <T extends string = string>(
           >
             <NativeInput
               ref={inputRef}
+              tab-index
               aria-haspopup={ariaHaspopup}
               containerSpacing={nativeInputContainerCss}
               disabled={disabled}
               onChange={handleInputChange}
               onClick={handleInputClick}
+              onKeyDown={handleInputKeyDown}
               placeholder={placeholder as string}
               testID={testID}
               value={searchText}

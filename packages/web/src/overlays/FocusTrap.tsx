@@ -257,7 +257,7 @@ export const FocusTrap = memo(function FocusTrap({
 
       if (
         !disableTypeFocus &&
-        activeElementIsMenuItemOrOption &&
+        (activeElementIsMenuItemOrOption || secondElementIsMenuItemOrOption) &&
         ALPHABET_KEYS.includes(event.key)
       ) {
         event.preventDefault();
