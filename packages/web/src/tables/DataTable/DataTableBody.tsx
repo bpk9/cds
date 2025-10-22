@@ -1,4 +1,6 @@
 import type { HTMLAttributes } from 'react';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { type Cell, flexRender, type Row, type Table } from '@tanstack/react-table';
 import { useVirtualizer, type VirtualItem, type Virtualizer } from '@tanstack/react-virtual';
 
@@ -131,6 +133,112 @@ export const DataTableBodyRow = ({
   );
 };
 
+type DraggableRowProps = Omit<DataTableBodyRowProps, 'staticPosition'>;
+
+const DraggableDataTableBodyRow = ({
+  columnVirtualizer,
+  row,
+  rowVirtualizer,
+  virtualPaddingLeft,
+  virtualPaddingRight,
+  virtualRow,
+}: DraggableRowProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: row.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 2 : 0,
+    position: 'relative' as const,
+  };
+
+  const visibleCells = row.getVisibleCells();
+  const virtualColumns = columnVirtualizer.getVirtualItems();
+  const leftCells = visibleCells.filter((c) => c.column.getIsPinned() === 'left');
+  const centerCells = visibleCells.filter((c) => !c.column.getIsPinned());
+  const rightCells = visibleCells.filter((c) => c.column.getIsPinned() === 'right');
+
+  return (
+    <tr
+      key={row.id}
+      ref={(node) => {
+        setNodeRef(node);
+        rowVirtualizer.measureElement(node);
+      }}
+      data-index={virtualRow.index}
+      style={{ display: 'flex', width: '100%', ...style }}
+    >
+      {/* Row actions sticky column with drag handle */}
+      <td
+        style={{
+          backgroundColor: 'white',
+          display: 'flex',
+          gap: 4,
+          left: 0,
+          position: 'sticky',
+          width: actionsColumnWidth,
+          zIndex: 2,
+        }}
+      >
+        <button
+          {...attributes}
+          {...listeners}
+          style={{ border: '1px solid', borderRadius: 4, paddingInline: 8 }}
+        >
+          🟰
+        </button>
+        {row.getIsPinned?.() !== 'top' ? (
+          <button
+            onClick={() => row.pin('top')}
+            style={{ border: '1px solid', borderRadius: 4, paddingInline: 8 }}
+          >
+            Top
+          </button>
+        ) : null}
+        {row.getIsPinned?.() ? (
+          <button
+            onClick={() => row.pin(false)}
+            style={{ border: '1px solid', borderRadius: 4, paddingInline: 8 }}
+          >
+            Unpin
+          </button>
+        ) : null}
+        {row.getIsPinned?.() !== 'bottom' ? (
+          <button
+            onClick={() => row.pin('bottom')}
+            style={{ border: '1px solid', borderRadius: 4, paddingInline: 8 }}
+          >
+            Bottom
+          </button>
+        ) : null}
+      </td>
+      {/* Left pinned */}
+      {leftCells.map((cell) => (
+        <DataTableBodyCell key={cell.id} cell={cell} leftOffset={actionsColumnWidth} />
+      ))}
+      {virtualPaddingLeft ? (
+        //fake empty column to the left for virtualization scroll padding
+        <td style={{ display: 'flex', width: virtualPaddingLeft }} />
+      ) : null}
+      {virtualColumns.map((virtualColumn) => {
+        const cell = centerCells[virtualColumn.index];
+        if (!cell) return null;
+        return <DataTableBodyCell key={cell.id} cell={cell} />;
+      })}
+      {virtualPaddingRight ? (
+        //fake empty column to the right for virtualization scroll padding
+        <td style={{ display: 'flex', width: virtualPaddingRight }} />
+      ) : null}
+      {/* Right pinned */}
+      {rightCells.map((cell) => (
+        <DataTableBodyCell key={cell.id} cell={cell} />
+      ))}
+    </tr>
+  );
+};
+
 export const DataTableBody = ({
   columnVirtualizer,
   table,
@@ -207,21 +315,22 @@ export const DataTableBody = ({
             <td style={{ display: 'flex', height: virtualPaddingTop, width: '100%' }} />
           </tr>
         ) : null}
-        {virtualRows.map((virtualRow) => {
-          const row = centerRows[virtualRow.index] as Row<any>;
-
-          return (
-            <DataTableBodyRow
-              key={row.id}
-              columnVirtualizer={columnVirtualizer}
-              row={row}
-              rowVirtualizer={rowVirtualizer}
-              virtualPaddingLeft={virtualPaddingLeft}
-              virtualPaddingRight={virtualPaddingRight}
-              virtualRow={virtualRow}
-            />
-          );
-        })}
+        <SortableContext items={centerRows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+          {virtualRows.map((virtualRow) => {
+            const row = centerRows[virtualRow.index] as Row<any>;
+            return (
+              <DraggableDataTableBodyRow
+                key={row.id}
+                columnVirtualizer={columnVirtualizer}
+                row={row}
+                rowVirtualizer={rowVirtualizer}
+                virtualPaddingLeft={virtualPaddingLeft}
+                virtualPaddingRight={virtualPaddingRight}
+                virtualRow={virtualRow}
+              />
+            );
+          })}
+        </SortableContext>
         {virtualPaddingBottom ? (
           //fake empty row at the bottom for virtualization scroll padding
           <tr style={{ display: 'flex', width: '100%', height: virtualPaddingBottom }}>
