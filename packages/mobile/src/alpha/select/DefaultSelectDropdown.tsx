@@ -390,6 +390,7 @@ const DefaultSelectDropdownComponent = memo(
         if (isAllOptionsSelected) onChange(null);
         else onChange(options.map((o) => o.value).filter((o) => o !== null));
       }, [isAllOptionsSelected, onChange, options]);
+
       const handleClearAll = useCallback(
         (e: GestureResponderEvent) => {
           e.stopPropagation();
