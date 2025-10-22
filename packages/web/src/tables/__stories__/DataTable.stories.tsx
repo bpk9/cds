@@ -14,7 +14,7 @@ export default {
   title: 'Components/Table/DataTable',
 } as Meta;
 
-type RowData = Record<string, number>;
+type RowData = { rowId: string } & Record<`col${number}`, number>;
 
 export const DataTableExample = () => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -32,17 +32,17 @@ export const DataTableExample = () => {
     return cols;
   }, []);
 
-  const data = React.useMemo<RowData[]>(() => {
+  const [data, setData] = React.useState<RowData[]>(() => {
     const rows: RowData[] = [];
     for (let r = 0; r < 1000; r += 1) {
-      const row: RowData = {};
+      const row: RowData = { rowId: String(r) };
       for (let c = 0; c < 1000; c += 1) {
         row[`col${c}`] = r * 1000 + c;
       }
       rows.push(row);
     }
     return rows;
-  }, []);
+  });
 
   const table = useReactTable<RowData>({
     data,
@@ -51,7 +51,22 @@ export const DataTableExample = () => {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getRowId: (row) => row.rowId,
   });
 
-  return <DataTable table={table} />;
+  return (
+    <DataTable
+      onRowChange={({ ids }) => {
+        // Reorder data to match the new ids order
+        // ids correspond to row.rowId values
+        setData((prev: RowData[]) => {
+          const byId = new Map<string, RowData>(prev.map((row) => [row.rowId, row] as const));
+          return ids
+            .map((id) => byId.get(String(id)))
+            .filter((row): row is RowData => Boolean(row));
+        });
+      }}
+      table={table}
+    />
+  );
 };
