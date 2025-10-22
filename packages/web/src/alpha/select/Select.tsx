@@ -511,8 +511,6 @@ const SelectBase = memo(
         disableClickOutsideClose,
         placeholder,
         helperText,
-        hiddenSelectedOptionsLabel,
-        removeSelectedOptionAccessibilityLabel,
         compact,
         label,
         labelVariant,

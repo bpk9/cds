@@ -585,6 +585,7 @@ const SelectBase = memo(
         clearAllLabel,
         selectAllLabel,
         emptyOptionsLabel,
+        clearAllLabel,
         hideSelectAll,
         defaultOpen,
         startNode,
@@ -601,10 +602,8 @@ const SelectBase = memo(
         SelectDropdownComponent = DefaultSelectDropdown,
         SelectControlComponent = DefaultSelectControl,
         SelectEmptyDropdownContentsComponent = DefaultSelectEmptyDropdownContents as SelectEmptyDropdownContentComponent,
+        style,
         styles,
-        accessibilityLabel,
-        accessibilityHint,
-        accessibilityRoles,
         testID,
         ...props
       }: SelectProps<Type, SelectOptionValue>,
@@ -621,6 +620,10 @@ const SelectBase = memo(
         throw Error(
           'Select component must be fully controlled or uncontrolled: "open" and "setOpen" props must be provided together or not at all',
         );
+
+      const rootStyles = useMemo(() => {
+        return [style, styles?.root];
+      }, [style, styles?.root]);
 
       const controlStyles = useMemo(
         () => ({
@@ -643,7 +646,7 @@ const SelectBase = memo(
 
       const dropdownStyles = useMemo(
         () => ({
-          dropdown: styles?.dropdown,
+          root: styles?.dropdown,
           option: styles?.option,
           optionBlendStyles: styles?.optionBlendStyles,
           optionCell: styles?.optionCell,
@@ -678,10 +681,11 @@ const SelectBase = memo(
       );
 
       return (
-        <View ref={containerRef} testID={testID}>
+        <View ref={containerRef} style={rootStyles} testID={testID}>
           <SelectControlComponent
             accessibilityHint={accessibilityHint}
             accessibilityLabel={accessibilityLabel}
+            blendStyles={styles?.controlBlendStyles}
             compact={compact}
             disabled={disabled}
             endNode={endNode}
@@ -704,7 +708,6 @@ const SelectBase = memo(
             variant={variant}
           />
           <SelectDropdownComponent
-            ref={() => {}}
             SelectAllOptionComponent={SelectAllOptionComponent}
             SelectEmptyDropdownContentsComponent={SelectEmptyDropdownContentsComponent}
             SelectOptionComponent={SelectOptionComponent}
