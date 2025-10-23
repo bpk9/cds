@@ -2,7 +2,7 @@
  * Utilities for polar chart calculations (pie, donut, etc.)
  */
 
-import { arc as d3Arc } from 'd3-shape';
+import { arc as d3Arc, pie as d3Pie } from 'd3-shape';
 
 export type PolarDataPoint = {
   /**
@@ -48,6 +48,10 @@ export type ArcData = {
    */
   endAngle: number;
   /**
+   * Padding angle in radians (from D3 pie layout).
+   */
+  padAngle: number;
+  /**
    * The value of this arc.
    */
   value: number;
@@ -71,6 +75,7 @@ export type ArcData = {
 
 /**
  * Calculates arc data from polar data points.
+ * Uses D3's pie layout for proper padding distribution, matching MUI X Charts behavior.
  */
 export function calculateArcData(
   data: PolarDataPoint[],
@@ -80,37 +85,31 @@ export function calculateArcData(
   endAngle = 2 * Math.PI,
   padAngle = 0,
 ): ArcData[] {
-  const total = data.reduce((sum, d) => sum + Math.abs(d.value), 0);
-
-  if (total === 0) {
+  if (data.length === 0) {
     return [];
   }
 
-  const angleRange = endAngle - startAngle;
-  let currentAngle = startAngle;
+  // Use D3's pie layout with padAngle for consistent padding behavior
+  // This matches MUI X Charts' implementation and provides better visual results
+  const pieGenerator = d3Pie<PolarDataPoint>()
+    .value((d) => Math.abs(d.value))
+    .startAngle(startAngle)
+    .endAngle(endAngle)
+    .padAngle(padAngle)
+    .sort(null); // Preserve data order
 
-  return data.map((d, index) => {
-    const proportion = Math.abs(d.value) / total;
-    const arcAngle = angleRange * proportion;
-    const arcStartAngle = currentAngle;
-    const arcEndAngle = currentAngle + arcAngle;
+  const pieData = pieGenerator(data);
 
-    // Apply padding
-    const paddedStartAngle = arcStartAngle + padAngle / 2;
-    const paddedEndAngle = arcEndAngle - padAngle / 2;
-
-    currentAngle = arcEndAngle;
-
-    return {
-      startAngle: paddedStartAngle,
-      endAngle: paddedEndAngle,
-      value: d.value,
-      innerRadius,
-      outerRadius,
-      index,
-      data: d,
-    };
-  });
+  return pieData.map((d, index) => ({
+    startAngle: d.startAngle,
+    endAngle: d.endAngle,
+    padAngle: d.padAngle,
+    value: d.data.value,
+    innerRadius,
+    outerRadius,
+    index,
+    data: d.data,
+  }));
 }
 
 /**
@@ -123,14 +122,15 @@ export function createArcPath(
   innerRadius: number,
   outerRadius: number,
   cornerRadius = 0,
+  padAngle = 0,
 ): string {
   // Handle degenerate cases
   if (outerRadius <= 0) return '';
   if (startAngle === endAngle) return '';
 
-  // Use d3's arc generator with cornerRadius support
+  // Use d3's arc generator with cornerRadius and padAngle support
   // This provides the same high-quality rounded corners as MUI X Charts
-  const path = d3Arc().cornerRadius(cornerRadius)({
+  const path = d3Arc().cornerRadius(cornerRadius).padAngle(padAngle)({
     innerRadius: Math.max(0, innerRadius),
     outerRadius: Math.max(0, outerRadius),
     startAngle,

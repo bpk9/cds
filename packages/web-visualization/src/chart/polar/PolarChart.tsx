@@ -35,18 +35,18 @@ export type PolarChartBaseProps = BoxBaseProps & {
    */
   innerRadiusRatio?: number;
   /**
-   * Padding angle between slices in radians.
+   * Padding angle between slices in degrees.
    * @default 0
    */
-  padAngle?: number;
+  paddingAngle?: number;
   /**
-   * Start angle in radians.
+   * Start angle in degrees.
    * @default 0
    */
   startAngle?: number;
   /**
-   * End angle in radians.
-   * @default 2 * Math.PI
+   * End angle in degrees.
+   * @default 360
    */
   endAngle?: number;
   /**
@@ -75,9 +75,9 @@ export const PolarChart = memo(
         children,
         animate = true,
         innerRadiusRatio = 0,
-        padAngle = 0,
+        paddingAngle = 0,
         startAngle = 0,
-        endAngle = 2 * Math.PI,
+        endAngle = 360,
         outerRadiusRatio = 1,
         padding = 0,
         width = '100%',
@@ -114,6 +114,19 @@ export const PolarChart = memo(
         return outerRadius * Math.max(0, Math.min(1, innerRadiusRatio));
       }, [outerRadius, innerRadiusRatio]);
 
+      // Convert angles from degrees to radians for internal use
+      const padAngle = useMemo(() => {
+        return (2 * Math.PI * paddingAngle) / 360;
+      }, [paddingAngle]);
+
+      const startAngleRadians = useMemo(() => {
+        return (2 * Math.PI * startAngle) / 360;
+      }, [startAngle]);
+
+      const endAngleRadians = useMemo(() => {
+        return (2 * Math.PI * endAngle) / 360;
+      }, [endAngle]);
+
       const getSeries = useCallback(
         (seriesId?: string) => series.find((s) => s.id === seriesId),
         [series],
@@ -132,8 +145,8 @@ export const PolarChart = memo(
           innerRadius,
           outerRadius,
           padAngle,
-          startAngle,
-          endAngle,
+          startAngle: startAngleRadians,
+          endAngle: endAngleRadians,
         }),
         [
           series,
@@ -147,8 +160,8 @@ export const PolarChart = memo(
           innerRadius,
           outerRadius,
           padAngle,
-          startAngle,
-          endAngle,
+          startAngleRadians,
+          endAngleRadians,
         ],
       );
 

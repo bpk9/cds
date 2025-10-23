@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HStack, VStack } from '@coinbase/cds-web/layout';
+import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
 
 import { DonutChart } from '../../pie/DonutChart';
@@ -20,7 +20,7 @@ const Example: React.FC<
         {title}
       </Text>
       {description && (
-        <Text display="block" font="body" style={{ color: 'var(--color-fgSecondary)' }}>
+        <Text display="block" font="body">
           {description}
         </Text>
       )}
@@ -75,8 +75,8 @@ const muiTestData: PolarDataPoint[] = [
   { value: 30, label: 'Windows', id: 'windows', color: '#5b7cfa' },
   { value: 25, label: 'MacOS', id: 'macos', color: '#6fdfbd' },
   { value: 15, label: 'Linux', id: 'linux', color: '#ff8b5a' },
-  { value: 15, label: 'Chrome OS', id: 'chromeos', color: '#5bc9e8' },
-  { value: 15, label: 'Other', id: 'other', color: '#ffc657' },
+  { value: 2, label: 'Chrome OS', id: 'chromeos', color: '#5bc9e8' },
+  { value: 5, label: 'Other', id: 'other', color: '#ffc657' },
 ];
 
 const BasicPieChart = () => {
@@ -84,15 +84,38 @@ const BasicPieChart = () => {
 };
 
 const MUIComparisonChart = () => {
+  // starts at top right now (should change to right)
+  const angleEachSideGap = (45 / 4) * 3;
   return (
-    <DonutChart
-      cornerRadius={5}
-      data={muiTestData}
-      height={300}
-      innerRadiusRatio={0.3}
-      padAngle={0.0872665} // 5 degrees in radians
-      width={300}
-    />
+    <Box style={{ width: 200, height: 200, position: 'relative' }}>
+      <DonutChart
+        cornerRadius={100}
+        data={[
+          { value: 30, label: 'Windows', id: 'windows', color: 'var(--color-fgMuted)' },
+          { value: 30, label: 'MacOS', id: 'macos', color: 'var(--color-fgMuted)' },
+          { value: 30, label: 'Linux', id: 'linux', color: 'var(--color-fgMuted)' },
+        ]}
+        endAngle={180 - angleEachSideGap}
+        height={300}
+        innerRadiusRatio={0.75}
+        paddingAngle={2.5}
+        startAngle={angleEachSideGap - 180}
+        style={{ position: 'absolute', inset: 0 }}
+      />
+      <DonutChart
+        cornerRadius={100}
+        data={[
+          { value: 30, label: 'Windows', id: 'windows', color: 'var(--color-fg)' },
+          { value: 15, label: 'MacOS', id: 'macos', color: 'var(--color-fg)' },
+        ]}
+        endAngle={0}
+        height={300}
+        innerRadiusRatio={0.75}
+        paddingAngle={2.5}
+        startAngle={angleEachSideGap - 180}
+        style={{ position: 'absolute', inset: 0 }}
+      />
+    </Box>
   );
 };
 
@@ -170,7 +193,7 @@ const CustomStyling = () => {
       <PieChart
         data={sampleData}
         height={300}
-        padAngle={0.02}
+        paddingAngle={1}
         stroke="var(--color-bgPrimary)"
         strokeWidth={2}
         width={300}
@@ -180,7 +203,7 @@ const CustomStyling = () => {
         data={sampleData}
         height={300}
         innerRadiusRatio={0.5}
-        padAngle={0.05}
+        paddingAngle={3}
         stroke="var(--color-bgPrimary)"
         strokeWidth={3}
         width={300}
@@ -256,13 +279,13 @@ const AnimatedCharts = () => {
 const CustomAngles = () => {
   return (
     <HStack gap={4}>
-      <PieChart data={sampleData} endAngle={Math.PI} height={300} startAngle={0} width={300} />
+      <PieChart data={sampleData} endAngle={180} height={300} startAngle={0} width={300} />
       <DonutChart
         data={sampleData}
-        endAngle={Math.PI * 1.5}
+        endAngle={270}
         height={300}
         innerRadiusRatio={0.5}
-        startAngle={-Math.PI * 0.5}
+        startAngle={-90}
         width={300}
       />
     </HStack>
@@ -289,7 +312,7 @@ const DominantSegmentChart = () => {
       data={dominantSegmentData}
       height={400}
       innerRadiusRatio={0.55}
-      padAngle={0.03}
+      paddingAngle={2}
       width={400}
     />
   );
@@ -302,7 +325,7 @@ const WalletBreakdownChart = () => {
       data={walletBreakdownData}
       height={350}
       innerRadiusRatio={0.7}
-      padAngle={0.05}
+      paddingAngle={3}
       width={350}
     >
       <text
@@ -323,14 +346,24 @@ const WalletBreakdownChart = () => {
 export const All = () => {
   return (
     <VStack gap={6}>
-      <Example
-        description="Donut chart matching MUI X Charts defaults for direct comparison. Uses d3-shape's arc generator with cornerRadius=5 and paddingAngle=5°."
-        title="MUI X Charts Comparison"
-      >
+      <Example title="MUI X Charts Comparison">
         <MUIComparisonChart />
       </Example>
+      <Example title="MUI X Charts Comparison">
+        <HStack gap={4}>
+          <PieChart data={sampleData} height={300} paddingAngle={1} width={300} />
+          <DonutChart
+            cornerRadius={4}
+            data={sampleData}
+            height={300}
+            innerRadiusRatio={0}
+            paddingAngle={3}
+            width={300}
+          />
+        </HStack>
+      </Example>
 
-      <Example
+      {/*<Example
         description="A simple pie chart showing portfolio distribution."
         title="Basic Pie Chart"
       >
@@ -402,7 +435,7 @@ export const All = () => {
         title="Responsive Charts"
       >
         <ResponsiveCharts />
-      </Example>
+      </Example>*/}
     </VStack>
   );
 };

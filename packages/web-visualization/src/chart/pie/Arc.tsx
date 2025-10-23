@@ -83,6 +83,7 @@ export const Arc = memo<ArcProps>(
           arcData.innerRadius,
           arcData.outerRadius,
           cornerRadius,
+          arcData.padAngle,
         ),
       [
         arcData.startAngle,
@@ -90,6 +91,7 @@ export const Arc = memo<ArcProps>(
         arcData.innerRadius,
         arcData.outerRadius,
         cornerRadius,
+        arcData.padAngle,
       ],
     );
 

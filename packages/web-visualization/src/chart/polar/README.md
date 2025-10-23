@@ -56,9 +56,9 @@ Both `PieChart` and `DonutChart` support the following props:
 
 - `data`: Array of data points with `value`, `label`, `color`, and `id` properties
 - `animate`: Whether to animate the chart (default: true)
-- `padAngle`: Padding angle between slices in radians (default: 0)
-- `startAngle`: Start angle in radians (default: 0)
-- `endAngle`: End angle in radians (default: 2π)
+- `paddingAngle`: Padding angle between slices in degrees (default: 0)
+- `startAngle`: Start angle in degrees (default: 0)
+- `endAngle`: End angle in degrees (default: 360)
 - `fillOpacity`: Opacity of the fill (0-1)
 - `stroke`: Stroke color
 - `strokeWidth`: Stroke width in pixels
