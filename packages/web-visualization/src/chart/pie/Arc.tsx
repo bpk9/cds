@@ -1,7 +1,8 @@
-import React, { memo, useMemo } from 'react';
-import { m as motion } from 'framer-motion';
+import React, { memo } from 'react';
+import { animate as frameAnimate, m as motion, useMotionValue, useTransform } from 'framer-motion';
 
-import { type ArcData, createArcPath, usePolarChartContext } from '../polar';
+import { type ArcData, usePolarChartContext } from '../polar';
+import { getArcPath } from '../utils/path';
 
 export type ArcBaseProps = {
   /**
@@ -31,6 +32,10 @@ export type ArcBaseProps = {
    * @default 0
    */
   cornerRadius?: number;
+  /**
+   * Clip path ID to apply to this arc.
+   */
+  clipPathId?: string;
   /**
    * CSS class name.
    */
@@ -67,33 +72,62 @@ export const Arc = memo<ArcProps>(
     stroke,
     strokeWidth = 0,
     cornerRadius = 0,
+    clipPathId,
     onClick,
     onMouseEnter,
     onMouseLeave,
     className,
     style,
   }) => {
-    const { animate, centerX, centerY } = usePolarChartContext();
+    const { animate, centerX, centerY, startAngle: chartStartAngle } = usePolarChartContext();
 
-    const path = useMemo(
-      () =>
-        createArcPath(
-          arcData.startAngle,
-          arcData.endAngle,
-          arcData.innerRadius,
-          arcData.outerRadius,
-          cornerRadius,
-          arcData.padAngle,
-        ),
-      [
-        arcData.startAngle,
-        arcData.endAngle,
-        arcData.innerRadius,
-        arcData.outerRadius,
+    // Animate both start and end angles from the chart's startAngle
+    // This creates both rotation and growth effects like Recharts
+    const animatedStartAngle = useMotionValue(chartStartAngle);
+    const animatedEndAngle = useMotionValue(chartStartAngle);
+
+    // Transform the animated angles into an SVG path
+    const path = useTransform([animatedStartAngle, animatedEndAngle], (values: number[]) => {
+      const [currentStartAngle, currentEndAngle] = values;
+      return getArcPath({
+        startAngle: currentStartAngle,
+        endAngle: currentEndAngle,
+        innerRadius: arcData.innerRadius,
+        outerRadius: arcData.outerRadius,
         cornerRadius,
-        arcData.padAngle,
-      ],
-    );
+        padAngle: arcData.padAngle,
+      });
+    });
+
+    // Trigger animation when the component mounts or data changes
+    React.useEffect(() => {
+      if (animate) {
+        const startControls = frameAnimate(animatedStartAngle, arcData.startAngle, {
+          duration: 3, // 3 seconds for debugging
+          ease: 'easeOut',
+          delay: arcData.index * 0.2,
+        });
+        const endControls = frameAnimate(animatedEndAngle, arcData.endAngle, {
+          duration: 3, // 3 seconds for debugging
+          ease: 'easeOut',
+          delay: arcData.index * 0.2,
+        });
+        return () => {
+          startControls.stop();
+          endControls.stop();
+        };
+      } else {
+        animatedStartAngle.set(arcData.startAngle);
+        animatedEndAngle.set(arcData.endAngle);
+      }
+    }, [
+      arcData.startAngle,
+      arcData.endAngle,
+      arcData.index,
+      animate,
+      animatedStartAngle,
+      animatedEndAngle,
+    ]);
 
     const handleClick = (event: React.MouseEvent<SVGPathElement>) => {
       onClick?.(arcData, event);
@@ -107,44 +141,31 @@ export const Arc = memo<ArcProps>(
       onMouseLeave?.(arcData, event);
     };
 
+    // Don't render if we don't have valid dimensions
+    if (arcData.outerRadius <= 0) return;
+
     const pathElement = (
       <motion.path
-        animate={
-          animate
-            ? {
-                opacity: 1,
-                d: path,
-              }
-            : undefined
-        }
         className={className}
         d={path}
         fill={fill}
         fillOpacity={fillOpacity}
-        initial={
-          animate
-            ? {
-                opacity: 0,
-              }
-            : undefined
-        }
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         stroke={stroke}
         strokeWidth={strokeWidth}
         style={style}
-        transition={
-          animate
-            ? {
-                duration: 0.5,
-                ease: 'easeOut',
-              }
-            : undefined
-        }
       />
     );
 
-    return <g transform={`translate(${centerX}, ${centerY})`}>{pathElement}</g>;
+    return (
+      <g
+        clipPath={clipPathId ? `url(#${clipPathId})` : undefined}
+        transform={`translate(${centerX}, ${centerY})`}
+      >
+        {pathElement}
+      </g>
+    );
   },
 );

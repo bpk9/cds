@@ -6,7 +6,7 @@ import { Box, type BoxBaseProps, type BoxProps } from '@coinbase/cds-web/layout'
 import { css } from '@linaria/core';
 
 import { PolarChartProvider } from './PolarChartProvider';
-import type { PolarChartContextValue, PolarSeries } from './utils';
+import { degreesToRadians, type PolarChartContextValue, type PolarSeries } from './utils';
 
 const focusStylesCss = css`
   &:focus {
@@ -115,17 +115,9 @@ export const PolarChart = memo(
       }, [outerRadius, innerRadiusRatio]);
 
       // Convert angles from degrees to radians for internal use
-      const padAngle = useMemo(() => {
-        return (2 * Math.PI * paddingAngle) / 360;
-      }, [paddingAngle]);
-
-      const startAngleRadians = useMemo(() => {
-        return (2 * Math.PI * startAngle) / 360;
-      }, [startAngle]);
-
-      const endAngleRadians = useMemo(() => {
-        return (2 * Math.PI * endAngle) / 360;
-      }, [endAngle]);
+      const padAngle = useMemo(() => degreesToRadians(paddingAngle), [paddingAngle]);
+      const startAngleRadians = useMemo(() => degreesToRadians(startAngle), [startAngle]);
+      const endAngleRadians = useMemo(() => degreesToRadians(endAngle), [endAngle]);
 
       const getSeries = useCallback(
         (seriesId?: string) => series.find((s) => s.id === seriesId),

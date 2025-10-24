@@ -1,4 +1,5 @@
 import {
+  arc as d3Arc,
   area as d3Area,
   curveBumpX,
   curveCatmullRom,
@@ -258,4 +259,66 @@ export const getBarPath = (
 
   path += ' Z';
   return path;
+};
+
+/**
+ * Creates an SVG path string for an arc (pie/donut slice).
+ * All angles are in radians, with 0 at the top (12 o'clock) and increasing clockwise.
+ *
+ * @example
+ * ```typescript
+ * // Half circle arc
+ * const arcPath = getArcPath({
+ *   startAngle: 0,
+ *   endAngle: Math.PI,
+ *   innerRadius: 50,
+ *   outerRadius: 100,
+ *   cornerRadius: 5,
+ * });
+ *
+ * // Full donut segment with padding
+ * const segment = getArcPath({
+ *   startAngle: 0,
+ *   endAngle: Math.PI / 2,
+ *   innerRadius: 60,
+ *   outerRadius: 100,
+ *   cornerRadius: 8,
+ *   padAngle: 0.05,
+ * });
+ * ```
+ */
+export const getArcPath = ({
+  startAngle,
+  endAngle,
+  innerRadius,
+  outerRadius,
+  cornerRadius = 0,
+  padAngle = 0,
+}: {
+  /** Start angle in radians (0 at top, increasing clockwise) */
+  startAngle: number;
+  /** End angle in radians (0 at top, increasing clockwise) */
+  endAngle: number;
+  /** Inner radius in pixels (0 for pie chart) */
+  innerRadius: number;
+  /** Outer radius in pixels */
+  outerRadius: number;
+  /** Corner radius in pixels */
+  cornerRadius?: number;
+  /** Padding angle in radians between adjacent arcs */
+  padAngle?: number;
+}): string => {
+  if (outerRadius <= 0) return '';
+
+  // Ensure we always have a valid path even for collapsed arcs
+  const effectiveEndAngle = startAngle === endAngle ? startAngle + 0.0001 : endAngle;
+
+  const path = d3Arc().cornerRadius(cornerRadius).padAngle(padAngle)({
+    innerRadius: Math.max(0, innerRadius),
+    outerRadius: Math.max(0, outerRadius),
+    startAngle,
+    endAngle: effectiveEndAngle,
+  });
+
+  return path ?? '';
 };

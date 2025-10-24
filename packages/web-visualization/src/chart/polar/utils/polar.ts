@@ -2,7 +2,7 @@
  * Utilities for polar chart calculations (pie, donut, etc.)
  */
 
-import { arc as d3Arc, pie as d3Pie } from 'd3-shape';
+import { pie as d3Pie } from 'd3-shape';
 
 export type PolarDataPoint = {
   /**
@@ -113,32 +113,30 @@ export function calculateArcData(
 }
 
 /**
- * Creates an SVG path for an arc using d3-shape's arc generator.
- * This matches MUI X Charts' implementation for consistent rounded corners.
+ * Converts degrees to radians.
+ *
+ * @example
+ * ```typescript
+ * const radians = degreesToRadians(180); // Math.PI
+ * const radians = degreesToRadians(90);  // Math.PI / 2
+ * ```
  */
-export function createArcPath(
-  startAngle: number,
-  endAngle: number,
-  innerRadius: number,
-  outerRadius: number,
-  cornerRadius = 0,
-  padAngle = 0,
-): string {
-  // Handle degenerate cases
-  if (outerRadius <= 0) return '';
-  if (startAngle === endAngle) return '';
+export const degreesToRadians = (degrees: number): number => {
+  return (degrees * Math.PI) / 180;
+};
 
-  // Use d3's arc generator with cornerRadius and padAngle support
-  // This provides the same high-quality rounded corners as MUI X Charts
-  const path = d3Arc().cornerRadius(cornerRadius).padAngle(padAngle)({
-    innerRadius: Math.max(0, innerRadius),
-    outerRadius: Math.max(0, outerRadius),
-    startAngle,
-    endAngle,
-  });
-
-  return path ?? '';
-}
+/**
+ * Converts radians to degrees.
+ *
+ * @example
+ * ```typescript
+ * const degrees = radiansToDegrees(Math.PI);     // 180
+ * const degrees = radiansToDegrees(Math.PI / 2); // 90
+ * ```
+ */
+export const radiansToDegrees = (radians: number): number => {
+  return (radians * 180) / Math.PI;
+};
 
 /**
  * Calculates the centroid of an arc for label positioning.

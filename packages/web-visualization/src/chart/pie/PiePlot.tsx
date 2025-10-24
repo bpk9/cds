@@ -1,12 +1,14 @@
 import React, { memo, useMemo } from 'react';
 
-import { usePolarChartContext } from '../polar';
+import { PolarChartProvider, usePolarChartContext } from '../polar';
 import {
   type ArcData,
   calculateArcData,
+  degreesToRadians,
   getPolarColor,
   type PolarDataPoint,
 } from '../polar/utils/polar';
+import { getArcPath } from '../utils/path';
 
 import { Arc, type ArcProps } from './Arc';
 
@@ -19,6 +21,36 @@ export type PiePlotBaseProps = {
    * Custom Arc component to use for rendering slices.
    */
   ArcComponent?: React.ComponentType<ArcProps>;
+  /**
+   * Whether to animate this plot. Overrides the chart-level animate setting.
+   */
+  animate?: boolean;
+  /**
+   * Start angle in degrees. Overrides the chart-level startAngle.
+   */
+  startAngle?: number;
+  /**
+   * End angle in degrees. Overrides the chart-level endAngle.
+   */
+  endAngle?: number;
+  /**
+   * Inner radius as a ratio of the outer radius (0-1). Overrides the chart-level innerRadiusRatio.
+   */
+  innerRadiusRatio?: number;
+  /**
+   * Padding angle between slices in degrees. Overrides the chart-level paddingAngle.
+   */
+  paddingAngle?: number;
+  /**
+   * ID of another series to use as a clipping mask. The current series will only be visible
+   * where it overlaps with the specified series.
+   */
+  clipToSeriesId?: string;
+  /**
+   * Custom clip path ID to apply to all arcs. Takes precedence over clipToSeriesId.
+   * Use with getArcPath() to create custom clipping shapes.
+   */
+  clipPathId?: string;
   /**
    * Fill opacity for all arcs.
    * @default 1
@@ -74,6 +106,13 @@ export const PiePlot = memo<PiePlotProps>(
   ({
     seriesId,
     ArcComponent = Arc,
+    animate: animateOverride,
+    startAngle: startAngleOverride,
+    endAngle: endAngleOverride,
+    innerRadiusRatio: innerRadiusRatioOverride,
+    paddingAngle: paddingAngleOverride,
+    clipToSeriesId,
+    clipPathId: customClipPathId,
     fillOpacity,
     stroke,
     strokeWidth,
@@ -82,8 +121,40 @@ export const PiePlot = memo<PiePlotProps>(
     onArcMouseEnter,
     onArcMouseLeave,
   }) => {
-    const { series, getSeries, innerRadius, outerRadius, padAngle, startAngle, endAngle } =
-      usePolarChartContext();
+    const {
+      series,
+      getSeries,
+      innerRadius: contextInnerRadius,
+      outerRadius,
+      padAngle: contextPadAngle,
+      startAngle: contextStartAngle,
+      endAngle: contextEndAngle,
+      animate: contextAnimate,
+      centerX,
+      centerY,
+      width,
+      height,
+      maxRadius,
+    } = usePolarChartContext();
+
+    // Use overrides if provided, otherwise use context values
+    const shouldAnimate = animateOverride !== undefined ? animateOverride : contextAnimate;
+
+    // Convert angles from degrees to radians for overrides
+    const startAngleRadians =
+      startAngleOverride !== undefined ? degreesToRadians(startAngleOverride) : contextStartAngle;
+    const endAngleRadians =
+      endAngleOverride !== undefined ? degreesToRadians(endAngleOverride) : contextEndAngle;
+
+    // Calculate inner radius from ratio override
+    const innerRadius =
+      innerRadiusRatioOverride !== undefined
+        ? outerRadius * Math.max(0, Math.min(1, innerRadiusRatioOverride))
+        : contextInnerRadius;
+
+    // Convert padding angle from degrees to radians for override
+    const padAngle =
+      paddingAngleOverride !== undefined ? degreesToRadians(paddingAngleOverride) : contextPadAngle;
 
     const targetSeries = useMemo(() => {
       if (seriesId) {
@@ -101,18 +172,68 @@ export const PiePlot = memo<PiePlotProps>(
         targetSeries.data,
         innerRadius,
         outerRadius,
-        startAngle,
-        endAngle,
+        startAngleRadians,
+        endAngleRadians,
         padAngle,
       );
-    }, [targetSeries, innerRadius, outerRadius, startAngle, endAngle, padAngle]);
+    }, [targetSeries, innerRadius, outerRadius, startAngleRadians, endAngleRadians, padAngle]);
+
+    // Calculate clip path arcs if clipToSeriesId is provided
+    const clipArcs = useMemo(() => {
+      if (!clipToSeriesId) return null;
+
+      const clipSeries = getSeries(clipToSeriesId);
+      if (!clipSeries || !clipSeries.data.length) return null;
+
+      // Use the same geometry as the arcs we're rendering
+      return calculateArcData(
+        clipSeries.data,
+        innerRadius,
+        outerRadius,
+        startAngleRadians,
+        endAngleRadians,
+        padAngle,
+      );
+    }, [
+      clipToSeriesId,
+      getSeries,
+      innerRadius,
+      outerRadius,
+      startAngleRadians,
+      endAngleRadians,
+      padAngle,
+    ]);
 
     if (!arcs.length) {
       return null;
     }
 
-    return (
+    // Use custom clip path ID if provided, otherwise generate from clipToSeriesId
+    const clipPathId =
+      customClipPathId || (clipToSeriesId ? `clip-${seriesId}-to-${clipToSeriesId}` : undefined);
+
+    const content = (
       <>
+        {/* Define clip path from series if clipToSeriesId is used - paths are centered at 0,0 */}
+        {!customClipPathId && clipArcs && clipPathId && (
+          <defs>
+            <clipPath id={clipPathId}>
+              {clipArcs.map((clipArcData: ArcData, index: number) => {
+                const clipPath = getArcPath({
+                  startAngle: clipArcData.startAngle,
+                  endAngle: clipArcData.endAngle,
+                  innerRadius: clipArcData.innerRadius,
+                  outerRadius: clipArcData.outerRadius,
+                  cornerRadius,
+                  padAngle: clipArcData.padAngle,
+                });
+                return <path key={`clip-${index}`} d={clipPath} />;
+              })}
+            </clipPath>
+          </defs>
+        )}
+
+        {/* Render arcs - clipPath will be applied by Arc component after transform */}
         {arcs.map((arcData: ArcData, index: number) => {
           const fill = getPolarColor(index, arcData.data.color);
 
@@ -120,6 +241,7 @@ export const PiePlot = memo<PiePlotProps>(
             <ArcComponent
               key={arcData.data.id ?? index}
               arcData={arcData}
+              clipPathId={clipPathId}
               cornerRadius={cornerRadius}
               fill={fill}
               fillOpacity={fillOpacity}
@@ -143,5 +265,35 @@ export const PiePlot = memo<PiePlotProps>(
         })}
       </>
     );
+
+    // If any values are overridden, wrap in a new context provider
+    const hasOverrides =
+      animateOverride !== undefined ||
+      startAngleOverride !== undefined ||
+      endAngleOverride !== undefined ||
+      innerRadiusRatioOverride !== undefined ||
+      paddingAngleOverride !== undefined;
+
+    if (hasOverrides) {
+      const overriddenContext = {
+        series,
+        getSeries,
+        animate: shouldAnimate,
+        width,
+        height,
+        centerX,
+        centerY,
+        maxRadius,
+        innerRadius,
+        outerRadius,
+        padAngle,
+        startAngle: startAngleRadians,
+        endAngle: endAngleRadians,
+      };
+
+      return <PolarChartProvider value={overriddenContext}>{content}</PolarChartProvider>;
+    }
+
+    return content;
   },
 );
