@@ -1,6 +1,4 @@
 import type { HTMLAttributes } from 'react';
-import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { flexRender, type Header, type HeaderGroup, type Table } from '@tanstack/react-table';
 import type { Virtualizer } from '@tanstack/react-virtual';
 
@@ -10,8 +8,6 @@ import { actionsColumnWidth, getColumnPinningStyles } from './getColumnPinningSt
 
 export type DataTableHeadProps = {
   columnVirtualizer: Virtualizer<HTMLDivElement, HTMLTableCellElement>;
-  dragActiveColId?: string;
-  dragOverColId?: string;
   table: Table<any>;
   virtualPaddingLeft?: number;
   virtualPaddingRight?: number;
@@ -21,8 +17,6 @@ export type DataTableHeadProps = {
 
 export type TableHeadRowProps = {
   columnVirtualizer: Virtualizer<HTMLDivElement, HTMLTableCellElement>;
-  dragActiveColId?: string;
-  dragOverColId?: string;
   headerGroup: HeaderGroup<any>;
   virtualPaddingLeft?: number;
   virtualPaddingRight?: number;
@@ -31,48 +25,25 @@ export type TableHeadRowProps = {
 export type TableHeadCellProps = HTMLAttributes<HTMLTableCellElement> & {
   header: Header<any, unknown>;
   leftOffset?: number;
-  dragActiveColId?: string;
-  dragOverColId?: string;
 };
 
 export const TableHeadCell = ({
   header,
   leftOffset = 0,
-  dragActiveColId,
-  dragOverColId,
   style: styleProp,
   ...props
 }: TableHeadCellProps) => {
   const isPinned = header.column.getIsPinned();
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: `col:${header.column.id}`,
-    disabled: Boolean(isPinned),
-  });
-  const style = {
-    transition,
-    opacity: isDragging ? 0.9 : 1,
-    zIndex: isDragging ? 3 : 1,
-  };
-  const isActive = dragActiveColId && dragActiveColId === header.column.id;
-  const isOver = dragOverColId && dragOverColId === header.column.id && !isActive;
-  if (isActive || isOver) {
-    console.log('isActive', isActive);
-    console.log('isOver', isOver);
-  }
   return (
     <th
       key={header.id}
       {...props}
-      ref={setNodeRef}
       style={{
         display: 'flex',
         width: header.getSize(),
         backgroundColor: 'white',
         ...getColumnPinningStyles(header.column, leftOffset),
-        ...style,
         ...styleProp,
-        ...(isActive ? { backgroundColor: 'rgba(0,0,0,0.1)' } : {}),
-        ...(isOver ? { borderInlineStart: '1px dashed gray' } : {}),
       }}
     >
       <Box
@@ -85,15 +56,6 @@ export const TableHeadCell = ({
           desc: ' 🔽',
         }[header.column.getIsSorted() as string] ?? null}
       </Box>
-      {!isPinned ? (
-        <button
-          {...attributes}
-          {...listeners}
-          style={{ border: '1px solid', marginInlineStart: 8, paddingInline: 8, borderRadius: 4 }}
-        >
-          =
-        </button>
-      ) : null}
       {!header.isPlaceholder && header.column.getCanPin() && (
         <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginInlineStart: 8 }}>
           {header.column.getIsPinned() !== 'left' ? (
@@ -134,8 +96,6 @@ export const TableHeadCell = ({
 
 export const TableHeadRow = ({
   columnVirtualizer,
-  dragActiveColId,
-  dragOverColId,
   headerGroup,
   virtualPaddingLeft,
   virtualPaddingRight,
@@ -163,8 +123,6 @@ export const TableHeadRow = ({
       {leftHeaders.map((header) => (
         <TableHeadCell
           key={header.id}
-          dragActiveColId={dragActiveColId}
-          dragOverColId={dragOverColId}
           header={header}
           leftOffset={actionsColumnWidth}
           style={{ zIndex: 3 }}
@@ -174,35 +132,18 @@ export const TableHeadRow = ({
         //fake empty column to the left for virtualization scroll padding
         <th style={{ display: 'flex', width: virtualPaddingLeft }} />
       ) : null}
-      <SortableContext
-        items={centerHeaders.map((h) => `col:${h.column.id}`)}
-        strategy={horizontalListSortingStrategy}
-      >
-        {virtualColumns.map((virtualColumn) => {
-          const header = centerHeaders[virtualColumn.index];
-          if (!header) return null;
-          return (
-            <TableHeadCell
-              key={header.id}
-              dragActiveColId={dragActiveColId}
-              dragOverColId={dragOverColId}
-              header={header}
-            />
-          );
-        })}
-      </SortableContext>
+      {virtualColumns.map((virtualColumn) => {
+        const header = centerHeaders[virtualColumn.index];
+        if (!header) return null;
+        return <TableHeadCell key={header.id} header={header} />;
+      })}
       {virtualPaddingRight ? (
         //fake empty column to the right for virtualization scroll padding
         <th style={{ display: 'flex', width: virtualPaddingRight }} />
       ) : null}
       {/* Right pinned */}
       {rightHeaders.map((header) => (
-        <TableHeadCell
-          key={header.id}
-          dragActiveColId={dragActiveColId}
-          dragOverColId={dragOverColId}
-          header={header}
-        />
+        <TableHeadCell key={header.id} header={header} />
       ))}
     </tr>
   );
@@ -215,8 +156,6 @@ export const DataTableHead = ({
   virtualPaddingRight,
   isSticky,
   onHeightChange,
-  dragActiveColId,
-  dragOverColId,
 }: DataTableHeadProps) => {
   return (
     <thead
@@ -235,8 +174,6 @@ export const DataTableHead = ({
         <TableHeadRow
           key={headerGroup.id}
           columnVirtualizer={columnVirtualizer}
-          dragActiveColId={dragActiveColId}
-          dragOverColId={dragOverColId}
           headerGroup={headerGroup}
           virtualPaddingLeft={virtualPaddingLeft}
           virtualPaddingRight={virtualPaddingRight}

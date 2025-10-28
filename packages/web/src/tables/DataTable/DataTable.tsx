@@ -1,18 +1,5 @@
 import React, { forwardRef } from 'react';
 import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  type DragOverEvent,
-  DragOverlay,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
-import {
   getCoreRowModel,
   getSortedRowModel,
   type TableOptions,
@@ -107,74 +94,6 @@ const DataTableInner = <TData,>(
     [allRows],
   );
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {}),
-  );
-
-  const [dragColActive, setDragColActive] = React.useState<string | null>(null);
-  const [dragColOver, setDragColOver] = React.useState<string | null>(null);
-
-  const handleDragEnd = React.useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!active || !over || active.id === over.id) return;
-      const activeId = String(active.id);
-      const overId = String(over.id);
-
-      // Row reorder (center rows only)
-      if (activeId.startsWith('row:') && overId.startsWith('row:')) {
-        const current = centerRowIds.map((id) => `row:${id}`);
-        const oldIndex = current.indexOf(activeId);
-        const newIndex = current.indexOf(overId);
-        if (oldIndex === -1 || newIndex === -1) return;
-        const next = arrayMove(current, oldIndex, newIndex);
-        const ids = next.map((rid) => rid.replace(/^row:/, ''));
-        onRowChange?.({
-          activeId: activeId.replace(/^row:/, ''),
-          overId: overId.replace(/^row:/, ''),
-          oldIndex,
-          newIndex,
-          ids,
-        });
-        return;
-      }
-
-      // Column reorder (center columns only)
-      if (activeId.startsWith('col:') && overId.startsWith('col:')) {
-        const centerColumnIds = centerColumns.map((c) => c.id);
-        const current = centerColumnIds.map((id) => `col:${id}`);
-        const oldIndex = current.indexOf(activeId);
-        const newIndex = current.indexOf(overId);
-        if (oldIndex === -1 || newIndex === -1) return;
-        const next = arrayMove(current, oldIndex, newIndex);
-        const ids = next.map((cid) => cid.replace(/^col:/, ''));
-        onColumnChange?.({
-          activeId: activeId.replace(/^col:/, ''),
-          overId: overId.replace(/^col:/, ''),
-          oldIndex,
-          newIndex,
-          ids,
-        });
-        setDragColActive(null);
-        setDragColOver(null);
-        return;
-      }
-    },
-    [centerRowIds, centerColumns, onRowChange, onColumnChange],
-  );
-
-  const handleDragOver = React.useCallback((event: DragOverEvent) => {
-    const { active, over } = event;
-    const a = active ? String(active.id) : null;
-    const o = over ? String(over.id) : null;
-    if (a && a.startsWith('col:')) {
-      setDragColActive(a.replace(/^col:/, ''));
-      setDragColOver(o && o.startsWith('col:') ? o.replace(/^col:/, '') : null);
-    }
-  }, []);
-
   return (
     <div
       ref={tableContainerRef}
@@ -184,50 +103,25 @@ const DataTableInner = <TData,>(
         height: '500px', //should be a fixed height
       }}
     >
-      <DndContext
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-        onDragOver={handleDragOver}
-        sensors={sensors}
-      >
-        {/* Even though we're still using sematic table tags, we must use CSS grid and flexbox for dynamic row heights */}
-        <table ref={ref} style={{ display: 'grid' }} {...props}>
-          <DataTableHead
-            columnVirtualizer={columnVirtualizer}
-            dragActiveColId={dragColActive ?? undefined}
-            dragOverColId={dragColOver ?? undefined}
-            isSticky={hasTopPinnedRows}
-            onHeightChange={setHeaderHeight}
-            table={table}
-            virtualPaddingLeft={virtualPaddingLeft}
-            virtualPaddingRight={virtualPaddingRight}
-          />
-          <DataTableBody
-            columnVirtualizer={columnVirtualizer}
-            dragActiveColId={dragColActive ?? undefined}
-            dragOverColId={dragColOver ?? undefined}
-            headerOffsetTop={hasTopPinnedRows ? headerHeight : 0}
-            table={table}
-            tableContainerRef={tableContainerRef}
-            virtualPaddingLeft={virtualPaddingLeft}
-            virtualPaddingRight={virtualPaddingRight}
-          />
-        </table>
-        <DragOverlay>
-          {dragColActive ? (
-            <th
-              style={{
-                backgroundColor: 'gray',
-                color: 'white',
-                opacity: 0.9,
-                padding: 8,
-              }}
-            >
-              {dragColActive}
-            </th>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      {/* Even though we're still using sematic table tags, we must use CSS grid and flexbox for dynamic row heights */}
+      <table ref={ref} style={{ display: 'grid' }} {...props}>
+        <DataTableHead
+          columnVirtualizer={columnVirtualizer}
+          isSticky={hasTopPinnedRows}
+          onHeightChange={setHeaderHeight}
+          table={table}
+          virtualPaddingLeft={virtualPaddingLeft}
+          virtualPaddingRight={virtualPaddingRight}
+        />
+        <DataTableBody
+          columnVirtualizer={columnVirtualizer}
+          headerOffsetTop={hasTopPinnedRows ? headerHeight : 0}
+          table={table}
+          tableContainerRef={tableContainerRef}
+          virtualPaddingLeft={virtualPaddingLeft}
+          virtualPaddingRight={virtualPaddingRight}
+        />
+      </table>
     </div>
   );
 };

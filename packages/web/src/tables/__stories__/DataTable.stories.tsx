@@ -1,6 +1,4 @@
 import React from 'react';
-import type { UniqueIdentifier } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 import type { Meta } from '@storybook/react';
 
 import type { ColumnDef, SortingState } from '../DataTable';
@@ -40,21 +38,10 @@ export const DataTableExample = () => {
     return rows;
   });
 
-  const dataIds = React.useMemo<UniqueIdentifier[]>(() => data?.map(({ rowId }) => rowId), [data]);
-
   return (
     <DataTable
       onColumnChange={({ ids }) => {
         setColumnOrder(ids);
-      }}
-      onRowChange={({ activeId, overId }) => {
-        // Reorder data to match the new ids order
-        // ids correspond to row.rowId values
-        setData((data: RowData[]) => {
-          const oldIndex = dataIds.indexOf(activeId);
-          const newIndex = dataIds.indexOf(overId);
-          return arrayMove(data, oldIndex, newIndex); //this is just a splice util
-        });
       }}
       tableOptions={{
         data,
