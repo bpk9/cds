@@ -2,14 +2,8 @@ import React from 'react';
 import type { UniqueIdentifier } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { Meta } from '@storybook/react';
-import {
-  type ColumnDef,
-  getCoreRowModel,
-  getSortedRowModel,
-  type SortingState,
-  useReactTable,
-} from '@tanstack/react-table';
 
+import type { ColumnDef, SortingState } from '../DataTable';
 import { DataTable } from '../DataTable/DataTable';
 
 export default {
@@ -20,6 +14,7 @@ type RowData = { rowId: string } & Record<`col${number}`, number>;
 
 export const DataTableExample = () => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnOrder, setColumnOrder] = React.useState<string[]>([]);
   const columns = React.useMemo<ColumnDef<RowData>[]>(() => {
     const cols: ColumnDef<RowData>[] = [];
     for (let c = 0; c < 1000; c += 1) {
@@ -47,21 +42,10 @@ export const DataTableExample = () => {
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(() => data?.map(({ rowId }) => rowId), [data]);
 
-  const table = useReactTable<RowData>({
-    data,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getRowId: (row) => row.rowId,
-  });
-
   return (
     <DataTable
       onColumnChange={({ ids }) => {
-        // With TanStack, users would call table.setColumnOrder(ids)
-        table.setColumnOrder(ids);
+        setColumnOrder(ids);
       }}
       onRowChange={({ activeId, overId }) => {
         // Reorder data to match the new ids order
@@ -72,7 +56,14 @@ export const DataTableExample = () => {
           return arrayMove(data, oldIndex, newIndex); //this is just a splice util
         });
       }}
-      table={table}
+      tableOptions={{
+        data,
+        columns,
+        state: { sorting, columnOrder },
+        onSortingChange: setSorting,
+        onColumnOrderChange: setColumnOrder,
+        getRowId: (row) => row.rowId,
+      }}
     />
   );
 };
