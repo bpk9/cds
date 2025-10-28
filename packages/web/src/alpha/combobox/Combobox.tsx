@@ -1,7 +1,8 @@
 import { forwardRef, memo, useCallback, useMemo, useRef, useState } from 'react';
-import type { SharedAccessibilityProps } from '@coinbase/cds-common';
+import type { InputVariant, SharedAccessibilityProps } from '@coinbase/cds-common';
 import Fuse from 'fuse.js';
 
+import type { AriaHasPopupType } from '../../hooks/useA11yControlledVisibility';
 import type { InteractableBlendStyles } from '../../system/Interactable';
 import {
   defaultAccessibilityRoles,
@@ -14,11 +15,76 @@ import {
   type SelectRef,
 } from '../select/Select';
 
-import {
-  type ComboboxControlComponent,
-  type ComboboxControlProps,
-  DefaultComboboxControl,
-} from './DefaultComboboxControl';
+import { DefaultComboboxControl } from './DefaultComboboxControl';
+
+export type ComboboxControlProps<T extends string = string> = {
+  /** Array of options to display in the combobox dropdown */
+  options: SelectOption<T>[];
+  /** Current value(s) - always an array for multi-select */
+  value: T[];
+  /** Change handler - accepts single value or array for multi-select */
+  onChange: (value: T | T[]) => void;
+  /** Whether the dropdown is currently open */
+  open: boolean;
+  /** Function to update the dropdown open state */
+  setOpen: (open: boolean | ((open: boolean) => boolean)) => void;
+  /** Search text value */
+  searchText: string;
+  /** Search text change handler */
+  onSearch: (searchText: string) => void;
+  /** Label displayed above the control */
+  label?: React.ReactNode;
+  /** Placeholder text displayed in the search input */
+  placeholder?: React.ReactNode;
+  /** Helper text displayed below the combobox */
+  helperText?: React.ReactNode;
+  /** Whether the combobox is disabled */
+  disabled?: boolean;
+  /** Input variant for styling */
+  variant?: InputVariant;
+  /** Label variant for positioning */
+  labelVariant?: 'inside' | 'outside';
+  /** Node displayed at the start of the control */
+  startNode?: React.ReactNode;
+  /** Node displayed at the end of the control */
+  endNode?: React.ReactNode;
+  /** Whether to use compact styling */
+  compact?: boolean;
+  /** Maximum number of selected options to show before truncating */
+  maxSelectedOptionsToShow?: number;
+  /** Label to show for showcasing count of hidden selected options */
+  hiddenSelectedOptionsLabel?: string;
+  /** Accessibility label for each chip in a multi-select */
+  removeSelectedOptionAccessibilityLabel?: string;
+  /** ARIA haspopup attribute value */
+  ariaHaspopup?: AriaHasPopupType;
+  /** Custom styles for different parts of the control */
+  styles?: {
+    controlStartNode?: React.CSSProperties;
+    controlInputNode?: React.CSSProperties;
+    controlValueNode?: React.CSSProperties;
+    controlLabelNode?: React.CSSProperties;
+    controlHelperTextNode?: React.CSSProperties;
+    controlEndNode?: React.CSSProperties;
+  };
+  /** Custom class names for different parts of the control */
+  classNames?: {
+    controlStartNode?: string;
+    controlInputNode?: string;
+    controlValueNode?: string;
+    controlLabelNode?: string;
+    controlHelperTextNode?: string;
+    controlEndNode?: string;
+  };
+  /** Accessibility label for the combobox */
+  accessibilityLabel?: string;
+  /** Test ID for the combobox */
+  testID?: string;
+};
+
+export type ComboboxControlComponent<T extends string = string> = React.FC<
+  ComboboxControlProps<T> & { ref?: React.Ref<HTMLElement> }
+>;
 
 export type ComboboxBaseProps<T extends string = string> = Pick<
   SharedAccessibilityProps,
@@ -51,18 +117,20 @@ export type ComboboxBaseProps<T extends string = string> = Pick<
     options: SelectOption<T>[];
     /** Current selected values (always an array for multi-select) */
     value: T[];
+    /** Controlled open state of the dropdown */
+    open?: boolean;
+    /** Callback to update the open state */
+    setOpen?: (open: boolean | ((open: boolean) => boolean)) => void;
     /** Change handler for selection changes */
     onChange: (value: T | T[]) => void;
     /** Controlled search text value */
     searchText?: string;
     /** Search text change handler */
     onSearch?: (searchText: string) => void;
+    /** Custom filter function for searching options */
+    filterFunction?: (options: SelectOption<T>[], searchText: string) => SelectOption<T>[];
     /** Default search text value for uncontrolled mode */
     defaultSearchText?: string;
-    /** Controlled open state of the dropdown */
-    open?: boolean;
-    /** Callback to update the open state */
-    setOpen?: (open: boolean | ((open: boolean) => boolean)) => void;
     /** Whether clicking outside the dropdown should close it */
     disableClickOutsideClose?: boolean;
     /** Whether to use compact styling */
@@ -71,8 +139,6 @@ export type ComboboxBaseProps<T extends string = string> = Pick<
     defaultOpen?: boolean;
     /** Maximum number of selected options to show before truncating */
     maxSelectedOptionsToShow?: number;
-    /** Custom filter function for searching options */
-    filterFunction?: (options: SelectOption<T>[], searchText: string) => SelectOption<T>[];
     /** Custom component to render the dropdown container */
     SelectDropdownComponent?: SelectDropdownComponent<'multi', T>;
     /** Custom component to render the combobox control */
@@ -294,7 +360,6 @@ const ComboboxBase = memo(
             setOpen={setOpen}
             startNode={startNode}
             styles={styles}
-            testID={testID}
             value={value}
             variant={variant}
           />

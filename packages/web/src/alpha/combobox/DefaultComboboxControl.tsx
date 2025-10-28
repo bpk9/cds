@@ -1,6 +1,5 @@
 import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
 import type { ThemeVars } from '@coinbase/cds-common/core/theme';
-import type { InputVariant } from '@coinbase/cds-common/types/InputBaseProps';
 import { css } from '@linaria/core';
 
 import { Chip } from '../../chips/Chip';
@@ -10,12 +9,13 @@ import { InputLabel } from '../../controls/InputLabel';
 import { InputStack } from '../../controls/InputStack';
 import { NativeInput } from '../../controls/NativeInput';
 import { cx } from '../../cx';
-import type { AriaHasPopupType } from '../../hooks/useA11yControlledVisibility';
 import { HStack } from '../../layout/HStack';
 import { VStack } from '../../layout/VStack';
 import { AnimatedCaret } from '../../motion/AnimatedCaret';
 import { Pressable } from '../../system/Pressable';
 import type { SelectOption } from '../select/Select';
+
+import type { ComboboxControlComponent, ComboboxControlProps } from './Combobox';
 
 const noFocusOutlineCss = css`
   &:focus,
@@ -41,75 +41,6 @@ const variantColor: Record<string, ThemeVars.Color> = {
   secondary: 'fgMuted',
 };
 
-export type ComboboxControlProps<T extends string = string> = {
-  /** Array of options to display in the combobox dropdown */
-  options: SelectOption<T>[];
-  /** Current value(s) - always an array for multi-select */
-  value: T[];
-  /** Change handler - accepts single value or array for multi-select */
-  onChange: (value: T | T[]) => void;
-  /** Whether the dropdown is currently open */
-  open: boolean;
-  /** Function to update the dropdown open state */
-  setOpen: (open: boolean | ((open: boolean) => boolean)) => void;
-  /** Search text value */
-  searchText: string;
-  /** Search text change handler */
-  onSearch: (searchText: string) => void;
-  /** Label displayed above the control */
-  label?: React.ReactNode;
-  /** Placeholder text displayed in the search input */
-  placeholder?: React.ReactNode;
-  /** Helper text displayed below the combobox */
-  helperText?: React.ReactNode;
-  /** Whether the combobox is disabled */
-  disabled?: boolean;
-  /** Input variant for styling */
-  variant?: InputVariant;
-  /** Label variant for positioning */
-  labelVariant?: 'inside' | 'outside';
-  /** Node displayed at the start of the control */
-  startNode?: React.ReactNode;
-  /** Node displayed at the end of the control */
-  endNode?: React.ReactNode;
-  /** Whether to use compact styling */
-  compact?: boolean;
-  /** Maximum number of selected options to show before truncating */
-  maxSelectedOptionsToShow?: number;
-  /** Label to show for showcasing count of hidden selected options */
-  hiddenSelectedOptionsLabel?: string;
-  /** Accessibility label for each chip in a multi-select */
-  removeSelectedOptionAccessibilityLabel?: string;
-  /** ARIA haspopup attribute value */
-  ariaHaspopup?: AriaHasPopupType;
-  /** Custom styles for different parts of the control */
-  styles?: {
-    controlStartNode?: React.CSSProperties;
-    controlInputNode?: React.CSSProperties;
-    controlValueNode?: React.CSSProperties;
-    controlLabelNode?: React.CSSProperties;
-    controlHelperTextNode?: React.CSSProperties;
-    controlEndNode?: React.CSSProperties;
-  };
-  /** Custom class names for different parts of the control */
-  classNames?: {
-    controlStartNode?: string;
-    controlInputNode?: string;
-    controlValueNode?: string;
-    controlLabelNode?: string;
-    controlHelperTextNode?: string;
-    controlEndNode?: string;
-  };
-  /** Accessibility label for the combobox */
-  accessibilityLabel?: string;
-  /** Test ID for the combobox */
-  testID?: string;
-};
-
-export type ComboboxControlComponent<T extends string = string> = React.FC<
-  ComboboxControlProps<T> & { ref?: React.Ref<HTMLElement> }
->;
-
 const DefaultComboboxControlComponent = <T extends string = string>(
   {
     options,
@@ -133,9 +64,7 @@ const DefaultComboboxControlComponent = <T extends string = string>(
     onSearch,
     styles,
     classNames,
-    accessibilityLabel,
-    ariaHaspopup,
-    testID,
+    ariaHaspopup = 'listbox',
     ...props
   }: ComboboxControlProps<T>,
   ref: React.Ref<HTMLElement>,
@@ -328,7 +257,6 @@ const DefaultComboboxControlComponent = <T extends string = string>(
               onClick={handleInputClick}
               onKeyDown={handleInputKeyDown}
               placeholder={placeholder as string}
-              testID={testID}
               value={searchText}
             />
           </HStack>
@@ -351,7 +279,6 @@ const DefaultComboboxControlComponent = <T extends string = string>(
       handleInputClick,
       handleInputKeyDown,
       placeholder,
-      testID,
       searchText,
     ],
   );
