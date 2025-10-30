@@ -45,9 +45,7 @@ export const DataTableBodyRow = ({
         ...(staticPosition || !virtualRow
           ? {}
           : {
-              left: 0,
-              position: 'absolute' as const,
-              top: 0,
+              position: 'absolute',
               transform: `translateY(${virtualRow.start}px)`,
             }),
       }}

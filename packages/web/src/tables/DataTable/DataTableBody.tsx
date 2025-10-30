@@ -1,4 +1,3 @@
-import { useLayoutEffect } from 'react';
 import { type Row, type Table } from '@tanstack/react-table';
 import { useVirtualizer, type Virtualizer } from '@tanstack/react-virtual';
 
@@ -45,11 +44,6 @@ export const DataTableBody = ({
         : undefined,
     overscan: defaultVirtualRowsOverscan,
   });
-
-  useLayoutEffect(() => {
-    if (!virtualizeRows) return;
-    rowVirtualizer.measure();
-  }, [rowVirtualizer, virtualizeRows, rows]);
 
   // `useVirtualizer` keeps the same instance reference while mutating internal state on scroll.
   // Memoizing these values would freeze them after the first render, so call the getters directly.
