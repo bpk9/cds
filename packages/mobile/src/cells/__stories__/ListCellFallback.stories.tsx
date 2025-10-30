@@ -35,35 +35,35 @@ const Fallbacks = () => {
         title
         spacingVariant="condensed"
       />
-      <ListCellFallback disableRandomRectWidth title media="icon" spacingVariant="condensed" />
+      <ListCellFallback disableRandomRectWidth title spacingVariant="condensed" start="icon" />
       <ListCellFallback
         description
         disableRandomRectWidth
         title
-        media="asset"
         spacingVariant="condensed"
+        start="asset"
       />
       <ListCellFallback
         detail
         disableRandomRectWidth
         title
-        media="image"
         spacingVariant="condensed"
+        start="image"
       />
       <ListCellFallback
         disableRandomRectWidth
         subdetail
         title
-        media="avatar"
         spacingVariant="condensed"
+        start="avatar"
       />
       <ListCellFallback
         description
         detail
         disableRandomRectWidth
         title
-        media="icon"
         spacingVariant="condensed"
+        start="icon"
       />
       <ListCellFallback
         description
@@ -71,35 +71,35 @@ const Fallbacks = () => {
         disableRandomRectWidth
         subdetail
         title
-        media="asset"
         spacingVariant="condensed"
+        start="asset"
       />
       <ListCellFallback
         description
         detail
         subdetail
         title
-        media="asset"
         rectWidthVariant={0}
         spacingVariant="condensed"
+        start="asset"
       />
       <ListCellFallback
         description
         detail
         subdetail
         title
-        media="asset"
         rectWidthVariant={1}
         spacingVariant="condensed"
+        start="asset"
       />
       <ListCellFallback
         description
         detail
         subdetail
         title
-        media="asset"
         rectWidthVariant={2}
         spacingVariant="condensed"
+        start="asset"
       />
       <ListCellFallback disableRandomRectWidth title spacingVariant="compact" />
       <ListCellFallback description disableRandomRectWidth title spacingVariant="compact" />
@@ -114,35 +114,35 @@ const Fallbacks = () => {
         title
         spacingVariant="compact"
       />
-      <ListCellFallback disableRandomRectWidth title media="icon" spacingVariant="compact" />
+      <ListCellFallback disableRandomRectWidth title spacingVariant="compact" start="icon" />
       <ListCellFallback
         description
         disableRandomRectWidth
         title
-        media="asset"
         spacingVariant="compact"
+        start="asset"
       />
       <ListCellFallback
         detail
         disableRandomRectWidth
         title
-        media="image"
         spacingVariant="compact"
+        start="image"
       />
       <ListCellFallback
         disableRandomRectWidth
         subdetail
         title
-        media="avatar"
         spacingVariant="compact"
+        start="avatar"
       />
       <ListCellFallback
         description
         detail
         disableRandomRectWidth
         title
-        media="icon"
         spacingVariant="compact"
+        start="icon"
       />
       <ListCellFallback
         description
@@ -150,35 +150,35 @@ const Fallbacks = () => {
         disableRandomRectWidth
         subdetail
         title
-        media="asset"
         spacingVariant="compact"
+        start="asset"
       />
       <ListCellFallback
         description
         detail
         subdetail
         title
-        media="asset"
         rectWidthVariant={0}
         spacingVariant="compact"
+        start="asset"
       />
       <ListCellFallback
         description
         detail
         subdetail
         title
-        media="asset"
         rectWidthVariant={1}
         spacingVariant="compact"
+        start="asset"
       />
       <ListCellFallback
         description
         detail
         subdetail
         title
-        media="asset"
         rectWidthVariant={2}
         spacingVariant="compact"
+        start="asset"
       />
       <ListCellFallback
         disableRandomRectWidth
@@ -195,24 +195,24 @@ const Fallbacks = () => {
         helperText
         subdetail
         title
-        media="image"
         spacingVariant="compact"
+        start="image"
         styles={{ helperText: { paddingLeft: 64 } }}
       />
       <ListCellFallback
         disableRandomRectWidth
         helperText
         title
-        media="icon"
         spacingVariant="compact"
+        start="icon"
         styles={{ helperText: { paddingLeft: 48 } }}
       />
       <ListCellFallback
         disableRandomRectWidth
         helperText
         title
-        media="icon"
         spacingVariant="compact"
+        start="icon"
         styles={{ helperText: { paddingLeft: 48 } }}
       />
     </>

@@ -118,8 +118,8 @@ const CustomNodes = () => {
             <Icon name="info" />
           </HStack>
         }
-        media={<Avatar src={assets.eth.imageUrl} />}
         spacingVariant="condensed"
+        start={<Avatar src={assets.eth.imageUrl} />}
         titleNode={
           <HStack alignItems="center" gap={1}>
             <Icon name="checkmark" />
@@ -140,8 +140,8 @@ const CustomNodes = () => {
             <Text font="body">$12,345.00</Text>
           </HStack>
         }
-        media={<Avatar src={assets.eth.imageUrl} />}
         spacingVariant="condensed"
+        start={<Avatar src={assets.eth.imageUrl} />}
         subdetailNode={
           <HStack alignItems="center" gap={0.5} justifyContent="flex-end">
             <Icon name="info" />
@@ -621,50 +621,50 @@ const WithAccessory = () => (
 
 const WithMedia = () => (
   <>
-    <ListCell media={<Icon active name="email" />} spacingVariant="condensed" title="Icon" />
+    <ListCell spacingVariant="condensed" start={<Icon active name="email" />} title="Icon" />
 
     <ListCell
-      media={<Icon active name="email" />}
       onClick={onClickConsole}
       spacingVariant="condensed"
+      start={<Icon active name="email" />}
       title="Icon (pressable)"
     />
 
     <ListCell
       description="Description"
-      media={<Icon name="phone" />}
       spacingVariant="condensed"
+      start={<Icon name="phone" />}
       title="Icon"
     />
 
     <ListCell
       description="Description"
       detail="Detail"
-      media={<Avatar src={assets.eth.imageUrl} />}
       spacingVariant="condensed"
+      start={<Avatar src={assets.eth.imageUrl} />}
       title="Avatar"
     />
 
     <ListCell
       description="Description"
       detail="Detail"
-      media={<Avatar src={assets.eth.imageUrl} />}
       spacingVariant="condensed"
+      start={<Avatar src={assets.eth.imageUrl} />}
       subdetail="Neutral"
       title="Asset"
     />
 
     <ListCell
       detail="Detail"
-      media={<Avatar src={assets.eth.imageUrl} />}
       spacingVariant="condensed"
+      start={<Avatar src={assets.eth.imageUrl} />}
       title="Image"
     />
 
     <ListCell
       description="Description"
-      media={<Pictogram name="shield" />}
       spacingVariant="condensed"
+      start={<Pictogram name="shield" />}
       title="Pictogram"
     />
   </>
@@ -790,9 +790,9 @@ const WithHelperText = () => (
           Please review this information carefully before proceeding
         </CellHelperText>
       }
-      media={<CellMedia source={assets.eth.imageUrl} type="asset" />}
       priority="end"
       spacingVariant="condensed"
+      start={<CellMedia source={assets.eth.imageUrl} type="asset" />}
       title="With Media and Helper Text"
     />
 
@@ -806,9 +806,9 @@ const WithHelperText = () => (
           This field contains an error that needs to be corrected
         </CellHelperText>
       }
-      media={<Avatar src={assets.eth.imageUrl} />}
       priority="end"
       spacingVariant="condensed"
+      start={<Avatar src={assets.eth.imageUrl} />}
       title="With Detail and Helper Text"
       variant="negative"
     />
@@ -822,9 +822,9 @@ const WithHelperText = () => (
           This action cannot be undone.
         </CellHelperText>
       }
-      media={<CellMedia source={assets.eth.imageUrl} type="asset" />}
       priority="end"
       spacingVariant="condensed"
+      start={<CellMedia source={assets.eth.imageUrl} type="asset" />}
       title="With Media and Action"
     />
   </VStack>
@@ -838,9 +838,9 @@ const SpacingVariant = () => (
       description="New design"
       detail="$12,345.00"
       intermediary={<Icon name="chartLine" />}
-      media={<Avatar src={assets.eth.imageUrl} />}
       onClick={onClickConsole}
       spacingVariant="condensed"
+      start={<Avatar src={assets.eth.imageUrl} />}
       subdetail="+1.23%"
       title="Condensed"
       variant="positive"
@@ -852,9 +852,9 @@ const SpacingVariant = () => (
       description="Deprecated (use condensed)"
       detail="$12,345.00"
       intermediary={<Icon name="chartLine" />}
-      media={<Avatar src={assets.eth.imageUrl} />}
       onClick={onClickConsole}
       spacingVariant="compact"
+      start={<Avatar src={assets.eth.imageUrl} />}
       subdetail="+1.23%"
       title="Compact"
       variant="positive"
@@ -863,9 +863,9 @@ const SpacingVariant = () => (
       accessory="arrow"
       detail="$12,345.00"
       intermediary={<Icon name="chartLine" />}
-      media={<Avatar src={assets.eth.imageUrl} />}
       onClick={onClickConsole}
       spacingVariant="normal"
+      start={<Avatar src={assets.eth.imageUrl} />}
       subdetail="+1.23%"
       title="Normal"
       variant="positive"
@@ -880,9 +880,9 @@ const CondensedListCell = () => {
         accessory="more"
         description="Description"
         detail="Detail"
-        media={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
         subdetail="Subdetail"
         title="Title"
       />
@@ -895,9 +895,9 @@ const CondensedListCell = () => {
             This is helpful information to guide the user
           </CellHelperText>
         }
-        media={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
         subdetail="Subdetail"
         title="Title"
       />
@@ -906,9 +906,9 @@ const CondensedListCell = () => {
         accessory="more"
         description="Long description with multiple lines. This section can be arbitrarily long and occupy many many lines."
         detail="Detail"
-        media={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
         subdetail="Subdetail"
         title="Title"
       />
@@ -917,9 +917,9 @@ const CondensedListCell = () => {
         accessory="more"
         description="Long description with multiple lines. This section can be arbitrarily long and occupy many many lines."
         detail="Detail"
-        media={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
         styles={{
           media: {
             marginTop: 'var(--space-1)',
@@ -942,9 +942,9 @@ const CondensedListCell = () => {
         accessory="more"
         description="Description"
         detail="Detail"
-        media={<Icon name="heart" size="l" />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Icon name="heart" size="l" />}
         subdetail="Subdetail"
         title="Title"
       />
@@ -952,9 +952,9 @@ const CondensedListCell = () => {
         accessory="more"
         description="Description"
         detail="Detail"
-        media={<Icon name="heart" size="s" />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Icon name="heart" size="s" />}
         subdetail="Subdetail"
         title="Title"
       />
@@ -963,9 +963,9 @@ const CondensedListCell = () => {
         description="Description"
         detail="Detail"
         end={<Button compact>Action</Button>}
-        media={<Icon name="heart" size="xs" />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Icon name="heart" size="xs" />}
         subdetail="Subdetail"
         title="Title"
       />
@@ -974,9 +974,9 @@ const CondensedListCell = () => {
         description="Description"
         detail="Detail"
         intermediary={<Avatar shape="square" size="l" src={squareAssets.human6} />}
-        media={<Avatar shape="square" size="l" src={squareAssets.human1} />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Avatar shape="square" size="l" src={squareAssets.human1} />}
         subdetail={
           <Tag colorScheme="green">
             <HStack alignItems="center" gap={0.5}>
@@ -1045,10 +1045,10 @@ const UseCaseShowcase = () => {
           </VStack>
         }
         intermediary={<Icon name="chartLine" />}
-        media={<Avatar src={assets.btc.imageUrl} />}
         onClick={onClickConsole}
         priority="middle"
         spacingVariant="condensed"
+        start={<Avatar src={assets.btc.imageUrl} />}
         styles={{
           end: {
             width: 100,
@@ -1068,9 +1068,9 @@ const UseCaseShowcase = () => {
           </VStack>
         }
         intermediary={<Icon name="chartLine" />}
-        media={<Avatar src={assets.eth.imageUrl} />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Avatar src={assets.eth.imageUrl} />}
         styles={{
           end: {
             width: 100,
@@ -1090,9 +1090,9 @@ const UseCaseShowcase = () => {
           </VStack>
         }
         intermediary={<Icon name="chartLine" />}
-        media={<Avatar src={assets.ada.imageUrl} />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Avatar src={assets.ada.imageUrl} />}
         styles={{
           end: {
             width: 100,
@@ -1109,9 +1109,9 @@ const UseCaseShowcase = () => {
           </VStack>
         }
         intermediary={<Icon name="chartLine" />}
-        media={<Avatar src={assets.ltc.imageUrl} />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Avatar src={assets.ltc.imageUrl} />}
         styles={{
           end: {
             width: 100,
@@ -1129,9 +1129,9 @@ const UseCaseShowcase = () => {
           </VStack>
         }
         intermediary={<Icon name="chartLine" />}
-        media={<Avatar src={assets.dai.imageUrl} />}
         onClick={onClickConsole}
         spacingVariant="condensed"
+        start={<Avatar src={assets.dai.imageUrl} />}
         styles={{
           end: {
             width: 100,

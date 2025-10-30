@@ -26,15 +26,15 @@ export const Fallbacks = () => {
       <ListCellFallback disableRandomRectWidth subdetail title />
       <ListCellFallback description detail disableRandomRectWidth title />
       <ListCellFallback description detail disableRandomRectWidth subdetail title />
-      <ListCellFallback disableRandomRectWidth title media="icon" />
-      <ListCellFallback description disableRandomRectWidth title media="asset" />
-      <ListCellFallback detail disableRandomRectWidth title media="image" />
-      <ListCellFallback disableRandomRectWidth subdetail title media="avatar" />
-      <ListCellFallback description detail disableRandomRectWidth title media="icon" />
-      <ListCellFallback description detail disableRandomRectWidth subdetail title media="asset" />
-      <ListCellFallback description detail subdetail title media="asset" rectWidthVariant={0} />
-      <ListCellFallback description detail subdetail title media="asset" rectWidthVariant={1} />
-      <ListCellFallback description detail subdetail title media="asset" rectWidthVariant={2} />
+      <ListCellFallback disableRandomRectWidth title start="icon" />
+      <ListCellFallback description disableRandomRectWidth title start="asset" />
+      <ListCellFallback detail disableRandomRectWidth title start="image" />
+      <ListCellFallback disableRandomRectWidth subdetail title start="avatar" />
+      <ListCellFallback description detail disableRandomRectWidth title start="icon" />
+      <ListCellFallback description detail disableRandomRectWidth subdetail title start="asset" />
+      <ListCellFallback description detail subdetail title rectWidthVariant={0} start="asset" />
+      <ListCellFallback description detail subdetail title rectWidthVariant={1} start="asset" />
+      <ListCellFallback description detail subdetail title rectWidthVariant={2} start="asset" />
       <ListCellFallback disableRandomRectWidth helperText title />
       <ListCellFallback description disableRandomRectWidth helperText title />
       <ListCellFallback
@@ -42,7 +42,7 @@ export const Fallbacks = () => {
         disableRandomRectWidth
         helperText
         title
-        media="pictogram"
+        start="pictogram"
         styles={{
           helperText: {
             paddingLeft: 48,
@@ -56,7 +56,7 @@ export const Fallbacks = () => {
         helperText
         subdetail
         title
-        media="asset"
+        start="asset"
         styles={{
           helperText: {
             paddingLeft: 48,
@@ -70,7 +70,7 @@ export const Fallbacks = () => {
         helperText
         subdetail
         title
-        media="image"
+        start="image"
         styles={{
           helperText: {
             paddingLeft: 64,
@@ -84,8 +84,8 @@ export const Fallbacks = () => {
         subdetail
         title
         innerSpacing={innerSpacing}
-        media="asset"
         outerSpacing={outerSpacing}
+        start="asset"
       />
     </>
   );
