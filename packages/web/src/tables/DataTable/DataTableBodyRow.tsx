@@ -4,8 +4,8 @@ import { type VirtualItem, type Virtualizer } from '@tanstack/react-virtual';
 
 import { cx } from '../../cx';
 
+import type { ActionColumnBodyComponent } from './ActionColumnComponents';
 import { DataTableBodyCell } from './DataTableBodyCell';
-import { actionsColumnWidth } from './getColumnPinningStyles';
 
 const bodyRowCss = css`
   display: flex;
@@ -19,9 +19,6 @@ const virtualizedRowCss = css`
 `;
 
 const rowActionsCellCss = css`
-  background-color: var(--color-bg);
-  display: flex;
-  gap: 4px;
   left: 0;
   position: sticky;
   z-index: 2;
@@ -31,14 +28,9 @@ const spacerCellCss = css`
   display: flex;
 `;
 
-const pinButtonCss = css`
-  background: none;
-  border: 1px solid var(--color-borderSubtle);
-  border-radius: 4px;
-  padding-inline: 8px;
-`;
-
 export type DataTableBodyRowProps = {
+  ActionColumnBodyComponent: ActionColumnBodyComponent;
+  actionsColumnWidth: number;
   columnVirtualizer: Virtualizer<HTMLDivElement, HTMLTableCellElement>;
   row: Row<any>;
   rowVirtualizer?: Virtualizer<HTMLDivElement, HTMLTableRowElement>;
@@ -50,6 +42,8 @@ export type DataTableBodyRowProps = {
 };
 
 export const DataTableBodyRow = ({
+  ActionColumnBodyComponent,
+  actionsColumnWidth,
   columnVirtualizer,
   row,
   rowVirtualizer,
@@ -84,21 +78,7 @@ export const DataTableBodyRow = ({
     >
       {/* Row actions sticky column */}
       <td className={rowActionsCellCss} style={{ width: actionsColumnWidth }}>
-        {row.getIsPinned?.() !== 'top' ? (
-          <button className={pinButtonCss} onClick={() => row.pin('top')} type="button">
-            Top
-          </button>
-        ) : null}
-        {row.getIsPinned?.() ? (
-          <button className={pinButtonCss} onClick={() => row.pin(false)} type="button">
-            Unpin
-          </button>
-        ) : null}
-        {row.getIsPinned?.() !== 'bottom' ? (
-          <button className={pinButtonCss} onClick={() => row.pin('bottom')} type="button">
-            Bottom
-          </button>
-        ) : null}
+        <ActionColumnBodyComponent row={row} />
       </td>
       {/* Left pinned */}
       {leftCells.map((cell) => (

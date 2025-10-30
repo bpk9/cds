@@ -2,6 +2,7 @@ import type { HTMLAttributes } from 'react';
 import { css } from '@linaria/core';
 import { flexRender, type Header } from '@tanstack/react-table';
 
+import { Button, IconButton } from '../../buttons';
 import { cx } from '../../cx';
 import { Box } from '../../layout';
 
@@ -28,13 +29,6 @@ const pinControlsCss = css`
   gap: 4px;
   justify-content: center;
   margin-inline-start: 8px;
-`;
-
-const pinButtonCss = css`
-  background: none;
-  border: 1px solid var(--color-borderSubtle);
-  border-radius: 4px;
-  padding-inline: 8px;
 `;
 
 export type TableHeadCellProps = HTMLAttributes<HTMLTableCellElement> & {
@@ -74,37 +68,32 @@ export const TableHeadCell = ({
       {!header.isPlaceholder && header.column.getCanPin() && (
         <Box className={pinControlsCss}>
           {isPinned !== 'left' ? (
-            <button
-              className={pinButtonCss}
+            <IconButton
+              name="arrowLeft"
               onClick={() => {
                 header.column.pin('left');
               }}
-              type="button"
-            >
-              {'<='}
-            </button>
+              variant="secondary"
+            />
           ) : null}
           {isPinned ? (
-            <button
-              className={pinButtonCss}
+            <IconButton
+              compact
+              name="close"
               onClick={() => {
                 header.column.pin(false);
               }}
-              type="button"
-            >
-              X
-            </button>
+              variant="secondary"
+            />
           ) : null}
           {isPinned !== 'right' ? (
-            <button
-              className={pinButtonCss}
+            <IconButton
+              compact
+              name="arrowRight"
               onClick={() => {
                 header.column.pin('right');
               }}
-              type="button"
-            >
-              {'=>'}
-            </button>
+            />
           ) : null}
         </Box>
       )}

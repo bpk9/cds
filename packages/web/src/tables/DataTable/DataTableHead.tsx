@@ -5,9 +5,12 @@ import type { Virtualizer } from '@tanstack/react-virtual';
 
 import { cx } from '../../cx';
 
+import { type ActionColumnHeadComponent, DefaultActionColumnHead } from './ActionColumnComponents';
 import { TableHeadRow } from './TableHeadRow';
 
 export type DataTableHeadProps = {
+  ActionColumnHeadComponent?: ActionColumnHeadComponent;
+  actionsColumnWidth: number;
   columnVirtualizer: Virtualizer<HTMLDivElement, HTMLTableCellElement>;
   table: Table<any>;
   virtualPaddingLeft?: number;
@@ -34,6 +37,8 @@ const nonStickyHeadCss = css`
 `;
 
 export const DataTableHead = ({
+  ActionColumnHeadComponent = DefaultActionColumnHead,
+  actionsColumnWidth,
   columnVirtualizer,
   table,
   virtualPaddingLeft,
@@ -50,8 +55,11 @@ export const DataTableHead = ({
       {table.getHeaderGroups().map((headerGroup) => (
         <TableHeadRow
           key={headerGroup.id}
+          ActionColumnHeadComponent={ActionColumnHeadComponent}
+          actionsColumnWidth={actionsColumnWidth}
           columnVirtualizer={columnVirtualizer}
           headerGroup={headerGroup}
+          table={table}
           virtualPaddingLeft={virtualPaddingLeft}
           virtualPaddingRight={virtualPaddingRight}
           virtualizeColumns={virtualizeColumns}

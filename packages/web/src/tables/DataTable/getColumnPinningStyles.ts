@@ -3,8 +3,6 @@ import type { Column } from '@tanstack/react-table';
 //These are the important styles to make sticky column pinning work!
 //Apply styles like this using your CSS strategy of choice with this kind of logic to head cells, data cells, footer cells, etc.
 //View the index.css file for more needed styles such as border-collapse: separate
-export const actionsColumnWidth = 180;
-
 export const getColumnPinningStyles = (
   column: Column<any>,
   leftOffset: number = 0,

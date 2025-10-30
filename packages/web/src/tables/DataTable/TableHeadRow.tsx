@@ -1,15 +1,18 @@
 import { css } from '@linaria/core';
-import { type HeaderGroup } from '@tanstack/react-table';
+import { type HeaderGroup, type Table } from '@tanstack/react-table';
 import type { Virtualizer } from '@tanstack/react-virtual';
 
 import { cx } from '../../cx';
 
-import { actionsColumnWidth } from './getColumnPinningStyles';
+import type { ActionColumnHeadComponent } from './ActionColumnComponents';
 import { TableHeadCell } from './TableHeadCell';
 
 export type TableHeadRowProps = {
+  ActionColumnHeadComponent: ActionColumnHeadComponent;
+  actionsColumnWidth: number;
   columnVirtualizer: Virtualizer<HTMLDivElement, HTMLTableCellElement>;
   headerGroup: HeaderGroup<any>;
+  table: Table<any>;
   virtualPaddingLeft?: number;
   virtualPaddingRight?: number;
   virtualizeColumns?: boolean;
@@ -20,13 +23,9 @@ const rowCss = css`
   width: 100%;
 `;
 
-// TODO turn actionsColumnWidth to be dynamically measured
 const actionsHeaderCellCss = css`
-  background-color: var(--color-bg);
-  display: flex;
   left: 0;
   position: sticky;
-  width: ${actionsColumnWidth}px;
   z-index: 3;
 `;
 
@@ -39,8 +38,11 @@ const pinnedHeaderCellCss = css`
 `;
 
 export const TableHeadRow = ({
+  ActionColumnHeadComponent,
+  actionsColumnWidth,
   columnVirtualizer,
   headerGroup,
+  table,
   virtualPaddingLeft,
   virtualPaddingRight,
   virtualizeColumns,
@@ -52,7 +54,9 @@ export const TableHeadRow = ({
   return (
     <tr key={headerGroup.id} className={rowCss}>
       {/* Row actions sticky column header */}
-      <th className={actionsHeaderCellCss}>Row</th>
+      <th className={actionsHeaderCellCss} style={{ width: actionsColumnWidth }}>
+        <ActionColumnHeadComponent table={table} />
+      </th>
       {/* Left pinned */}
       {leftHeaders.map((header) => (
         <TableHeadCell
