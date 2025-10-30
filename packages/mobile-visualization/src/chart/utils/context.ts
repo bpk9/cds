@@ -1,8 +1,10 @@
 import { createContext, useContext } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
+import type { SkTypefaceFontProvider } from '@shopify/react-native-skia';
 
 import type { AxisConfig } from './axis';
 import type { Series } from './chart';
+import type { GradientScale } from './gradient';
 import type { ChartScaleFunction } from './scale';
 
 /**
@@ -37,6 +39,11 @@ export type CartesianChartContextValue = {
    * Height of the chart SVG.
    */
   height: number;
+  /**
+   * Skia font manager for rendering text.
+   * Uses system fonts (Helvetica, Arial, etc.) by default.
+   */
+  fontMgr: SkTypefaceFontProvider | null;
   /**
    * Get x-axis configuration.
    */
@@ -76,6 +83,12 @@ export type CartesianChartContextValue = {
    * Computes the bounds of the axis based on the chart's drawing area chart/axis config, and axis position.
    */
   getAxisBounds: (id: string) => Rect | undefined;
+  /**
+   * Gets the color map scale for a series.
+   * Returns undefined if the series does not exist or if there is no valid color map for that series.
+   * @param seriesId - The series ID
+   */
+  getSeriesGradientScale: (seriesId: string) => GradientScale | undefined;
 };
 
 export type ScrubberContextValue = {

@@ -1,18 +1,22 @@
-import { memo, type SVGProps } from 'react';
+import { memo, type SVGProps, useId, useMemo } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
 
+import { useCartesianChartContext } from '../ChartProvider';
+import { Gradient as GradientDef } from '../gradient/Gradient';
 import { Path, type PathProps } from '../Path';
+import { getGradientConfig, type Gradient } from '../utils/gradient';
 
 import type { LineComponentProps } from './Line';
 
 export type DottedLineProps = SharedProps &
   Omit<PathProps, 'fill' | 'strokeWidth'> &
-  Pick<LineComponentProps, 'strokeWidth'> & {
+  Pick<LineComponentProps, 'strokeWidth' | 'gradient' | 'seriesId' | 'yAxisId'> & {
     fill?: SVGProps<SVGPathElement>['fill'];
   };
 
 /**
- * A customizable dotted line component which uses path element.
+ * A customizable dotted line component.
+ * Supports gradient for gradient effects on the dots.
  */
 export const DottedLine = memo<DottedLineProps>(
   ({
@@ -24,21 +28,51 @@ export const DottedLine = memo<DottedLineProps>(
     strokeOpacity = 1,
     strokeWidth = 2,
     vectorEffect = 'non-scaling-stroke',
+    gradient,
+    seriesId,
+    yAxisId,
     ...props
   }) => {
+    const gradientId = useId();
+    const context = useCartesianChartContext();
+
+    const xScale = context.getXScale();
+    const yScale = context.getYScale(yAxisId);
+    const drawingArea = context.drawingArea;
+
+    const gradientConfig = useMemo(() => {
+      if (!gradient || !xScale || !yScale) return;
+      return getGradientConfig(gradient, xScale, yScale);
+    }, [gradient, xScale, yScale]);
+
+    // Determine gradient direction based on gradient axis
+    const gradientDirection = gradient?.axis === 'x' ? 'horizontal' : 'vertical';
+
     return (
-      <Path
-        clipOffset={strokeWidth}
-        fill={fill}
-        stroke={stroke}
-        strokeDasharray={strokeDasharray}
-        strokeLinecap={strokeLinecap}
-        strokeLinejoin={strokeLinejoin}
-        strokeOpacity={strokeOpacity}
-        strokeWidth={strokeWidth}
-        vectorEffect={vectorEffect}
-        {...props}
-      />
+      <>
+        {gradientConfig && (
+          <defs>
+            <GradientDef
+              config={gradientConfig}
+              direction={gradientDirection}
+              drawingArea={drawingArea}
+              id={gradientId}
+            />
+          </defs>
+        )}
+        <Path
+          clipOffset={strokeWidth}
+          fill={fill}
+          stroke={gradientConfig ? `url(#${gradientId})` : stroke}
+          strokeDasharray={strokeDasharray}
+          strokeLinecap={strokeLinecap}
+          strokeLinejoin={strokeLinejoin}
+          strokeOpacity={strokeOpacity}
+          strokeWidth={strokeWidth}
+          vectorEffect={vectorEffect}
+          {...props}
+        />
+      </>
     );
   },
 );

@@ -1,12 +1,14 @@
 import React, { forwardRef, memo, useCallback, useMemo } from 'react';
-import { type View, type ViewStyle } from 'react-native';
-import { Svg } from 'react-native-svg';
+import { type View } from 'react-native';
 import type { Rect } from '@coinbase/cds-common/types';
 import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
 import type { BoxBaseProps, BoxProps } from '@coinbase/cds-mobile/layout';
 import { Box } from '@coinbase/cds-mobile/layout';
+import { Skia } from '@shopify/react-native-skia';
 
 import { ScrubberProvider, type ScrubberProviderProps } from './scrubber/ScrubberProvider';
+import { getGradientScale } from './utils/gradient';
+import { ChartCanvas } from './ChartCanvas';
 import { CartesianChartProvider } from './ChartProvider';
 import {
   type AxisConfig,
@@ -88,6 +90,14 @@ export const CartesianChart = memo(
     ) => {
       const [containerLayout, onContainerLayout] = useLayout();
 
+      // Use Skia's default TypefaceFontProvider for paragraph rendering
+      // This provides access to system fonts (Helvetica, Arial, etc.) without custom font loading
+      const fontMgr = useMemo(() => {
+        const fontProvider = Skia.TypefaceFontProvider.Make();
+        // Register system fonts if available, otherwise Skia will use defaults
+        return fontProvider;
+      }, []);
+
       const chartWidth = typeof width === 'number' ? width : containerLayout.width;
       const chartHeight = typeof height === 'number' ? height : containerLayout.height;
 
@@ -146,9 +156,12 @@ export const CartesianChart = memo(
         return axisConfig;
       }, [xAxisConfig, series, chartRect]);
 
-      const yAxes = useMemo(() => {
+      // Create both axes configs and scales together so we can store the actual scale domain
+      const { yAxes, yScales } = useMemo(() => {
         const axes = new Map<string, AxisConfig>();
-        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return axes;
+        const scales = new Map<string, ChartScaleFunction>();
+        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0)
+          return { yAxes: axes, yScales: scales };
 
         yAxisConfig.forEach((axisParam) => {
           const axisId = axisParam.id ?? defaultAxisId;
@@ -157,21 +170,45 @@ export const CartesianChart = memo(
           const relevantSeries =
             series?.filter((s) => (s.yAxisId ?? defaultAxisId) === axisId) ?? [];
 
-          // Calculate domain and range in one pass
-          const domain = getAxisDomain(axisParam, relevantSeries, 'y');
+          // Calculate domain and range
+          const dataDomain = getAxisDomain(axisParam, relevantSeries, 'y');
           const range = getAxisRange(axisParam, chartRect, 'y');
 
-          axes.set(axisId, {
+          const axisConfig: AxisConfig = {
             scaleType: axisParam.scaleType,
-            domain,
+            domain: dataDomain,
             range,
             data: axisParam.data,
             categoryPadding: axisParam.categoryPadding,
             domainLimit: axisParam.domainLimit ?? 'nice',
+          };
+
+          // Create the scale
+          const scale = getAxisScale({
+            config: axisConfig,
+            type: 'y',
+            range: axisConfig.range,
+            dataDomain: axisConfig.domain,
           });
+
+          if (scale) {
+            scales.set(axisId, scale);
+
+            // Update axis config with actual scale domain (after .nice() or other adjustments)
+            const scaleDomain = scale.domain();
+            const actualDomain =
+              Array.isArray(scaleDomain) && scaleDomain.length === 2
+                ? { min: scaleDomain[0] as number, max: scaleDomain[1] as number }
+                : axisConfig.domain;
+
+            axes.set(axisId, {
+              ...axisConfig,
+              domain: actualDomain,
+            });
+          }
         });
 
-        return axes;
+        return { yAxes: axes, yScales: scales };
       }, [yAxisConfig, series, chartRect]);
 
       const xScale = useMemo(() => {
@@ -185,26 +222,6 @@ export const CartesianChart = memo(
           dataDomain: xAxis.domain,
         });
       }, [chartRect, xAxis]);
-
-      const yScales = useMemo(() => {
-        const scales = new Map<string, ChartScaleFunction>();
-        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return scales;
-
-        yAxes.forEach((axisConfig, axisId) => {
-          const scale = getAxisScale({
-            config: axisConfig,
-            type: 'y',
-            range: axisConfig.range,
-            dataDomain: axisConfig.domain,
-          });
-
-          if (scale) {
-            scales.set(axisId, scale);
-          }
-        });
-
-        return scales;
-      }, [chartRect, yAxes]);
 
       const getXAxis = useCallback(() => xAxis, [xAxis]);
       const getYAxis = useCallback((id?: string) => yAxes.get(id ?? defaultAxisId), [yAxes]);
@@ -287,6 +304,18 @@ export const CartesianChart = memo(
         [renderedAxes, chartRect, userInset],
       );
 
+      const getSeriesGradientScale = useCallback(
+        (seriesId: string) => {
+          const targetSeries = series?.find((s) => s.id === seriesId);
+          if (!targetSeries?.gradient) return undefined;
+
+          const yScale = yScales.get(targetSeries.yAxisId ?? defaultAxisId);
+
+          return getGradientScale(targetSeries.gradient, xScale, yScale);
+        },
+        [series, xScale, yScales],
+      );
+
       const contextValue: CartesianChartContextValue = useMemo(
         () => ({
           series: series ?? [],
@@ -295,6 +324,7 @@ export const CartesianChart = memo(
           animate,
           width: chartWidth,
           height: chartHeight,
+          fontMgr,
           getXAxis,
           getYAxis,
           getXScale,
@@ -303,6 +333,7 @@ export const CartesianChart = memo(
           registerAxis,
           unregisterAxis,
           getAxisBounds,
+          getSeriesGradientScale,
         }),
         [
           series,
@@ -311,6 +342,7 @@ export const CartesianChart = memo(
           animate,
           chartWidth,
           chartHeight,
+          fontMgr,
           getXAxis,
           getYAxis,
           getXScale,
@@ -319,6 +351,7 @@ export const CartesianChart = memo(
           registerAxis,
           unregisterAxis,
           getAxisBounds,
+          getSeriesGradientScale,
         ],
       );
 
@@ -349,9 +382,9 @@ export const CartesianChart = memo(
               style={containerStyles}
               {...props}
             >
-              <Svg height={chartHeight} width={chartWidth}>
+              <ChartCanvas height={chartHeight} width={chartWidth}>
                 {children}
-              </Svg>
+              </ChartCanvas>
             </Box>
           </ScrubberProvider>
         </CartesianChartProvider>

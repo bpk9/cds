@@ -1,24 +1,28 @@
-import { memo, useId } from 'react';
-import { Defs, LinearGradient, Stop } from 'react-native-svg';
+import { memo, useMemo } from 'react';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
+import { LinearGradient, Path as SkiaPath } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { Path, type PathProps } from '../Path';
+import { type PathProps } from '../Path';
+import { applyOpacityToColor, getGradientConfig, type Gradient } from '../utils/gradient';
+import { defaultTransition, type TransitionConfig, usePathTransition } from '../utils/transition';
 
 import type { AreaComponentProps } from './Area';
 
 export type GradientAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
   AreaComponentProps & {
     /**
-     * The color at peak values (top/bottom of gradient).
-     * @default fill or theme.color.fgPrimary
+     * Color gradient configuration.
+     * Supports smooth gradient transitions.
+     * @example
+     * gradient={{
+     *   stops: [
+     *     { offset: 0, color: 'green', opacity: 0.4 },
+     *     { offset: 100, color: 'green', opacity: 0 }
+     *   ]
+     * }}
      */
-    peakColor?: string;
-    /**
-     * The color at the baseline (0 or edge closest to 0).
-     * @default peakColor or fill
-     */
-    baselineColor?: string;
+    gradient?: Gradient;
     /**
      * Opacity at peak values.
      * @default 0.3
@@ -29,129 +33,130 @@ export type GradientAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
      * @default 0
      */
     baselineOpacity?: number;
+    /**
+     * Transition configuration for area transitions.
+     * Allows customization of animation type, timing, and springs.
+     *
+     * @example
+     * // Spring animation
+     * transitionConfig={{ type: 'spring', damping: 10, stiffness: 100 }}
+     *
+     * @example
+     * // Timing animation
+     * transitionConfig={{ type: 'timing', duration: 500 }}
+     */
+    transitionConfig?: TransitionConfig;
   };
 
 /**
- * A customizable gradient area component which uses Path.
+ * A customizable gradient area component which uses Path with Skia linear gradient shader.
+ *
+ * When no gradient is provided, automatically creates an appropriate gradient:
+ * - For data crossing zero: Creates a diverging gradient with peak opacity at both extremes
+ *   and baseline opacity at zero (or the specified baseline).
+ * - For all-positive or all-negative data: Creates a simple gradient from baseline to peak.
  */
 export const GradientArea = memo<GradientAreaProps>(
   ({
     d,
-    fill,
+    fill: fillProp,
+    // todo: should we drop fillOpacity?
     fillOpacity = 1,
-    peakColor,
-    baselineColor,
+    gradient: gradientProp,
+    seriesId,
+    // todo: what about peak opacity?
     peakOpacity = 0.3,
     baselineOpacity = 0,
     baseline,
     yAxisId,
     clipRect,
+    animate: animateProp,
+    transitionConfig = defaultTransition,
     ...pathProps
   }) => {
     const context = useCartesianChartContext();
     const theme = useTheme();
-    const patternId = useId();
 
-    // Get the y-scale for the specified axis (or default)
+    const fill = fillProp ?? theme.color.fgPrimary;
+
+    const shouldAnimate = animateProp ?? context.animate;
+
+    const currentPath = d ?? '';
+
+    const xScale = context.getXScale();
     const yScale = context.getYScale(yAxisId);
-    const yRange = yScale?.range();
-    const yDomain = yScale?.domain();
+    const yAxisConfig = context.getYAxis(yAxisId);
 
-    // Use chart range if available, otherwise fall back to percentage
-    const useUserSpaceUnits = yRange !== undefined;
-    const gradientY1 = useUserSpaceUnits && yRange ? String(yRange[1]) : '0%';
-    const gradientY2 = useUserSpaceUnits && yRange ? String(yRange[0]) : '100%';
+    const gradient = useMemo((): Gradient | undefined => {
+      if (gradientProp) return gradientProp;
+      if (!yAxisConfig) return;
 
-    // Auto-calculate baseline position based on domain
-    let baselinePosition: number | undefined;
-    let baselinePercentage: string | undefined;
+      const { min, max } = yAxisConfig.domain;
+      const baselineValue = min >= 0 ? min : max <= 0 ? max : (baseline ?? 0);
 
-    if (yScale && yDomain) {
-      const [minValue, maxValue] = yDomain;
-
-      let dataBaseline: number;
-      if (minValue >= 0) {
-        // All positive: baseline at min
-        dataBaseline = minValue;
-      } else if (maxValue <= 0) {
-        // All negative: baseline at max
-        dataBaseline = maxValue;
-      } else {
-        // Crosses zero: baseline at 0
-        dataBaseline = 0;
+      // Diverging gradient (data crosses zero)
+      if (min < 0 && max > 0) {
+        return {
+          axis: 'y',
+          stops: [
+            { offset: min, color: fill, opacity: peakOpacity },
+            { offset: baselineValue, color: fill, opacity: baselineOpacity },
+            { offset: max, color: fill, opacity: peakOpacity },
+          ],
+        };
       }
 
-      if (useUserSpaceUnits && yRange) {
-        // Get the actual y coordinate for the baseline
-        const scaledValue = yScale(baseline ?? dataBaseline);
-        if (typeof scaledValue === 'number') {
-          baselinePosition = scaledValue;
-        }
-      } else {
-        // Calculate percentage position
-        baselinePercentage = `${((maxValue - (baseline ?? dataBaseline)) / (maxValue - minValue)) * 100}%`;
-      }
-    }
+      // Simple gradient (all positive or all negative)
+      const peakValue = min >= 0 ? max : min;
+      return {
+        axis: 'y',
+        stops:
+          max <= 0
+            ? [
+                { offset: peakValue, color: fill, opacity: peakOpacity },
+                { offset: baselineValue, color: fill, opacity: baselineOpacity },
+              ]
+            : [
+                { offset: baselineValue, color: fill, opacity: baselineOpacity },
+                { offset: peakValue, color: fill, opacity: peakOpacity },
+              ],
+      };
+    }, [gradientProp, yAxisConfig, fill, baseline, peakOpacity, baselineOpacity]);
 
-    const effectiveFill = fill ?? theme.color.fgPrimary;
-    const effectivePeakColor = peakColor ?? effectiveFill;
-    const effectiveBaselineColor = baselineColor ?? effectiveFill;
+    const gradientConfig = useMemo(() => {
+      if (!gradient || !xScale || !yScale) return;
+
+      const config = getGradientConfig(gradient, xScale, yScale);
+      if (!config) return;
+
+      if (fillOpacity < 1) {
+        return {
+          ...config,
+          colors: config.colors.map((color: string) => applyOpacityToColor(color, fillOpacity)),
+        };
+      }
+
+      return config;
+    }, [gradient, xScale, yScale, fillOpacity]);
+
+    const path = usePathTransition({
+      currentPath,
+      animate: shouldAnimate,
+      transitionConfig,
+    });
+
+    if (!gradientConfig) return null;
 
     return (
-      <>
-        <Defs>
-          <LinearGradient
-            gradientUnits={useUserSpaceUnits ? 'userSpaceOnUse' : 'objectBoundingBox'}
-            id={patternId}
-            x1={useUserSpaceUnits ? '0' : '0%'}
-            x2={useUserSpaceUnits ? '0' : '0%'}
-            y1={gradientY1}
-            y2={gradientY2}
-          >
-            {baselinePosition !== undefined || baselinePercentage !== undefined
-              ? /* Diverging gradient: peak opacity at extremes, baseline opacity at baseline */
-                [
-                  <Stop
-                    key="0"
-                    offset="0%"
-                    stopColor={effectivePeakColor}
-                    stopOpacity={peakOpacity}
-                  />,
-                  <Stop
-                    key="1"
-                    offset={
-                      baselinePercentage ??
-                      `${((baselinePosition! - yRange![1]) / (yRange![0] - yRange![1])) * 100}%`
-                    }
-                    stopColor={effectiveBaselineColor}
-                    stopOpacity={baselineOpacity}
-                  />,
-                  <Stop
-                    key="2"
-                    offset="100%"
-                    stopColor={effectivePeakColor}
-                    stopOpacity={peakOpacity}
-                  />,
-                ]
-              : /* Simple gradient from peak to baseline */
-                [
-                  <Stop
-                    key="0"
-                    offset="0%"
-                    stopColor={effectivePeakColor}
-                    stopOpacity={peakOpacity}
-                  />,
-                  <Stop
-                    key="1"
-                    offset="100%"
-                    stopColor={effectiveBaselineColor}
-                    stopOpacity={baselineOpacity}
-                  />,
-                ]}
-          </LinearGradient>
-        </Defs>
-        <Path clipRect={clipRect} d={d} fill={`url(#${patternId})`} {...pathProps} />
-      </>
+      <SkiaPath color={fill} path={path} style="fill">
+        <LinearGradient
+          colors={gradientConfig.colors}
+          end={gradientConfig.end}
+          mode="clamp"
+          positions={gradientConfig.positions}
+          start={gradientConfig.start}
+        />
+      </SkiaPath>
     );
   },
 );

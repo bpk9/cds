@@ -1,8 +1,10 @@
 import React, { memo, useMemo } from 'react';
 import type { Rect } from '@coinbase/cds-common';
+import type { Transition } from 'framer-motion';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import type { ChartScaleFunction } from '../utils';
+import { evaluateGradientAtValue, getGradientScale } from '../utils/gradient';
 
 import { Bar, type BarComponent, type BarProps } from './Bar';
 import type { BarSeries } from './BarChart';
@@ -50,13 +52,27 @@ export type BarStackComponentProps = {
    * The y-origin for animations (baseline position).
    */
   yOrigin?: number;
+  /**
+   * Transition configurations for different animation phases.
+   * Allows separate control over enter and update animations for the stack clip path.
+   */
+  transitionConfigs?: {
+    /**
+     * Transition used when the stack clip path first enters/mounts.
+     */
+    enter?: Transition;
+    /**
+     * Transition used when the stack clip path updates.
+     */
+    update?: Transition;
+  };
 };
 
 export type BarStackComponent = React.FC<BarStackComponentProps>;
 
 export type BarStackProps = Pick<
   BarProps,
-  'BarComponent' | 'fillOpacity' | 'stroke' | 'strokeWidth' | 'borderRadius'
+  'BarComponent' | 'fillOpacity' | 'stroke' | 'strokeWidth' | 'borderRadius' | 'transitionConfigs'
 > & {
   /**
    * Array of series configurations that belong to this stack.
@@ -133,10 +149,12 @@ export const BarStack = memo<BarStackProps>(
     barMinSize,
     stackMinSize,
     roundBaseline,
+    transitionConfigs,
   }) => {
-    const { getSeriesData, getXAxis } = useCartesianChartContext();
+    const { getSeriesData, getXAxis, getXScale, getSeries } = useCartesianChartContext();
 
     const stackGapPx = stackGap;
+    const xScale = getXScale();
     const barMinSizePx = barMinSize;
     const stackMinSizePx = stackMinSize;
 
@@ -223,6 +241,38 @@ export const BarStack = memo<BarStackProps>(
         minY = Math.min(minY, y);
         maxY = Math.max(maxY, y + height);
 
+        let barFill = s.fill || s.color || 'var(--color-fgPrimary)';
+
+        // Evaluate gradient if provided
+        if (
+          s.gradient &&
+          xScale &&
+          yScale &&
+          originalValue !== null &&
+          originalValue !== undefined
+        ) {
+          const gradientScale = getGradientScale(s.gradient, xScale, yScale);
+          if (gradientScale) {
+            const axis = s.gradient.axis ?? 'y';
+            // For x-axis gradient, use the categoryIndex
+            // For y-axis gradient, use the ORIGINAL data value (not the processed top value)
+            // This is important for bar charts where originalValue might be a single number (e.g., -40, 15)
+            // or a tuple (e.g., [0, 10] for range bars)
+            let evalValue: number;
+            if (axis === 'x') {
+              evalValue = categoryIndex;
+            } else {
+              // Use original value for evaluation - handles both single numbers and tuples
+              evalValue = Array.isArray(originalValue) ? originalValue[1] : originalValue;
+            }
+            const evaluatedColor = evaluateGradientAtValue(s.gradient, evalValue, gradientScale);
+            if (evaluatedColor && !s.fill) {
+              // Only apply gradient color if fill is not explicitly set
+              barFill = evaluatedColor;
+            }
+          }
+        }
+
         allBars.push({
           seriesId: s.id,
           x,
@@ -232,7 +282,7 @@ export const BarStack = memo<BarStackProps>(
           dataY: value, // Store the actual data value
           // Use series-specific properties, falling back to defaults
           BarComponent: s.BarComponent,
-          fill: s.fill || s.color || 'var(--color-fgPrimary)',
+          fill: barFill,
           fillOpacity: s.fillOpacity,
           stroke: s.stroke,
           strokeWidth: s.strokeWidth,
@@ -618,16 +668,17 @@ export const BarStack = memo<BarStackProps>(
       return { bars: allBars, stackRect: stackBounds };
     }, [
       series,
-      x,
-      width,
-      getSeriesData,
-      categoryIndex,
-      roundBaseline,
-      baseline,
       stackGapPx,
       barMinSizePx,
+      x,
+      baseline,
+      width,
       stackMinSizePx,
+      getSeriesData,
+      categoryIndex,
       yScale,
+      xScale,
+      roundBaseline,
     ]);
 
     const xData =
@@ -651,6 +702,7 @@ export const BarStack = memo<BarStackProps>(
         roundTop={bar.roundTop}
         stroke={bar.stroke ?? defaultStroke}
         strokeWidth={bar.strokeWidth ?? defaultStrokeWidth}
+        transitionConfigs={transitionConfigs}
         width={bar.width}
         x={bar.x}
         y={bar.y}
@@ -667,6 +719,7 @@ export const BarStack = memo<BarStackProps>(
         height={stackRect.height}
         roundBottom={stackRoundBottom}
         roundTop={stackRoundTop}
+        transitionConfigs={transitionConfigs}
         width={stackRect.width}
         x={stackRect.x}
         y={stackRect.y}

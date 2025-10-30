@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { ColorScheme } from '@coinbase/cds-common/core/theme';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { PortalProvider } from '@coinbase/cds-mobile/overlays/PortalProvider';
+import { FiberProvider } from '@coinbase/cds-mobile/system/context-bridge';
 import { StatusBar } from '@coinbase/cds-mobile/system/StatusBar';
 import { ThemeProvider } from '@coinbase/cds-mobile/system/ThemeProvider';
 import { defaultTheme } from '@coinbase/cds-mobile/themes/defaultTheme';
@@ -58,16 +59,18 @@ const App = memo(() => {
 
   return (
     <LocalStrictMode>
-      <ThemeProvider activeColorScheme={colorScheme} theme={defaultTheme}>
-        <CdsSafeAreaProvider>
-          <PortalProvider>
-            <StatusBar hidden={!__DEV__} />
-            <NavigationContainer linking={linking} onReady={handleOnReady}>
-              <Playground routes={codegenRoutes} setColorScheme={setColorScheme} />
-            </NavigationContainer>
-          </PortalProvider>
-        </CdsSafeAreaProvider>
-      </ThemeProvider>
+      <FiberProvider>
+        <ThemeProvider activeColorScheme={colorScheme} theme={defaultTheme}>
+          <CdsSafeAreaProvider>
+            <PortalProvider>
+              <StatusBar hidden={!__DEV__} />
+              <NavigationContainer linking={linking} onReady={handleOnReady}>
+                <Playground routes={codegenRoutes} setColorScheme={setColorScheme} />
+              </NavigationContainer>
+            </PortalProvider>
+          </CdsSafeAreaProvider>
+        </ThemeProvider>
+      </FiberProvider>
     </LocalStrictMode>
   );
 });

@@ -1,14 +1,14 @@
 import React, { memo, useMemo } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
-import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
+import { useTheme } from '@coinbase/cds-mobile';
 
 import { Area, type AreaComponent } from '../area/Area';
 import { useCartesianChartContext } from '../ChartProvider';
 import { Point, type PointConfig, type RenderPointsParams } from '../Point';
-import { type ChartPathCurveType, getLinePath } from '../utils';
+import { type ChartPathCurveType, getLinePath, type TransitionConfig } from '../utils';
+import { evaluateGradientAtValue, getGradientScale, type Gradient } from '../utils/gradient';
 
 import { DottedLine } from './DottedLine';
-import { GradientLine } from './GradientLine';
 import { SolidLine } from './SolidLine';
 
 export type LineComponentProps = {
@@ -18,6 +18,30 @@ export type LineComponentProps = {
   strokeWidth?: number;
   testID?: string;
   clipPath?: string;
+  /**
+   * Series ID - used to retrieve gradient scale from context.
+   */
+  seriesId?: string;
+  /**
+   * ID of the y-axis to use.
+   * Required for components that need to map data values to pixel positions.
+   */
+  yAxisId?: string;
+  /**
+   * Color mapping configuration.
+   * When provided, creates gradient or threshold-based coloring.
+   */
+  gradient?: Gradient;
+  /**
+   * Whether to animate the line.
+   * Overrides the animate value from the chart context.
+   */
+  animate?: boolean;
+  /**
+   * Transition configuration for line animations.
+   * Defines how the line transitions when data changes.
+   */
+  transitionConfig?: TransitionConfig;
 };
 
 export type LineComponent = React.FC<LineComponentProps>;
@@ -90,6 +114,11 @@ export type LineProps = SharedProps & {
    * @default false
    */
   connectNulls?: boolean;
+  /**
+   * Transition configuration for line animations.
+   * Defines how the line transitions when data changes.
+   */
+  transitionConfig?: TransitionConfig;
 };
 
 export const Line = memo<LineProps>(
@@ -106,12 +135,15 @@ export const Line = memo<LineProps>(
     opacity = 1,
     renderPoints,
     connectNulls = false,
+    animate,
+    transitionConfig,
     ...props
   }) => {
     const theme = useTheme();
     const { getSeries, getSeriesData, getXScale, getYScale, getXAxis } = useCartesianChartContext();
 
     const matchedSeries = getSeries(seriesId);
+    const seriesGradient = matchedSeries?.gradient;
 
     const sourceData = useMemo(() => {
       return getSeriesData(seriesId) || null;
@@ -177,7 +209,6 @@ export const Line = memo<LineProps>(
         case 'dotted':
           return DottedLine;
         case 'gradient':
-          return GradientLine;
         case 'solid':
         default:
           return SolidLine;
@@ -193,6 +224,11 @@ export const Line = memo<LineProps>(
         : null;
     }, [xAxis?.data]);
 
+    const gradientScale = useMemo(() => {
+      if (!seriesGradient || !xScale || !yScale) return null;
+      return getGradientScale(seriesGradient, xScale, yScale);
+    }, [seriesGradient, xScale, yScale]);
+
     if (!xScale || !yScale) return;
 
     return (
@@ -205,11 +241,23 @@ export const Line = memo<LineProps>(
             curve={curve}
             fill={stroke}
             fillOpacity={opacity}
+            gradient={seriesGradient}
             seriesId={seriesId}
+            transitionConfig={transitionConfig}
             type={areaType}
           />
         )}
-        <LineComponent d={path} stroke={stroke} strokeOpacity={opacity} {...props} />
+        <LineComponent
+          animate={animate}
+          d={path}
+          gradient={seriesGradient}
+          seriesId={seriesId}
+          stroke={stroke}
+          strokeOpacity={opacity}
+          transitionConfig={transitionConfig}
+          yAxisId={matchedSeries?.yAxisId}
+          {...props}
+        />
         {renderPoints &&
           chartData.map((value, index) => {
             if (value === null) {
@@ -231,13 +279,33 @@ export const Line = memo<LineProps>(
 
             const pointConfig = pointResult === true ? {} : pointResult;
 
+            // Evaluate colors from gradient if available (only if not explicitly set)
+            let pointFill = pointConfig.fill ?? stroke;
+
+            if (gradientScale && seriesGradient && !pointConfig.fill) {
+              // Use the appropriate data value based on gradient axis
+              const axis = seriesGradient.axis ?? 'y';
+              const dataValue = axis === 'x' ? xValue : value;
+
+              const evaluatedColor = evaluateGradientAtValue(
+                seriesGradient,
+                dataValue,
+                gradientScale,
+              );
+              if (evaluatedColor) {
+                // Apply gradient color to fill if not explicitly set
+                pointFill = evaluatedColor;
+              }
+            }
+
             return (
               <Point
-                key={`${seriesId}-renderpoint-${index}`}
+                key={`${seriesId}-renderpoint-${xValue}`}
                 dataX={xValue}
                 dataY={value}
+                transitionConfig={transitionConfig}
                 {...pointConfig}
-                fill={pointConfig.fill ?? stroke}
+                fill={pointFill}
                 opacity={pointConfig.opacity ?? opacity}
               />
             );

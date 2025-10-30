@@ -1,28 +1,30 @@
 import { forwardRef, memo, useEffect, useImperativeHandle, useMemo } from 'react';
-import Reanimated, {
+import {
   cancelAnimation,
-  useAnimatedProps,
+  useDerivedValue,
   useSharedValue,
   withRepeat,
   withSequence,
-  withTiming,
 } from 'react-native-reanimated';
-import { Circle, G } from 'react-native-svg';
 import { usePreviousValue } from '@coinbase/cds-common/hooks/usePreviousValue';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import { useTheme } from '@coinbase/cds-mobile';
+import { Circle, Group } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { projectPoint, useScrubberContext } from '../utils';
-
-const AnimatedCircle = Reanimated.createAnimatedComponent(Circle);
+import { evaluateGradientAtValue, type Gradient } from '../utils/gradient';
+import { buildTransition, defaultTransition, type TransitionConfig } from '../utils/transition';
 
 const radius = 5;
 const glowRadius = 10;
 const pulseRadius = 15;
+const strokeWidth = 2;
 
-const pulseDuration = 2000; // 2 seconds
-const singlePulseDuration = 1000; // 1 second
+const defaultPulseTransitionConfig: TransitionConfig = {
+  type: 'timing',
+  duration: 1000,
+};
 
 export type ScrubberBeaconRef = {
   /**
@@ -52,6 +54,11 @@ export type ScrubberBeaconProps = SharedProps & {
    */
   color?: string;
   /**
+   * Gradient configuration.
+   * When provided, the beacon color is evaluated based on the data value.
+   */
+  gradient?: Gradient;
+  /**
    * Opacity of the beacon.
    * @default 1
    */
@@ -60,6 +67,30 @@ export type ScrubberBeaconProps = SharedProps & {
    * Pulse the scrubber beacon while it is at rest.
    */
   idlePulse?: boolean;
+  /**
+   * Transition configuration for beacon animations.
+   * Allows customization of both position update animations and pulse animations.
+   *
+   * @example
+   * // Custom update and pulse animations
+   * beaconTransitionConfig={{
+   *   update: { type: 'spring', damping: 8, stiffness: 100 },
+   *   pulse: { type: 'timing', duration: 1500 }
+   * }}
+   */
+  beaconTransitionConfig?: {
+    /**
+     * Transition used for beacon position updates when idle.
+     * @default defaultTransition
+     */
+    update?: TransitionConfig;
+    /**
+     * Transition used for the pulse animation (0->peak->0).
+     * This duration represents a single pulse cycle.
+     * @default { type: 'timing', duration: 1000 }
+     */
+    pulse?: TransitionConfig;
+  };
 };
 
 /**
@@ -68,20 +99,42 @@ export type ScrubberBeaconProps = SharedProps & {
 export const ScrubberBeacon = memo(
   forwardRef<ScrubberBeaconRef, ScrubberBeaconProps>(
     (
-      { seriesId, dataX: dataXProp, dataY: dataYProp, color, testID, idlePulse, opacity = 1 },
+      {
+        seriesId,
+        dataX: dataXProp,
+        dataY: dataYProp,
+        color,
+        gradient: gradientProp,
+        testID,
+        idlePulse,
+        opacity = 1,
+        beaconTransitionConfig,
+      },
       ref,
     ) => {
       const theme = useTheme();
-      const { getSeries, getXScale, getYScale, getSeriesData, animate } =
+      const { getSeries, getXScale, getYScale, getSeriesData, animate, getSeriesGradientScale } =
         useCartesianChartContext();
       const { scrubberPosition } = useScrubberContext();
 
       const targetSeries = getSeries(seriesId);
       const sourceData = getSeriesData(seriesId);
+      const gradient = gradientProp ?? targetSeries?.gradient;
       const xScale = getXScale();
       const yScale = getYScale(targetSeries?.yAxisId);
+      const gradientScale = seriesId ? getSeriesGradientScale(seriesId) : undefined;
 
       const isIdleState = scrubberPosition === undefined;
+
+      // Extract update and pulse configs with defaults
+      const updateTransitionConfig = useMemo(
+        () => beaconTransitionConfig?.update ?? defaultTransition,
+        [beaconTransitionConfig?.update],
+      );
+      const pulseTransitionConfig = useMemo(
+        () => beaconTransitionConfig?.pulse ?? defaultPulseTransitionConfig,
+        [beaconTransitionConfig?.pulse],
+      );
 
       const { dataX, dataY } = useMemo(() => {
         let x: number | undefined;
@@ -147,7 +200,7 @@ export const ScrubberBeacon = memo(
         pulse: () => {
           if (isIdleState && animate) {
             pulseOpacity.value = 0.1;
-            pulseOpacity.value = withTiming(0, { duration: singlePulseDuration });
+            pulseOpacity.value = buildTransition(0, pulseTransitionConfig);
           }
         },
       }));
@@ -158,17 +211,17 @@ export const ScrubberBeacon = memo(
         if (shouldPulse) {
           pulseOpacity.value = withRepeat(
             withSequence(
-              withTiming(0.1, { duration: pulseDuration / 2 }),
-              withTiming(0, { duration: pulseDuration / 2 }),
+              buildTransition(0.1, pulseTransitionConfig),
+              buildTransition(0, pulseTransitionConfig),
             ),
             -1, // loop
             false,
           );
         } else {
           cancelAnimation(pulseOpacity);
-          pulseOpacity.value = withTiming(0, { duration: 200 });
+          pulseOpacity.value = buildTransition(0, pulseTransitionConfig);
         }
-      }, [animate, isIdleState, idlePulse, pulseOpacity]);
+      }, [animate, isIdleState, idlePulse, pulseOpacity, pulseTransitionConfig]);
 
       // Update position when data coordinates change
       useEffect(() => {
@@ -182,72 +235,87 @@ export const ScrubberBeacon = memo(
           animatedX.value = pixelCoordinate.x;
           animatedY.value = pixelCoordinate.y;
         } else {
-          // When idle with animations enabled: animate smoothly
-          animatedX.value = withTiming(pixelCoordinate.x, { duration: 300 });
-          animatedY.value = withTiming(pixelCoordinate.y, { duration: 300 });
+          animatedX.value = buildTransition(pixelCoordinate.x, updateTransitionConfig);
+          animatedY.value = buildTransition(pixelCoordinate.y, updateTransitionConfig);
         }
-      }, [pixelCoordinate, isIdleState, animate, previousIdleState, animatedX, animatedY]);
+      }, [
+        pixelCoordinate,
+        isIdleState,
+        animate,
+        previousIdleState,
+        animatedX,
+        animatedY,
+        updateTransitionConfig,
+      ]);
 
-      // Animated props for all circles in idle state
-      const glowAnimatedProps = useAnimatedProps(() => ({
-        cx: animatedX.value,
-        cy: animatedY.value,
-      }));
+      // Create derived animated point for circles
+      const animatedPoint = useDerivedValue(() => {
+        return { x: animatedX.value, y: animatedY.value };
+      }, [animatedX, animatedY]);
 
-      const pointAnimatedProps = useAnimatedProps(() => ({
-        cx: animatedX.value,
-        cy: animatedY.value,
-      }));
+      const pointColor = useMemo(() => {
+        if (gradient && gradientScale) {
+          const axis = gradient.axis ?? 'y';
+          const dataValue = axis === 'x' ? dataX : dataY;
 
-      const pulseAnimatedProps = useAnimatedProps(() => ({
-        cx: animatedX.value,
-        cy: animatedY.value,
-        opacity: pulseOpacity.value,
-      }));
+          if (dataValue !== undefined) {
+            const evaluatedColor = evaluateGradientAtValue(gradient, dataValue, gradientScale);
+            if (evaluatedColor) {
+              return evaluatedColor;
+            }
+          }
+        }
 
-      if (!pixelCoordinate) return;
+        return color ?? targetSeries?.color ?? theme.color.fgPrimary;
+      }, [
+        gradient,
+        gradientScale,
+        dataX,
+        dataY,
+        color,
+        targetSeries?.color,
+        theme.color.fgPrimary,
+      ]);
 
-      const pointColor = color ?? targetSeries?.color ?? theme.color.fgPrimary;
+      if (!pixelCoordinate) return null;
 
       if (!isIdleState) {
         return (
-          <G opacity={opacity} testID={testID}>
+          <Group opacity={opacity}>
+            {/* Glow circle behind */}
             <Circle
-              cx={pixelCoordinate.x}
-              cy={pixelCoordinate.y}
-              fill={pointColor}
+              c={{ x: pixelCoordinate.x, y: pixelCoordinate.y }}
+              color={pointColor}
               opacity={0.15}
               r={glowRadius}
             />
+            {/* Outer stroke circle */}
             <Circle
-              cx={pixelCoordinate.x}
-              cy={pixelCoordinate.y}
-              fill={pointColor}
-              r={radius}
-              stroke={theme.color.bg}
-              strokeWidth={2}
+              c={{ x: pixelCoordinate.x, y: pixelCoordinate.y }}
+              color={theme.color.bg}
+              r={radius + strokeWidth / 2}
             />
-          </G>
+            {/* Inner fill circle */}
+            <Circle
+              c={{ x: pixelCoordinate.x, y: pixelCoordinate.y }}
+              color={pointColor}
+              r={radius - strokeWidth / 2}
+            />
+          </Group>
         );
       }
 
       return (
-        <G opacity={opacity} testID={testID}>
-          <AnimatedCircle
-            animatedProps={glowAnimatedProps}
-            fill={pointColor}
-            opacity={0.15}
-            r={glowRadius}
-          />
-          <AnimatedCircle animatedProps={pulseAnimatedProps} fill={pointColor} r={pulseRadius} />
-          <AnimatedCircle
-            animatedProps={pointAnimatedProps}
-            fill={pointColor}
-            r={radius}
-            stroke={theme.color.bg}
-            strokeWidth={2}
-          />
-        </G>
+        <Group opacity={opacity}>
+          {/* Glow circle */}
+          <Circle c={animatedPoint} color={pointColor} opacity={0.15} r={glowRadius} />
+          {/* Pulse circle */}
+          <Circle c={animatedPoint} color={pointColor} opacity={pulseOpacity} r={pulseRadius} />
+          {/* Outer stroke circle */}
+          <Circle c={animatedPoint} color={theme.color.bg} r={radius + strokeWidth / 2} />
+          {/* Inner fill circle */}
+          <Circle c={animatedPoint} color={pointColor} r={radius - strokeWidth / 2} />
+        </Group>
       );
     },
   ),

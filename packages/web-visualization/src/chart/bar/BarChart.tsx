@@ -30,6 +30,7 @@ export type BarChartProps = Omit<CartesianChartProps, 'xAxis' | 'yAxis' | 'serie
     | 'stackGap'
     | 'barMinSize'
     | 'stackMinSize'
+    | 'transitionConfigs'
   > & {
     /**
      * Configuration objects that define how to visualize the data.
@@ -81,6 +82,7 @@ export const BarChart = memo(
         stackGap,
         barMinSize,
         stackMinSize,
+        transitionConfigs,
         ...chartProps
       },
       ref,
@@ -100,6 +102,7 @@ export const BarChart = memo(
             color: s.color,
             yAxisId: s.yAxisId,
             stackId: s.stackId,
+            gradient: s.gradient, // Include gradient for bar color evaluation
           }),
         );
       }, [series]);
@@ -192,6 +195,7 @@ export const BarChart = memo(
             stackMinSize={stackMinSize}
             stroke={stroke}
             strokeWidth={strokeWidth}
+            transitionConfigs={transitionConfigs}
           />
           {children}
         </CartesianChart>

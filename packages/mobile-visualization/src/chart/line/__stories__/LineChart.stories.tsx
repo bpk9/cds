@@ -3,14 +3,13 @@ import {
   memo,
   useCallback,
   useEffect,
-  useId,
   useImperativeHandle,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import type { View } from 'react-native';
-import { Defs, LinearGradient, Stop, TSpan } from 'react-native-svg';
+import type { ThemeVars } from '@coinbase/cds-common/core/theme';
 import { assets } from '@coinbase/cds-common/internal/data/assets';
 import { prices } from '@coinbase/cds-common/internal/data/prices';
 import { sparklineInteractiveData } from '@coinbase/cds-common/internal/visualizations/SparklineInteractiveData';
@@ -30,19 +29,23 @@ import {
 import { SegmentedTab, type SegmentedTabProps } from '@coinbase/cds-mobile/tabs/SegmentedTab';
 import { TextLabel1 } from '@coinbase/cds-mobile/typography';
 import { Text } from '@coinbase/cds-mobile/typography/Text';
+import { FontWeight, Rect } from '@shopify/react-native-skia';
 
-import { Area, DottedArea, GradientArea } from '../../area';
+import { Area, type AreaComponentProps, DottedArea, GradientArea } from '../../area';
 import { XAxis, YAxis } from '../../axis';
+import { BarChart } from '../../bar';
 import { CartesianChart } from '../../CartesianChart';
 import { useCartesianChartContext } from '../../ChartProvider';
 import { PeriodSelector, PeriodSelectorActiveIndicator } from '../../PeriodSelector';
-import { Point } from '../../Point';
+import { Point, type RenderPointsParams } from '../../Point';
 import { Scrubber, type ScrubberRef } from '../../scrubber';
-import type { ChartTextChildren } from '../../text';
+import { ChartText, type ChartTextChildren, ChartTextSpan } from '../../text';
 import type { ChartAxisScaleType } from '../../utils/scale';
-import { GradientLine, Line, LineChart, ReferenceLine } from '..';
+import { Line, LineChart, type LineComponentProps, ReferenceLine, SolidLine } from '..';
 
 const defaultChartHeight = 200;
+
+const sampleData = [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58];
 
 const formatChartDate = (timestamp: string, timeframe: string): string => {
   const date = new Date(timestamp);
@@ -185,8 +188,6 @@ export const BasicLineChartWithPoints = () => {
         label="hello world im on a point!"
         labelProps={{
           verticalAlignment: 'bottom',
-          // why does this go in the opposite direction than what i would expect?
-          dy: -16,
         }}
         onPress={() => console.log('clicked')}
         radius={6}
@@ -205,6 +206,57 @@ export const BasicLineChartWithPoints = () => {
       <ReferenceLine dataY={60} label="testing 123" labelProps={{ horizontalAlignment: 'left' }} />
       <Point dataX={5} dataY={50} fill="orange" radius={5} />
     </LineChart>
+  );
+};
+
+const data = sparklineInteractiveData.all.map((d) => d.value);
+
+const ethData = data.map((value) => value * 2);
+const uniData = data.map((value) => value * 3);
+
+export const ScrubberWithBeaconLabels = () => {
+  const theme = useTheme();
+  const formatPrice = useCallback((value: number, prefix = '$') => {
+    return `${prefix}${new Intl.NumberFormat('en-US', {
+      maximumFractionDigits: 0,
+    }).format(value)}`;
+  }, []);
+
+  return (
+    <VStack gap={2}>
+      <Text font="title3">Multi-Series with Beacon Labels</Text>
+      <Text font="body" style={{ color: theme.color.fgMuted }}>
+        Scrub the chart to see labels on each series beacon
+      </Text>
+      <LineChart
+        enableScrubbing
+        height={defaultChartHeight}
+        inset={{ top: 4, bottom: 4, left: 0, right: 60 }}
+        series={[
+          {
+            id: 'btc',
+            data: data,
+            color: assets.btc.color,
+          },
+          {
+            id: 'eth',
+            data: ethData,
+            color: assets.eth.color,
+          },
+          {
+            id: 'uni',
+            data: uniData,
+            color: assets.uni.color,
+          },
+        ]}
+        yAxis={{
+          requestedTickCount: 3,
+          showGrid: true,
+        }}
+      >
+        <Scrubber idlePulse />
+      </LineChart>
+    </VStack>
   );
 };
 
@@ -277,7 +329,6 @@ export const AssetPrice = () => {
   return (
     <VStack gap={2}>
       <LineChart
-        showArea
         height={defaultChartHeight}
         inset={{ top: 4, bottom: 8, left: 0, right: 0 }}
         onScrubberPositionChange={onScrubberPositionChange}
@@ -300,7 +351,7 @@ export const AssetPrice = () => {
   );
 };
 
-export const LineStyles = () => {
+const LineStyles = () => {
   const topChartData = [15, 28, 32, 44, 46, 36, 40, 45, 48, 38];
   const upperMiddleChartData = [12, 23, 21, 29, 34, 28, 31, 38, 42, 35];
   const lowerMiddleChartData = [8, 15, 14, 25, 20, 18, 22, 28, 24, 30];
@@ -322,7 +373,12 @@ export const LineStyles = () => {
         {
           id: 'lowerMiddle',
           data: lowerMiddleChartData,
-          color: '#f59e0b',
+          gradient: {
+            stops: ({ min, max }) => [
+              { offset: min, color: '#E3D74D' },
+              { offset: max, color: '#F7931A' },
+            ],
+          },
         },
         {
           id: 'bottom',
@@ -331,15 +387,9 @@ export const LineStyles = () => {
         },
       ]}
     >
-      <Line seriesId="top" />
-      <Line seriesId="upperMiddle" type="dotted" />
-      <Line
-        LineComponent={(props) => (
-          <GradientLine {...props} endColor="#F7931A" startColor="#E3D74D" strokeWidth={4} />
-        )}
-        curve="natural"
-        seriesId="lowerMiddle"
-      />
+      <Line renderPoints={() => true} seriesId="top" />
+      <Line renderPoints={() => true} seriesId="upperMiddle" type="dotted" />
+      <Line curve="natural" renderPoints={() => true} seriesId="lowerMiddle" strokeWidth={4} />
       <Line showArea AreaComponent={DottedArea} curve="step" seriesId="bottom" />
     </CartesianChart>
   );
@@ -371,7 +421,6 @@ export const ChartScale = () => {
         </HStack>
       </VStack>
       <LineChart
-        showArea
         showYAxis
         curve="natural"
         height={defaultChartHeight}
@@ -489,7 +538,6 @@ export const ColorShiftChart = () => {
       <VStack gap={3} width="100%">
         <LineChart
           enableScrubbing
-          showArea
           showXAxis
           height={defaultChartHeight}
           inset={{ left: 0, right: 24, bottom: 0 }}
@@ -509,7 +557,6 @@ export const ColorShiftChart = () => {
               horizontalAlignment: 'right',
               inset: 4,
               borderRadius: 4,
-              dx: -8,
               color: theme.color.fgInverse,
               background: priceChange >= 0 ? theme.color.bgPositive : theme.color.bgNegative,
             }}
@@ -689,16 +736,7 @@ export const PriceChart = () => {
 
   return (
     <VStack gap={3} width="100%">
-      {/*<HStack alignItems="flex-start" gap={3} justifyContent="space-between" inset={32}>
-        <CartesianChartHeader
-          description={formattedPrice}
-          title={<Text font="headline">Ethereum</Text>}
-          trend={formattedPriceChange}
-          trendDirection={trendDirection as 'up' | 'down' | 'neutral'}
-        />
-      </HStack>*/}
       <LineChart
-        showArea
         height={defaultChartHeight}
         inset={{ left: 0, right: 3, bottom: 3, top: 3 }}
         onScrubberPositionChange={onScrubberPositionChange}
@@ -712,10 +750,6 @@ export const PriceChart = () => {
                 return {
                   opacity: 0,
                   label: formatPrice(currentData[index]),
-                  labelProps: {
-                    position: 'top',
-                    dy: -16,
-                  },
                 };
               }
 
@@ -723,10 +757,6 @@ export const PriceChart = () => {
                 return {
                   opacity: 0,
                   label: formatPrice(currentData[index]),
-                  labelProps: {
-                    position: 'bottom',
-                    dy: 16,
-                  },
                 };
               }
             },
@@ -812,7 +842,6 @@ export const ForecastChart = () => {
   return (
     <LineChart
       enableScrubbing
-      showArea
       showXAxis
       areaType="dotted"
       height={defaultChartHeight}
@@ -869,6 +898,78 @@ const BTCTab: TabComponent = memo(
   }),
 );
 
+function AnimatedGainLossChart() {
+  const theme = useTheme();
+  const negativeColor = `rgb(${theme.spectrum.gray15})`;
+  const positiveColor = theme.color.fgPositive;
+  const MyGradient = memo((props: AreaComponentProps) => {
+    // Area gradient: combines hard color change with continuous opacity fade
+    const areaGradient = {
+      stops: ({ min, max }: { min: number; max: number }) => [
+        { offset: min, color: negativeColor, opacity: 0.4 },
+        { offset: 0, color: negativeColor, opacity: 0 },
+        { offset: 0, color: positiveColor, opacity: 0 },
+        { offset: max, color: positiveColor, opacity: 0.4 },
+      ],
+    };
+
+    return <DottedArea {...props} gradient={areaGradient} />;
+  });
+  function InnerChart() {
+    const [data, setData] = useState([
+      -40, -28, -21, -5, 48, -5, 0, -28, 2, -29, -46, 16, -30, -29, 8,
+    ]);
+
+    const tickLabelFormatter = useCallback(
+      (value: number) =>
+        new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: 0,
+        }).format(value),
+      [],
+    );
+
+    // Line gradient: hard color change at 0 (full opacity for line)
+    const lineGradient = {
+      stops: [
+        { offset: 0, color: negativeColor },
+        { offset: 0, color: positiveColor },
+      ],
+    };
+
+    return (
+      <VStack gap={2}>
+        <CartesianChart
+          enableScrubbing
+          height={150}
+          inset={{ top: 12, bottom: 12, left: 0, right: 0 }}
+          series={[
+            {
+              id: 'prices',
+              data: data,
+              gradient: lineGradient,
+            },
+          ]}
+        >
+          <YAxis showGrid requestedTickCount={2} tickLabelFormatter={tickLabelFormatter} />
+          <Line
+            showArea
+            AreaComponent={MyGradient}
+            curve="monotone"
+            seriesId="prices"
+            strokeWidth={3}
+            type="gradient"
+          />
+          <Scrubber hideOverlay />
+        </CartesianChart>
+        <Button onPress={() => setData((d) => d.map((d) => -1 * d))}>Flip</Button>
+      </VStack>
+    );
+  }
+  return <InnerChart />;
+}
+
 const BTCActiveIndicator = memo(({ style, ...props }: TabsActiveIndicatorProps) => (
   <PeriodSelectorActiveIndicator
     {...props}
@@ -876,7 +977,21 @@ const BTCActiveIndicator = memo(({ style, ...props }: TabsActiveIndicatorProps) 
   />
 ));
 
+const DrawingAreaBox = memo(() => {
+  const { drawingArea, width, height } = useCartesianChartContext();
+
+  if (!drawingArea) return;
+
+  return (
+    <>
+      <Rect color="green" height={height} opacity={0.25} width={width} x={0} y={0} />
+      <Rect {...drawingArea} color="red" opacity={0.25} />
+    </>
+  );
+});
+
 const AssetPriceDotted = () => {
+  const theme = useTheme();
   const currentPrice =
     sparklineInteractiveData.hour[sparklineInteractiveData.hour.length - 1].value;
   const tabs = useMemo(
@@ -942,7 +1057,14 @@ const AssetPriceDotted = () => {
         maximumFractionDigits: 2,
       }).format(sparklineTimePeriodDataValues[dataIndex]);
       const date = formatDate(sparklineTimePeriodDataTimestamps[dataIndex]);
-      return `${price} USD ${date}`;
+      return (
+        <>
+          <ChartTextSpan font="label1" fontWeight={FontWeight.Bold}>
+            {price} USD
+          </ChartTextSpan>
+          <ChartTextSpan font="label2"> {date}</ChartTextSpan>
+        </>
+      );
     },
     [sparklineTimePeriodDataValues, formatDate, sparklineTimePeriodDataTimestamps],
   );
@@ -983,16 +1105,16 @@ const AssetPriceDotted = () => {
     return `Price chart for Bitcoin, ${startDateStr} to ${endDateStr}. Swipe left or right to navigate data points.`;
   }, [sparklineTimePeriodData, timePeriod.id]);
 
+  const myPoints = useCallback(({ dataX }: RenderPointsParams) => {
+    return dataX % 50 === 0;
+  }, []);
+
   return (
     <Box accessibilityLabel={chartOverviewLabel} accessibilityLiveRegion="polite">
       <VStack gap={2}>
         <SectionHeader
           aria-hidden="true"
-          balance={
-            <Text font="title2">
-              {formatPrice(currentPrice)} {sparklineTimePeriodDataValues.length}
-            </Text>
-          }
+          balance={<Text font="title2">{formatPrice(currentPrice)}</Text>}
           end={
             <VStack justifyContent="center">
               <RemoteImage shape="circle" size="xl" source={assets.btc.imageUrl} />
@@ -1007,15 +1129,37 @@ const AssetPriceDotted = () => {
           accessibilityLiveRegion="polite"
           areaType="dotted"
           height={defaultChartHeight}
+          inset={{ top: 56 }}
+          renderPoints={myPoints}
           series={[
             {
               id: 'btc',
               data: sparklineTimePeriodDataValues,
               color: assets.btc.color,
+              gradient: {
+                stops: [
+                  { offset: currentPrice * 0.25, color: theme.color.fgNegative },
+                  { offset: currentPrice * 0.5, color: theme.color.fgWarning },
+                  { offset: currentPrice * 0.75, color: theme.color.fgWarning },
+                  { offset: currentPrice, color: theme.color.fgPositive },
+                ],
+              },
             },
           ]}
+          transitionConfig={{ type: 'timing', duration: 1500 }}
         >
-          <Scrubber idlePulse label={scrubberLabel} />
+          <Scrubber
+            idlePulse
+            beaconTransitionConfig={{
+              update: { type: 'timing', duration: 1500 },
+              pulse: { type: 'timing', duration: 5000 },
+            }}
+            label={scrubberLabel}
+            labelProps={{
+              yOffset: -28, // Elevate label 16 pixels above the default position
+              elevation: 1, // Add drop shadow for depth
+            }}
+          />
         </LineChart>
         <PeriodSelector
           TabComponent={BTCTab}
@@ -1118,7 +1262,6 @@ const AssetPriceDottedNonMemoized = () => {
       />
       <LineChart
         enableScrubbing
-        showArea
         areaType="dotted"
         height={defaultChartHeight}
         onScrubberPositionChange={setScrubIndex}
@@ -1237,16 +1380,19 @@ const AssetPriceMultipleDotted = () => {
             id: 'btc',
             data: sparklineTimePeriodDataValues,
             color: assets.btc.color,
+            label: 'BTC',
           },
           {
             id: 'eth',
             data: sparklineTimePeriodDataValues.map((d) => d * 0.75),
             color: assets.eth.color,
+            label: 'ETH',
           },
           {
             id: 'xrp',
             data: sparklineTimePeriodDataValues.map((d) => d * 0.5),
             color: assets.xrp.color,
+            label: 'XRP',
           },
         ]}
       >
@@ -1263,60 +1409,32 @@ const AssetPriceMultipleDotted = () => {
   );
 };
 
+const TextComponent = memo(() => {
+  const { getYScale, drawingArea } = useCartesianChartContext();
+  const yScale = getYScale();
+
+  if (!yScale)
+    return (
+      <ChartText x={25} y={25}>
+        Testing thresholds
+      </ChartText>
+    );
+
+  const baselineY = yScale(0) ?? 0;
+
+  return (
+    <ChartText
+      x={25}
+      y={25}
+    >{`Testing thresholds: ${drawingArea.y} ${baselineY} ${drawingArea.height}`}</ChartText>
+  );
+});
+
 const GainLossChart = () => {
   const theme = useTheme();
-  const gradientId = useId();
-
   const data = [-40, -28, -21, -5, 48, -5, -28, 2, -29, -46, 16, -30, -29, 8];
-
-  const ChartDefs = ({ threshold = 0 }) => {
-    const { getYScale } = useCartesianChartContext();
-    // get the default y-axis scale
-    const yScale = getYScale();
-
-    if (yScale) {
-      const domain = yScale.domain();
-      const range = yScale.range();
-
-      const baselinePercentage = ((threshold - domain[0]) / (domain[1] - domain[0])) * 100;
-
-      const negativeColor = `rgb(${theme.spectrum.gray20})`;
-      const positiveColor = theme.color.fgPositive;
-
-      return (
-        <Defs>
-          <LinearGradient
-            gradientUnits="userSpaceOnUse"
-            id={`${gradientId}-solid`}
-            x1="0%"
-            x2="0%"
-            y1={range[0]}
-            y2={range[1]}
-          >
-            <Stop offset="0%" stopColor={negativeColor} />
-            <Stop offset={`${baselinePercentage}%`} stopColor={negativeColor} />
-            <Stop offset={`${baselinePercentage}%`} stopColor={positiveColor} />
-            <Stop offset="100%" stopColor={positiveColor} />
-          </LinearGradient>
-          <LinearGradient
-            gradientUnits="userSpaceOnUse"
-            id={`${gradientId}-gradient`}
-            x1="0%"
-            x2="0%"
-            y1={range[0]}
-            y2={range[1]}
-          >
-            <Stop offset="0%" stopColor={negativeColor} stopOpacity={0.3} />
-            <Stop offset={`${baselinePercentage}%`} stopColor={negativeColor} stopOpacity={0} />
-            <Stop offset={`${baselinePercentage}%`} stopColor={positiveColor} stopOpacity={0} />
-            <Stop offset="100%" stopColor={positiveColor} stopOpacity={0.3} />
-          </LinearGradient>
-        </Defs>
-      );
-    }
-
-    return null;
-  };
+  const negativeColor = `rgb(${theme.spectrum.gray15})`;
+  const positiveColor = theme.color.fgPositive;
 
   const tickLabelFormatter = useCallback(
     (value: number) =>
@@ -1328,8 +1446,6 @@ const GainLossChart = () => {
     [],
   );
 
-  const solidColor = `url(#${gradientId}-solid)`;
-
   return (
     <CartesianChart
       enableScrubbing
@@ -1339,15 +1455,19 @@ const GainLossChart = () => {
         {
           id: 'prices',
           data: data,
-          color: solidColor,
+          gradient: {
+            stops: [
+              { offset: -15, color: negativeColor },
+              { offset: 5, color: positiveColor },
+            ],
+          },
         },
       ]}
     >
-      <ChartDefs />
       <YAxis showGrid requestedTickCount={2} tickLabelFormatter={tickLabelFormatter} />
-      <Area curve="monotone" fill={`url(#${gradientId}-gradient)`} seriesId="prices" />
-      <Line curve="monotone" seriesId="prices" stroke={solidColor} strokeWidth={3} />
+      <Line curve="monotone" seriesId="prices" strokeWidth={3} type="gradient" />
       <Scrubber hideOverlay />
+      <TextComponent />
     </CartesianChart>
   );
 };
@@ -1385,6 +1505,9 @@ const ScrubberWithImperativeHandle = () => {
             curve: 'natural',
           },
         ]}
+        xAxis={{
+          range: ({ min, max }) => ({ min, max: max - 32 }),
+        }}
         yAxis={{
           domain: {
             min: 0,
@@ -1455,7 +1578,18 @@ const BTCPriceChart = () => {
   })}`;
 
   const AreaComponent = useMemo(
-    () => (props: any) => <GradientArea {...props} peakOpacity={0.15} />,
+    () => (props: any) => (
+      <GradientArea
+        {...props}
+        colorMap={{
+          type: 'continuous',
+          colors: [
+            { color: 'black', opacity: 0.15 },
+            { color: 'black', opacity: 0 },
+          ],
+        }}
+      />
+    ),
     [],
   );
 
@@ -1490,7 +1624,7 @@ const BTCPriceChart = () => {
           ]}
           width="100%"
         >
-          <Line showArea AreaComponent={AreaComponent} seriesId="price" strokeWidth={3} />
+          <Line AreaComponent={AreaComponent} seriesId="price" strokeWidth={3} />
           <Scrubber
             idlePulse
             label={displayDate}
@@ -1565,7 +1699,6 @@ const LiveAssetPrice = () => {
   return (
     <LineChart
       enableScrubbing
-      showArea
       height={defaultChartHeight}
       series={[
         {
@@ -1599,7 +1732,7 @@ const availabilityEvents = [
   },
   {
     date: new Date('2022-01-07'),
-    availability: 92,
+    availability: 90,
   },
   {
     date: new Date('2022-01-10'),
@@ -1835,17 +1968,15 @@ const PredictionChart = () => {
   return (
     <Box accessibilityLabel={chartOverviewLabel} accessibilityLiveRegion="polite">
       <VStack gap={4}>
-        {/* Legend */}
         <PredictionLegend ref={legendRef} colors={colors} data={legendData} />
 
         <Box style={{ marginLeft: -16, marginRight: -16 }}>
           <LineChart
             enableScrubbing
-            showYAxis
             accessibilityLiveRegion="polite"
+            animate={false}
             height={defaultChartHeight}
             inset={{ left: 0 }}
-            onScrubberPositionChange={onScrubberPositionChange}
             series={[
               {
                 id: 'candidate1',
@@ -1876,8 +2007,6 @@ const PredictionChart = () => {
             <Scrubber idlePulse label={scrubberLabel} />
           </LineChart>
         </Box>
-
-        {/* Period Selector */}
         <PeriodSelector
           accessibilityLabel="Select time period for prediction chart"
           activeTab={timePeriod}
@@ -1893,56 +2022,6 @@ const AvailabilityChart = () => {
   const theme = useTheme();
   const [scrubIndex, setScrubIndex] = useState<number | undefined>();
 
-  const ChartDefs = memo(
-    ({
-      yellowThresholdPercentage = 85,
-      greenThresholdPercentage = 90,
-    }: {
-      yellowThresholdPercentage?: number;
-      greenThresholdPercentage?: number;
-    }) => {
-      const { getYScale, getYAxis } = useCartesianChartContext();
-      const yScale = getYScale();
-      const yAxis = getYAxis();
-
-      if (!yScale) return null;
-
-      const rangeBounds = yAxis?.domain;
-      const rangeMin = rangeBounds?.min ?? 0;
-      const rangeMax = rangeBounds?.max ?? 100;
-
-      // Calculate the Y positions in the chart coordinate system
-      const yellowThresholdY = yScale(yellowThresholdPercentage) ?? 0;
-      const greenThresholdY = yScale(greenThresholdPercentage) ?? 0;
-      const minY = yScale(rangeMax) ?? 0; // Top of chart (max value)
-      const maxY = yScale(rangeMin) ?? 0; // Bottom of chart (min value)
-
-      // Calculate percentages based on actual chart positions
-      const yellowThreshold = ((yellowThresholdY - minY) / (maxY - minY)) * 100;
-      const greenThreshold = ((greenThresholdY - minY) / (maxY - minY)) * 100;
-
-      return (
-        <Defs>
-          <LinearGradient
-            gradientUnits="userSpaceOnUse"
-            id="availabilityGradient"
-            x1="0%"
-            x2="0%"
-            y1={minY}
-            y2={maxY}
-          >
-            <Stop offset="0%" stopColor={theme.color.fgPositive} />
-            <Stop offset={`${greenThreshold}%`} stopColor={theme.color.fgPositive} />
-            <Stop offset={`${greenThreshold}%`} stopColor={theme.color.fgWarning} />
-            <Stop offset={`${yellowThreshold}%`} stopColor={theme.color.fgWarning} />
-            <Stop offset={`${yellowThreshold}%`} stopColor={theme.color.fgNegative} />
-            <Stop offset="100%" stopColor={theme.color.fgNegative} />
-          </LinearGradient>
-        </Defs>
-      );
-    },
-  );
-
   return (
     <CartesianChart
       enableScrubbing
@@ -1952,7 +2031,14 @@ const AvailabilityChart = () => {
         {
           id: 'availability',
           data: availabilityEvents.map((event) => event.availability),
-          color: 'url(#availabilityGradient)',
+          gradient: {
+            stops: [
+              { offset: 85, color: theme.color.fgNegative },
+              { offset: 85, color: theme.color.fgWarning },
+              { offset: 90, color: theme.color.fgWarning },
+              { offset: 90, color: theme.color.fgPositive },
+            ],
+          },
         },
       ]}
       xAxis={{
@@ -1965,7 +2051,6 @@ const AvailabilityChart = () => {
         }),
       }}
     >
-      <ChartDefs />
       <XAxis
         showGrid
         showLine
@@ -1979,27 +2064,18 @@ const AvailabilityChart = () => {
         position="left"
         tickLabelFormatter={(value) => `${value}%`}
       />
-      <Line
-        curve="stepAfter"
-        renderPoints={() => ({
-          fill: theme.color.bg,
-          stroke: 'url(#availabilityGradient)',
-          strokeWidth: 2,
-        })}
-        seriesId="availability"
-      />
+      <Line curve="stepAfter" renderPoints={() => true} seriesId="availability" type="gradient" />
       <Scrubber overlayOffset={10} />
     </CartesianChart>
   );
 };
 
-const sampleData = [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58];
+const dataWithGaps = [10, 22, 29, null, null, 45, 22, 52, null, 4, 68, 20, 21, 58];
+const dataWithGapsOffset = dataWithGaps.map((value) => (value !== null ? value + 40 : null));
+const dataNoNull = dataWithGaps.map((value) => (value !== null ? value : 0));
 
-const ConnectNullsChart = () => {
+const ConnectNullsChart = memo(() => {
   const theme = useTheme();
-  const dataWithGaps = [10, 22, 29, null, null, 45, 22, 52, null, 4, 68, 20, 21, 58];
-  const dataWithGapsOffset = dataWithGaps.map((value) => (value !== null ? value + 40 : null));
-
   return (
     <CartesianChart
       enableScrubbing
@@ -2016,60 +2092,83 @@ const ConnectNullsChart = () => {
         },
       ]}
     >
-      <YAxis showGrid />
-      <Line curve="monotone" seriesId="withGaps" />
-      <Line connectNulls curve="monotone" seriesId="connected" />
+      <Line curve="bump" seriesId="withGaps" />
+      <Line connectNulls curve="bump" seriesId="connected" />
       <Scrubber />
     </CartesianChart>
   );
-};
+});
 
 const LineChartStories = () => {
+  const theme = useTheme();
   return (
     <ExampleScreen>
-      <Example title="Scrubber with Imperative Handle">
-        <ScrubberWithImperativeHandle />
+      <Example title="Non Nulls">
+        <ConnectNullsChart />
       </Example>
-      <Example title="Basic">
-        <LineChart
+      <Example title="Basic 4">
+        <CartesianChart
           enableScrubbing
-          showArea
-          showYAxis
-          curve="monotone"
           height={defaultChartHeight}
           series={[
             {
               id: 'prices',
-              data: sampleData,
+              data: data,
+              color: theme.color.fgPositive,
+              gradient: {
+                axis: 'x',
+                stops: [
+                  { offset: 15, color: '#ff0000' },
+                  { offset: data.length - 15, color: '#00ff00' },
+                ],
+              },
             },
           ]}
-          yAxis={{
-            showGrid: true,
-          }}
+        >
+          <Line curve="bump" seriesId="prices" type="gradient" />
+          <Scrubber />
+        </CartesianChart>
+      </Example>
+      <Example title="Scrubber with Beacon Labels">
+        <ScrubberWithBeaconLabels />
+      </Example>
+      <Example title="Basic 4 Line">
+        <LineChart
+          enableScrubbing
+          curve="bump"
+          height={defaultChartHeight}
+          series={[
+            {
+              id: 'prices',
+              data: data,
+              color: theme.color.fgPrimary,
+              gradient: {
+                axis: 'x',
+                stops: [
+                  { offset: 15, color: '#ff0000' },
+                  { offset: data.length - 15, color: '#00ff00' },
+                ],
+              },
+            },
+          ]}
+          type="gradient"
         >
           <Scrubber />
         </LineChart>
       </Example>
-      <Example title="Simple">
-        <LineChart
-          curve="monotone"
-          height={defaultChartHeight}
-          series={[
-            {
-              id: 'prices',
-              data: sampleData,
-            },
-          ]}
-        />
-      </Example>
-      <Example title="Data Formats">
+      {/* <Example title="Multiple Series">
+        <MultipleSeriesChart />
+      </Example>*/}
+      {/*<Example title="Data Formats 4">
         <LineChart
           enableScrubbing
           showArea
           showXAxis
           showYAxis
+          areaType="gradient"
           curve="natural"
           height={defaultChartHeight}
+          renderPoints={() => true}
           series={[
             {
               id: 'line',
@@ -2085,14 +2184,60 @@ const LineChartStories = () => {
             showGrid: true,
           }}
         >
+          <Scrubber hideOverlay />
+        </LineChart>
+      </Example>*/}
+      {/*} <Example title="Simple">
+        <LineChart
+          curve="monotone"
+          height={defaultChartHeight}
+          series={[
+            {
+              id: 'prices',
+              data: sampleData,
+            },
+          ]}
+          type="dotted"
+        />
+      </Example>*/}
+      <Example title="ColorMap - Discrete Thresholds">
+        <LineChart
+          enableScrubbing
+          showArea
+          showXAxis
+          showYAxis
+          AreaComponent={(props) => <GradientArea {...props} fillOpacity={0.5} />}
+          height={300}
+          renderPoints={({ dataX }) => dataX % 100 === 0}
+          series={[
+            {
+              id: 'line',
+              data: sparklineInteractiveData.all.map((d) => d.value),
+              type: 'gradient',
+              gradient: {
+                stops: [
+                  { offset: 0, color: '#ef4444' },
+                  { offset: 10000, color: '#ef4444' },
+                  { offset: 20000, color: '#f59e0b' },
+                  { offset: 30000, color: '#f59e0b' },
+                  { offset: 40000, color: '#10b981' },
+                  { offset: 50000, color: '#10b981' },
+                ],
+              },
+            },
+          ]}
+        >
           <Scrubber />
         </LineChart>
       </Example>
+      {/* <Example title="Availability Chart">
+        <AvailabilityChart />
+      </Example>*/}
+      <Example title="BTC Price Chart">
+        <BTCPriceChart />
+      </Example>
       <Example title="Color Shift Chart">
         <ColorShiftChart />
-      </Example>
-      <Example title="Connect Nulls">
-        <ConnectNullsChart />
       </Example>
       <Example title="Asset Price Dotted">
         <AssetPriceDotted />
@@ -2115,11 +2260,157 @@ const LineChartStories = () => {
       <Example title="Prediction Chart">
         <PredictionChart />
       </Example>
-      <Example title="Availability Chart">
-        <AvailabilityChart />
+      <Example title="Gain/Loss">
+        <GainLossChart />
+      </Example>
+      <Example title="Line Styles">
+        <LineStyles />
+      </Example>
+      <Example title="Gain/Loss">
+        <GainLossChart />
+      </Example>
+      <Example title="Basic">
+        <CartesianChart
+          enableScrubbing
+          height={defaultChartHeight}
+          series={[
+            {
+              id: 'prices',
+              data: data,
+              gradient: {
+                axis: 'x',
+                stops: [
+                  { offset: Math.floor(data.length / 2), color: assets.btc.color, opacity: 0 },
+                  { offset: Math.floor(data.length / 2 + 50), color: assets.btc.color, opacity: 1 },
+                ],
+              },
+            },
+          ]}
+          yAxis={{
+            domain: { min: 0 },
+          }}
+        >
+          <Line curve="monotone" seriesId="prices" type="gradient" />
+          <Scrubber idlePulse />
+        </CartesianChart>
       </Example>
     </ExampleScreen>
   );
 };
 
-export default LineChartStories;
+const GradientLineChart = memo(() => {
+  const [scrubberPosition, setScrubberPosition] = useState<number | undefined>();
+
+  return (
+    <VStack gap={2}>
+      <Text>Scrubber position: {scrubberPosition}</Text>
+      <GradientLineWithStateCallback onScrubberPositionChange={setScrubberPosition} />
+    </VStack>
+  );
+});
+
+const GradientLineWithStateCallback = memo(
+  ({
+    onScrubberPositionChange,
+  }: {
+    onScrubberPositionChange: (position: number | undefined) => void;
+  }) => {
+    const theme = useTheme();
+    const points = useCallback(({ dataX }: { dataX: number }) => dataX % 10 === 0, []);
+
+    return (
+      <CartesianChart
+        enableScrubbing
+        height={defaultChartHeight}
+        onScrubberPositionChange={onScrubberPositionChange}
+        series={[
+          {
+            id: 'prices',
+            data: data,
+            color: theme.color.fgPositive,
+            gradient: {
+              axis: 'x',
+              stops: [
+                { offset: 15, color: '#ff0000' },
+                { offset: data.length - 15, color: '#00ff00' },
+              ],
+            },
+          },
+        ]}
+      >
+        <Line curve="bump" renderPoints={points} seriesId="prices" type="gradient" />
+        <Scrubber hideLine hideOverlay />
+      </CartesianChart>
+    );
+  },
+);
+
+export default () => {
+  const theme = useTheme();
+
+  return (
+    <ExampleScreen>
+      <Example title="Gradient line 6">
+        <CartesianChart
+          enableScrubbing
+          height={defaultChartHeight}
+          series={[
+            {
+              id: 'prices',
+              data: data,
+              color: theme.color.fgPositive,
+              gradient: {
+                axis: 'x',
+                stops: [
+                  { offset: 15, color: '#ff0000' },
+                  { offset: data.length - 15, color: '#00ff00' },
+                ],
+              },
+              label: 'test',
+            },
+            {
+              id: 'prices2',
+              data: data.map((d) => d * 2),
+              color: theme.color.fgPositive,
+              gradient: {
+                axis: 'x',
+                stops: [
+                  { offset: 15, color: '#ff0000' },
+                  { offset: data.length - 15, color: '#00ff00' },
+                ],
+              },
+              label: 'test',
+            },
+            {
+              id: 'prices3',
+              data: data.map((d) => d * 1.5),
+              color: theme.color.fgPositive,
+              gradient: {
+                axis: 'x',
+                stops: [
+                  { offset: 15, color: '#ff0000' },
+                  { offset: data.length - 15, color: '#00ff00' },
+                ],
+              },
+              label: 'test',
+            },
+          ]}
+        >
+          <Line showArea curve="bump" seriesId="prices" type="gradient" />
+          <Line showArea curve="bump" seriesId="prices3" type="gradient" />
+          <Line showArea curve="bump" seriesId="prices2" type="gradient" />
+          <Scrubber />
+        </CartesianChart>
+      </Example>
+      <Example title="Gradient line">
+        <GradientLineChart />
+      </Example>
+      <Example title="Dotted">
+        <AssetPriceDotted />
+      </Example>
+      <Example title="Animated Gain/Loss">
+        <AnimatedGainLossChart />
+      </Example>
+    </ExampleScreen>
+  );
+};

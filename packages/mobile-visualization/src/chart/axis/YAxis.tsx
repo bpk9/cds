@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useId, useMemo } from 'react';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import { Circle, G, Rect } from 'react-native-svg';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
+import { Group, vec } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { DottedLine } from '../line/DottedLine';
@@ -12,8 +11,6 @@ import { SmartChartTextGroup, type TextLabelData } from '../text/SmartChartTextG
 import { getAxisTicksData, isCategoricalScale, lineToPath } from '../utils';
 
 import { type AxisBaseProps, type AxisProps } from './Axis';
-
-const AnimatedG = Animated.createAnimatedComponent(G);
 
 const AXIS_WIDTH = 44;
 const LABEL_SIZE = 20;
@@ -70,7 +67,8 @@ export const YAxis = memo<YAxisProps>(
 
     const axisBounds = getAxisBounds(registrationId);
 
-    const gridOpacity = useSharedValue(1);
+    // Note: gridOpacity not currently used in Skia version
+    // const gridOpacity = useSharedValue(1);
 
     useEffect(() => {
       registerAxis(registrationId, position, width);
@@ -156,17 +154,13 @@ export const YAxis = memo<YAxisProps>(
     }, [
       axisBounds,
       ticksData,
-      theme.color.fgMuted,
       tickMarkLabelGap,
       showTickMarks,
       tickMarkSize,
       position,
       formatTick,
+      theme.color.fgMuted,
     ]);
-
-    const gridAnimatedStyle = useAnimatedStyle(() => ({
-      opacity: gridOpacity.value,
-    }));
 
     if (!yScale || !axisBounds) return;
 
@@ -177,9 +171,9 @@ export const YAxis = memo<YAxisProps>(
     const labelY = axisBounds.y + axisBounds.height / 2;
 
     return (
-      <G data-axis="y" data-position={position} {...props}>
+      <Group>
         {showGrid && (
-          <AnimatedG animatedProps={gridAnimatedStyle}>
+          <Group>
             {ticksData.map((tick, index) => {
               const horizontalLine = (
                 <ReferenceLine
@@ -189,9 +183,9 @@ export const YAxis = memo<YAxisProps>(
                 />
               );
 
-              return <G key={`grid-${tick.tick}-${index}`}>{horizontalLine}</G>;
+              return <Group key={`grid-${tick.tick}-${index}`}>{horizontalLine}</Group>;
             })}
-          </AnimatedG>
+          </Group>
         )}
         {chartTextData && (
           <SmartChartTextGroup
@@ -201,7 +195,7 @@ export const YAxis = memo<YAxisProps>(
           />
         )}
         {axisBounds && showTickMarks && (
-          <G data-testid="tick-marks">
+          <Group>
             {ticksData.map((tick, index) => {
               const tickX = position === 'left' ? axisBounds.x + axisBounds.width : axisBounds.x;
               const tickMarkSizePixels = tickMarkSize;
@@ -213,6 +207,7 @@ export const YAxis = memo<YAxisProps>(
               return (
                 <TickMarkLineComponent
                   key={`tick-mark-${tick.tick}-${index}`}
+                  animate={false}
                   clipPath={undefined}
                   d={lineToPath(tickX, tick.position, tickX2, tick.position)}
                   stroke={theme.color.fg}
@@ -221,10 +216,11 @@ export const YAxis = memo<YAxisProps>(
                 />
               );
             })}
-          </G>
+          </Group>
         )}
         {showLine && (
           <LineComponent
+            animate={false}
             d={lineToPath(
               position === 'left' ? axisBounds.x + axisBounds.width : axisBounds.x,
               axisBounds.y,
@@ -237,17 +233,21 @@ export const YAxis = memo<YAxisProps>(
           />
         )}
         {label && (
-          <ChartText
-            horizontalAlignment="center"
-            transform={`rotate(${position === 'left' ? -90 : 90})`}
-            verticalAlignment="middle"
-            x={labelX}
-            y={labelY}
+          <Group
+            origin={vec(labelX, labelY)}
+            transform={[{ rotate: position === 'left' ? -Math.PI / 2 : Math.PI / 2 }]}
           >
-            {label}
-          </ChartText>
+            <ChartText
+              horizontalAlignment="center"
+              verticalAlignment="middle"
+              x={labelX}
+              y={labelY}
+            >
+              {label}
+            </ChartText>
+          </Group>
         )}
-      </G>
+      </Group>
     );
   },
 );

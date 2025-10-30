@@ -1,5 +1,5 @@
 import { memo, useId, useMemo } from 'react';
-import { ClipPath, Defs, G, Rect } from 'react-native-svg';
+import { Group, Skia } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { defaultAxisId } from '../utils';
@@ -21,6 +21,7 @@ export type BarPlotProps = Pick<
   | 'barMinSize'
   | 'stackMinSize'
   | 'BarStackComponent'
+  | 'transitionConfig'
 > & {
   /**
    * Array of series IDs to render.
@@ -49,6 +50,7 @@ export const BarPlot = memo<BarPlotProps>(
     stackGap,
     barMinSize,
     stackMinSize,
+    transitionConfig,
   }) => {
     const { series: allSeries, drawingArea } = useCartesianChartContext();
     const clipPathId = useId();
@@ -93,45 +95,49 @@ export const BarPlot = memo<BarPlotProps>(
       return Array.from(groups.values());
     }, [targetSeries]);
 
-    if (!drawingArea) {
+    // Create clip path for the entire chart area (shared by all bars)
+    const clipPath = useMemo(() => {
+      if (!drawingArea) return null;
+      const clip = Skia.Path.Make();
+      clip.addRect({
+        x: drawingArea.x,
+        y: drawingArea.y,
+        width: drawingArea.width,
+        height: drawingArea.height,
+      });
+      return clip;
+    }, [drawingArea]);
+
+    if (!clipPath) {
       return null;
     }
 
+    // Note: Clipping is now handled here at the BarPlot level (one clip path for all bars!)
+    // This is much more efficient than creating a clip path for each individual bar
     return (
-      <>
-        <Defs>
-          <ClipPath id={clipPathId}>
-            <Rect
-              height={drawingArea.height}
-              width={drawingArea.width}
-              x={drawingArea.x}
-              y={drawingArea.y}
-            />
-          </ClipPath>
-        </Defs>
-        <G clipPath={`url(#${clipPathId})`}>
-          {stackGroups.map((group, stackIndex) => (
-            <BarStackGroup
-              key={group.stackId}
-              BarComponent={defaultBarComponent}
-              BarStackComponent={BarStackComponent}
-              barMinSize={barMinSize}
-              barPadding={barPadding}
-              borderRadius={defaultBorderRadius}
-              fillOpacity={defaultFillOpacity}
-              roundBaseline={roundBaseline}
-              series={group.series}
-              stackGap={stackGap}
-              stackIndex={stackIndex}
-              stackMinSize={stackMinSize}
-              stroke={defaultStroke}
-              strokeWidth={defaultStrokeWidth}
-              totalStacks={stackGroups.length}
-              yAxisId={group.yAxisId}
-            />
-          ))}
-        </G>
-      </>
+      <Group clip={clipPath}>
+        {stackGroups.map((group, stackIndex) => (
+          <BarStackGroup
+            key={group.stackId}
+            BarComponent={defaultBarComponent}
+            BarStackComponent={BarStackComponent}
+            barMinSize={barMinSize}
+            barPadding={barPadding}
+            borderRadius={defaultBorderRadius}
+            fillOpacity={defaultFillOpacity}
+            roundBaseline={roundBaseline}
+            series={group.series}
+            stackGap={stackGap}
+            stackIndex={stackIndex}
+            stackMinSize={stackMinSize}
+            stroke={defaultStroke}
+            strokeWidth={defaultStrokeWidth}
+            totalStacks={stackGroups.length}
+            transitionConfig={transitionConfig}
+            yAxisId={group.yAxisId}
+          />
+        ))}
+      </Group>
     );
   },
 );

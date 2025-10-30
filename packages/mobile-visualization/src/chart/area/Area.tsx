@@ -3,7 +3,8 @@ import type { Rect } from '@coinbase/cds-common/types';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { type ChartPathCurveType, getAreaPath } from '../utils';
+import { type ChartPathCurveType, getAreaPath, type TransitionConfig } from '../utils';
+import type { Gradient } from '../utils/gradient';
 
 import { DottedArea } from './DottedArea';
 import { GradientArea } from './GradientArea';
@@ -17,6 +18,10 @@ export type AreaComponentProps = {
   stroke?: string;
   strokeWidth?: number;
   /**
+   * Series ID - used to retrieve colorMap scale from context.
+   */
+  seriesId?: string;
+  /**
    * ID of the y-axis to use.
    * If not provided, defaults to the default y-axis.
    */
@@ -26,6 +31,21 @@ export type AreaComponentProps = {
    * When set, overrides the default baseline.
    */
   baseline?: number;
+  /**
+   * Gradient configuration.
+   * When provided, creates gradient or threshold-based coloring.
+   */
+  gradient?: Gradient;
+  /**
+   * Whether to animate the area.
+   * Overrides the animate value from the chart context.
+   */
+  animate?: boolean;
+  /**
+   * Transition configuration for area animations.
+   * Defines how the area transitions when data changes.
+   */
+  transitionConfig?: TransitionConfig;
 };
 
 export type AreaComponent = React.FC<AreaComponentProps>;
@@ -68,11 +88,26 @@ export type AreaProps = {
    */
   baseline?: number;
   /**
+   * Gradient configuration.
+   * When provided, creates gradient or threshold-based coloring.
+   */
+  gradient?: Gradient;
+  /**
    * When true, null values are skipped and the area connects across gaps.
    * When false, null values create gaps in the area.
    * @default false
    */
   connectNulls?: boolean;
+  /**
+   * Whether to animate the area.
+   * Overrides the animate value from the chart context.
+   */
+  animate?: boolean;
+  /**
+   * Transition configuration for area animations.
+   * Defines how the area transitions when data changes.
+   */
+  transitionConfig?: TransitionConfig;
 };
 
 export const Area = memo<AreaProps>(
@@ -86,14 +121,16 @@ export const Area = memo<AreaProps>(
     stroke,
     strokeWidth,
     baseline,
+    gradient: gradientProp,
     connectNulls = false,
+    animate,
+    transitionConfig,
   }) => {
-    const theme = useTheme();
     const { getSeries, getSeriesData, getXScale, getYScale, getXAxis, drawingArea } =
       useCartesianChartContext();
 
-    // Get sourceData from series (using stacked data if available)
     const matchedSeries = useMemo(() => getSeries(seriesId), [seriesId, getSeries]);
+    const gradient = gradientProp ?? matchedSeries?.gradient;
 
     // Check for stacked data first, then fall back to raw data
     const sourceData = useMemo(() => {
@@ -144,17 +181,21 @@ export const Area = memo<AreaProps>(
       return null;
     }
 
-    const fill = specifiedFill ?? matchedSeries?.color ?? theme.color.fgPrimary;
+    const fill = specifiedFill ?? matchedSeries?.color ?? 'red';
 
     return (
       <AreaComponent
+        animate={animate}
         baseline={baseline}
         clipRect={drawingArea}
         d={area}
         fill={fill}
         fillOpacity={fillOpacity}
+        gradient={gradient}
+        seriesId={seriesId}
         stroke={stroke}
         strokeWidth={strokeWidth}
+        transitionConfig={transitionConfig}
         yAxisId={matchedSeries?.yAxisId}
       />
     );

@@ -1,4 +1,4 @@
-import { forwardRef, memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { assets } from '@coinbase/cds-common/internal/data/assets';
 import { candles as btcCandles } from '@coinbase/cds-common/internal/data/candles';
 import { prices } from '@coinbase/cds-common/internal/data/prices';
@@ -23,6 +23,7 @@ import { m as motion } from 'framer-motion';
 
 import {
   type ChartTextChildren,
+  type Gradient,
   LiveTabLabel,
   PeriodSelector,
   PeriodSelectorActiveIndicator,
@@ -32,16 +33,13 @@ import {
 } from '../..';
 import { Area, type AreaComponentProps, DottedArea, GradientArea } from '../../area';
 import { XAxis, YAxis } from '../../axis';
-import { BarPlot } from '../../bar';
 import { CartesianChart } from '../../CartesianChart';
-import { DottedLine, GradientLine, Line, LineChart, ReferenceLine, SolidLine } from '..';
+import { Line, LineChart, ReferenceLine, SolidLine } from '..';
 
 export default {
   component: LineChart,
   title: 'Components/Chart/LineChart',
 };
-
-const defaultChartHeight = 400;
 
 const formatChartDate = (timestamp: string, timeframe: string): string => {
   const date = new Date(timestamp);
@@ -1235,58 +1233,9 @@ const Example: React.FC<
 };
 
 const GainLossChart = () => {
-  const gradientId = useId();
-
   const data = [-40, -28, -21, -5, 48, -5, -28, 2, -29, -46, 16, -30, -29, 8];
-
-  const ChartDefs = ({ threshold = 0 }) => {
-    const { getYScale } = useCartesianChartContext();
-    // get the default y-axis scale
-    const yScale = getYScale();
-
-    if (yScale) {
-      const domain = yScale.domain();
-      const range = yScale.range();
-
-      const baselinePercentage = ((threshold - domain[0]) / (domain[1] - domain[0])) * 100;
-
-      const negativeColor = 'rgb(var(--gray15))';
-      const positiveColor = 'var(--color-fgPositive)';
-
-      return (
-        <defs>
-          <linearGradient
-            gradientUnits="userSpaceOnUse"
-            id={`${gradientId}-solid`}
-            x1="0%"
-            x2="0%"
-            y1={range[0]}
-            y2={range[1]}
-          >
-            <stop offset="0%" stopColor={negativeColor} />
-            <stop offset={`${baselinePercentage}%`} stopColor={negativeColor} />
-            <stop offset={`${baselinePercentage}%`} stopColor={positiveColor} />
-            <stop offset="100%" stopColor={positiveColor} />
-          </linearGradient>
-          <linearGradient
-            gradientUnits="userSpaceOnUse"
-            id={`${gradientId}-gradient`}
-            x1="0%"
-            x2="0%"
-            y1={range[0]}
-            y2={range[1]}
-          >
-            <stop offset="0%" stopColor={negativeColor} stopOpacity={0.3} />
-            <stop offset={`${baselinePercentage}%`} stopColor={negativeColor} stopOpacity={0} />
-            <stop offset={`${baselinePercentage}%`} stopColor={positiveColor} stopOpacity={0} />
-            <stop offset="100%" stopColor={positiveColor} stopOpacity={0.3} />
-          </linearGradient>
-        </defs>
-      );
-    }
-
-    return null;
-  };
+  const negativeColor = `rgb(var(--gray15))`;
+  const positiveColor = 'var(--color-fgPositive)';
 
   const tickLabelFormatter = useCallback(
     (value: number) =>
@@ -1298,7 +1247,24 @@ const GainLossChart = () => {
     [],
   );
 
-  const solidColor = `url(#${gradientId}-solid)`;
+  // Line gradient: hard color change at 0 (full opacity for line)
+  const lineGradient: Gradient = {
+    stops: [
+      { offset: 0, color: negativeColor },
+      { offset: 0, color: positiveColor },
+    ],
+  };
+
+  // Area gradient: combines hard color change with continuous opacity fade
+  // Creates a diverging gradient with proper colors on each side
+  const areaGradient: Gradient = {
+    stops: ({ min, max }) => [
+      { offset: min, color: negativeColor, opacity: 0.3 }, // Peak negative (most opaque)
+      { offset: 0, color: negativeColor, opacity: 0 }, // Baseline negative
+      { offset: 0, color: positiveColor, opacity: 0 }, // Baseline positive
+      { offset: max, color: positiveColor, opacity: 0.3 }, // Peak positive (most opaque)
+    ],
+  };
 
   return (
     <CartesianChart
@@ -1309,14 +1275,19 @@ const GainLossChart = () => {
         {
           id: 'prices',
           data: data,
-          color: solidColor,
+          gradient: lineGradient,
         },
       ]}
     >
-      <ChartDefs />
       <YAxis showGrid requestedTickCount={2} tickLabelFormatter={tickLabelFormatter} />
-      <Area curve="monotone" fill={`url(#${gradientId}-gradient)`} seriesId="prices" />
-      <Line curve="monotone" seriesId="prices" stroke={solidColor} strokeWidth={3} />
+      <Line
+        showArea
+        AreaComponent={(props) => <GradientArea {...props} gradient={areaGradient} />}
+        curve="monotone"
+        seriesId="prices"
+        strokeWidth={3}
+        type="gradient"
+      />
       <Scrubber hideOverlay />
     </CartesianChart>
   );
@@ -1716,6 +1687,250 @@ const ConnectNullsChart = () => {
   );
 };
 
+export const ColorMapStories = () => {
+  return (
+    <VStack gap={4}>
+      <Example
+        description={
+          <Text color="fgMuted" font="body">
+            Continuous gradient with two colors. Should transition smoothly from red (low values) to
+            green (high values).
+          </Text>
+        }
+        title="Gradient - Continuous (2 colors)"
+      >
+        <LineChart
+          enableScrubbing
+          showArea
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [10, 25, 15, 35, 20, 40, 30, 45],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: 'var(--color-fgNegative)' },
+                  { offset: max, color: 'var(--color-fgPositive)' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example
+        description={
+          <Text color="fgMuted" font="body">
+            Hard transitions at 20 and 30. Values &lt;20 should be red, 20-30 should be yellow,
+            &gt;30 should be green. Multiple stops at same offset create hard transitions.
+          </Text>
+        }
+        title="Gradient - Hard Transitions"
+      >
+        <LineChart
+          enableScrubbing
+          showArea
+          showXAxis
+          showYAxis
+          AreaComponent={(props) => <GradientArea {...props} fillOpacity={0.5} />}
+          height={300}
+          renderPoints={() => true}
+          series={[
+            {
+              id: 'line',
+              data: [5, 10, 15, 16.75, 17, 20, 25, 35, 45, 25, 15, 35],
+              type: 'gradient',
+              gradient: {
+                stops: [
+                  { offset: 0, color: '#ef4444' },
+                  { offset: 20, color: '#ef4444' },
+                  { offset: 20, color: '#f59e0b' },
+                  { offset: 30, color: '#f59e0b' },
+                  { offset: 30, color: '#10b981' },
+                  { offset: 50, color: '#10b981' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example
+        description={
+          <Text color="fgMuted" font="body">
+            Continuous gradient with custom stop positions. Blue at 10, purple at 40, pink at 80.
+          </Text>
+        }
+        title="Gradient - Custom Stops"
+      >
+        <LineChart
+          enableScrubbing
+          showArea
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [10, 20, 30, 40, 50, 60, 70, 80],
+              type: 'gradient',
+              gradient: {
+                stops: [
+                  { offset: 10, color: '#3b82f6' },
+                  { offset: 40, color: '#8b5cf6' },
+                  { offset: 80, color: '#ec4899' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example
+        description={
+          <Text color="fgMuted" font="body">
+            Continuous gradient with opacity values. Both colors have 80% opacity.
+          </Text>
+        }
+        title="Gradient - With Opacity"
+      >
+        <LineChart
+          enableScrubbing
+          showArea
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [10, 30, 20, 40, 35, 50, 45, 60],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: 'var(--color-fgNegative)', opacity: 0.8 },
+                  { offset: max, color: 'var(--color-fgPositive)', opacity: 0.8 },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber labelProps={{ elevation: 1 }} />
+        </LineChart>
+      </Example>
+      <Example
+        description={
+          <Text color="fgMuted" font="body">
+            Two series with different gradients. First series (red-yellow) and second series
+            (blue-green).
+          </Text>
+        }
+        title="Gradient - Multiple Series"
+      >
+        <LineChart
+          enableScrubbing
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'series1',
+              data: [20, 35, 25, 45, 30, 50, 40, 55],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: '#ef4444' },
+                  { offset: max, color: '#f59e0b' },
+                ],
+              },
+            },
+            {
+              id: 'series2',
+              data: [10, 25, 15, 35, 20, 40, 30, 45],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: '#3b82f6' },
+                  { offset: max, color: '#10b981' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example
+        description={
+          <Text color="fgMuted" font="body">
+            Smooth gradient transition from red to blue using default color interpolation.
+          </Text>
+        }
+        title="Gradient - Smooth Transition"
+      >
+        <LineChart
+          enableScrubbing
+          showArea
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [10, 25, 15, 35, 20, 40, 30, 45],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: '#ff0000' },
+                  { offset: max, color: '#0000ff' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example
+        description={
+          <Text color="fgMuted" font="body">
+            Testing scrubber beacon colors with gradient. The beacon should match the color of the
+            line at that position.
+          </Text>
+        }
+        title="Gradient - Scrubber Beacon Test"
+      >
+        <LineChart
+          enableScrubbing
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [-40, -28, -21, -5, 8, 15, 25, 35],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: 'var(--color-fgNegative)', opacity: 0.25 },
+                  { offset: max, color: 'var(--color-fgPositive)', opacity: 0.5 },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+    </VStack>
+  );
+};
+
 export const All = () => {
   return (
     <VStack gap={2}>
@@ -1799,9 +2014,14 @@ export const All = () => {
               data: [8, 15, 14, 25, 20, 18, 22, 28, 24, 30],
               color: '#f59e0b',
               curve: 'natural',
-              LineComponent: (props) => (
-                <GradientLine {...props} endColor="#F7931A" startColor="#E3D74D" strokeWidth={4} />
-              ),
+              gradient: {
+                axis: 'y',
+                stops: [
+                  { offset: 0, color: '#E3D74D' },
+                  { offset: 100, color: '#F7931A' },
+                ],
+              },
+              LineComponent: (props) => <SolidLine {...props} strokeWidth={4} />,
             },
             {
               id: 'bottom',
@@ -1869,6 +2089,161 @@ export const All = () => {
       </Example>
       <Example title="Bitcoin Chart With Scrubber Beacon">
         <BitcoinChartWithScrubberBeacon />
+      </Example>
+      <Example title="Gradient - Continuous">
+        <LineChart
+          enableScrubbing
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [10, 25, 15, 35, 20, 40, 30, 45],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: 'var(--color-fgNegative)' },
+                  { offset: max, color: 'var(--color-fgPositive)' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example title="Gradient - Hard Transitions">
+        <LineChart
+          enableScrubbing
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [5, 10, 15, 25, 35, 45, 25, 15, 35],
+              type: 'gradient',
+              gradient: {
+                stops: [
+                  { offset: 0, color: '#ef4444' },
+                  { offset: 20, color: '#ef4444' },
+                  { offset: 20, color: '#f59e0b' },
+                  { offset: 30, color: '#f59e0b' },
+                  { offset: 30, color: '#10b981' },
+                  { offset: 50, color: '#10b981' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example title="Gradient - Custom Stops">
+        <LineChart
+          enableScrubbing
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [10, 20, 30, 40, 50, 60, 70, 80],
+              type: 'gradient',
+              gradient: {
+                stops: [
+                  { offset: 10, color: '#3b82f6' },
+                  { offset: 40, color: '#8b5cf6' },
+                  { offset: 80, color: '#ec4899' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example title="Gradient - With Opacity">
+        <LineChart
+          enableScrubbing
+          showArea
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [10, 30, 20, 40, 35, 50, 45, 60],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: 'var(--color-fgNegative)', opacity: 0.8 },
+                  { offset: max, color: 'var(--color-fgPositive)', opacity: 0.8 },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber labelProps={{ elevation: 1 }} />
+        </LineChart>
+      </Example>
+      <Example title="Gradient - Multiple Series">
+        <LineChart
+          enableScrubbing
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'series1',
+              data: [20, 35, 25, 45, 30, 50, 40, 55],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: '#ef4444' },
+                  { offset: max, color: '#f59e0b' },
+                ],
+              },
+            },
+            {
+              id: 'series2',
+              data: [10, 25, 15, 35, 20, 40, 30, 45],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: '#3b82f6' },
+                  { offset: max, color: '#10b981' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
+      </Example>
+      <Example title="Gradient - Smooth Transition">
+        <LineChart
+          enableScrubbing
+          showXAxis
+          showYAxis
+          height={300}
+          series={[
+            {
+              id: 'line',
+              data: [10, 25, 15, 35, 20, 40, 30, 45],
+              type: 'gradient',
+              gradient: {
+                stops: ({ min, max }) => [
+                  { offset: min, color: '#ff0000' },
+                  { offset: max, color: '#0000ff' },
+                ],
+              },
+            },
+          ]}
+        >
+          <Scrubber />
+        </LineChart>
       </Example>
     </VStack>
   );

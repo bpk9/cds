@@ -1,28 +1,22 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Image, ScrollView, StyleSheet } from 'react-native';
-import { Circle, G } from 'react-native-svg';
 import { assets } from '@coinbase/cds-common/internal/data/assets';
 import { candles as btcCandles } from '@coinbase/cds-common/internal/data/candles';
 import { Example, ExampleScreen } from '@coinbase/cds-mobile/examples/ExampleScreen';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { Box, HStack, VStack } from '@coinbase/cds-mobile/layout';
 import { TextLabel1, TextLabel2, TextTitle1, TextTitle2 } from '@coinbase/cds-mobile/typography';
+import { Circle, Group, Path, Skia } from '@shopify/react-native-skia';
 
 import { Area } from '../area/Area';
 import { XAxis, YAxis } from '../axis';
 import { BarPlot } from '../bar/BarPlot';
 import { useCartesianChartContext } from '../ChartProvider';
 import { Line } from '../line/Line';
+import { Point } from '../Point';
 import { Scrubber } from '../scrubber/Scrubber';
-import { isCategoricalScale } from '../utils';
-import {
-  CartesianChart,
-  DottedArea,
-  GradientLine,
-  ReferenceLine,
-  SolidLine,
-  type SolidLineProps,
-} from '../';
+import { type Gradient, isCategoricalScale } from '../utils';
+import { CartesianChart, DottedArea, ReferenceLine, SolidLine, type SolidLineProps } from '../';
 
 const defaultChartHeight = 250;
 
@@ -60,16 +54,7 @@ const LineStyles = () => {
       <Line seriesId="top" />
       <Line seriesId="upperMiddle" type="dotted" />
       <Line
-        LineComponent={(lineProps) => (
-          <GradientLine
-            d={lineProps.d}
-            endColor="#F7931A"
-            startColor="#E3D74D"
-            stroke={lineProps.stroke}
-            strokeOpacity={lineProps.strokeOpacity}
-            strokeWidth={4}
-          />
-        )}
+        LineComponent={(lineProps) => <SolidLine {...lineProps} strokeWidth={4} />}
         curve="natural"
         seriesId="lowerMiddle"
       />
@@ -126,7 +111,7 @@ const EarningsHistory = () => {
     const diameter = Math.min(xScale.bandwidth(), yScaleSize / 10);
 
     return (
-      <G>
+      <Group>
         {data.map((value: any, index: any) => {
           if (value === null || value === undefined) return null;
 
@@ -144,15 +129,15 @@ const EarningsHistory = () => {
           return (
             <Circle
               key={`${seriesId}-${index}`}
+              color={series?.color || theme.color.fgPrimary}
               cx={centerX}
               cy={centerY}
-              fill={series?.color || theme.color.fgPrimary}
               opacity={opacity}
               r={diameter / 2}
             />
           );
         })}
-      </G>
+      </Group>
     );
   });
 
@@ -405,6 +390,124 @@ function TradingTrends() {
   );
 }
 
+const UVGradient: Gradient = {
+  axis: 'y',
+  stops: [
+    { offset: 0, color: 'green' },
+    { offset: 3, color: 'yellow' },
+    { offset: 5, color: 'orange' },
+    { offset: 8, color: 'red' },
+    { offset: 10, color: 'purple' },
+  ],
+};
+
+const PreviousData = memo(
+  ({
+    children,
+    currentHour,
+    clipOffset = 0,
+  }: {
+    children: React.ReactNode;
+    currentHour: number;
+    clipOffset?: number;
+  }) => {
+    // we will clip the data to the current hour
+    const { drawingArea, getXScale } = useCartesianChartContext();
+    const xScale = getXScale();
+
+    const currentHourX = xScale?.(currentHour);
+
+    const clipPath = useMemo(() => {
+      if (!xScale || currentHourX === undefined) return null;
+
+      // Create a rectangle from top-left of drawing area to currentHourX on the right
+      // Apply clipOffset to left, top, and bottom edges only (NOT to currentHourX)
+      const pathString = `M ${drawingArea.x - clipOffset} ${drawingArea.y - clipOffset} L ${currentHourX} ${drawingArea.y - clipOffset} L ${currentHourX} ${drawingArea.y + drawingArea.height + clipOffset} L ${drawingArea.x - clipOffset} ${drawingArea.y + drawingArea.height + clipOffset} Z`;
+      return Skia.Path.MakeFromSVGString(pathString);
+    }, [xScale, currentHourX, drawingArea, clipOffset]);
+
+    if (!clipPath) return null;
+
+    return (
+      <Group clip={clipPath} opacity={0.75}>
+        {children}
+      </Group>
+    );
+  },
+);
+
+const FutureData = memo(
+  ({
+    children,
+    currentHour,
+    clipOffset = 0,
+  }: {
+    children: React.ReactNode;
+    currentHour: number;
+    clipOffset?: number;
+  }) => {
+    // we will clip the data from the current hour to the right edge
+    const { drawingArea, getXScale } = useCartesianChartContext();
+    const xScale = getXScale();
+
+    const currentHourX = xScale?.(currentHour);
+
+    const clipPath = useMemo(() => {
+      if (!xScale || currentHourX === undefined) return null;
+
+      // Create a rectangle from currentHourX to right edge of drawing area
+      // Apply clipOffset to top, bottom, and right, but NOT left (currentHourX)
+      const pathString = `M ${currentHourX} ${drawingArea.y - clipOffset} L ${drawingArea.x + drawingArea.width + clipOffset} ${drawingArea.y - clipOffset} L ${drawingArea.x + drawingArea.width + clipOffset} ${drawingArea.y + drawingArea.height + clipOffset} L ${currentHourX} ${drawingArea.y + drawingArea.height + clipOffset} Z`;
+      return Skia.Path.MakeFromSVGString(pathString);
+    }, [xScale, currentHourX, drawingArea, clipOffset]);
+
+    if (!clipPath) return null;
+
+    return <Group clip={clipPath}>{children}</Group>;
+  },
+);
+
+const UVIndexChart = () => {
+  const theme = useTheme();
+  const data = [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0];
+
+  const currentHour = 14;
+
+  return (
+    <CartesianChart
+      height={defaultChartHeight}
+      series={[
+        {
+          id: 'uv',
+          data: data,
+          gradient: UVGradient,
+        },
+      ]}
+    >
+      <PreviousData clipOffset={8} currentHour={currentHour}>
+        <Area fillOpacity={0.25} seriesId="uv" type="gradient" />
+        <Line seriesId="uv" strokeWidth={8} type="dotted" />
+      </PreviousData>
+      <FutureData clipOffset={8} currentHour={currentHour}>
+        <Area fillOpacity={0.5} seriesId="uv" type="gradient" />
+        <Line seriesId="uv" strokeWidth={8} type="solid" />
+      </FutureData>
+      <ReferenceLine
+        LineComponent={(props) => <SolidLine {...props} stroke={theme.color.bg} strokeWidth={4} />}
+        dataX={currentHour}
+      />
+      <Point
+        dataX={currentHour}
+        dataY={data[currentHour]}
+        fill={theme.color.fg}
+        radius={8}
+        stroke={theme.color.bg}
+        strokeWidth={4}
+      />
+    </CartesianChart>
+  );
+};
+
 const ChartStories = () => {
   return (
     <ScrollView>
@@ -423,6 +526,9 @@ const ChartStories = () => {
         </Example>
         <Example title="Trading Trends">
           <TradingTrends />
+        </Example>
+        <Example title="UV Index">
+          <UVIndexChart />
         </Example>
       </ExampleScreen>
     </ScrollView>

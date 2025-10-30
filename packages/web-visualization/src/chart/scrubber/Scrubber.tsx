@@ -15,7 +15,13 @@ import { m as motion } from 'framer-motion';
 import { axisTickLabelsInitialAnimationVariants } from '../axis';
 import { useCartesianChartContext } from '../ChartProvider';
 import { ReferenceLine, type ReferenceLineProps } from '../line';
-import { type ChartScaleFunction, getPointOnScale, useScrubberContext } from '../utils';
+import {
+  type ChartScaleFunction,
+  evaluateGradientAtValue,
+  getGradientScale,
+  getPointOnScale,
+  useScrubberContext,
+} from '../utils';
 
 import { ScrubberBeacon, type ScrubberBeaconProps, type ScrubberBeaconRef } from './ScrubberBeacon';
 import { ScrubberBeaconLabel, type ScrubberBeaconLabelProps } from './ScrubberBeaconLabel';
@@ -144,8 +150,16 @@ export const Scrubber = memo(
       const ScrubberBeaconRefs = useRefMap<ScrubberBeaconRef>();
 
       const { scrubberPosition } = useScrubberContext();
-      const { getXScale, getYScale, getSeriesData, getXAxis, animate, series, drawingArea } =
-        useCartesianChartContext();
+      const {
+        getXScale,
+        getYScale,
+        getSeriesData,
+        getXAxis,
+        getYAxis,
+        animate,
+        series,
+        drawingArea,
+      } = useCartesianChartContext();
       const getStackedSeriesData = getSeriesData; // getSeriesData now returns stacked data
 
       // Track label dimensions for collision detection
@@ -190,8 +204,9 @@ export const Scrubber = memo(
 
       const beaconPositions = useMemo(() => {
         const xScale = getXScale() as ChartScaleFunction;
+        const xAxis = getXAxis();
 
-        if (!xScale || dataX === undefined || dataIndex === undefined) return [];
+        if (!xScale || dataX === undefined || dataIndex === undefined || !xAxis) return [];
 
         return (
           series
@@ -213,20 +228,43 @@ export const Scrubber = memo(
 
               if (dataY !== undefined) {
                 const yScale = getYScale(s.yAxisId) as ChartScaleFunction;
-                if (!yScale) {
-                  return undefined;
-                }
+                const yAxis = getYAxis(s.yAxisId);
+
+                if (!yScale || !yAxis) return;
+
+                const isWithinXDomain = dataX >= xAxis.domain.min && dataX <= xAxis.domain.max;
+                const isWithinYDomain = dataY >= yAxis.domain.min && dataY <= yAxis.domain.max;
+
+                if (!isWithinXDomain || !isWithinYDomain) return;
 
                 const pixelY = getPointOnScale(dataY, yScale);
 
                 const resolvedLabel = typeof s.label === 'function' ? s.label(dataIndex) : s.label;
+
+                let evaluatedColor: string | undefined = s.color;
+                if (s.gradient) {
+                  const xScale = getXScale();
+                  const gradientScale = getGradientScale(s.gradient, xScale, yScale);
+                  if (gradientScale) {
+                    const gradientAxis = s.gradient.axis ?? 'y';
+                    const dataValue = gradientAxis === 'x' ? dataX : dataY;
+                    const colorResult = evaluateGradientAtValue(
+                      s.gradient,
+                      dataValue,
+                      gradientScale,
+                    );
+                    if (colorResult) {
+                      evaluatedColor = colorResult;
+                    }
+                  }
+                }
 
                 return {
                   x: dataX,
                   y: dataY,
                   label: resolvedLabel,
                   pixelY,
-                  targetSeries: s,
+                  targetSeries: { ...s, color: evaluatedColor },
                 };
               }
             })
@@ -234,6 +272,7 @@ export const Scrubber = memo(
         );
       }, [
         getXScale,
+        getXAxis,
         dataX,
         dataIndex,
         series,
@@ -241,6 +280,7 @@ export const Scrubber = memo(
         getStackedSeriesData,
         getSeriesData,
         getYScale,
+        getYAxis,
       ]);
 
       const labelVerticalInset = 2;

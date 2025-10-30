@@ -1,5 +1,7 @@
 import { stack as d3Stack, stackOffsetDiverging, stackOrderNone } from 'd3-shape';
 
+import type { Gradient } from './gradient';
+
 export const defaultStackId = 'DEFAULT_STACK_ID';
 
 export type AxisBounds = {
@@ -33,9 +35,25 @@ export type Series = {
    */
   label?: string | ((dataIndex: number) => string);
   /**
-   * The color of the series.
+   * Solid color for the series.
+   * Used when gradient is not provided.
+   * @example 'blue', '#FF0000', 'rgb(255, 0, 0)'
    */
   color?: string;
+  /**
+   * Color gradient configuration.
+   * When provided, creates gradient-based coloring.
+   * Takes precedence over solid `color`.
+   * Applies to all visualization components (line, area, bars, points).
+   * @example
+   * gradient: {
+   *   stops: [
+   *     { offset: 0, color: 'red' },
+   *     { offset: 0, color: 'green' }
+   *   ]
+   * }
+   */
+  gradient?: Gradient;
   /**
    * The ID of the y-axis this series uses.
    * Defaults to defaultAxisId if not specified.
