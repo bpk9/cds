@@ -51,7 +51,11 @@ export type CellBaseProps = SharedProps &
     detail?: React.ReactNode;
     /** Middle content between main content and detail. */
     intermediary?: React.ReactNode;
-    /** Media rendered at the start of the cell (icon, avatar, image, etc). */
+    /** Content rendered at the start of the cell (icon, avatar, image, etc). */
+    start?: React.ReactElement;
+    /**
+     * @deprecated Use `start` instead. `media` will be removed in a future major release.
+     */
     media?: React.ReactElement;
     borderRadius?: ThemeVars.BorderRadius;
     /**
@@ -79,6 +83,10 @@ export type CellBaseProps = SharedProps &
       topContent?: StyleProp<ViewStyle>;
       bottomContent?: StyleProp<ViewStyle>;
       pressable?: StyleProp<ViewStyle>;
+      start?: StyleProp<ViewStyle>;
+      /**
+       * @deprecated Use `styles.start` instead. `styles.media` will be removed in a future major release.
+       */
       media?: StyleProp<ViewStyle>;
       intermediary?: StyleProp<ViewStyle>;
       /** Applied to the container of detail or action */
@@ -101,6 +109,7 @@ export const Cell = memo(function Cell({
   detailWidth,
   disabled,
   intermediary,
+  start,
   media,
   minHeight,
   maxHeight,
@@ -154,11 +163,13 @@ export const Cell = memo(function Cell({
 
     const endContent = end ?? detail;
 
+    const startNode = start ?? media;
+
     const topContent = (
       <>
-        {!!media && (
-          <Box flexGrow={0} flexShrink={0} style={styles?.media}>
-            {media}
+        {!!startNode && (
+          <Box flexGrow={0} flexShrink={0} style={styles?.start ?? styles?.media}>
+            {startNode}
           </Box>
         )}
 
@@ -232,8 +243,10 @@ export const Cell = memo(function Cell({
     alignItems,
     columnGap,
     gap,
+    start,
     media,
     styles?.media,
+    styles?.start,
     priority,
     children,
     intermediary,

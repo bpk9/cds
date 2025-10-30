@@ -86,7 +86,11 @@ export type ListCellBaseProps = CellDetailProps &
     helperText?: React.ReactNode;
     /** For internal use only. */
     intermediary?: React.ReactNode;
-    /* Media (icon, asset, image, etc) to display at the start of the cell. */
+    /** Content to display at the start of the cell (icon, asset, image, etc). */
+    start?: React.ReactElement;
+    /**
+     * @deprecated Use `start` instead. `media` will be removed in a future major release.
+     */
     media?: React.ReactElement;
     /** Allow the description to span multiple lines. This *will* break fixed height requirements, so should not be used in a `FlatList`. */
     multiline?: boolean;
@@ -97,6 +101,10 @@ export type ListCellBaseProps = CellDetailProps &
     /** Styles for the components */
     styles?: {
       root?: StyleProp<ViewStyle>;
+      start?: StyleProp<ViewStyle>;
+      /**
+       * @deprecated Use `styles.start` instead. `styles.media` will be removed in a future major release.
+       */
       media?: StyleProp<ViewStyle>;
       intermediary?: StyleProp<ViewStyle>;
       end?: StyleProp<ViewStyle>;
@@ -133,6 +141,7 @@ export const ListCell = memo(function ListCell({
   disabled,
   disableSelectionAccessory,
   helperText,
+  start,
   media,
   multiline,
   selected,
@@ -196,7 +205,6 @@ export const ListCell = memo(function ListCell({
         innerSpacing ?? (spacingVariant === 'condensed' ? condensedInnerSpacing : undefined)
       }
       intermediary={intermediary}
-      media={media}
       minHeight={minHeight}
       onPress={onPress}
       outerSpacing={
@@ -204,8 +212,10 @@ export const ListCell = memo(function ListCell({
       }
       priority={priority}
       selected={selected}
+      start={start ?? media}
       style={[style, styles?.root]}
       styles={{
+        start: styles?.start,
         accessory: styles?.accessory,
         bottomContent: styles?.helperText,
         contentContainer: styles?.contentContainer,

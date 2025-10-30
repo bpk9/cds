@@ -21,7 +21,11 @@ export type ListCellFallbackBaseProps = SharedProps &
     detail?: boolean;
     /** Display helper text shimmer. */
     helperText?: boolean;
-    /** Display media shimmer with a shape according to type. */
+    /** Display start shimmer with a shape according to type. */
+    start?: CellMediaType;
+    /**
+     * @deprecated Use `start` instead. `media` will be removed in a future major release.
+     */
     media?: CellMediaType;
     /** Display subdetail shimmer. */
     subdetail?: boolean;
@@ -50,6 +54,7 @@ export const ListCellFallback = memo(function ListCellFallback({
   description,
   detail,
   subdetail,
+  start,
   media,
   disableRandomRectWidth,
   rectWidthVariant,
@@ -149,12 +154,14 @@ export const ListCellFallback = memo(function ListCellFallback({
   ]);
 
   const mediaFallback = useMemo(() => {
-    if (!media) {
+    const startType = start ?? media;
+
+    if (!startType) {
       return;
     }
 
-    return <MediaFallback testID="list-cell-fallback-media" type={media} />;
-  }, [media]);
+    return <MediaFallback testID="list-cell-fallback-media" type={startType} />;
+  }, [media, start]);
 
   const titleFallback = useMemo(() => {
     if (!title) {
@@ -180,10 +187,10 @@ export const ListCellFallback = memo(function ListCellFallback({
       innerSpacing={
         innerSpacing ?? (spacingVariant === 'condensed' ? condensedInnerSpacing : undefined)
       }
-      media={mediaFallback}
       outerSpacing={
         outerSpacing ?? (spacingVariant === 'condensed' ? condensedOuterSpacing : undefined)
       }
+      start={mediaFallback}
       {...props}
     >
       <VStack gap={0.5}>
