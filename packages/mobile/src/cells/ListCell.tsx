@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import type { StyleProp, TextStyle } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { compactListHeight, listHeight } from '@coinbase/cds-common/tokens/cell';
 
 import { VStack } from '../layout/VStack';
@@ -9,24 +9,25 @@ import { Cell, type CellBaseProps, type CellProps, type CellSpacing } from './Ce
 import { CellAccessory, type CellAccessoryType } from './CellAccessory';
 import { CellDetail, type CellDetailProps } from './CellDetail';
 
-export const hugInnerSpacing: CellSpacing = {
-  paddingX: 2 as const,
-  paddingY: 0.5 as const,
-  marginX: 0 as const,
-};
-// no padding outside of the pressable area
-export const hugOuterSpacing: CellSpacing = {
-  paddingX: 0 as const,
-  paddingY: 0 as const,
-  marginX: 0 as const,
-};
+export const condensedInnerSpacing = {
+  paddingX: 3,
+  paddingY: 1,
+  marginX: 0,
+} as const satisfies CellSpacing;
 
-type CellStyles = NonNullable<CellBaseProps['styles']>;
+// no padding outside of the pressable area
+export const condensedOuterSpacing = {
+  paddingX: 0,
+  paddingY: 0,
+  marginX: 0,
+} as const satisfies CellSpacing;
 
 export type ListCellBaseProps = CellDetailProps &
   Omit<CellBaseProps, 'accessory' | 'children'> & {
     /** Accessory to display at the end of the cell. */
     accessory?: CellAccessoryType;
+    /** Custom accessory node rendered at the end of the cell. Takes precedence over `accessory`. */
+    accessoryNode?: React.ReactNode;
     /**
      * End-aligned content (e.g., CTA, form element, metric). Replacement for the deprecated action prop, and takes precedence over it.
      * If the content is a action (like button, link, etc), we recommand avoid using alongside `onPress`.
@@ -38,40 +39,37 @@ export type ListCellBaseProps = CellDetailProps &
      */
     action?: React.ReactNode;
     /**
-     * @deprecated Use `layoutSpacing="compact"`. `compact` will be removed in a release.
+     * @deprecated Use `spacingVariant="compact"`. `compact` will be removed in a release.
      */
     compact?: boolean;
     /**
-     * Layout spacing configuration.
-     * Deprecated values: 'spacious' and 'compact'. Prefer 'hug'.
-     * This prop will be removed in the next major release, new list cell will only have 'hug' spacing.
+     * Spacing variant configuration.
+     * Deprecated value: 'compact'. Prefer 'condensed'.
      *
-     * When 'spacious' is set, the cell will have the following behavior:
-     * 1. min-height is 80px
-     * 2. Effective padding is '16px 24px' with 8px padding around the pressable area
-     * 3. border radius is 8px for pressable area
-     * 4. Title always cap at 1 line when there is no description, cap at 2 lines when there is description
-     * 5. Description and subdetail have font 'body'
+     * When `spacingVariant="normal"`:
+     * 1. `min-height` is `80px`
+     * 2. `padding` is `'var(--space-2) var(--space-3)'`
+     * 3. `border-radius` is `'var(--borderRadius-200)'`
+     * 4. when there is a description, title's `numberOfLines={1}` otherwise title's `numberOfLines={2}`
+     * 5. description and subdetail have font `body`
      *
-     * When 'compact' is set, the cell will have the following behavior:
-     * 1. min-height is 40px
-     * 2. Effective padding is '16px 24px' with 8px padding around the pressable area
-     * 3. border radius is 8px for pressable area
-     * 4. Title always cap at 1 line when there is no description, cap at 2 lines when there is description
-     * 5. Description and subdetail have font 'body'
+     * When `spacingVariant="compact"`:
+     * 1. same as `spacingVariant="normal"`, except `min-height` is `40px`
      *
-     * When 'hug' is set, the cell will have the following behavior:
-     * 1. No min-height, height is determined by the content
-     * 2. Padding is '4px 16px', no extra padding around the pressable area
-     * 3. 0 border radius for pressable area
-     * 4. Title always cap at 2 lines
-     * 5. Description and subdetail have font 'label2'
+     * When `spacingVariant="condensed"`:
+     * 1. `min-height` is undefined
+     * 2. `padding` is `'var(--space-1) var(--space-2)'`
+     * 3. `border-radius` is `--borderRadius-0`
+     * 4. title's `numberOfLines={2}`
+     * 5. description and subdetail have font `label2`
      *
-     * @default 'spacious'
+     * @default 'normal'
      */
-    layoutSpacing?: 'spacious' | 'compact' | 'hug';
-    /** Description of content. Max 1 line (with title) or 2 lines (without), otherwise will truncate. */
+    spacingVariant?: 'normal' | 'compact' | 'condensed';
+    /** Description of content. Max 1 line (with title) or 2 lines (without), otherwise will truncate. This prop is only intended to accept a string or Text component; other use cases, while allowed, are not supported and may result in unexpected behavior. For arbitrary content, use `descriptionNode`. */
     description?: React.ReactNode;
+    /** React node to render description. Takes precedence over `description`. */
+    descriptionNode?: React.ReactNode;
     /**
      * Disable the default accessory that is displayed when the cell is selected.
      * If `accessory` is provided, that will continue to be displayed, otherwise no accessory will be displayed when the cell is selected.
@@ -92,15 +90,21 @@ export type ListCellBaseProps = CellDetailProps &
     media?: React.ReactElement;
     /** Allow the description to span multiple lines. This *will* break fixed height requirements, so should not be used in a `FlatList`. */
     multiline?: boolean;
-    /** Title of content. Max 1 line (with description) or 2 lines (without), otherwise will truncate. */
+    /** Title of content. Max 1 line (with description) or 2 lines (without), otherwise will truncate. This prop is only intended to accept a string or Text component; other use cases, while allowed, are not supported and may result in unexpected behavior. For arbitrary content, use `titleNode`. */
     title?: React.ReactNode;
+    /** React node to render title. Takes precedence over `title`. */
+    titleNode?: React.ReactNode;
     /** Styles for the components */
-    styles?: Pick<
-      CellStyles,
-      'root' | 'media' | 'intermediary' | 'end' | 'accessory' | 'contentContainer' | 'pressable'
-    > & {
-      mainContent?: CellStyles['topContent'];
-      helperText?: CellStyles['bottomContent'];
+    styles?: {
+      root?: StyleProp<ViewStyle>;
+      media?: StyleProp<ViewStyle>;
+      intermediary?: StyleProp<ViewStyle>;
+      end?: StyleProp<ViewStyle>;
+      accessory?: StyleProp<ViewStyle>;
+      contentContainer?: StyleProp<ViewStyle>;
+      pressable?: StyleProp<ViewStyle>;
+      mainContent?: StyleProp<ViewStyle>;
+      helperText?: StyleProp<ViewStyle>;
       title?: StyleProp<TextStyle>;
       description?: StyleProp<TextStyle>;
     };
@@ -110,13 +114,17 @@ export type ListCellProps = ListCellBaseProps & Omit<CellProps, 'accessory' | 'c
 
 export const ListCell = memo(function ListCell({
   accessory,
+  accessoryNode,
   end: endProp,
   action,
   compact,
   title,
+  titleNode,
   disableMultilineTitle = false,
   description,
+  descriptionNode,
   detail,
+  detailNode,
   detailWidth,
   intermediary,
   priority,
@@ -129,21 +137,22 @@ export const ListCell = memo(function ListCell({
   multiline,
   selected,
   subdetail,
+  subdetailNode,
   variant,
   onPress,
-  layoutSpacing = compact ? 'compact' : 'spacious',
+  spacingVariant = compact ? 'compact' : 'normal',
   style,
   styles,
   ...props
 }: ListCellProps) {
   const minHeight =
-    layoutSpacing === 'compact'
+    spacingVariant === 'compact'
       ? compactListHeight
-      : layoutSpacing === 'spacious'
+      : spacingVariant === 'normal'
         ? listHeight
         : undefined;
   const accessoryType = selected && !disableSelectionAccessory ? 'selected' : accessory;
-  const hasDetails = Boolean(detail || subdetail);
+  const hasDetails = Boolean(detail || subdetail || detailNode || subdetailNode);
 
   const end = useMemo(
     () =>
@@ -153,57 +162,77 @@ export const ListCell = memo(function ListCell({
         <CellDetail
           adjustsFontSizeToFit={!!detailWidth}
           detail={detail}
+          detailNode={detailNode}
           subdetail={subdetail}
-          subdetailFont={layoutSpacing === 'hug' ? 'label2' : 'body'}
+          subdetailFont={spacingVariant === 'condensed' ? 'label2' : 'body'}
+          subdetailNode={subdetailNode}
           variant={variant}
         />
       )),
-    [endProp, action, hasDetails, detail, subdetail, detailWidth, layoutSpacing, variant],
+    [
+      endProp,
+      action,
+      hasDetails,
+      detail,
+      detailNode,
+      subdetail,
+      subdetailNode,
+      detailWidth,
+      spacingVariant,
+      variant,
+    ],
   );
 
   return (
     <Cell
       accessory={accessoryType ? <CellAccessory type={accessoryType} /> : undefined}
-      borderRadius={props.borderRadius ?? (layoutSpacing === 'hug' ? 0 : undefined)}
+      accessoryNode={accessoryNode}
+      borderRadius={props.borderRadius ?? (spacingVariant === 'condensed' ? 0 : undefined)}
       bottomContent={helperText}
       detailWidth={detailWidth}
       disabled={disabled}
       end={end}
-      innerSpacing={innerSpacing ?? (layoutSpacing === 'hug' ? hugInnerSpacing : undefined)}
+      innerSpacing={
+        innerSpacing ?? (spacingVariant === 'condensed' ? condensedInnerSpacing : undefined)
+      }
       intermediary={intermediary}
       media={media}
       minHeight={minHeight}
       onPress={onPress}
-      outerSpacing={outerSpacing ?? (layoutSpacing === 'hug' ? hugOuterSpacing : undefined)}
+      outerSpacing={
+        outerSpacing ?? (spacingVariant === 'condensed' ? condensedOuterSpacing : undefined)
+      }
       priority={priority}
       selected={selected}
       style={[style, styles?.root]}
       styles={{
-        media: styles?.media,
-        intermediary: styles?.intermediary,
-        end: styles?.end,
         accessory: styles?.accessory,
-        topContent: styles?.mainContent,
         bottomContent: styles?.helperText,
         contentContainer: styles?.contentContainer,
+        end: styles?.end,
+        intermediary: styles?.intermediary,
+        media: styles?.media,
         pressable: [
-          // for the hug spacing, we need to offset the margin vertical to remove the strange gap between the pressable area
-          layoutSpacing === 'hug' && !!onPress && { marginVertical: -1 },
+          // for the condensed spacing, we need to offset the margin vertical to remove the strange gap between the pressable area
+          spacingVariant === 'condensed' && Boolean(onPress) && { marginVertical: -1 },
           styles?.pressable,
         ],
+        topContent: styles?.mainContent,
       }}
       {...props}
     >
       <VStack justifyContent="center">
-        {!!title && (
+        {titleNode ? (
+          titleNode
+        ) : title ? (
           <Text
             ellipsize="tail"
             font="headline"
             numberOfLines={
               disableMultilineTitle
                 ? 1
-                : // wrap at 2 lines in hug layoutSpacing regardless of description
-                  layoutSpacing === 'hug'
+                : // wrap at 2 lines in condensed spacingVariant regardless of description
+                  spacingVariant === 'condensed'
                   ? 2
                   : description
                     ? 1
@@ -213,19 +242,21 @@ export const ListCell = memo(function ListCell({
           >
             {title}
           </Text>
-        )}
+        ) : null}
 
-        {!!description && (
+        {descriptionNode ? (
+          descriptionNode
+        ) : description ? (
           <Text
             color="fgMuted"
             ellipsize={multiline ? undefined : 'tail'}
-            font={layoutSpacing === 'hug' ? 'label2' : 'body'}
+            font={spacingVariant === 'condensed' ? 'label2' : 'body'}
             numberOfLines={multiline ? undefined : title ? 1 : 2}
             style={styles?.description}
           >
             {description}
           </Text>
-        )}
+        ) : null}
       </VStack>
     </Cell>
   );

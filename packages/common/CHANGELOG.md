@@ -8,6 +8,58 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 8.19.0 (10/29/2025 PST)
+
+#### 🚀 Updates
+
+- Added getMediaChipSpacingProps util function. [[#125](https://github.com/coinbase/cds/pull/125)]
+
+## 8.18.0 ((10/29/2025, 10:09 AM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.17.6 ((10/28/2025, 02:28 PM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.17.5 ((10/27/2025, 04:19 PM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.17.4 (10/27/2025)
+
+This is an artificial version bump with no new change.
+
+## 8.17.3 (10/21/2025)
+
+This is an artificial version bump with no new change.
+
+## 8.17.2 ((10/16/2025, 03:16 PM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.17.1 ((10/16/2025, 01:14 PM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.17.0 (10/16/2025 PST)
+
+#### 🚀 Updates
+
+- Update useStepper to not set initialActiveId if not passed in. [[#109](https://github.com/coinbase/cds/pull/109)]
+
+## 8.16.4 ((10/15/2025, 07:38 AM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.16.3 ((10/14/2025, 02:02 PM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.16.2 ((10/10/2025, 03:01 PM PST))
+
+This is an artificial version bump with no new change.
+
 ## 8.16.1 ((10/9/2025, 08:02 AM PST))
 
 This is an artificial version bump with no new change.

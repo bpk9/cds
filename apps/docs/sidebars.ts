@@ -21,12 +21,12 @@ const sidebars: SidebarsConfig = {
       items: [
         'getting-started/introduction',
         'getting-started/installation/installation',
+        'getting-started/templates/templates',
         // 'getting-started/api-overview/api-overview',
         'getting-started/theming/theming',
         'getting-started/styling/styling',
-        // 'getting-started/templates',
         'getting-started/playground',
-        'getting-started/mcp-server',
+        'getting-started/ai-overview',
       ],
     },
     {
@@ -155,6 +155,11 @@ const sidebars: SidebarsConfig = {
               type: 'doc',
               id: 'components/inputs/InputChip/input-chip',
               label: 'InputChip',
+            },
+            {
+              type: 'doc',
+              id: 'components/inputs/MediaChip/mediaChip',
+              label: 'MediaChip',
             },
             {
               type: 'doc',

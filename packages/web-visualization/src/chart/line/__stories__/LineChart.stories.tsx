@@ -1335,9 +1335,9 @@ const CompactLineChart = () => {
             </LineChart>
           </Box>
         }
-        layoutSpacing="hug"
         media={<Avatar src={assets.btc.imageUrl} />}
         onClick={() => console.log('clicked')}
+        spacingVariant="condensed"
         subdetail="-4.55%"
         title={assets.btc.name}
         variant="negative"
@@ -1365,9 +1365,9 @@ const CompactLineChart = () => {
             </LineChart>
           </Box>
         }
-        layoutSpacing="hug"
         media={<Avatar src={assets.btc.imageUrl} />}
         onClick={() => console.log('clicked')}
+        spacingVariant="condensed"
         subdetail="-4.55%"
         title={assets.btc.name}
         variant="negative"
@@ -1395,9 +1395,9 @@ const CompactLineChart = () => {
             </LineChart>
           </Box>
         }
-        layoutSpacing="hug"
         media={<Avatar src={assets.btc.imageUrl} />}
         onClick={() => console.log('clicked')}
+        spacingVariant="condensed"
         subdetail="+0.25%"
         title={assets.btc.name}
         variant="positive"
@@ -1425,9 +1425,9 @@ const CompactLineChart = () => {
             </LineChart>
           </Box>
         }
-        layoutSpacing="hug"
         media={<Avatar src={assets.btc.imageUrl} />}
         onClick={() => console.log('clicked')}
+        spacingVariant="condensed"
         subdetail="-4.55%"
         title={assets.btc.name}
         variant="negative"
