@@ -223,28 +223,82 @@ export const usePathTransition = ({
   };
 }): SharedValue<SkPath> => {
   const isInitialRender = useRef(true);
-  const previousPathRef = useRef(initialPath ?? currentPath);
+  const targetPathRef = useRef(currentPath);
   const progress = useSharedValue(animate && initialPath ? 0 : 1);
 
+  // Track the previous from/to paths used for interpolation
+  const previousFromPathRef = useRef(initialPath ?? currentPath);
+  const previousToPathRef = useRef(currentPath);
+
+  // Compute the actual from/to paths for interpolation
+  // This must happen during render, before useEffect
+  const { fromPath, toPath } = useMemo(() => {
+    const isNewPath = targetPathRef.current !== currentPath;
+
+    if (!isNewPath) {
+      // No change, keep using the same paths
+      return {
+        fromPath: previousFromPathRef.current,
+        toPath: previousToPathRef.current,
+      };
+    }
+
+    const currentProgress = progress.value;
+    const isInterrupting = currentProgress > 0 && currentProgress < 1;
+
+    if (isInterrupting) {
+      // Animation was interrupted - capture current interpolated path
+      const pathInterpolator = interpolate.interpolatePath(
+        previousFromPathRef.current,
+        previousToPathRef.current,
+      );
+      const currentInterpolatedPath = pathInterpolator(currentProgress);
+
+      // Start next animation from the current interpolated position
+      return {
+        fromPath: currentInterpolatedPath,
+        toPath: currentPath,
+      };
+    }
+
+    // Normal transition or first render
+    const startPath = isInitialRender.current && initialPath ? initialPath : targetPathRef.current;
+
+    return {
+      fromPath: startPath,
+      toPath: currentPath,
+    };
+  }, [currentPath, initialPath, progress]);
+
+  // Update the previous path refs after computing new paths
   useEffect(() => {
-    if (previousPathRef.current !== currentPath) {
+    previousFromPathRef.current = fromPath;
+    previousToPathRef.current = toPath;
+  }, [fromPath, toPath]);
+
+  useEffect(() => {
+    // Only proceed if the target path has actually changed
+    if (targetPathRef.current !== currentPath) {
+      targetPathRef.current = currentPath;
+
       if (animate) {
-        progress.value = 0;
         // Use enter config for first render if provided, otherwise use update config or default
         const configToUse =
           isInitialRender.current && transitionConfigs?.enter
             ? transitionConfigs.enter
             : (transitionConfigs?.update ?? defaultTransition);
+
+        progress.value = 0;
         progress.value = buildTransition(1, configToUse);
       } else {
         progress.value = 1;
       }
-      previousPathRef.current = currentPath;
+
       isInitialRender.current = false;
     }
     // progress is a SharedValue and should not trigger re-renders
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPath, animate, transitionConfigs]);
 
-  return useD3PathInterpolation(progress, previousPathRef.current, currentPath);
+  return useD3PathInterpolation(progress, fromPath, toPath);
 };
