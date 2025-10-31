@@ -1,4 +1,4 @@
-import type { Animated, LayoutRectangle, ViewProps } from 'react-native';
+import type { AccessibilityRole, AccessibilityState, Animated, LayoutRectangle, ViewProps } from 'react-native';
 import type { ThemeVars } from '@coinbase/cds-common/core/theme';
 import type {
   BaseTooltipPlacement,
@@ -66,6 +66,13 @@ export type TooltipBaseProps = SharedProps &
      * is read correctly for voice-overs.
      */
     accessibilityHint?: SharedAccessibilityProps['accessibilityHint'];
+    /**
+     * Indicates that the trigger element represents disabled content.
+     * When true, screen readers will perceive the element as disabled,
+     * but the tooltip remains tappable for sighted users.
+     * @default false
+     */
+    triggerDisabled?: boolean;
   };
 
 export type TooltipProps = TooltipBaseProps;

@@ -1,5 +1,6 @@
-import React, { Fragment, memo, useCallback, useMemo, useRef, useState } from 'react';
+import { Fragment, memo, useCallback, useMemo, useRef, useState } from 'react';
 import { Modal as RNModal, TouchableOpacity, View } from 'react-native';
+import type { AccessibilityRole } from 'react-native';
 
 import { InvertedThemeProvider } from '../../system/ThemeProvider';
 
@@ -24,6 +25,7 @@ export const Tooltip = memo(
     visible,
     invertColorScheme = true,
     elevation,
+    triggerDisabled = false,
   }: TooltipProps) => {
     const subjectRef = useRef<View | null>(null);
     const [isOpen, setIsOpen] = useState(false);
@@ -54,21 +56,50 @@ export const Tooltip = memo(
       onOpenTooltip?.();
     }, [onOpenTooltip]);
 
+    const computedAccessibilityLabel = useMemo(
+      () =>
+        typeof children === 'string' && accessibilityLabel === undefined
+          ? children
+          : accessibilityLabel,
+      [children, accessibilityLabel],
+    );
+
+    const computedAccessibilityHint = useMemo(
+      () =>
+        typeof children === 'string' && accessibilityHint === undefined ? children : accessibilityHint,
+      [children, accessibilityHint],
+    );
+
+    // When trigger is disabled, make wrapper accessible instead of TouchableOpacity
+    // This prevents TalkBack from detecting the onPress handler
+    const accessibilityPropsForWrapper = useMemo(() => {
+      if (!triggerDisabled) {
+        return undefined;
+      }
+
+      return {
+        accessible: true,
+        accessibilityRole: 'text' as AccessibilityRole,
+        accessibilityLabel: computedAccessibilityLabel,
+        accessibilityHint: computedAccessibilityHint,
+      };
+    }, [triggerDisabled, computedAccessibilityLabel, computedAccessibilityHint]);
+
     // The accessibility props for the trigger component. Trigger component
     // equals the component where when you click on it, it will show the tooltip
-    const accessibilityPropsForTrigger = useMemo(
-      () => ({
-        accessibilityLabel:
-          typeof children === 'string' && accessibilityLabel === undefined
-            ? children
-            : accessibilityLabel,
-        accessibilityHint:
-          typeof children === 'string' && accessibilityHint === undefined
-            ? children
-            : accessibilityHint,
-      }),
-      [children, accessibilityLabel, accessibilityHint],
-    );
+    const accessibilityPropsForTrigger = useMemo(() => {
+      if (triggerDisabled) {
+        return {
+          'aria-hidden': true,
+        };
+      }
+
+      return {
+        accessibilityLabel: computedAccessibilityLabel,
+        accessibilityHint: computedAccessibilityHint,
+        accessibilityRole: 'button' as AccessibilityRole,
+      };
+    }, [triggerDisabled, computedAccessibilityLabel, computedAccessibilityHint]);
 
     const accessibilityPropsForContent = useMemo(
       () => ({
@@ -87,10 +118,9 @@ export const Tooltip = memo(
     );
 
     return (
-      <View ref={subjectRef} collapsable={false}>
+      <View ref={subjectRef} collapsable={false} {...accessibilityPropsForWrapper}>
         <TouchableOpacity
           {...accessibilityPropsForTrigger}
-          accessibilityRole="button"
           onPress={handlePressSubject}
         >
           {children}

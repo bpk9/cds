@@ -9,8 +9,8 @@ const nextMonth15th = new Date(today.getFullYear(), today.getMonth() + 1, 15);
 const lastMonth15th = new Date(today.getFullYear(), today.getMonth() - 1, 15);
 
 const exampleProps = {
-  maxDate: nextMonth15th,
-  minDate: lastMonth15th,
+  // maxDate: nextMonth15th,
+  // minDate: lastMonth15th,
   invalidDateError: 'Please enter a valid date',
   disabledDateError: 'Date unavailable',
   requiredError: 'This field is required',
