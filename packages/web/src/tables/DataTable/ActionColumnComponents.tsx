@@ -21,9 +21,8 @@ export type ActionColumnBodyComponentProps = {
 export type ActionColumnBodyComponent = (props: ActionColumnBodyComponentProps) => ReactNode;
 
 const defaultHeadContentCss = css`
-  align-items: center;
   background-color: var(--color-bg);
-  display: flex;
+  height: 100%;
   width: ${defaultActionsColumnWidth}px;
 `;
 
@@ -36,7 +35,9 @@ const defaultBodyContentCss = css`
 `;
 
 export const DefaultActionColumnHead: ActionColumnHeadComponent = () => (
-  <Box className={defaultHeadContentCss}>Row Actions</Box>
+  <Box className={defaultHeadContentCss} padding={1}>
+    Row Actions
+  </Box>
 );
 
 export const DefaultActionColumnBody: ActionColumnBodyComponent = ({ row }) => (
