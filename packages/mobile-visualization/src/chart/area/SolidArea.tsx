@@ -1,12 +1,12 @@
 import { memo, useMemo } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
-import { LinearGradient, Path as SkiaPath } from '@shopify/react-native-skia';
+import { LinearGradient } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { type PathProps } from '../Path';
+import { Path, type PathProps } from '../Path';
 import { getGradientConfig, type Gradient } from '../utils/gradient';
-import { type TransitionConfig, usePathTransition } from '../utils/transition';
+import { type TransitionConfig } from '../utils/transition';
 
 /**
  * Shared props for area component implementations.
@@ -74,7 +74,7 @@ export const SolidArea = memo<SolidAreaProps>(
     gradient: gradientProp,
     seriesId,
     yAxisId,
-    animate: animateProp,
+    animate,
     transitionConfig,
     ...props
   }) => {
@@ -82,11 +82,6 @@ export const SolidArea = memo<SolidAreaProps>(
     const theme = useTheme();
 
     const fill = fillProp ?? theme.color.fgPrimary;
-
-    // Use prop value if provided, otherwise fall back to context
-    const shouldAnimate = animateProp ?? context.animate;
-
-    const currentPath = d ?? '';
 
     // Get gradient from series if seriesId is provided and gradient is not
     const targetSeries = seriesId ? context.getSeries(seriesId) : undefined;
@@ -101,14 +96,15 @@ export const SolidArea = memo<SolidAreaProps>(
       return getGradientConfig(gradient, xScale, yScale);
     }, [gradient, xScale, yScale]);
 
-    const path = usePathTransition({
-      currentPath,
-      animate: shouldAnimate,
-      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
-    });
-
     return (
-      <SkiaPath color={fill} opacity={fillOpacity} path={path} style="fill">
+      <Path
+        animate={animate}
+        clipRect={clipRect}
+        d={d}
+        fill={fill}
+        fillOpacity={fillOpacity}
+        transitionConfigs={transitionConfig ? { update: transitionConfig } : undefined}
+      >
         {gradientConfig && (
           <LinearGradient
             colors={gradientConfig.colors}
@@ -118,7 +114,7 @@ export const SolidArea = memo<SolidAreaProps>(
             start={gradientConfig.start}
           />
         )}
-      </SkiaPath>
+      </Path>
     );
   },
 );

@@ -1,12 +1,12 @@
 import { memo, useMemo } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
-import { LinearGradient, Path as SkiaPath } from '@shopify/react-native-skia';
+import { LinearGradient } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { type PathProps } from '../Path';
+import { Path, type PathProps } from '../Path';
 import { getGradientConfig, type Gradient } from '../utils/gradient';
-import { type TransitionConfig, usePathTransition } from '../utils/transition';
+import { type TransitionConfig } from '../utils/transition';
 
 /**
  * Shared props for line component implementations.
@@ -75,7 +75,7 @@ export const SolidLine = memo<SolidLineProps>(
     seriesId,
     yAxisId,
     d,
-    animate: animateProp,
+    animate,
     transitionConfig,
     ...props
   }) => {
@@ -85,31 +85,23 @@ export const SolidLine = memo<SolidLineProps>(
     const xScale = context.getXScale();
     const yScale = context.getYScale(yAxisId);
 
-    // Use prop value if provided, otherwise fall back to context
-    const shouldAnimate = animateProp ?? context.animate;
-
-    const currentPath = d ?? '';
-
     const gradientConfig = useMemo(() => {
       if (!gradient || !xScale || !yScale) return;
       return getGradientConfig(gradient, xScale, yScale);
     }, [gradient, xScale, yScale]);
 
-    const path = usePathTransition({
-      currentPath,
-      animate: shouldAnimate,
-      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
-    });
-
     return (
-      <SkiaPath
-        color={stroke ?? theme.color.fgPrimary}
-        opacity={strokeOpacity}
-        path={path}
-        strokeCap={strokeLinecap}
-        strokeJoin={strokeLinejoin}
+      <Path
+        animate={animate}
+        clipOffset={strokeWidth}
+        d={d}
+        fill={fill}
+        stroke={stroke ?? theme.color.fgPrimary}
+        strokeLinecap={strokeLinecap}
+        strokeLinejoin={strokeLinejoin}
+        strokeOpacity={strokeOpacity}
         strokeWidth={strokeWidth}
-        style="stroke"
+        transitionConfigs={transitionConfig ? { update: transitionConfig } : undefined}
       >
         {gradientConfig && (
           <LinearGradient
@@ -119,7 +111,7 @@ export const SolidLine = memo<SolidLineProps>(
             start={gradientConfig.start}
           />
         )}
-      </SkiaPath>
+      </Path>
     );
   },
 );

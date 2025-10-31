@@ -190,7 +190,6 @@ export const buildTransition = (targetValue: number, config: TransitionConfig): 
 export const usePathTransition = ({
   currentPath,
   initialPath,
-  animate = true,
   transitionConfigs,
 }: {
   /**
@@ -203,11 +202,6 @@ export const usePathTransition = ({
    * If not provided, defaults to currentPath (no enter animation).
    */
   initialPath?: string;
-  /**
-   * Whether to animate path transitions.
-   * @default true
-   */
-  animate?: boolean;
   /**
    * Transition configurations for different animation phases.
    */
@@ -223,23 +217,17 @@ export const usePathTransition = ({
   };
 }): SharedValue<SkPath> => {
   const isInitialRender = useRef(true);
+  const previousPathRef = useRef(initialPath ?? currentPath);
   const targetPathRef = useRef(currentPath);
-  const progress = useSharedValue(animate && initialPath ? 0 : 1);
+  const progress = useSharedValue(0);
 
-  // Track the previous from/to paths used for interpolation
-  const previousFromPathRef = useRef(initialPath ?? currentPath);
-  const previousToPathRef = useRef(currentPath);
-
-  // Compute the actual from/to paths for interpolation
-  // This must happen during render, before useEffect
   const { fromPath, toPath } = useMemo(() => {
     const isNewPath = targetPathRef.current !== currentPath;
 
     if (!isNewPath) {
-      // No change, keep using the same paths
       return {
-        fromPath: previousFromPathRef.current,
-        toPath: previousToPathRef.current,
+        fromPath: previousPathRef.current,
+        toPath: targetPathRef.current,
       };
     }
 
@@ -249,19 +237,18 @@ export const usePathTransition = ({
     if (isInterrupting) {
       // Animation was interrupted - capture current interpolated path
       const pathInterpolator = interpolate.interpolatePath(
-        previousFromPathRef.current,
-        previousToPathRef.current,
+        previousPathRef.current,
+        targetPathRef.current,
       );
       const currentInterpolatedPath = pathInterpolator(currentProgress);
 
-      // Start next animation from the current interpolated position
       return {
         fromPath: currentInterpolatedPath,
         toPath: currentPath,
       };
     }
 
-    // Normal transition or first render
+    // Normal transition (from completed position to new target)
     const startPath = isInitialRender.current && initialPath ? initialPath : targetPathRef.current;
 
     return {
@@ -270,35 +257,24 @@ export const usePathTransition = ({
     };
   }, [currentPath, initialPath, progress]);
 
-  // Update the previous path refs after computing new paths
-  useEffect(() => {
-    previousFromPathRef.current = fromPath;
-    previousToPathRef.current = toPath;
-  }, [fromPath, toPath]);
-
   useEffect(() => {
     // Only proceed if the target path has actually changed
     if (targetPathRef.current !== currentPath) {
-      targetPathRef.current = currentPath;
+      // Update refs for next render
+      previousPathRef.current = fromPath;
+      targetPathRef.current = toPath;
 
-      if (animate) {
-        // Use enter config for first render if provided, otherwise use update config or default
-        const configToUse =
-          isInitialRender.current && transitionConfigs?.enter
-            ? transitionConfigs.enter
-            : (transitionConfigs?.update ?? defaultTransition);
+      const configToUse =
+        isInitialRender.current && transitionConfigs?.enter
+          ? transitionConfigs.enter
+          : (transitionConfigs?.update ?? defaultTransition);
 
-        progress.value = 0;
-        progress.value = buildTransition(1, configToUse);
-      } else {
-        progress.value = 1;
-      }
+      progress.value = 0;
+      progress.value = buildTransition(1, configToUse);
 
       isInitialRender.current = false;
     }
-    // progress is a SharedValue and should not trigger re-renders
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPath, animate, transitionConfigs]);
+  }, [currentPath, transitionConfigs, fromPath, toPath, progress]);
 
   return useD3PathInterpolation(progress, fromPath, toPath);
 };

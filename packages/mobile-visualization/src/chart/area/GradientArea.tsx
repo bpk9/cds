@@ -1,11 +1,10 @@
 import { memo, useMemo } from 'react';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
-import { LinearGradient, Path as SkiaPath } from '@shopify/react-native-skia';
+import { LinearGradient } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { type PathProps } from '../Path';
+import { Path, type PathProps } from '../Path';
 import { applyOpacityToColor, getGradientConfig, type Gradient } from '../utils/gradient';
-import { usePathTransition } from '../utils/transition';
 
 import { type AreaComponentProps } from './SolidArea';
 
@@ -45,7 +44,7 @@ export const GradientArea = memo<GradientAreaProps>(
     baseline,
     yAxisId,
     clipRect,
-    animate: animateProp,
+    animate,
     transitionConfig,
     ...pathProps
   }) => {
@@ -53,10 +52,6 @@ export const GradientArea = memo<GradientAreaProps>(
     const theme = useTheme();
 
     const fill = fillProp ?? theme.color.fgPrimary;
-
-    const shouldAnimate = animateProp ?? context.animate;
-
-    const currentPath = d ?? '';
 
     const xScale = context.getXScale();
     const yScale = context.getYScale(yAxisId);
@@ -114,16 +109,16 @@ export const GradientArea = memo<GradientAreaProps>(
       return config;
     }, [gradient, xScale, yScale, fillOpacity]);
 
-    const path = usePathTransition({
-      currentPath,
-      animate: shouldAnimate,
-      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
-    });
-
     if (!gradientConfig) return null;
 
     return (
-      <SkiaPath color={fill} path={path} style="fill">
+      <Path
+        animate={animate}
+        clipRect={clipRect}
+        d={d}
+        fill={fill}
+        transitionConfigs={transitionConfig ? { update: transitionConfig } : undefined}
+      >
         <LinearGradient
           colors={gradientConfig.colors}
           end={gradientConfig.end}
@@ -131,7 +126,7 @@ export const GradientArea = memo<GradientAreaProps>(
           positions={gradientConfig.positions}
           start={gradientConfig.start}
         />
-      </SkiaPath>
+      </Path>
     );
   },
 );

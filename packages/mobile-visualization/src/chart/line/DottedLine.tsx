@@ -1,12 +1,11 @@
 import { memo, useMemo } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
-import { DashPathEffect, LinearGradient, Path as SkiaPath } from '@shopify/react-native-skia';
+import { DashPathEffect, LinearGradient } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { type PathProps } from '../Path';
+import { Path, type PathProps } from '../Path';
 import { getGradientConfig } from '../utils/gradient';
-import { usePathTransition } from '../utils/transition';
 
 import { type LineComponentProps } from './SolidLine';
 
@@ -34,7 +33,7 @@ export const DottedLine = memo<DottedLineProps>(
     seriesId,
     yAxisId,
     d,
-    animate: animateProp,
+    animate,
     transitionConfig,
     ...props
   }) => {
@@ -43,11 +42,6 @@ export const DottedLine = memo<DottedLineProps>(
 
     const xScale = context.getXScale();
     const yScale = context.getYScale(yAxisId);
-
-    // Use prop value if provided, otherwise fall back to context
-    const shouldAnimate = animateProp ?? context.animate;
-
-    const currentPath = d ?? '';
 
     const gradientConfig = useMemo(() => {
       if (!gradient || !xScale || !yScale) return;
@@ -61,21 +55,18 @@ export const DottedLine = memo<DottedLineProps>(
       return strokeDasharray.split(/[\s,]+/).map((v) => parseFloat(v));
     }, [strokeDasharray]);
 
-    const path = usePathTransition({
-      currentPath,
-      animate: shouldAnimate,
-      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
-    });
-
     return (
-      <SkiaPath
-        color={stroke ?? theme.color.bgLine}
-        opacity={strokeOpacity}
-        path={path}
-        strokeCap={strokeLinecap}
-        strokeJoin={strokeLinejoin}
+      <Path
+        animate={animate}
+        clipOffset={strokeWidth}
+        d={d}
+        fill={fill}
+        stroke={stroke ?? theme.color.bgLine}
+        strokeLinecap={strokeLinecap}
+        strokeLinejoin={strokeLinejoin}
+        strokeOpacity={strokeOpacity}
         strokeWidth={strokeWidth}
-        style="stroke"
+        transitionConfigs={transitionConfig ? { update: transitionConfig } : undefined}
       >
         <DashPathEffect intervals={dashIntervals} />
         {gradientConfig && (
@@ -86,7 +77,7 @@ export const DottedLine = memo<DottedLineProps>(
             start={gradientConfig.start}
           />
         )}
-      </SkiaPath>
+      </Path>
     );
   },
 );

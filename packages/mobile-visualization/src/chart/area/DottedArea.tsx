@@ -1,19 +1,10 @@
 import { memo, useMemo } from 'react';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
-import {
-  Blend,
-  Group,
-  ImageShader,
-  LinearGradient,
-  Path as SkiaPath,
-  Skia,
-  vec,
-} from '@shopify/react-native-skia';
+import { Blend, ImageShader, LinearGradient, Skia, vec } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import type { PathProps } from '../Path';
+import { Path, type PathProps } from '../Path';
 import { applyOpacityToColor, getGradientScale, processGradient } from '../utils/gradient';
-import { usePathTransition } from '../utils/transition';
 
 import { type AreaComponentProps } from './SolidArea';
 
@@ -69,9 +60,7 @@ export const DottedArea = memo<DottedAreaProps>(
     const drawingArea = clipRect ?? context.drawingArea;
     const fill = fillProp ?? theme.color.fgPrimary;
 
-    const shouldAnimate = animateProp ?? context.animate;
-
-    const currentPath = d ?? '';
+    const animate = animateProp ?? context.animate;
 
     const targetSeries = seriesId ? context.getSeries(seriesId) : undefined;
     const gradient = gradientProp ?? targetSeries?.gradient;
@@ -101,16 +90,6 @@ export const DottedArea = memo<DottedAreaProps>(
 
       return surface.makeImageSnapshot();
     }, [patternSize, dotSize]);
-
-    // Create clip rect for drawing area (like web's Path.tsx)
-    const clipPath = useMemo(() => {
-      if (!drawingArea) return null;
-      const path = Skia.Path.Make();
-      path.addRect(
-        Skia.XYWHRect(drawingArea.x, drawingArea.y, drawingArea.width, drawingArea.height),
-      );
-      return path;
-    }, [drawingArea]);
 
     // Calculate gradient configuration (color or opacity-based)
     const gradientConfig = useMemo(() => {
@@ -214,28 +193,26 @@ export const DottedArea = memo<DottedAreaProps>(
       fill,
     ]);
 
-    const areaPath = usePathTransition({
-      currentPath,
-      animate: shouldAnimate,
-      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
-    });
-
-    if (!clipPath || !drawingArea || !patternImage || !gradientConfig) return null;
+    if (!drawingArea || !patternImage || !gradientConfig) return null;
 
     return (
-      <Group clip={clipPath}>
-        <SkiaPath path={areaPath} style="fill">
-          <ImageShader fit="none" image={patternImage} tx="repeat" ty="repeat" />
-          <Blend mode="srcIn">
-            <LinearGradient
-              colors={gradientConfig.colors}
-              end={gradientConfig.end}
-              positions={gradientConfig.positions}
-              start={gradientConfig.start}
-            />
-          </Blend>
-        </SkiaPath>
-      </Group>
+      <Path
+        animate={animate}
+        clipRect={clipRect}
+        d={d}
+        fill={fill}
+        transitionConfigs={transitionConfig ? { update: transitionConfig } : undefined}
+      >
+        <ImageShader fit="none" image={patternImage} tx="repeat" ty="repeat" />
+        <Blend mode="srcIn">
+          <LinearGradient
+            colors={gradientConfig.colors}
+            end={gradientConfig.end}
+            positions={gradientConfig.positions}
+            start={gradientConfig.start}
+          />
+        </Blend>
+      </Path>
     );
   },
 );
