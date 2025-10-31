@@ -23,7 +23,8 @@ import { m as motion } from 'framer-motion';
 
 import {
   type ChartTextChildren,
-  type Gradient,
+  type GradientDefinition,
+  type GradientStop,
   LiveTabLabel,
   PeriodSelector,
   PeriodSelectorActiveIndicator,
@@ -1248,7 +1249,7 @@ const GainLossChart = () => {
   );
 
   // Line gradient: hard color change at 0 (full opacity for line)
-  const lineGradient: Gradient = {
+  const lineGradient: GradientDefinition = {
     stops: [
       { offset: 0, color: negativeColor },
       { offset: 0, color: positiveColor },
@@ -1257,8 +1258,8 @@ const GainLossChart = () => {
 
   // Area gradient: combines hard color change with continuous opacity fade
   // Creates a diverging gradient with proper colors on each side
-  const areaGradient: Gradient = {
-    stops: ({ min, max }) => [
+  const areaGradient: GradientDefinition = {
+    stops: ({ min, max }: { min: number; max: number }): GradientStop[] => [
       { offset: min, color: negativeColor, opacity: 0.3 }, // Peak negative (most opaque)
       { offset: 0, color: negativeColor, opacity: 0 }, // Baseline negative
       { offset: 0, color: positiveColor, opacity: 0 }, // Baseline positive
@@ -1711,7 +1712,7 @@ export const ColorMapStories = () => {
               data: [10, 25, 15, 35, 20, 40, 30, 45],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: 'var(--color-fgNegative)' },
                   { offset: max, color: 'var(--color-fgPositive)' },
                 ],
@@ -1812,7 +1813,7 @@ export const ColorMapStories = () => {
               data: [10, 30, 20, 40, 35, 50, 45, 60],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: 'var(--color-fgNegative)', opacity: 0.8 },
                   { offset: max, color: 'var(--color-fgPositive)', opacity: 0.8 },
                 ],
@@ -1843,7 +1844,7 @@ export const ColorMapStories = () => {
               data: [20, 35, 25, 45, 30, 50, 40, 55],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: '#ef4444' },
                   { offset: max, color: '#f59e0b' },
                 ],
@@ -1854,7 +1855,7 @@ export const ColorMapStories = () => {
               data: [10, 25, 15, 35, 20, 40, 30, 45],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: '#3b82f6' },
                   { offset: max, color: '#10b981' },
                 ],
@@ -1885,7 +1886,7 @@ export const ColorMapStories = () => {
               data: [10, 25, 15, 35, 20, 40, 30, 45],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: '#ff0000' },
                   { offset: max, color: '#0000ff' },
                 ],
@@ -1916,7 +1917,7 @@ export const ColorMapStories = () => {
               data: [-40, -28, -21, -5, 8, 15, 25, 35],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: 'var(--color-fgNegative)', opacity: 0.25 },
                   { offset: max, color: 'var(--color-fgPositive)', opacity: 0.5 },
                 ],
@@ -2102,7 +2103,7 @@ export const All = () => {
               data: [10, 25, 15, 35, 20, 40, 30, 45],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: 'var(--color-fgNegative)' },
                   { offset: max, color: 'var(--color-fgPositive)' },
                 ],
@@ -2177,7 +2178,7 @@ export const All = () => {
               data: [10, 30, 20, 40, 35, 50, 45, 60],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: 'var(--color-fgNegative)', opacity: 0.8 },
                   { offset: max, color: 'var(--color-fgPositive)', opacity: 0.8 },
                 ],
@@ -2200,7 +2201,7 @@ export const All = () => {
               data: [20, 35, 25, 45, 30, 50, 40, 55],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: '#ef4444' },
                   { offset: max, color: '#f59e0b' },
                 ],
@@ -2211,7 +2212,7 @@ export const All = () => {
               data: [10, 25, 15, 35, 20, 40, 30, 45],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: '#3b82f6' },
                   { offset: max, color: '#10b981' },
                 ],
@@ -2234,7 +2235,7 @@ export const All = () => {
               data: [10, 25, 15, 35, 20, 40, 30, 45],
               type: 'solid',
               gradient: {
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: '#ff0000' },
                   { offset: max, color: '#0000ff' },
                 ],

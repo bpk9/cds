@@ -1,7 +1,7 @@
 import { memo, useId, useMemo } from 'react';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { Gradient as GradientDef } from '../gradient';
+import { Gradient } from '../gradient';
 import { Path, type PathProps } from '../Path';
 import { getGradientConfig } from '../utils';
 
@@ -61,7 +61,7 @@ export const SolidArea = memo<SolidAreaProps>(
     return (
       <>
         <defs>
-          <GradientDef
+          <Gradient
             animate={animate}
             config={gradientConfig}
             direction={gradientDirection}

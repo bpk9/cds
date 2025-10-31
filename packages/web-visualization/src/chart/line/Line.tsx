@@ -12,7 +12,7 @@ import {
   evaluateGradientAtValue,
   getGradientScale,
   getLinePath,
-  type Gradient,
+  type GradientDefinition,
 } from '../utils';
 
 import { DottedLine } from './DottedLine';
@@ -32,7 +32,7 @@ export type LineComponentProps = {
    * Color gradient configuration.
    * When provided, creates gradient-based coloring.
    */
-  gradient?: Gradient;
+  gradient?: GradientDefinition;
   /**
    * Series ID - used to retrieve gradient from series if not provided directly.
    */

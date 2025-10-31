@@ -4,7 +4,7 @@ import { LinearGradient } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { Path, type PathProps } from '../Path';
-import { applyOpacityToColor, getGradientConfig, type Gradient } from '../utils/gradient';
+import { applyOpacityToColor, getGradientConfig, type GradientDefinition } from '../utils/gradient';
 
 import { type AreaComponentProps } from './SolidArea';
 
@@ -57,7 +57,7 @@ export const GradientArea = memo<GradientAreaProps>(
     const yScale = context.getYScale(yAxisId);
     const yAxisConfig = context.getYAxis(yAxisId);
 
-    const gradient = useMemo((): Gradient | undefined => {
+    const gradient = useMemo((): GradientDefinition | undefined => {
       if (gradientProp) return gradientProp;
       if (!yAxisConfig) return;
 

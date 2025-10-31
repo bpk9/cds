@@ -227,7 +227,6 @@ describe('usePathTransition', () => {
     const { result } = renderHook(() =>
       usePathTransition({
         currentPath,
-        animate: true,
       }),
     );
 
@@ -242,32 +241,18 @@ describe('usePathTransition', () => {
       usePathTransition({
         currentPath,
         initialPath,
-        animate: true,
       }),
     );
 
     expect(result.current).toBeDefined();
   });
 
-  it('should handle animate=false', () => {
-    const currentPath = 'M0,0L10,10';
-
-    const { result } = renderHook(() =>
-      usePathTransition({
-        currentPath,
-        animate: false,
-      }),
-    );
-
-    expect(result.current).toBeDefined();
-  });
 
   it('should handle path updates', () => {
     const { result, rerender } = renderHook(
       ({ path }) =>
         usePathTransition({
           currentPath: path,
-          animate: true,
         }),
       {
         initialProps: { path: 'M0,0L10,10' },
@@ -317,7 +302,6 @@ describe('usePathTransition', () => {
       usePathTransition({
         currentPath,
         initialPath,
-        animate: true,
         transitionConfigs: {
           enter: enterConfig,
           update: updateConfig,
@@ -343,7 +327,6 @@ describe('usePathTransition', () => {
         usePathTransition({
           currentPath: path,
           initialPath: 'M0,0L0,0',
-          animate: true,
           transitionConfigs: {
             enter: enterConfig,
             update: updateConfig,
@@ -365,7 +348,6 @@ describe('usePathTransition', () => {
     const { result } = renderHook(() =>
       usePathTransition({
         currentPath: '',
-        animate: true,
       }),
     );
 
@@ -378,7 +360,6 @@ describe('usePathTransition', () => {
     const { result } = renderHook(() =>
       usePathTransition({
         currentPath: complexPath,
-        animate: true,
       }),
     );
 
@@ -393,7 +374,6 @@ describe('usePathTransition', () => {
       ({ path }) =>
         usePathTransition({
           currentPath: path,
-          animate: true,
         }),
       {
         initialProps: { path: path1 },

@@ -2,9 +2,9 @@ import { memo, type SVGProps, useId, useMemo } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { Gradient as GradientDef } from '../gradient/Gradient';
+import { Gradient } from '../gradient';
 import { Path, type PathProps } from '../Path';
-import { getGradientConfig, type Gradient } from '../utils/gradient';
+import { getGradientConfig, type GradientDefinition } from '../utils/gradient';
 
 import type { LineComponentProps } from './Line';
 
@@ -57,7 +57,7 @@ export const DottedLine = memo<DottedLineProps>(
       <>
         {gradientConfig && (
           <defs>
-            <GradientDef
+            <Gradient
               animate={animate}
               config={gradientConfig}
               direction={gradientDirection}

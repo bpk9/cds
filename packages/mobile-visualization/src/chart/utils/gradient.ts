@@ -28,7 +28,7 @@ export type GradientStop = {
 /**
  * Unified color gradient configuration for chart visualizations.
  */
-export type Gradient = {
+export type GradientDefinition = {
   /**
    * Which axis to map colors against.
    * - 'y': Map colors based on y-values (high/low values) - most common
@@ -250,15 +250,15 @@ const processGradientStops = (
 };
 
 /**
- * Processes a Gradient configuration into a gradient configuration for Skia.
+ * Processes a GradientDefinition configuration into a gradient configuration for Skia.
  * Supports both numeric scales (linear, log) and categorical scales (band).
  *
- * @param gradient - The Gradient configuration
+ * @param gradient - The GradientDefinition configuration
  * @param scale - The d3 scale to use for mapping data values to positions
  * @returns Gradient configuration with colors and positions, or null if invalid
  */
 export const processGradient = (
-  gradient: Gradient,
+  gradient: GradientDefinition,
   scale: GradientScale,
 ): ProcessedGradient | null => {
   if (!gradient) return null;
@@ -270,16 +270,16 @@ export const processGradient = (
 };
 
 /**
- * Determines the appropriate scale to use based on Gradient axis configuration.
+ * Determines the appropriate scale to use based on GradientDefinition axis configuration.
  * Gradients work with numeric scales (linear, log) and categorical scales (band).
  *
- * @param gradient - The Gradient configuration
+ * @param gradient - The GradientDefinition configuration
  * @param xScale - The x-axis scale
  * @param yScale - The y-axis scale
  * @returns The scale to use for color mapping, or undefined if not supported
  */
 export const getGradientScale = (
-  gradient: Gradient | undefined,
+  gradient: GradientDefinition | undefined,
   xScale: ChartScaleFunction | undefined,
   yScale: ChartScaleFunction | undefined,
 ): GradientScale | undefined => {
@@ -326,13 +326,13 @@ const interpolateColor = (color1: string, color2: string, t: number): string => 
  * Note: Opacity from gradient stops is ignored when evaluating colors at specific points.
  * Opacity should only be used in the gradient rendering itself (Skia LinearGradient).
  *
- * @param gradient - The Gradient configuration
+ * @param gradient - The GradientDefinition configuration
  * @param dataValue - The data value to evaluate (for band scales, this is the index)
  * @param scale - The scale to use for mapping
  * @returns The color string at this data value (rgba format), or null if invalid
  */
 export const evaluateGradientAtValue = (
-  gradient: Gradient,
+  gradient: GradientDefinition,
   dataValue: number,
   scale: GradientScale,
 ): string | null => {
@@ -414,7 +414,7 @@ export const evaluateGradientAtValue = (
  * Creates a gradient configuration for Skia components.
  * Handles gradient processing and direction calculation based on axis.
  *
- * @param gradient - Gradient configuration (required)
+ * @param gradient - GradientDefinition configuration (required)
  * @param xScale - X-axis scale (required)
  * @param yScale - Y-axis scale (required)
  * @returns GradientConfig or null if gradient processing fails
@@ -439,7 +439,7 @@ export const evaluateGradientAtValue = (
  * );
  */
 export const getGradientConfig = (
-  gradient: Gradient,
+  gradient: GradientDefinition,
   xScale: ChartScaleFunction,
   yScale: ChartScaleFunction,
 ): GradientConfig | null => {

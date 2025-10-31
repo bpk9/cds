@@ -6,7 +6,7 @@ import { Area, type AreaComponent } from '../area/Area';
 import { useCartesianChartContext } from '../ChartProvider';
 import { Point, type PointConfig, type RenderPointsParams } from '../Point';
 import { type ChartPathCurveType, getLinePath, type TransitionConfig } from '../utils';
-import { evaluateGradientAtValue, getGradientScale, type Gradient } from '../utils/gradient';
+import { evaluateGradientAtValue, getGradientScale, type GradientDefinition } from '../utils/gradient';
 
 import { DottedLine } from './DottedLine';
 import { type LineComponentProps, SolidLine } from './SolidLine';

@@ -3,7 +3,7 @@ import { scaleLinear } from 'd3-scale';
 import {
   evaluateGradientAtValue,
   getGradientScale,
-  type Gradient,
+  type GradientDefinition,
   type GradientScale,
   normalizeGradientStop,
   processGradient,
@@ -72,7 +72,7 @@ describe('gradient utilities', () => {
 
     describe('static stops', () => {
       it('should generate gradient config from stops', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000' },
             { offset: 100, color: '#00ff00' },
@@ -87,7 +87,7 @@ describe('gradient utilities', () => {
       });
 
       it('should handle CSS variables in gradient config', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: 'var(--color-fgNegative)' },
             { offset: 100, color: 'var(--color-fgPositive)' },
@@ -99,7 +99,7 @@ describe('gradient utilities', () => {
       });
 
       it('should handle custom stop positions', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000' },
             { offset: 30, color: '#ffff00' },
@@ -115,7 +115,7 @@ describe('gradient utilities', () => {
       });
 
       it('should handle opacity in gradient stops', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000', opacity: 0.5 },
             { offset: 100, color: '#00ff00' },
@@ -129,7 +129,7 @@ describe('gradient utilities', () => {
 
       it('should warn when stops are not in ascending order', () => {
         const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 100, color: '#ff0000' },
             { offset: 0, color: '#00ff00' },
@@ -144,7 +144,7 @@ describe('gradient utilities', () => {
       });
 
       it('should allow duplicate stops for hard transitions', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000' },
             { offset: 50, color: '#ff0000' },
@@ -161,7 +161,7 @@ describe('gradient utilities', () => {
 
       it('should require at least 2 stops', () => {
         const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [{ offset: 0, color: '#ff0000' }],
         };
         const result = processGradient(gradient, scale);
@@ -173,8 +173,8 @@ describe('gradient utilities', () => {
 
     describe('function form stops', () => {
       it('should process gradient with function form stops', () => {
-        const gradient: Gradient = {
-          stops: ({ min, max }) => [
+        const gradient: GradientDefinition = {
+          stops: ({ min, max }: { min: number; max: number }) => [
             { offset: min, color: '#ff0000' },
             { offset: max, color: '#00ff00' },
           ],
@@ -188,8 +188,8 @@ describe('gradient utilities', () => {
       });
 
       it('should handle function form with calculated offsets', () => {
-        const gradient: Gradient = {
-          stops: ({ min, max }) => [
+        const gradient: GradientDefinition = {
+          stops: ({ min, max }: { min: number; max: number }) => [
             { offset: min, color: '#ff0000' },
             { offset: (min + max) / 2, color: '#ffff00' },
             { offset: max, color: '#00ff00' },
@@ -204,8 +204,8 @@ describe('gradient utilities', () => {
       });
 
       it('should handle function form with opacity', () => {
-        const gradient: Gradient = {
-          stops: ({ min, max }) => [
+        const gradient: GradientDefinition = {
+          stops: ({ min, max }: { min: number; max: number }) => [
             { offset: min, color: '#ff0000', opacity: 0.3 },
             { offset: 0, color: '#ff0000', opacity: 0 },
             { offset: 0, color: '#00ff00', opacity: 0 },
@@ -225,7 +225,7 @@ describe('gradient utilities', () => {
 
     describe('static stops', () => {
       it('should return color-mix() string for continuous gradient', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000' },
             { offset: 100, color: '#00ff00' },
@@ -239,7 +239,7 @@ describe('gradient utilities', () => {
       });
 
       it('should return first color for value at start of range', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000' },
             { offset: 100, color: '#00ff00' },
@@ -249,7 +249,7 @@ describe('gradient utilities', () => {
       });
 
       it('should return last color for value at end of range', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000' },
             { offset: 100, color: '#00ff00' },
@@ -259,7 +259,7 @@ describe('gradient utilities', () => {
       });
 
       it('should work with CSS variables', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: 'var(--color-fgNegative)' },
             { offset: 100, color: 'var(--color-fgPositive)' },
@@ -272,7 +272,7 @@ describe('gradient utilities', () => {
       });
 
       it('should handle custom stop offsets', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000' },
             { offset: 30, color: '#ffff00' },
@@ -287,7 +287,7 @@ describe('gradient utilities', () => {
       });
 
       it('should ignore opacity in gradient stops (opacity only used in SVG rendering)', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000', opacity: 0.5 },
             { offset: 100, color: '#00ff00' },
@@ -302,7 +302,7 @@ describe('gradient utilities', () => {
       });
 
       it('should handle hard transitions (duplicate offsets)', () => {
-        const gradient: Gradient = {
+        const gradient: GradientDefinition = {
           stops: [
             { offset: 0, color: '#ff0000' },
             { offset: 0, color: '#00ff00' },
@@ -315,8 +315,8 @@ describe('gradient utilities', () => {
 
     describe('function form stops', () => {
       it('should evaluate function form with domain bounds', () => {
-        const gradient: Gradient = {
-          stops: ({ min, max }) => [
+        const gradient: GradientDefinition = {
+          stops: ({ min, max }: { min: number; max: number }) => [
             { offset: min, color: '#ff0000' },
             { offset: max, color: '#00ff00' },
           ],
@@ -328,8 +328,8 @@ describe('gradient utilities', () => {
       });
 
       it('should handle function form with zero crossover', () => {
-        const gradient: Gradient = {
-          stops: ({ min, max }) => [
+        const gradient: GradientDefinition = {
+          stops: ({ min, max }: { min: number; max: number }) => [
             { offset: min, color: '#ff0000', opacity: 0.3 },
             { offset: 0, color: '#ff0000', opacity: 0 },
             { offset: 0, color: '#00ff00', opacity: 0 },
@@ -353,7 +353,7 @@ describe('gradient utilities', () => {
 
     it('should return null for empty stops array', () => {
       // This shouldn't happen in practice, but test for robustness
-      const gradient: Gradient = {
+      const gradient: GradientDefinition = {
         stops: [],
       };
       expect(evaluateGradientAtValue(gradient, 50, scale)).toBeNull();
@@ -365,7 +365,7 @@ describe('gradient utilities', () => {
     const yScale = scaleLinear().domain([0, 50]).range([400, 0]);
 
     it('should return y-axis scale by default', () => {
-      const gradient: Gradient = {
+      const gradient: GradientDefinition = {
         stops: [
           { offset: 0, color: '#ff0000' },
           { offset: 100, color: '#00ff00' },
@@ -376,7 +376,7 @@ describe('gradient utilities', () => {
     });
 
     it('should return x-axis scale when axis is x', () => {
-      const gradient: Gradient = {
+      const gradient: GradientDefinition = {
         axis: 'x',
         stops: [
           { offset: 0, color: '#ff0000' },
@@ -394,7 +394,7 @@ describe('gradient utilities', () => {
 
     it('should warn when scale is not available', () => {
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      const gradient: Gradient = {
+      const gradient: GradientDefinition = {
         axis: 'x',
         stops: [
           { offset: 0, color: '#ff0000' },

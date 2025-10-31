@@ -15,7 +15,7 @@ import { useCartesianChartContext } from '../ChartProvider';
 import { Line } from '../line/Line';
 import { Point } from '../Point';
 import { Scrubber } from '../scrubber/Scrubber';
-import { type Gradient, isCategoricalScale } from '../utils';
+import { type GradientDefinition, isCategoricalScale } from '../utils';
 import { CartesianChart, DottedArea, ReferenceLine, SolidLine, type SolidLineProps } from '../';
 
 const defaultChartHeight = 250;
@@ -390,7 +390,7 @@ function TradingTrends() {
   );
 }
 
-const UVGradient: Gradient = {
+const UVGradient: GradientDefinition = {
   axis: 'y',
   stops: [
     { offset: 0, color: 'green' },

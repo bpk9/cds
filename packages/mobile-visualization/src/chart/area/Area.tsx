@@ -3,7 +3,7 @@ import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { type ChartPathCurveType, getAreaPath, type TransitionConfig } from '../utils';
-import type { Gradient } from '../utils/gradient';
+import type { GradientDefinition } from '../utils/gradient';
 
 import { DottedArea } from './DottedArea';
 import { GradientArea } from './GradientArea';
@@ -53,7 +53,7 @@ export type AreaProps = {
    * Gradient configuration.
    * When provided, creates gradient or threshold-based coloring.
    */
-  gradient?: Gradient;
+  gradient?: GradientDefinition;
   /**
    * When true, null values are skipped and the area connects across gaps.
    * When false, null values create gaps in the area.

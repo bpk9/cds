@@ -1,9 +1,9 @@
 import { memo, useId, useMemo } from 'react';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { Gradient as GradientDef } from '../gradient';
+import { Gradient } from '../gradient';
 import { Path, type PathProps } from '../Path';
-import { applyOpacityToColor, getGradientConfig, type Gradient } from '../utils';
+import { applyOpacityToColor, getGradientConfig, type GradientDefinition } from '../utils';
 
 import type { AreaComponentProps } from './Area';
 
@@ -34,7 +34,7 @@ export type GradientAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
      * When provided, overrides peakColor/baselineColor and creates a gradient-based gradient.
      * When not provided, creates an automatic diverging gradient around the baseline.
      */
-    gradient?: Gradient;
+    gradient?: GradientDefinition;
     /**
      * Series ID - used to retrieve gradient from series if not provided directly.
      */
@@ -75,7 +75,7 @@ export const GradientArea = memo<GradientAreaProps>(
     const yScale = getYScale(yAxisId);
     const yAxisConfig = getYAxis(yAxisId);
 
-    const gradient = useMemo((): Gradient | undefined => {
+    const gradient = useMemo((): GradientDefinition | undefined => {
       if (gradientProp) return gradientProp;
       if (!yAxisConfig) return;
 
@@ -146,7 +146,7 @@ export const GradientArea = memo<GradientAreaProps>(
     return (
       <>
         <defs>
-          <GradientDef
+          <Gradient
             animate={animate}
             config={gradientConfig}
             direction={gradientDirection}

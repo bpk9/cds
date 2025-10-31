@@ -585,7 +585,7 @@ export const All = () => {
               data: [12, 25, 38, 52, 45, 30, 18],
               gradient: {
                 axis: 'y',
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: 'var(--color-accentBoldGreen)' },
                   { offset: (min + max) / 2, color: 'var(--color-accentBoldYellow)' },
                   { offset: max, color: 'var(--color-accentBoldRed)' },
@@ -701,7 +701,7 @@ export const All = () => {
               data: [20, 30, 25, 35, 28, 32, 27],
               gradient: {
                 axis: 'y',
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: '#3b82f6' },
                   { offset: max, color: '#8b5cf6' },
                 ],
@@ -712,7 +712,7 @@ export const All = () => {
               data: [15, 25, 20, 30, 22, 28, 23],
               gradient: {
                 axis: 'y',
-                stops: ({ min, max }) => [
+                stops: ({ min, max }: { min: number; max: number }) => [
                   { offset: min, color: '#10b981' },
                   { offset: max, color: '#059669' },
                 ],

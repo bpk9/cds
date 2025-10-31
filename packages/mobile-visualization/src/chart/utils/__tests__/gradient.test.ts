@@ -1,7 +1,7 @@
 import {
   evaluateGradientAtValue,
   getGradientScale,
-  type Gradient,
+  type GradientDefinition,
   normalizeGradientStop,
   parseColor,
   processGradient,
@@ -142,7 +142,7 @@ describe('getGradientScale', () => {
       range: { min: 0, max: 400 },
     });
 
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       axis: 'x',
       stops: [
         { offset: 0, color: 'red' },
@@ -165,7 +165,7 @@ describe('getGradientScale', () => {
       range: { min: 0, max: 400 },
     });
 
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       axis: 'x',
       stops: [
         { offset: 0, color: 'red' },
@@ -178,7 +178,7 @@ describe('getGradientScale', () => {
   });
 
   it('should return undefined for missing scale', () => {
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       axis: 'x',
       stops: [
         { offset: 0, color: 'red' },
@@ -198,7 +198,7 @@ describe('processGradient with band scale', () => {
       range: { min: 0, max: 200 },
     });
 
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       stops: [
         { offset: 0, color: 'red' },
         { offset: 6, color: 'blue' },
@@ -219,7 +219,7 @@ describe('evaluateGradientAtValue with band scale', () => {
       range: { min: 0, max: 200 },
     });
 
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       stops: [
         { offset: 0, color: 'red' },
         { offset: 6, color: 'blue' },
@@ -248,7 +248,7 @@ describe('evaluateGradientAtValue includeAlpha parameter', () => {
   });
 
   it('should exclude alpha by default (includeAlpha = false)', () => {
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       stops: [
         { offset: 0, color: 'red', opacity: 0.5 },
         { offset: 100, color: 'blue', opacity: 0.3 },
@@ -262,7 +262,7 @@ describe('evaluateGradientAtValue includeAlpha parameter', () => {
   });
 
   it('should ignore opacity values from stops', () => {
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       stops: [
         { offset: 0, color: 'red', opacity: 0.5 },
         { offset: 100, color: 'blue', opacity: 0.5 },
@@ -276,7 +276,7 @@ describe('evaluateGradientAtValue includeAlpha parameter', () => {
   });
 
   it('should handle string colors and always return full opacity', () => {
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       stops: [
         { offset: 0, color: 'red' },
         { offset: 100, color: 'blue' },
@@ -290,7 +290,7 @@ describe('evaluateGradientAtValue includeAlpha parameter', () => {
   });
 
   it('should handle string colors (no opacity specified) with includeAlpha = true', () => {
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       stops: [
         { offset: 0, color: 'red' },
         { offset: 100, color: 'blue' },
@@ -312,7 +312,7 @@ describe('processGradient with numeric scale', () => {
       range: { min: 0, max: 400 },
     });
 
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       stops: [
         { offset: 0, color: 'red' },
         { offset: 50, color: 'yellow' },
@@ -333,7 +333,7 @@ describe('processGradient with numeric scale', () => {
       range: { min: 0, max: 400 },
     });
 
-    const gradient: Gradient = {
+    const gradient: GradientDefinition = {
       stops: [
         { offset: 0, color: 'red' },
         { offset: 30, color: 'yellow' },
@@ -353,8 +353,8 @@ describe('processGradient with numeric scale', () => {
       range: { min: 0, max: 400 },
     });
 
-    const gradient: Gradient = {
-      stops: ({ min, max }) => [
+    const gradient: GradientDefinition = {
+      stops: ({ min, max }: { min: number; max: number }) => [
         { offset: min, color: 'red' },
         { offset: max, color: 'green' },
       ],

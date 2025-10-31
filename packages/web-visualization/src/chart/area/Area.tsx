@@ -3,7 +3,7 @@ import type { SVGProps } from 'react';
 import type { Transition } from 'framer-motion';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { type ChartPathCurveType, getAreaPath, type Gradient } from '../utils';
+import { type ChartPathCurveType, getAreaPath, type GradientDefinition } from '../utils';
 
 import { DottedArea } from './DottedArea';
 import { GradientArea } from './GradientArea';
@@ -34,7 +34,7 @@ export type AreaComponentProps = {
    * Color gradient configuration.
    * When provided, creates gradient-based coloring.
    */
-  gradient?: Gradient;
+  gradient?: GradientDefinition;
   /**
    * Transition configurations for path animations.
    */
@@ -78,7 +78,7 @@ export type AreaProps = Pick<
    * Color gradient configuration.
    * When provided, overrides the series gradient and creates gradient-based coloring.
    */
-  gradient?: Gradient;
+  gradient?: GradientDefinition;
 };
 
 export const Area = memo<AreaProps>(

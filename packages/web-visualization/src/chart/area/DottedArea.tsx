@@ -1,9 +1,9 @@
 import { memo, useId, useMemo } from 'react';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { Gradient as GradientDef } from '../gradient';
+import { Gradient } from '../gradient';
 import { Path, type PathProps } from '../Path';
-import { getGradientConfig, type Gradient } from '../utils/gradient';
+import { getGradientConfig, type GradientDefinition } from '../utils/gradient';
 
 import type { AreaComponentProps } from './Area';
 
@@ -107,7 +107,7 @@ export const DottedArea = memo<DottedAreaProps>(
     const { drawingArea } = context;
 
     // Auto-generate gradient if not provided
-    const gradient = useMemo((): Gradient | undefined => {
+    const gradient = useMemo((): GradientDefinition | undefined => {
       if (gradientProp) return gradientProp;
       if (targetSeries?.gradient) return targetSeries.gradient;
       if (!yAxisConfig) return;
@@ -212,7 +212,7 @@ export const DottedArea = memo<DottedAreaProps>(
               transitionConfigs={transitionConfigs}
             />
           </mask>
-          <GradientDef
+          <Gradient
             animate={animate}
             config={gradientConfig}
             direction={gradientDirection}

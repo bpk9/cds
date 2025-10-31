@@ -5,7 +5,7 @@ import { LinearGradient } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { Path, type PathProps } from '../Path';
-import { getGradientConfig, type Gradient } from '../utils/gradient';
+import { getGradientConfig, type GradientDefinition } from '../utils/gradient';
 import { type TransitionConfig } from '../utils/transition';
 
 /**
@@ -32,7 +32,7 @@ export type LineComponentProps = {
    * Color mapping configuration.
    * When provided, creates gradient or threshold-based coloring.
    */
-  gradient?: Gradient;
+  gradient?: GradientDefinition;
   /**
    * Whether to animate the line.
    * Overrides the animate value from the chart context.

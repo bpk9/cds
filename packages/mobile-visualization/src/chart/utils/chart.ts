@@ -1,6 +1,6 @@
 import { stack as d3Stack, stackOffsetDiverging, stackOrderNone } from 'd3-shape';
 
-import type { Gradient } from './gradient';
+import type { GradientDefinition } from './gradient';
 
 export const defaultStackId = 'DEFAULT_STACK_ID';
 
@@ -53,7 +53,7 @@ export type Series = {
    *   ]
    * }
    */
-  gradient?: Gradient;
+  gradient?: GradientDefinition;
   /**
    * The ID of the y-axis this series uses.
    * Defaults to defaultAxisId if not specified.

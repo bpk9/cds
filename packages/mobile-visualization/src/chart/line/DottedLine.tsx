@@ -13,6 +13,15 @@ export type DottedLineProps = SharedProps &
   Omit<PathProps, 'fill' | 'strokeWidth' | 'd'> &
   LineComponentProps & {
     fill?: string;
+    /**
+     * Stroke dash array for the dotted pattern.
+     * @default '0 4'
+     */
+    strokeDasharray?: string;
+    /**
+     * Vector effect (not used on mobile, for compatibility).
+     */
+    vectorEffect?: string;
   };
 
 /**
@@ -52,7 +61,7 @@ export const DottedLine = memo<DottedLineProps>(
     // todo: change the prop to be this array instead
     const dashIntervals = useMemo(() => {
       if (!strokeDasharray) return [0, 4]; // default
-      return strokeDasharray.split(/[\s,]+/).map((v) => parseFloat(v));
+      return strokeDasharray.split(/[\s,]+/).map((v: string) => parseFloat(v));
     }, [strokeDasharray]);
 
     return (

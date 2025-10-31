@@ -15,7 +15,7 @@ import { useCartesianChartContext } from '../ChartProvider';
 import { ReferenceLine, SolidLine, type SolidLineProps } from '../line';
 import { Line } from '../line/Line';
 import { LineChart } from '../line/LineChart';
-import { type Gradient, isCategoricalScale } from '../utils';
+import { type GradientDefinition, isCategoricalScale } from '../utils';
 import {
   BarPlot,
   CartesianChart,
@@ -588,7 +588,7 @@ export const Miscellaneous = () => {
   );
 };
 
-const UVGradient: Gradient = {
+const UVGradient: GradientDefinition = {
   axis: 'y',
   stops: [
     { offset: 0, color: 'green' },

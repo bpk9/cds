@@ -2,7 +2,7 @@ import { memo, type SVGProps, useId, useMemo } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { Gradient as GradientDef } from '../gradient/Gradient';
+import { Gradient } from '../gradient';
 import { Path, type PathProps } from '../Path';
 import { getGradientConfig } from '../utils/gradient';
 
@@ -55,7 +55,7 @@ export const SolidLine = memo<SolidLineProps>(
       <>
         {gradientConfig && (
           <defs>
-            <GradientDef
+            <Gradient
               animate={animate}
               config={gradientConfig}
               direction={gradientDirection}

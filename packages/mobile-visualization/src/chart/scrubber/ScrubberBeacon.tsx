@@ -13,7 +13,7 @@ import { Circle, Group } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { projectPoint, useScrubberContext } from '../utils';
-import { evaluateGradientAtValue, type Gradient } from '../utils/gradient';
+import { evaluateGradientAtValue, type GradientDefinition } from '../utils/gradient';
 import { buildTransition, defaultTransition, type TransitionConfig } from '../utils/transition';
 
 const radius = 5;
@@ -57,7 +57,7 @@ export type ScrubberBeaconProps = SharedProps & {
    * Gradient configuration.
    * When provided, the beacon color is evaluated based on the data value.
    */
-  gradient?: Gradient;
+  gradient?: GradientDefinition;
   /**
    * Opacity of the beacon.
    * @default 1
