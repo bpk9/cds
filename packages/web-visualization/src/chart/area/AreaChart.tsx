@@ -17,7 +17,14 @@ export type AreaSeries = Series &
   Partial<
     Pick<AreaProps, 'AreaComponent' | 'curve' | 'fillOpacity' | 'type' | 'fill' | 'connectNulls'>
   > &
-  Partial<Pick<LineProps, 'LineComponent' | 'strokeWidth' | 'stroke' | 'opacity'>>;
+  Partial<Pick<LineProps, 'LineComponent' | 'strokeWidth' | 'stroke' | 'opacity'>> & {
+    /**
+     * The type of line to render for this series.
+     * Overrides the chart-level lineType if provided.
+     * @default 'solid'
+     */
+    lineType?: 'solid' | 'dotted';
+  };
 
 export type AreaChartProps = Omit<CartesianChartProps, 'xAxis' | 'yAxis' | 'series'> &
   Pick<AreaProps, 'AreaComponent' | 'curve' | 'fillOpacity' | 'type' | 'connectNulls'> &
@@ -53,7 +60,7 @@ export type AreaChartProps = Omit<CartesianChartProps, 'xAxis' | 'yAxis' | 'seri
      * The type of line to render.
      * @default 'solid'
      */
-    lineType?: 'solid' | 'dotted' | 'gradient';
+    lineType?: 'solid' | 'dotted';
 
     xAxis?: Partial<AxisConfigProps> & XAxisProps;
     yAxis?: Partial<AxisConfigProps> & YAxisProps;
@@ -207,6 +214,8 @@ export const AreaChart = memo(
                 fill,
                 fillOpacity,
                 stackId,
+                type, // Area type (don't pass to Line)
+                lineType: seriesLineType,
                 ...linePropsFromSeries
               }) => {
                 return (
@@ -217,7 +226,7 @@ export const AreaChart = memo(
                     curve={curve}
                     seriesId={id}
                     strokeWidth={strokeWidth}
-                    type={lineType}
+                    type={seriesLineType ?? lineType}
                     {...linePropsFromSeries}
                   />
                 );

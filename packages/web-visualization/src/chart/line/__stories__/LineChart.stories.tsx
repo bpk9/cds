@@ -1286,7 +1286,7 @@ const GainLossChart = () => {
         curve="monotone"
         seriesId="prices"
         strokeWidth={3}
-        type="gradient"
+        type="solid"
       />
       <Scrubber hideOverlay />
     </CartesianChart>
@@ -1709,7 +1709,7 @@ export const ColorMapStories = () => {
             {
               id: 'line',
               data: [10, 25, 15, 35, 20, 40, 30, 45],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: 'var(--color-fgNegative)' },
@@ -1743,7 +1743,7 @@ export const ColorMapStories = () => {
             {
               id: 'line',
               data: [5, 10, 15, 16.75, 17, 20, 25, 35, 45, 25, 15, 35],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: [
                   { offset: 0, color: '#ef4444' },
@@ -1778,7 +1778,7 @@ export const ColorMapStories = () => {
             {
               id: 'line',
               data: [10, 20, 30, 40, 50, 60, 70, 80],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: [
                   { offset: 10, color: '#3b82f6' },
@@ -1810,7 +1810,7 @@ export const ColorMapStories = () => {
             {
               id: 'line',
               data: [10, 30, 20, 40, 35, 50, 45, 60],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: 'var(--color-fgNegative)', opacity: 0.8 },
@@ -1841,7 +1841,7 @@ export const ColorMapStories = () => {
             {
               id: 'series1',
               data: [20, 35, 25, 45, 30, 50, 40, 55],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: '#ef4444' },
@@ -1852,7 +1852,7 @@ export const ColorMapStories = () => {
             {
               id: 'series2',
               data: [10, 25, 15, 35, 20, 40, 30, 45],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: '#3b82f6' },
@@ -1883,7 +1883,7 @@ export const ColorMapStories = () => {
             {
               id: 'line',
               data: [10, 25, 15, 35, 20, 40, 30, 45],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: '#ff0000' },
@@ -1914,7 +1914,7 @@ export const ColorMapStories = () => {
             {
               id: 'line',
               data: [-40, -28, -21, -5, 8, 15, 25, 35],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: 'var(--color-fgNegative)', opacity: 0.25 },
@@ -2100,7 +2100,7 @@ export const All = () => {
             {
               id: 'line',
               data: [10, 25, 15, 35, 20, 40, 30, 45],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: 'var(--color-fgNegative)' },
@@ -2123,7 +2123,7 @@ export const All = () => {
             {
               id: 'line',
               data: [5, 10, 15, 25, 35, 45, 25, 15, 35],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: [
                   { offset: 0, color: '#ef4444' },
@@ -2150,7 +2150,7 @@ export const All = () => {
             {
               id: 'line',
               data: [10, 20, 30, 40, 50, 60, 70, 80],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: [
                   { offset: 10, color: '#3b82f6' },
@@ -2175,7 +2175,7 @@ export const All = () => {
             {
               id: 'line',
               data: [10, 30, 20, 40, 35, 50, 45, 60],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: 'var(--color-fgNegative)', opacity: 0.8 },
@@ -2198,7 +2198,7 @@ export const All = () => {
             {
               id: 'series1',
               data: [20, 35, 25, 45, 30, 50, 40, 55],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: '#ef4444' },
@@ -2209,7 +2209,7 @@ export const All = () => {
             {
               id: 'series2',
               data: [10, 25, 15, 35, 20, 40, 30, 45],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: '#3b82f6' },
@@ -2232,7 +2232,7 @@ export const All = () => {
             {
               id: 'line',
               data: [10, 25, 15, 35, 20, 40, 30, 45],
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: ({ min, max }) => [
                   { offset: min, color: '#ff0000' },

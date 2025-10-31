@@ -5,45 +5,15 @@ import { DashPathEffect, LinearGradient, Path as SkiaPath } from '@shopify/react
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { type PathProps } from '../Path';
-import { getGradientConfig, type Gradient } from '../utils/gradient';
-import { defaultTransition, type TransitionConfig, usePathTransition } from '../utils/transition';
+import { getGradientConfig } from '../utils/gradient';
+import { usePathTransition } from '../utils/transition';
+
+import { type LineComponentProps } from './SolidLine';
 
 export type DottedLineProps = SharedProps &
-  Omit<PathProps, 'fill' | 'strokeWidth' | 'd'> & {
+  Omit<PathProps, 'fill' | 'strokeWidth' | 'd'> &
+  LineComponentProps & {
     fill?: string;
-    strokeWidth?: number;
-    /**
-     * Gradient configuration.
-     * When provided, creates gradient or threshold-based coloring.
-     */
-    gradient?: Gradient;
-    /**
-     * Series ID - used to retrieve gradient scale from context.
-     */
-    seriesId?: string;
-    /**
-     * ID of the y-axis to use.
-     */
-    yAxisId?: string;
-    d?: string;
-    /**
-     * Whether to animate the line.
-     * Overrides the animate value from the chart context.
-     */
-    animate?: boolean;
-    /**
-     * Transition configuration for path transitions.
-     * Allows customization of animation type, timing, and springs.
-     *
-     * @example
-     * // Simple timing animation
-     * transitionConfig={{ type: 'timing', duration: 500 }}
-     *
-     * @example
-     * // Spring animation
-     * transitionConfig={{ type: 'spring', damping: 15, stiffness: 100 }}
-     */
-    transitionConfig?: TransitionConfig;
   };
 
 /**
@@ -65,7 +35,7 @@ export const DottedLine = memo<DottedLineProps>(
     yAxisId,
     d,
     animate: animateProp,
-    transitionConfig = defaultTransition,
+    transitionConfig,
     ...props
   }) => {
     const theme = useTheme();
@@ -94,7 +64,7 @@ export const DottedLine = memo<DottedLineProps>(
     const path = usePathTransition({
       currentPath,
       animate: shouldAnimate,
-      transitionConfig,
+      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
     });
 
     return (

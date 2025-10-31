@@ -53,13 +53,18 @@ export type BarStackComponentProps = {
    */
   yOrigin?: number;
   /**
-   * Transition configuration for stack clip path transitions.
+   * Transition configurations for different animation phases.
    */
-  transitionConfig?: TransitionConfig;
-  /**
-   * Transition configuration specifically for the initial render.
-   */
-  initialTransitionConfig?: TransitionConfig;
+  transitionConfigs?: {
+    /**
+     * Transition used when the bar stack first enters/mounts.
+     */
+    enter?: TransitionConfig;
+    /**
+     * Transition used when the bar stack morphs to new data.
+     */
+    update?: TransitionConfig;
+  };
 };
 
 export type BarStackComponent = React.FC<BarStackComponentProps>;
@@ -694,10 +699,16 @@ export const BarStack = memo<BarStackProps>(
         borderRadius={borderRadius}
         categoryIndex={categoryIndex}
         height={stackRect.height}
-        initialTransitionConfig={transitionConfig?.initial}
         roundBottom={stackRoundBottom}
         roundTop={stackRoundTop}
-        transitionConfig={transitionConfig?.update}
+        transitionConfigs={
+          transitionConfig
+            ? {
+                enter: transitionConfig.initial,
+                update: transitionConfig.update,
+              }
+            : undefined
+        }
         width={stackRect.width}
         x={stackRect.x}
         y={stackRect.y}

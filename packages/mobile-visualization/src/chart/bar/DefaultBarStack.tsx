@@ -3,11 +3,33 @@ import { Group } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { getBarPath } from '../utils';
-import { defaultTransition, usePathTransition } from '../utils/transition';
+import { type TransitionConfig, usePathTransition } from '../utils/transition';
 
 import type { BarStackComponentProps } from './BarStack';
 
-export type DefaultBarStackProps = BarStackComponentProps;
+export type DefaultBarStackProps = BarStackComponentProps & {
+  /**
+   * Transition configurations for different animation phases.
+   * Allows customization of animation type, timing, and springs.
+   *
+   * @example
+   * // Different enter and update animations
+   * transitionConfigs={{
+   *   enter: { type: 'timing', duration: 1000 },
+   *   update: { type: 'timing', duration: 300 }
+   * }}
+   */
+  transitionConfigs?: {
+    /**
+     * Transition used when the bar stack first enters/mounts.
+     */
+    enter?: TransitionConfig;
+    /**
+     * Transition used when the bar stack morphs to new data.
+     */
+    update?: TransitionConfig;
+  };
+};
 
 /**
  * Default stack component that renders children in a group with animated clip path.
@@ -23,8 +45,7 @@ export const DefaultBarStack = memo<DefaultBarStackProps>(
     roundTop = true,
     roundBottom = true,
     yOrigin,
-    transitionConfig = defaultTransition,
-    initialTransitionConfig,
+    transitionConfigs,
   }) => {
     const { animate } = useCartesianChartContext();
 
@@ -43,8 +64,7 @@ export const DefaultBarStack = memo<DefaultBarStackProps>(
       currentPath: targetPath,
       initialPath,
       animate,
-      transitionConfig,
-      initialTransitionConfig,
+      transitionConfigs,
     });
 
     return <Group clip={clipPath}>{children}</Group>;

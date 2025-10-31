@@ -485,11 +485,11 @@ const UVIndexChart = () => {
       ]}
     >
       <PreviousData clipOffset={8} currentHour={currentHour}>
-        <Area fillOpacity={0.25} seriesId="uv" type="gradient" />
+        <Area fillOpacity={0.25} seriesId="uv" type="solid" />
         <Line seriesId="uv" strokeWidth={8} type="dotted" />
       </PreviousData>
       <FutureData clipOffset={8} currentHour={currentHour}>
-        <Area fillOpacity={0.5} seriesId="uv" type="gradient" />
+        <Area fillOpacity={0.5} seriesId="uv" type="solid" />
         <Line seriesId="uv" strokeWidth={8} type="solid" />
       </FutureData>
       <ReferenceLine

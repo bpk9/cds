@@ -4,7 +4,7 @@ import type { SharedProps } from '@coinbase/cds-common/types';
 import { useCartesianChartContext } from '../ChartProvider';
 import { Gradient as GradientDef } from '../gradient/Gradient';
 import { Path, type PathProps } from '../Path';
-import { getGradientConfig, type Gradient } from '../utils/gradient';
+import { getGradientConfig } from '../utils/gradient';
 
 import type { LineComponentProps } from './Line';
 

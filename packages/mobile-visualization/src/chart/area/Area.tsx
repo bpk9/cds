@@ -1,5 +1,4 @@
 import React, { memo, useMemo } from 'react';
-import type { Rect } from '@coinbase/cds-common/types';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 
 import { useCartesianChartContext } from '../ChartProvider';
@@ -8,46 +7,9 @@ import type { Gradient } from '../utils/gradient';
 
 import { DottedArea } from './DottedArea';
 import { GradientArea } from './GradientArea';
-import { SolidArea } from './SolidArea';
+import { type AreaComponentProps, SolidArea } from './SolidArea';
 
-export type AreaComponentProps = {
-  d: string;
-  fill: string;
-  fillOpacity?: number;
-  clipRect?: Rect;
-  stroke?: string;
-  strokeWidth?: number;
-  /**
-   * Series ID - used to retrieve colorMap scale from context.
-   */
-  seriesId?: string;
-  /**
-   * ID of the y-axis to use.
-   * If not provided, defaults to the default y-axis.
-   */
-  yAxisId?: string;
-  /**
-   * Baseline value for the gradient.
-   * When set, overrides the default baseline.
-   */
-  baseline?: number;
-  /**
-   * Gradient configuration.
-   * When provided, creates gradient or threshold-based coloring.
-   */
-  gradient?: Gradient;
-  /**
-   * Whether to animate the area.
-   * Overrides the animate value from the chart context.
-   */
-  animate?: boolean;
-  /**
-   * Transition configuration for area animations.
-   * Defines how the area transitions when data changes.
-   */
-  transitionConfig?: TransitionConfig;
-};
-
+export type { AreaComponentProps } from './SolidArea';
 export type AreaComponent = React.FC<AreaComponentProps>;
 
 export type AreaProps = {

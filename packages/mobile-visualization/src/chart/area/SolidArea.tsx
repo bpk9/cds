@@ -1,30 +1,64 @@
 import { memo, useMemo } from 'react';
+import type { Rect } from '@coinbase/cds-common/types';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { LinearGradient, Path as SkiaPath } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { type PathProps } from '../Path';
-import { getGradientConfig } from '../utils/gradient';
-import { defaultTransition, type TransitionConfig, usePathTransition } from '../utils/transition';
+import { getGradientConfig, type Gradient } from '../utils/gradient';
+import { type TransitionConfig, usePathTransition } from '../utils/transition';
 
-import type { AreaComponentProps } from './Area';
+/**
+ * Shared props for area component implementations.
+ * Used by SolidArea, DottedArea, GradientArea, and other area variants.
+ */
+export type AreaComponentProps = {
+  d: string;
+  fill: string;
+  fillOpacity?: number;
+  clipRect?: Rect;
+  stroke?: string;
+  strokeWidth?: number;
+  /**
+   * Series ID - used to retrieve colorMap scale from context.
+   */
+  seriesId?: string;
+  /**
+   * ID of the y-axis to use.
+   * If not provided, defaults to the default y-axis.
+   */
+  yAxisId?: string;
+  /**
+   * Baseline value for the gradient.
+   * When set, overrides the default baseline.
+   */
+  baseline?: number;
+  /**
+   * Gradient configuration.
+   * When provided, creates gradient or threshold-based coloring.
+   */
+  gradient?: Gradient;
+  /**
+   * Whether to animate the area.
+   * Overrides the animate value from the chart context.
+   */
+  animate?: boolean;
+  /**
+   * Transition configuration for area animations.
+   * Defines how the area transitions when data changes.
+   *
+   * @example
+   * // Spring animation
+   * transitionConfig={{ type: 'spring', damping: 10, stiffness: 100 }}
+   *
+   * @example
+   * // Timing animation
+   * transitionConfig={{ type: 'timing', duration: 500 }}
+   */
+  transitionConfig?: TransitionConfig;
+};
 
-export type SolidAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
-  AreaComponentProps & {
-    /**
-     * Transition configuration for area transitions.
-     * Allows customization of animation type, timing, and springs.
-     *
-     * @example
-     * // Spring animation
-     * transitionConfig={{ type: 'spring', damping: 10, stiffness: 100 }}
-     *
-     * @example
-     * // Timing animation
-     * transitionConfig={{ type: 'timing', duration: 500 }}
-     */
-    transitionConfig?: TransitionConfig;
-  };
+export type SolidAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> & AreaComponentProps;
 
 /**
  * A customizable solid area component which uses Path.
@@ -41,7 +75,7 @@ export const SolidArea = memo<SolidAreaProps>(
     seriesId,
     yAxisId,
     animate: animateProp,
-    transitionConfig = defaultTransition,
+    transitionConfig,
     ...props
   }) => {
     const context = useCartesianChartContext();
@@ -70,7 +104,7 @@ export const SolidArea = memo<SolidAreaProps>(
     const path = usePathTransition({
       currentPath,
       animate: shouldAnimate,
-      transitionConfig,
+      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
     });
 
     return (

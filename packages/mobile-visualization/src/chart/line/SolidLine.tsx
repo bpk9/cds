@@ -6,44 +6,57 @@ import { LinearGradient, Path as SkiaPath } from '@shopify/react-native-skia';
 import { useCartesianChartContext } from '../ChartProvider';
 import { type PathProps } from '../Path';
 import { getGradientConfig, type Gradient } from '../utils/gradient';
-import { defaultTransition, type TransitionConfig, usePathTransition } from '../utils/transition';
+import { type TransitionConfig, usePathTransition } from '../utils/transition';
+
+/**
+ * Shared props for line component implementations.
+ * Used by SolidLine, DottedLine, and other line variants.
+ */
+export type LineComponentProps = {
+  d: string;
+  stroke: string;
+  strokeOpacity?: number;
+  strokeWidth?: number;
+  testID?: string;
+  clipPath?: string;
+  /**
+   * Series ID - used to retrieve gradient scale from context.
+   */
+  seriesId?: string;
+  /**
+   * ID of the y-axis to use.
+   * Required for components that need to map data values to pixel positions.
+   */
+  yAxisId?: string;
+  /**
+   * Color mapping configuration.
+   * When provided, creates gradient or threshold-based coloring.
+   */
+  gradient?: Gradient;
+  /**
+   * Whether to animate the line.
+   * Overrides the animate value from the chart context.
+   */
+  animate?: boolean;
+  /**
+   * Transition configuration for line animations.
+   * Defines how the line transitions when data changes.
+   *
+   * @example
+   * // Simple spring animation
+   * transitionConfig={{ type: 'spring', damping: 10, stiffness: 100 }}
+   *
+   * @example
+   * // Timing animation
+   * transitionConfig={{ type: 'timing', duration: 500 }}
+   */
+  transitionConfig?: TransitionConfig;
+};
 
 export type SolidLineProps = SharedProps &
-  Omit<PathProps, 'fill' | 'strokeWidth' | 'd'> & {
+  Omit<PathProps, 'fill' | 'strokeWidth' | 'd'> &
+  LineComponentProps & {
     fill?: string;
-    strokeWidth?: number;
-    /**
-     * Gradient configuration.
-     * When provided, creates gradient or threshold-based coloring.
-     */
-    gradient?: Gradient;
-    /**
-     * Series ID - used to retrieve gradient scale from context.
-     */
-    seriesId?: string;
-    /**
-     * ID of the y-axis to use.
-     */
-    yAxisId?: string;
-    d?: string;
-    /**
-     * Whether to animate the line.
-     * Overrides the animate value from the chart context.
-     */
-    animate?: boolean;
-    /**
-     * Animation configuration for path transitions.
-     * Allows customization of animation type, timing, and springs.
-     *
-     * @example
-     * // Simple spring animation
-     * transitionConfig={{ type: 'spring', damping: 10, stiffness: 100 }}
-     *
-     * @example
-     * // Timing animation
-     * transitionConfig={{ type: 'timing', duration: 500 }}
-     */
-    transitionConfig?: TransitionConfig;
   };
 
 /**
@@ -63,7 +76,7 @@ export const SolidLine = memo<SolidLineProps>(
     yAxisId,
     d,
     animate: animateProp,
-    transitionConfig = defaultTransition,
+    transitionConfig,
     ...props
   }) => {
     const theme = useTheme();
@@ -85,7 +98,7 @@ export const SolidLine = memo<SolidLineProps>(
     const path = usePathTransition({
       currentPath,
       animate: shouldAnimate,
-      transitionConfig,
+      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
     });
 
     return (

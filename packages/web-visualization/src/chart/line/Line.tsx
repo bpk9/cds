@@ -60,7 +60,7 @@ export type LineProps = SharedProps & {
    * The type of line to render.
    * @default 'solid'
    */
-  type?: 'solid' | 'dotted' | 'gradient';
+  type?: 'solid' | 'dotted';
   /**
    * Handler for when a dot is clicked.
    * Automatically makes dots appear pressable when provided.
@@ -227,7 +227,6 @@ export const Line = memo<LineProps>(
       switch (type) {
         case 'dotted':
           return DottedLine;
-        case 'gradient':
         case 'solid':
         default:
           return SolidLine;

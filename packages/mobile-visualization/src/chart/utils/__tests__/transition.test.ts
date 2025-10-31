@@ -294,21 +294,21 @@ describe('usePathTransition', () => {
     const { result } = renderHook(() =>
       usePathTransition({
         currentPath,
-        transitionConfig,
+        transitionConfigs: { update: transitionConfig },
       }),
     );
 
     expect(result.current).toBeDefined();
   });
 
-  it('should use initialTransitionConfig for first animation', () => {
+  it('should use enter config for first animation', () => {
     const currentPath = 'M0,0L20,20';
     const initialPath = 'M0,0L0,0';
-    const transitionConfig = {
+    const updateConfig = {
       type: 'timing' as const,
       duration: 300,
     };
-    const initialTransitionConfig = {
+    const enterConfig = {
       type: 'timing' as const,
       duration: 1000,
     };
@@ -318,20 +318,22 @@ describe('usePathTransition', () => {
         currentPath,
         initialPath,
         animate: true,
-        transitionConfig,
-        initialTransitionConfig,
+        transitionConfigs: {
+          enter: enterConfig,
+          update: updateConfig,
+        },
       }),
     );
 
     expect(result.current).toBeDefined();
   });
 
-  it('should switch to regular config after first animation', () => {
-    const initialTransitionConfig = {
+  it('should switch to update config after first animation', () => {
+    const enterConfig = {
       type: 'timing' as const,
       duration: 1000,
     };
-    const transitionConfig = {
+    const updateConfig = {
       type: 'timing' as const,
       duration: 300,
     };
@@ -342,8 +344,10 @@ describe('usePathTransition', () => {
           currentPath: path,
           initialPath: 'M0,0L0,0',
           animate: true,
-          transitionConfig,
-          initialTransitionConfig,
+          transitionConfigs: {
+            enter: enterConfig,
+            update: updateConfig,
+          },
         }),
       {
         initialProps: { path: 'M0,0L10,10' },
@@ -352,7 +356,7 @@ describe('usePathTransition', () => {
 
     expect(result.current).toBeDefined();
 
-    // Second render should use regular config, not initial
+    // Second render should use update config, not enter
     rerender({ path: 'M0,0L20,20' });
     expect(result.current).toBeDefined();
   });

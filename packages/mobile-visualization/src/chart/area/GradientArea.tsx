@@ -5,24 +5,12 @@ import { LinearGradient, Path as SkiaPath } from '@shopify/react-native-skia';
 import { useCartesianChartContext } from '../ChartProvider';
 import { type PathProps } from '../Path';
 import { applyOpacityToColor, getGradientConfig, type Gradient } from '../utils/gradient';
-import { defaultTransition, type TransitionConfig, usePathTransition } from '../utils/transition';
+import { usePathTransition } from '../utils/transition';
 
-import type { AreaComponentProps } from './Area';
+import { type AreaComponentProps } from './SolidArea';
 
 export type GradientAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
   AreaComponentProps & {
-    /**
-     * Color gradient configuration.
-     * Supports smooth gradient transitions.
-     * @example
-     * gradient={{
-     *   stops: [
-     *     { offset: 0, color: 'green', opacity: 0.4 },
-     *     { offset: 100, color: 'green', opacity: 0 }
-     *   ]
-     * }}
-     */
-    gradient?: Gradient;
     /**
      * Opacity at peak values.
      * @default 0.3
@@ -33,19 +21,6 @@ export type GradientAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
      * @default 0
      */
     baselineOpacity?: number;
-    /**
-     * Transition configuration for area transitions.
-     * Allows customization of animation type, timing, and springs.
-     *
-     * @example
-     * // Spring animation
-     * transitionConfig={{ type: 'spring', damping: 10, stiffness: 100 }}
-     *
-     * @example
-     * // Timing animation
-     * transitionConfig={{ type: 'timing', duration: 500 }}
-     */
-    transitionConfig?: TransitionConfig;
   };
 
 /**
@@ -71,7 +46,7 @@ export const GradientArea = memo<GradientAreaProps>(
     yAxisId,
     clipRect,
     animate: animateProp,
-    transitionConfig = defaultTransition,
+    transitionConfig,
     ...pathProps
   }) => {
     const context = useCartesianChartContext();
@@ -142,7 +117,7 @@ export const GradientArea = memo<GradientAreaProps>(
     const path = usePathTransition({
       currentPath,
       animate: shouldAnimate,
-      transitionConfig,
+      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
     });
 
     if (!gradientConfig) return null;

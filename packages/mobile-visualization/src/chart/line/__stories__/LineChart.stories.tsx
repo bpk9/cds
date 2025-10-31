@@ -959,7 +959,7 @@ function AnimatedGainLossChart() {
             curve="monotone"
             seriesId="prices"
             strokeWidth={3}
-            type="gradient"
+            type="solid"
           />
           <Scrubber hideOverlay />
         </CartesianChart>
@@ -1465,7 +1465,7 @@ const GainLossChart = () => {
       ]}
     >
       <YAxis showGrid requestedTickCount={2} tickLabelFormatter={tickLabelFormatter} />
-      <Line curve="monotone" seriesId="prices" strokeWidth={3} type="gradient" />
+      <Line curve="monotone" seriesId="prices" strokeWidth={3} type="solid" />
       <Scrubber hideOverlay />
       <TextComponent />
     </CartesianChart>
@@ -2064,7 +2064,7 @@ const AvailabilityChart = () => {
         position="left"
         tickLabelFormatter={(value) => `${value}%`}
       />
-      <Line curve="stepAfter" renderPoints={() => true} seriesId="availability" type="gradient" />
+      <Line curve="stepAfter" renderPoints={() => true} seriesId="availability" type="solid" />
       <Scrubber overlayOffset={10} />
     </CartesianChart>
   );
@@ -2125,7 +2125,7 @@ const LineChartStories = () => {
             },
           ]}
         >
-          <Line curve="bump" seriesId="prices" type="gradient" />
+          <Line curve="bump" seriesId="prices" type="solid" />
           <Scrubber />
         </CartesianChart>
       </Example>
@@ -2151,7 +2151,7 @@ const LineChartStories = () => {
               },
             },
           ]}
-          type="gradient"
+          type="solid"
         >
           <Scrubber />
         </LineChart>
@@ -2213,7 +2213,7 @@ const LineChartStories = () => {
             {
               id: 'line',
               data: sparklineInteractiveData.all.map((d) => d.value),
-              type: 'gradient',
+              type: 'solid',
               gradient: {
                 stops: [
                   { offset: 0, color: '#ef4444' },
@@ -2290,7 +2290,7 @@ const LineChartStories = () => {
             domain: { min: 0 },
           }}
         >
-          <Line curve="monotone" seriesId="prices" type="gradient" />
+          <Line curve="monotone" seriesId="prices" type="solid" />
           <Scrubber idlePulse />
         </CartesianChart>
       </Example>
@@ -2338,7 +2338,7 @@ const GradientLineWithStateCallback = memo(
           },
         ]}
       >
-        <Line curve="bump" renderPoints={points} seriesId="prices" type="gradient" />
+        <Line curve="bump" renderPoints={points} seriesId="prices" type="solid" />
         <Scrubber hideLine hideOverlay />
       </CartesianChart>
     );
@@ -2396,9 +2396,9 @@ export default () => {
             },
           ]}
         >
-          <Line showArea curve="bump" seriesId="prices" type="gradient" />
-          <Line showArea curve="bump" seriesId="prices3" type="gradient" />
-          <Line showArea curve="bump" seriesId="prices2" type="gradient" />
+          <Line showArea curve="bump" seriesId="prices" type="solid" />
+          <Line showArea curve="bump" seriesId="prices3" type="solid" />
+          <Line showArea curve="bump" seriesId="prices2" type="solid" />
           <Scrubber />
         </CartesianChart>
       </Example>

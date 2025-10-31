@@ -9,41 +9,9 @@ import { type ChartPathCurveType, getLinePath, type TransitionConfig } from '../
 import { evaluateGradientAtValue, getGradientScale, type Gradient } from '../utils/gradient';
 
 import { DottedLine } from './DottedLine';
-import { SolidLine } from './SolidLine';
+import { type LineComponentProps, SolidLine } from './SolidLine';
 
-export type LineComponentProps = {
-  d: string;
-  stroke: string;
-  strokeOpacity?: number;
-  strokeWidth?: number;
-  testID?: string;
-  clipPath?: string;
-  /**
-   * Series ID - used to retrieve gradient scale from context.
-   */
-  seriesId?: string;
-  /**
-   * ID of the y-axis to use.
-   * Required for components that need to map data values to pixel positions.
-   */
-  yAxisId?: string;
-  /**
-   * Color mapping configuration.
-   * When provided, creates gradient or threshold-based coloring.
-   */
-  gradient?: Gradient;
-  /**
-   * Whether to animate the line.
-   * Overrides the animate value from the chart context.
-   */
-  animate?: boolean;
-  /**
-   * Transition configuration for line animations.
-   * Defines how the line transitions when data changes.
-   */
-  transitionConfig?: TransitionConfig;
-};
-
+export type { LineComponentProps } from './SolidLine';
 export type LineComponent = React.FC<LineComponentProps>;
 
 export type LineProps = SharedProps & {
@@ -60,7 +28,7 @@ export type LineProps = SharedProps & {
    * The type of line to render.
    * @default 'solid'
    */
-  type?: 'solid' | 'dotted' | 'gradient';
+  type?: 'solid' | 'dotted';
   /**
    * Show area fill under the line.
    */
@@ -208,7 +176,6 @@ export const Line = memo<LineProps>(
       switch (type) {
         case 'dotted':
           return DottedLine;
-        case 'gradient':
         case 'solid':
         default:
           return SolidLine;

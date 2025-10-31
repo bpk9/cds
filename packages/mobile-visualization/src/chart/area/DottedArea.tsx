@@ -13,9 +13,9 @@ import {
 import { useCartesianChartContext } from '../ChartProvider';
 import type { PathProps } from '../Path';
 import { applyOpacityToColor, getGradientScale, processGradient } from '../utils/gradient';
-import { defaultTransition, type TransitionConfig, usePathTransition } from '../utils/transition';
+import { usePathTransition } from '../utils/transition';
 
-import type { AreaComponentProps } from './Area';
+import { type AreaComponentProps } from './SolidArea';
 
 export type DottedAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
   AreaComponentProps & {
@@ -39,19 +39,6 @@ export type DottedAreaProps = Omit<PathProps, 'd' | 'fill' | 'fillOpacity'> &
      * @default 0
      */
     baselineOpacity?: number;
-    /**
-     * Transition configuration for area transitions.
-     * Allows customization of animation type, timing, and springs.
-     *
-     * @example
-     * // Spring animation
-     * transitionConfig={{ type: 'spring', damping: 10, stiffness: 100 }}
-     *
-     * @example
-     * // Timing animation
-     * transitionConfig={{ type: 'timing', duration: 500 }}
-     */
-    transitionConfig?: TransitionConfig;
   };
 
 /**
@@ -74,7 +61,7 @@ export const DottedArea = memo<DottedAreaProps>(
     gradient: gradientProp,
     seriesId,
     animate: animateProp,
-    transitionConfig = defaultTransition,
+    transitionConfig,
   }) => {
     const theme = useTheme();
     const context = useCartesianChartContext();
@@ -230,7 +217,7 @@ export const DottedArea = memo<DottedAreaProps>(
     const areaPath = usePathTransition({
       currentPath,
       animate: shouldAnimate,
-      transitionConfig,
+      transitionConfigs: transitionConfig ? { update: transitionConfig } : undefined,
     });
 
     if (!clipPath || !drawingArea || !patternImage || !gradientConfig) return null;

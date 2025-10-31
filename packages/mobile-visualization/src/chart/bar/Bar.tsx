@@ -155,13 +155,19 @@ export const Bar = memo<BarProps>(
         fill={effectiveFill}
         fillOpacity={fillOpacity}
         height={height}
-        initialTransitionConfig={transitionConfig?.initial}
         originY={effectiveOriginY}
         roundBottom={roundBottom}
         roundTop={roundTop}
         stroke={stroke}
         strokeWidth={strokeWidth}
-        transitionConfig={transitionConfig?.update}
+        transitionConfigs={
+          transitionConfig
+            ? {
+                enter: transitionConfig.initial,
+                update: transitionConfig.update,
+              }
+            : undefined
+        }
         width={width}
         x={x}
         y={y}

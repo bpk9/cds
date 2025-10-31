@@ -4,35 +4,36 @@ import { Path as SkiaPath } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { getBarPath } from '../utils';
-import { defaultTransition, type TransitionConfig, usePathTransition } from '../utils/transition';
+import { type TransitionConfig, usePathTransition } from '../utils/transition';
 
 import type { BarComponentProps } from './Bar';
 
 export type DefaultBarProps = BarComponentProps & {
   /**
-   * Transition configuration for bar transitions.
+   * Transition configurations for different animation phases.
    * Allows customization of animation type, timing, and springs.
    *
    * @example
    * // Spring animation for bouncy bars
-   * transitionConfig={{ type: 'spring', damping: 10, stiffness: 100 }}
+   * transitionConfigs={{ update: { type: 'spring', damping: 10, stiffness: 100 } }}
    *
    * @example
-   * // Timing animation
-   * transitionConfig={{ type: 'timing', duration: 500 }}
+   * // Different enter and update animations
+   * transitionConfigs={{
+   *   enter: { type: 'timing', duration: 1000 },
+   *   update: { type: 'timing', duration: 300 }
+   * }}
    */
-  transitionConfig?: TransitionConfig;
-  /**
-   * Transition configuration specifically for the initial render.
-   * If provided, this will be used for the first animation only.
-   * Subsequent animations will use the regular transitionConfig.
-   *
-   * @example
-   * // Slow initial animation, faster updates
-   * initialTransitionConfig={{ type: 'timing', duration: 1000 }}
-   * transitionConfig={{ type: 'timing', duration: 300 }}
-   */
-  initialTransitionConfig?: TransitionConfig;
+  transitionConfigs?: {
+    /**
+     * Transition used when the bar first enters/mounts.
+     */
+    enter?: TransitionConfig;
+    /**
+     * Transition used when the bar morphs to new data.
+     */
+    update?: TransitionConfig;
+  };
 };
 
 /**
@@ -53,8 +54,7 @@ export const DefaultBar = memo<DefaultBarProps>(
     stroke,
     strokeWidth,
     originY,
-    transitionConfig = defaultTransition,
-    initialTransitionConfig,
+    transitionConfigs,
   }) => {
     const { animate } = useCartesianChartContext();
     const theme = useTheme();
@@ -101,8 +101,7 @@ export const DefaultBar = memo<DefaultBarProps>(
       currentPath: targetPath,
       initialPath,
       animate,
-      transitionConfig,
-      initialTransitionConfig,
+      transitionConfigs,
     });
 
     return (
