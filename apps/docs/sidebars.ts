@@ -160,6 +160,9 @@ const sidebars: SidebarsConfig = {
               type: 'doc',
               id: 'components/inputs/MediaChip/mediaChip',
               label: 'MediaChip',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
@@ -577,71 +580,113 @@ const sidebars: SidebarsConfig = {
               type: 'doc',
               id: 'components/graphs/AreaChart/areaChart',
               label: 'AreaChart',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/BarChart/barChart',
               label: 'BarChart',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/CartesianChart/cartesianChart',
               label: 'CartesianChart',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/LineChart/lineChart',
               label: 'LineChart',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/ReferenceLine/referenceLine',
               label: 'ReferenceLine',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/PeriodSelector/periodSelector',
               label: 'PeriodSelector',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/Point/point',
               label: 'Point',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/Scrubber/scrubber',
               label: 'Scrubber',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/Sparkline/sparkline',
-              label: 'Sparkline (Deprecated)',
+              label: 'Sparkline',
+              customProps: {
+                status: 'deprecated',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/SparklineGradient/sparklineGradient',
-              label: 'SparklineGradient (Deprecated)',
+              label: 'SparklineGradient',
+              customProps: {
+                status: 'deprecated',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/SparklineInteractive/sparklineInteractive',
-              label: 'SparklineInteractive (Deprecated)',
+              label: 'SparklineInteractive',
+              customProps: {
+                status: 'deprecated',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/SparklineInteractiveHeader/sparklineInteractiveHeader',
-              label: 'SparklineInteractiveHeader (Deprecated)',
+              label: 'SparklineInteractiveHeader',
+              customProps: {
+                status: 'deprecated',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/XAxis/xAxis',
               label: 'XAxis',
+              customProps: {
+                status: 'new',
+              },
             },
             {
               type: 'doc',
               id: 'components/graphs/YAxis/yAxis',
               label: 'YAxis',
+              customProps: {
+                status: 'new',
+              },
             },
           ],
         },
@@ -653,6 +698,9 @@ const sidebars: SidebarsConfig = {
               type: 'doc',
               id: 'components/numbers/RollingNumber/rollingNumber',
               label: 'RollingNumber',
+              customProps: {
+                status: 'new',
+              },
             },
           ],
         },

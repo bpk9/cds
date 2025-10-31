@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { IconName } from '@coinbase/cds-common/types';
 import { cx } from '@coinbase/cds-web';
 import { Collapsible } from '@coinbase/cds-web/collapsible';
@@ -23,6 +23,8 @@ import { isSamePath } from '@docusaurus/theme-common/internal';
 import useIsBrowser from '@docusaurus/useIsBrowser';
 import type { Props } from '@theme/DocSidebarItem/Category';
 import DocSidebarItems from '@theme/DocSidebarItems';
+
+import JSDocTag from '../../../components/page/JSDocTag';
 // If we navigate to a category and it becomes active, it should automatically
 // expand itself
 function useAutoExpandActiveCategory({
@@ -82,6 +84,12 @@ export default function DocSidebarItemCategory({
     },
   } = useThemeConfig();
   const hrefWithSSRFallback = useCategoryHrefWithSSRFallback(item);
+
+  const statusTag = useMemo(() => {
+    const isNew = level !== 1 && items.some((item) => item.customProps?.status === 'new');
+    if (isNew) return <JSDocTag variant="new" />;
+    return null;
+  }, [items, level]);
 
   const isActive = isActiveSidebarItem(item, activePath);
   const isCurrentPage = isSamePath(href, activePath);
@@ -206,12 +214,13 @@ export default function DocSidebarItemCategory({
               paddingY={0.5}
               width="100%"
             >
-              <Text color="fg" font="label2">
-                {label}
-              </Text>
-              {level !== 1 && (
-                <Icon color="fg" name={expandedItem === index ? 'caretUp' : 'caretDown'} size="s" />
-              )}
+              <HStack alignItems="baseline" gap={1}>
+                <Text color="fg" font="label2">
+                  {label}
+                </Text>
+                {statusTag}
+              </HStack>
+              <Icon color="fg" name={expandedItem === index ? 'caretUp' : 'caretDown'} size="s" />
             </HStack>
           </Pressable>
         </Box>

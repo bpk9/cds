@@ -1,11 +1,13 @@
-import React from 'react';
+import { useMemo } from 'react';
 import { Box, HStack } from '@coinbase/cds-web/layout';
 import { Pressable } from '@coinbase/cds-web/system';
+import { Text } from '@coinbase/cds-web/typography/Text';
 import isInternalUrl from '@docusaurus/isInternalUrl';
 import Link from '@docusaurus/Link';
 import { isActiveSidebarItem } from '@docusaurus/plugin-content-docs/client';
 import type { Props } from '@theme/DocSidebarItem/Link';
-import IconExternalLink from '@theme/Icon/ExternalLink';
+
+import JSDocTag from '../../../components/page/JSDocTag';
 
 import styles from './styles.module.css';
 export default function DocSidebarItemLink({
@@ -14,9 +16,16 @@ export default function DocSidebarItemLink({
   activePath,
   ...props
 }: Props): JSX.Element {
-  const { href, label, autoAddBaseUrl } = item;
+  const { href, label, autoAddBaseUrl, customProps } = item;
   const isActive = isActiveSidebarItem(item, activePath);
   const isInternalLink = isInternalUrl(href);
+
+  const status = customProps?.status as 'deprecated' | 'alpha' | 'new' | undefined;
+
+  const statusTag = useMemo(() => {
+    if (status) return <JSDocTag variant={status} />;
+    return null;
+  }, [status]);
 
   return (
     <Box key={label} as="li" padding={0.5}>
@@ -37,9 +46,9 @@ export default function DocSidebarItemLink({
         className={isActive ? styles.linkSelected : styles.link}
         {...props}
       >
-        <HStack alignItems="center" gap={1} paddingX={1.5} paddingY={0.5}>
-          {label}
-          {/* {!isInternalLink && <IconExternalLink />} */}
+        <HStack alignItems="baseline" flexWrap="wrap" gap={1} paddingX={1.5} paddingY={0.5}>
+          <Text overflow="break">{label}</Text>
+          {statusTag}
         </HStack>
       </Pressable>
     </Box>
