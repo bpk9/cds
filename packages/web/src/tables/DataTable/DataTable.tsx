@@ -109,8 +109,10 @@ const tableContainerCss = css`
   position: relative;
 `;
 
+// height needs to be fit-content for the sticky header to work correctly
 const dataTableCss = css`
   display: grid;
+  height: fit-content;
 `;
 
 const DataTableBase = <TData,>(
