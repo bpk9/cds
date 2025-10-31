@@ -35,7 +35,7 @@ export type ScrubberRef = ScrubberBeaconRef;
  * Provides consistent API with smart defaults and component customization.
  */
 export type ScrubberProps = SharedProps &
-  Pick<ScrubberBeaconProps, 'idlePulse'> & {
+  Pick<ScrubberBeaconProps, 'idlePulse' | 'transitionConfigs'> & {
     /**
      * An array of series IDs that will receive visual emphasis as the user scrubs through the chart.
      * Use this prop to restrict the scrubbing visual behavior to specific series.
@@ -141,6 +141,7 @@ export const Scrubber = memo(
         overlayOffset = 2,
         testID,
         idlePulse,
+        transitionConfigs,
         styles,
         classNames,
       },
@@ -678,6 +679,7 @@ export const Scrubber = memo(
                   seriesId={beacon.targetSeries.id}
                   style={styles?.beacon}
                   testID={testID ? `${testID}-${beacon.targetSeries.id}-dot` : undefined}
+                  transitionConfigs={transitionConfigs}
                 />
                 {beacon.label &&
                   pixelX !== undefined &&

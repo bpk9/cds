@@ -42,6 +42,13 @@ export type LineComponentProps = {
    * Only needed when using gradient with multiple y-axes.
    */
   yAxisId?: string;
+  /**
+   * Transition configurations for path animations.
+   */
+  transitionConfigs?: {
+    enter?: Transition;
+    update?: Transition;
+  };
 };
 
 export type LineComponent = React.FC<LineComponentProps>;
@@ -280,6 +287,7 @@ export const Line = memo<LineProps>(
             fillOpacity={opacity}
             gradient={seriesGradient}
             seriesId={seriesId}
+            transitionConfigs={transitionConfigs}
             type={areaType}
           />
         )}
@@ -289,6 +297,7 @@ export const Line = memo<LineProps>(
           seriesId={seriesId}
           stroke={stroke}
           strokeOpacity={opacity}
+          transitionConfigs={transitionConfigs}
           yAxisId={matchedSeries?.yAxisId}
           {...props}
         />

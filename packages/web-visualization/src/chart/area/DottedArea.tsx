@@ -89,6 +89,7 @@ export const DottedArea = memo<DottedAreaProps>(
     classNames,
     styles,
     animate,
+    transitionConfigs,
     ...pathProps
   }) => {
     const context = useCartesianChartContext();
@@ -181,6 +182,7 @@ export const DottedArea = memo<DottedAreaProps>(
             d={d}
             fill={`url(#${patternId})`}
             style={styles?.path}
+            transitionConfigs={transitionConfigs}
             {...pathProps}
           />
         </g>
@@ -203,7 +205,12 @@ export const DottedArea = memo<DottedAreaProps>(
             <circle cx={dotCenterPosition} cy={dotCenterPosition} fill="white" r={dotSize} />
           </pattern>
           <mask id={maskId}>
-            <Path animate={animate} d={d} fill={`url(#${patternId})`} />
+            <Path
+              animate={animate}
+              d={d}
+              fill={`url(#${patternId})`}
+              transitionConfigs={transitionConfigs}
+            />
           </mask>
           <GradientDef
             config={gradientConfig}
@@ -219,6 +226,7 @@ export const DottedArea = memo<DottedAreaProps>(
           fill={`url(#${gradientId})`}
           mask={`url(#${maskId})`}
           style={styles?.path}
+          transitionConfigs={transitionConfigs}
           {...pathProps}
         />
       </g>

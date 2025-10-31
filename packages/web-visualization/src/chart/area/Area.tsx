@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import type { SVGProps } from 'react';
+import type { Transition } from 'framer-motion';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { type ChartPathCurveType, getAreaPath, type Gradient } from '../utils';
@@ -34,13 +35,20 @@ export type AreaComponentProps = {
    * When provided, creates gradient-based coloring.
    */
   gradient?: Gradient;
+  /**
+   * Transition configurations for path animations.
+   */
+  transitionConfigs?: {
+    enter?: Transition;
+    update?: Transition;
+  };
 };
 
 export type AreaComponent = React.FC<AreaComponentProps>;
 
 export type AreaProps = Pick<
   AreaComponentProps,
-  'fill' | 'fillOpacity' | 'stroke' | 'strokeWidth' | 'baseline'
+  'fill' | 'fillOpacity' | 'stroke' | 'strokeWidth' | 'baseline' | 'transitionConfigs'
 > & {
   /**
    * The ID of the series to render. Will be used to find the data from the chart context.
@@ -86,6 +94,7 @@ export const Area = memo<AreaProps>(
     baseline,
     connectNulls,
     gradient: gradientProp,
+    transitionConfigs,
   }) => {
     const { getSeries, getSeriesData, getXScale, getYScale, getXAxis } = useCartesianChartContext();
 
@@ -155,6 +164,7 @@ export const Area = memo<AreaProps>(
         seriesId={seriesId}
         stroke={stroke}
         strokeWidth={strokeWidth}
+        transitionConfigs={transitionConfigs}
         yAxisId={matchedSeries?.yAxisId}
       />
     );

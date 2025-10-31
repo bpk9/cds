@@ -10,7 +10,7 @@ import type { LineComponentProps } from './Line';
 
 export type DottedLineProps = SharedProps &
   Omit<PathProps, 'fill' | 'strokeWidth'> &
-  Pick<LineComponentProps, 'strokeWidth' | 'gradient' | 'seriesId' | 'yAxisId'> & {
+  Pick<LineComponentProps, 'strokeWidth' | 'gradient' | 'seriesId' | 'yAxisId' | 'transitionConfigs'> & {
     fill?: SVGProps<SVGPathElement>['fill'];
   };
 

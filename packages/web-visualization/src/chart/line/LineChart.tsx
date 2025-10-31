@@ -17,7 +17,6 @@ export type LineSeries = Series &
       | 'areaType'
       | 'areaBaseline'
       | 'type'
-      | 'type'
       | 'LineComponent'
       | 'AreaComponent'
       | 'stroke'
@@ -25,6 +24,7 @@ export type LineSeries = Series &
       | 'renderPoints'
       | 'strokeWidth'
       | 'connectNulls'
+      | 'transitionConfigs'
     >
   >;
 
@@ -41,6 +41,7 @@ export type LineChartProps = Omit<CartesianChartProps, 'xAxis' | 'yAxis' | 'seri
     | 'renderPoints'
     | 'strokeWidth'
     | 'connectNulls'
+    | 'transitionConfigs'
   > & {
     /**
      * Configuration objects that define how to visualize the data.
@@ -74,6 +75,7 @@ export const LineChart = memo(
         renderPoints,
         strokeWidth,
         connectNulls,
+        transitionConfigs,
         showXAxis,
         showYAxis,
         xAxis,
@@ -169,6 +171,7 @@ export const LineChart = memo(
               seriesId={id}
               showArea={showArea}
               strokeWidth={strokeWidth}
+              transitionConfigs={linePropsFromSeries.transitionConfigs ?? transitionConfigs}
               type={type}
               {...linePropsFromSeries}
             />
