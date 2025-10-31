@@ -1,20 +1,29 @@
 import type { Column } from '@tanstack/react-table';
 
+type PinningStyleOptions = {
+  hasLeftOverflow?: boolean;
+  hasRightOverflow?: boolean;
+};
+
 //These are the important styles to make sticky column pinning work!
 //Apply styles like this using your CSS strategy of choice with this kind of logic to head cells, data cells, footer cells, etc.
 //View the index.css file for more needed styles such as border-collapse: separate
 export const getColumnPinningStyles = (
   column: Column<any>,
   leftOffset: number = 0,
+  { hasLeftOverflow = false, hasRightOverflow = false }: PinningStyleOptions = {},
 ): React.CSSProperties => {
   const isPinned = column.getIsPinned();
   const isLastLeftPinnedColumn = isPinned === 'left' && column.getIsLastColumn('left');
   const isFirstRightPinnedColumn = isPinned === 'right' && column.getIsFirstColumn('right');
 
+  const showLeftShadow = isLastLeftPinnedColumn && hasLeftOverflow;
+  const showRightShadow = isFirstRightPinnedColumn && hasRightOverflow;
+
   return {
-    boxShadow: isLastLeftPinnedColumn
+    boxShadow: showLeftShadow
       ? '-4px 0 4px -4px gray inset'
-      : isFirstRightPinnedColumn
+      : showRightShadow
         ? '4px 0 4px -4px gray inset'
         : undefined,
     left: isPinned === 'left' ? `${leftOffset + column.getStart('left')}px` : undefined,

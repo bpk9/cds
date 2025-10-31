@@ -7,6 +7,8 @@ import { cx } from '../../cx';
 import { TableHeadCell } from './TableHeadCell';
 
 export type TableHeadRowProps = {
+  hasLeftOverflow: boolean;
+  hasRightOverflow: boolean;
   columnVirtualizer: Virtualizer<HTMLDivElement, HTMLTableCellElement>;
   headerGroup: HeaderGroup<any>;
   virtualPaddingLeft?: number;
@@ -28,6 +30,8 @@ const pinnedHeaderCellCss = css`
 `;
 
 export const TableHeadRow = ({
+  hasLeftOverflow,
+  hasRightOverflow,
   columnVirtualizer,
   headerGroup,
   virtualPaddingLeft,
@@ -45,6 +49,8 @@ export const TableHeadRow = ({
         <TableHeadCell
           key={header.id}
           className={cx(spacerCellCss, pinnedHeaderCellCss)}
+          hasLeftOverflow={hasLeftOverflow}
+          hasRightOverflow={hasRightOverflow}
           header={header}
         />
       ))}
@@ -55,15 +61,34 @@ export const TableHeadRow = ({
         ? columnVirtualizer.getVirtualItems().map((virtualColumn) => {
             const header = centerHeaders[virtualColumn.index];
             if (!header) return null;
-            return <TableHeadCell key={header.id} header={header} />;
+            return (
+              <TableHeadCell
+                key={header.id}
+                hasLeftOverflow={hasLeftOverflow}
+                hasRightOverflow={hasRightOverflow}
+                header={header}
+              />
+            );
           })
-        : centerHeaders.map((header) => <TableHeadCell key={header.id} header={header} />)}
+        : centerHeaders.map((header) => (
+            <TableHeadCell
+              key={header.id}
+              hasLeftOverflow={hasLeftOverflow}
+              hasRightOverflow={hasRightOverflow}
+              header={header}
+            />
+          ))}
       {virtualizeColumns && virtualPaddingRight ? (
         <th className={spacerCellCss} style={{ width: virtualPaddingRight }} />
       ) : null}
       {/* Right pinned */}
       {rightHeaders.map((header) => (
-        <TableHeadCell key={header.id} header={header} />
+        <TableHeadCell
+          key={header.id}
+          hasLeftOverflow={hasLeftOverflow}
+          hasRightOverflow={hasRightOverflow}
+          header={header}
+        />
       ))}
     </tr>
   );

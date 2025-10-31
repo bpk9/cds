@@ -1,4 +1,4 @@
-import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { css } from '@linaria/core';
 import {
   getCoreRowModel,
@@ -109,6 +109,8 @@ const DataTableBase = <TData,>(
   }: DataTableProps<TData>,
   ref: React.Ref<HTMLTableElement>,
 ) => {
+  // Build the TanStack table instance once so every downstream call goes through
+  // the same memoized APIs (sorting, pinning, sizing, etc.).
   const table = useReactTable({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -122,6 +124,7 @@ const DataTableBase = <TData,>(
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   //we are using a slightly different virtualization strategy for columns (compared to virtual rows) in order to support dynamic row heights
+  // The column virtualizer is only active for center columns; pinned columns are rendered explicitly.
   const columnVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableCellElement>({
     count: centerColumns.length,
     enabled: virtualizeColumns ?? true,
@@ -142,6 +145,24 @@ const DataTableBase = <TData,>(
     virtualPaddingRight =
       columnVirtualizer.getTotalSize() - (virtualColumns[virtualColumns.length - 1]?.end ?? 0);
   }
+
+  // Presence of overflow is exposed so pinned headers/cells can show a divider shadow.
+  const [hasLeftOverflow, setHasLeftOverflow] = useState(false);
+  const [hasRightOverflow, setHasRightOverflow] = useState(false);
+
+  // Detect whether the scroll container reveals additional content to the left/right.
+  const updateOverflowIndicators = useCallback(() => {
+    const node = tableContainerRef.current;
+    if (!node) return;
+    const { scrollLeft, scrollWidth, clientWidth } = node;
+    const maxScrollLeft = Math.max(scrollWidth - clientWidth, 0);
+    const nextHasLeftOverflow = scrollLeft > 0;
+    const overflowThreshold = 1;
+    const nextHasRightOverflow = scrollLeft < maxScrollLeft - overflowThreshold;
+
+    setHasLeftOverflow((prev) => (prev === nextHasLeftOverflow ? prev : nextHasLeftOverflow));
+    setHasRightOverflow((prev) => (prev === nextHasRightOverflow ? prev : nextHasRightOverflow));
+  }, []);
 
   const headerRef = useRef<HTMLTableSectionElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -180,12 +201,39 @@ const DataTableBase = <TData,>(
     };
   }, [stickyHeader]);
 
+  // Keep the overflow indicators in sync with scroll position and container resizes.
+  useLayoutEffect(() => {
+    const node = tableContainerRef.current;
+    if (!node) return;
+
+    const handleScroll = () => {
+      updateOverflowIndicators();
+    };
+
+    handleScroll();
+
+    node.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll);
+
+    return () => {
+      node.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [updateOverflowIndicators]);
+
+  useLayoutEffect(() => {
+    updateOverflowIndicators();
+  }, [updateOverflowIndicators, virtualPaddingLeft, virtualPaddingRight]);
+
   return (
     <Box ref={tableContainerRef} className={tableContainerCss} style={style}>
       {/* Even though we're still using sematic table tags, we must use CSS grid and flexbox for dynamic row heights */}
       <table ref={ref} className={dataTableCss} {...props}>
+        {/* Head renders pinned + center columns and needs overflow state to decide when to draw borders */}
         <DataTableHead
           columnVirtualizer={columnVirtualizer}
+          hasLeftOverflow={hasLeftOverflow}
+          hasRightOverflow={hasRightOverflow}
           isSticky={stickyHeader}
           sectionRef={headerRef}
           table={table}
@@ -193,9 +241,12 @@ const DataTableBase = <TData,>(
           virtualPaddingRight={virtualPaddingRight}
           virtualizeColumns={virtualizeColumns}
         />
+        {/* Body mirrors the head setup, forwarding virtualization + overflow metadata down to rows */}
         <DataTableBody
           columnVirtualizer={columnVirtualizer}
           estimateVirtualRowHeight={estimateVirtualRowHeight}
+          hasLeftOverflow={hasLeftOverflow}
+          hasRightOverflow={hasRightOverflow}
           headerOffsetTop={stickyHeader ? headerHeight : 0}
           table={table}
           tableContainerRef={tableContainerRef}

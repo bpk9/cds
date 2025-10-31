@@ -22,6 +22,8 @@ const spacerCellCss = css`
 `;
 
 export type DataTableBodyRowProps = {
+  hasLeftOverflow: boolean;
+  hasRightOverflow: boolean;
   columnVirtualizer: Virtualizer<HTMLDivElement, HTMLTableCellElement>;
   row: Row<any>;
   rowVirtualizer?: Virtualizer<HTMLDivElement, HTMLTableRowElement>;
@@ -33,6 +35,8 @@ export type DataTableBodyRowProps = {
 };
 
 export const DataTableBodyRow = ({
+  hasLeftOverflow,
+  hasRightOverflow,
   columnVirtualizer,
   row,
   rowVirtualizer,
@@ -65,7 +69,13 @@ export const DataTableBodyRow = ({
     >
       {/* Left pinned */}
       {leftCells.map((cell) => (
-        <DataTableBodyCell key={cell.id} cell={cell} selected={isSelected} />
+        <DataTableBodyCell
+          key={cell.id}
+          cell={cell}
+          hasLeftOverflow={hasLeftOverflow}
+          hasRightOverflow={hasRightOverflow}
+          selected={isSelected}
+        />
       ))}
       {virtualizeColumns && virtualPaddingLeft ? (
         <td className={spacerCellCss} style={{ width: virtualPaddingLeft }} />
@@ -74,17 +84,37 @@ export const DataTableBodyRow = ({
         ? columnVirtualizer.getVirtualItems().map((virtualColumn) => {
             const cell = centerCells[virtualColumn.index];
             if (!cell) return null;
-            return <DataTableBodyCell key={cell.id} cell={cell} selected={isSelected} />;
+            return (
+              <DataTableBodyCell
+                key={cell.id}
+                cell={cell}
+                hasLeftOverflow={hasLeftOverflow}
+                hasRightOverflow={hasRightOverflow}
+                selected={isSelected}
+              />
+            );
           })
         : centerCells.map((cell) => (
-            <DataTableBodyCell key={cell.id} cell={cell} selected={isSelected} />
+            <DataTableBodyCell
+              key={cell.id}
+              cell={cell}
+              hasLeftOverflow={hasLeftOverflow}
+              hasRightOverflow={hasRightOverflow}
+              selected={isSelected}
+            />
           ))}
       {virtualizeColumns && virtualPaddingRight ? (
         <td className={spacerCellCss} style={{ width: virtualPaddingRight }} />
       ) : null}
       {/* Right pinned */}
       {rightCells.map((cell) => (
-        <DataTableBodyCell key={cell.id} cell={cell} selected={isSelected} />
+        <DataTableBodyCell
+          key={cell.id}
+          cell={cell}
+          hasLeftOverflow={hasLeftOverflow}
+          hasRightOverflow={hasRightOverflow}
+          selected={isSelected}
+        />
       ))}
     </tr>
   );

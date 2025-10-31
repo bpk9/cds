@@ -8,6 +8,8 @@ import { cx } from '../../cx';
 import { TableHeadRow } from './TableHeadRow';
 
 export type DataTableHeadProps = {
+  hasLeftOverflow: boolean;
+  hasRightOverflow: boolean;
   columnVirtualizer: Virtualizer<HTMLDivElement, HTMLTableCellElement>;
   table: Table<any>;
   virtualPaddingLeft?: number;
@@ -34,6 +36,8 @@ const nonStickyHeadCss = css`
 `;
 
 export const DataTableHead = ({
+  hasLeftOverflow,
+  hasRightOverflow,
   columnVirtualizer,
   table,
   virtualPaddingLeft,
@@ -51,6 +55,8 @@ export const DataTableHead = ({
         <TableHeadRow
           key={headerGroup.id}
           columnVirtualizer={columnVirtualizer}
+          hasLeftOverflow={hasLeftOverflow}
+          hasRightOverflow={hasRightOverflow}
           headerGroup={headerGroup}
           virtualPaddingLeft={virtualPaddingLeft}
           virtualPaddingRight={virtualPaddingRight}

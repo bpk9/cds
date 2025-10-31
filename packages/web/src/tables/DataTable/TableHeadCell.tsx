@@ -32,17 +32,25 @@ const pinControlsCss = css`
 `;
 
 export type TableHeadCellProps = HTMLAttributes<HTMLTableCellElement> & {
+  hasLeftOverflow?: boolean;
+  hasRightOverflow?: boolean;
   header: Header<any, unknown>;
   leftOffset?: number;
 };
 
 export const TableHeadCell = ({
+  hasLeftOverflow,
+  hasRightOverflow,
   header,
   leftOffset = 0,
   style: styleProp,
   ...props
 }: TableHeadCellProps) => {
   const isPinned = header.column.getIsPinned();
+  const pinningStyles = getColumnPinningStyles(header.column, leftOffset, {
+    hasLeftOverflow,
+    hasRightOverflow,
+  });
 
   return (
     <th
@@ -51,7 +59,7 @@ export const TableHeadCell = ({
       className={tableHeadCellCss}
       style={{
         width: header.getSize(),
-        ...getColumnPinningStyles(header.column, leftOffset),
+        ...pinningStyles,
         ...styleProp,
       }}
     >

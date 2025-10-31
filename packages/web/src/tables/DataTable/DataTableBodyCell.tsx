@@ -12,12 +12,16 @@ const bodyCellCss = css`
 
 export type DataTableBodyCellProps = HTMLAttributes<HTMLTableCellElement> & {
   cell: Cell<any, unknown>;
+  hasLeftOverflow?: boolean;
+  hasRightOverflow?: boolean;
   selected?: boolean;
   leftOffset?: number;
 };
 
 export const DataTableBodyCell = ({
   cell,
+  hasLeftOverflow,
+  hasRightOverflow,
   selected,
   leftOffset,
   ...props
@@ -30,7 +34,10 @@ export const DataTableBodyCell = ({
       style={{
         backgroundColor: selected ? 'var(--color-bgAlternate)' : undefined,
         width: cell.column.getSize(),
-        ...getColumnPinningStyles(cell.column, leftOffset),
+        ...getColumnPinningStyles(cell.column, leftOffset, {
+          hasLeftOverflow,
+          hasRightOverflow,
+        }),
       }}
     >
       {flexRender(cell.column.columnDef.cell, cell.getContext())}

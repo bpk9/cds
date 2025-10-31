@@ -28,6 +28,8 @@ const staticCenterSectionCss = css`
 `;
 
 export type DataTableBodyProps = {
+  hasLeftOverflow: boolean;
+  hasRightOverflow: boolean;
   columnVirtualizer: Virtualizer<HTMLDivElement, HTMLTableCellElement>;
   table: Table<any>;
   tableContainerRef: React.RefObject<HTMLDivElement>;
@@ -46,6 +48,8 @@ export type DataTableBodyProps = {
 };
 
 export const DataTableBody = ({
+  hasLeftOverflow,
+  hasRightOverflow,
   columnVirtualizer,
   estimateVirtualRowHeight,
   table,
@@ -90,6 +94,8 @@ export const DataTableBody = ({
               key={row.id}
               staticPosition
               columnVirtualizer={columnVirtualizer}
+              hasLeftOverflow={hasLeftOverflow}
+              hasRightOverflow={hasRightOverflow}
               row={row}
               virtualPaddingLeft={virtualPaddingLeft}
               virtualPaddingRight={virtualPaddingRight}
@@ -111,6 +117,8 @@ export const DataTableBody = ({
               <DataTableBodyRow
                 key={row.id}
                 columnVirtualizer={columnVirtualizer}
+                hasLeftOverflow={hasLeftOverflow}
+                hasRightOverflow={hasRightOverflow}
                 row={row}
                 rowVirtualizer={rowVirtualizer}
                 virtualPaddingLeft={virtualPaddingLeft}
@@ -128,6 +136,8 @@ export const DataTableBody = ({
               key={row.id}
               staticPosition
               columnVirtualizer={columnVirtualizer}
+              hasLeftOverflow={hasLeftOverflow}
+              hasRightOverflow={hasRightOverflow}
               row={row}
               virtualPaddingLeft={virtualPaddingLeft}
               virtualPaddingRight={virtualPaddingRight}
@@ -145,6 +155,8 @@ export const DataTableBody = ({
               key={row.id}
               staticPosition
               columnVirtualizer={columnVirtualizer}
+              hasLeftOverflow={hasLeftOverflow}
+              hasRightOverflow={hasRightOverflow}
               row={row}
               virtualPaddingLeft={virtualPaddingLeft}
               virtualPaddingRight={virtualPaddingRight}
