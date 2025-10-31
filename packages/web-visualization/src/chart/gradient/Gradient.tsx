@@ -1,6 +1,9 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
+import { m as motion, type Transition } from 'framer-motion';
 
+import { useCartesianChartContext } from '../ChartProvider';
 import type { GradientConfig } from '../utils/gradient';
+import { defaultTransition } from '../utils/transition';
 
 export type GradientProps = {
   /**
@@ -30,6 +33,24 @@ export type GradientProps = {
     width: number;
     height: number;
   };
+  /**
+   * Whether to animate gradient changes.
+   */
+  animate?: boolean;
+  /**
+   * Transition configurations for different animation phases.
+   * Allows separate control over enter and update animations.
+   */
+  transitionConfigs?: {
+    /**
+     * Transition used when the gradient first enters/mounts.
+     */
+    enter?: Transition;
+    /**
+     * Transition used when the gradient changes.
+     */
+    update?: Transition;
+  };
 };
 
 /**
@@ -37,8 +58,18 @@ export type GradientProps = {
  * The gradient can be referenced via `fill="url(#${id})"` or `stroke="url(#${id})"`.
  */
 export const Gradient = memo<GradientProps>(
-  ({ id, config, direction = 'vertical', drawingArea }) => {
+  ({
+    id,
+    config,
+    direction = 'vertical',
+    drawingArea,
+    animate: animateProp,
+    transitionConfigs,
+  }) => {
+    const context = useCartesianChartContext();
+    const animate = animateProp ?? context.animate;
     const { colors, positions, opacities } = config;
+    const isInitialRender = useRef(true);
 
     // Determine gradient units and coordinates
     let gradientUnits: 'objectBoundingBox' | 'userSpaceOnUse' = 'objectBoundingBox';
@@ -75,17 +106,50 @@ export const Gradient = memo<GradientProps>(
           : { x1: '0%', y1: '0%', x2: '100%', y2: '0%' };
     }
 
+    // Determine which transition to use
+    const transition =
+      isInitialRender.current && transitionConfigs?.enter
+        ? transitionConfigs.enter
+        : (transitionConfigs?.update ?? defaultTransition);
+
+    // Mark as no longer initial render after first animation is set up
+    useEffect(() => {
+      if (animate && config) {
+        isInitialRender.current = false;
+      }
+    }, [animate, config]);
+
     return (
       <linearGradient gradientUnits={gradientUnits} id={id} {...coordinates}>
         {colors.map((color, index) => {
           const offset = `${positions[index] * 100}%`;
           const opacity = opacities?.[index];
+
+          if (!animate) {
+            return (
+              <stop
+                key={`${id}-stop-${index}`}
+                offset={offset}
+                stopColor={color}
+                {...(opacity !== undefined && { stopOpacity: opacity })}
+              />
+            );
+          }
+
           return (
-            <stop
+            <motion.stop
               key={`${id}-stop-${index}`}
-              offset={offset}
-              stopColor={color}
-              {...(opacity !== undefined && { stopOpacity: opacity })}
+              animate={{
+                offset,
+                stopColor: color,
+                ...(opacity !== undefined && { stopOpacity: opacity }),
+              }}
+              initial={{
+                offset,
+                stopColor: color,
+                ...(opacity !== undefined && { stopOpacity: opacity }),
+              }}
+              transition={transition}
             />
           );
         })}

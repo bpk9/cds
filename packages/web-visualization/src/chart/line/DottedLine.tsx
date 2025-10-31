@@ -34,6 +34,8 @@ export const DottedLine = memo<DottedLineProps>(
     gradient,
     seriesId,
     yAxisId,
+    animate,
+    transitionConfigs,
     ...props
   }) => {
     const gradientId = useId();
@@ -56,14 +58,17 @@ export const DottedLine = memo<DottedLineProps>(
         {gradientConfig && (
           <defs>
             <GradientDef
+              animate={animate}
               config={gradientConfig}
               direction={gradientDirection}
               drawingArea={drawingArea}
               id={gradientId}
+              transitionConfigs={transitionConfigs}
             />
           </defs>
         )}
         <Path
+          animate={animate}
           clipOffset={strokeWidth}
           fill={fill}
           stroke={gradientConfig ? `url(#${gradientId})` : stroke}
@@ -72,6 +77,7 @@ export const DottedLine = memo<DottedLineProps>(
           strokeLinejoin={strokeLinejoin}
           strokeOpacity={strokeOpacity}
           strokeWidth={strokeWidth}
+          transitionConfigs={transitionConfigs}
           vectorEffect={vectorEffect}
           {...props}
         />

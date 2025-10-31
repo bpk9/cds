@@ -213,10 +213,12 @@ export const DottedArea = memo<DottedAreaProps>(
             />
           </mask>
           <GradientDef
+            animate={animate}
             config={gradientConfig}
             direction={gradientDirection}
             drawingArea={drawingArea}
             id={gradientId}
+            transitionConfigs={transitionConfigs}
           />
         </defs>
         <Path

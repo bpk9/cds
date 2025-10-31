@@ -64,6 +64,8 @@ export const GradientArea = memo<GradientAreaProps>(
     yAxisId,
     gradient: gradientProp,
     seriesId,
+    animate,
+    transitionConfigs,
     ...pathProps
   }) => {
     const { drawingArea, getXScale, getYScale, getYAxis } = useCartesianChartContext();
@@ -129,20 +131,38 @@ export const GradientArea = memo<GradientAreaProps>(
     const gradientDirection = gradientAxis === 'x' ? 'horizontal' : 'vertical';
 
     if (!gradientConfig) {
-      return <Path d={d} fill={fill} fillOpacity={fillOpacity} {...pathProps} />;
+      return (
+        <Path
+          animate={animate}
+          d={d}
+          fill={fill}
+          fillOpacity={fillOpacity}
+          transitionConfigs={transitionConfigs}
+          {...pathProps}
+        />
+      );
     }
 
     return (
       <>
         <defs>
           <GradientDef
+            animate={animate}
             config={gradientConfig}
             direction={gradientDirection}
             drawingArea={drawingArea}
             id={patternId}
+            transitionConfigs={transitionConfigs}
           />
         </defs>
-        <Path d={d} fill={`url(#${patternId})`} fillOpacity={fillOpacity} {...pathProps} />
+        <Path
+          animate={animate}
+          d={d}
+          fill={`url(#${patternId})`}
+          fillOpacity={fillOpacity}
+          transitionConfigs={transitionConfigs}
+          {...pathProps}
+        />
       </>
     );
   },
