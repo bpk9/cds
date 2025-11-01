@@ -162,3 +162,379 @@ You can have different area styles for each series.
   ]}
 />
 ```
+
+## Animations
+
+You can configure chart transitions using the `transitionConfigs` prop. This example showcases stacked areas with animated data updates.
+
+```jsx live
+function AnimatedStackedAreas() {
+  const dataCount = 20;
+  const maxDataOffset = 15000;
+  const minStepOffset = 2500;
+  const maxStepOffset = 10000;
+  const updateInterval = 500;
+  const seriesSpacing = 2000;
+  const myTransitionConfigs = { update: { type: 'spring', stiffness: 700, damping: 20 } };
+
+  const seriesConfig = [
+    { id: 'red', label: 'Red', color: 'rgb(var(--red40))' },
+    { id: 'orange', label: 'Orange', color: 'rgb(var(--orange40))' },
+    { id: 'yellow', label: 'Yellow', color: 'rgb(var(--yellow40))' },
+    { id: 'green', label: 'Green', color: 'rgb(var(--green40))' },
+    { id: 'blue', label: 'Blue', color: 'rgb(var(--blue40))' },
+    { id: 'indigo', label: 'Indigo', color: 'rgb(var(--indigo40))' },
+    { id: 'purple', label: 'Purple', color: 'rgb(var(--purple40))' },
+  ];
+
+  const domainLimit = maxDataOffset + seriesConfig.length * seriesSpacing;
+
+  function generateNextValue(previousValue) {
+    const range = maxStepOffset - minStepOffset;
+    const offset = Math.random() * range + minStepOffset;
+
+    let direction;
+    if (previousValue >= maxDataOffset) {
+      direction = -1;
+    } else if (previousValue <= 0) {
+      direction = 1;
+    } else {
+      // Not at boundary, random direction
+      direction = Math.random() < 0.5 ? -1 : 1;
+    }
+
+    let newValue = previousValue + offset * direction;
+    newValue = Math.max(0, Math.min(maxDataOffset, newValue));
+    return newValue;
+  }
+
+  function generateInitialData() {
+    const data = [];
+
+    let previousValue = Math.random() * maxDataOffset;
+    data.push(previousValue);
+
+    for (let i = 1; i < dataCount; i++) {
+      const newValue = generateNextValue(previousValue);
+      data.push(newValue);
+      previousValue = newValue;
+    }
+
+    return data;
+  }
+
+  const MemoizedDottedArea = memo((props) => (
+    <DottedArea {...props} baselineOpacity={1} peakOpacity={1} />
+  ));
+
+  function AnimatedChart() {
+    const [data, setData] = useState(generateInitialData);
+
+    useEffect(() => {
+      const intervalId = setInterval(() => {
+        setData((currentData) => {
+          const lastValue = currentData[currentData.length - 1] ?? 0;
+          const newValue = generateNextValue(lastValue);
+
+          return [...currentData.slice(1), newValue];
+        });
+      }, updateInterval);
+
+      return () => clearInterval(intervalId);
+    }, []);
+
+    const series = seriesConfig.map((config, index) => ({
+      id: config.id,
+      label: config.label,
+      color: config.color,
+      data: index === 0 ? data : Array(dataCount).fill(seriesSpacing),
+    }));
+
+    return (
+      <AreaChart
+        stacked
+        height={{ base: 200, tablet: 250, desktop: 300 }}
+        series={series}
+        curve="monotone"
+        type="dotted"
+        showLines
+        AreaComponent={MemoizedDottedArea}
+        transitionConfigs={myTransitionConfigs}
+        inset={0}
+        showYAxis
+        yAxis={{
+          showGrid: true,
+          width: 0,
+          tickLabelFormatter: () => '',
+          domain: { min: 0, max: domainLimit },
+        }}
+      />
+    );
+  }
+
+  return <AnimatedChart />;
+}
+```
+
+### Disable Animations
+
+You can also disable animations by setting the `animate` prop to `false`.
+
+```jsx live
+function AnimatedStackedAreas() {
+  const dataCount = 20;
+  const maxDataOffset = 15000;
+  const minStepOffset = 2500;
+  const maxStepOffset = 10000;
+  const updateInterval = 500;
+  const seriesSpacing = 2000;
+  const myTransitionConfigs = { update: { type: 'spring', stiffness: 700, damping: 20 } };
+
+  const seriesConfig = [
+    { id: 'red', label: 'Red', color: 'rgb(var(--red40))' },
+    { id: 'orange', label: 'Orange', color: 'rgb(var(--orange40))' },
+    { id: 'yellow', label: 'Yellow', color: 'rgb(var(--yellow40))' },
+    { id: 'green', label: 'Green', color: 'rgb(var(--green40))' },
+    { id: 'blue', label: 'Blue', color: 'rgb(var(--blue40))' },
+    { id: 'indigo', label: 'Indigo', color: 'rgb(var(--indigo40))' },
+    { id: 'purple', label: 'Purple', color: 'rgb(var(--purple40))' },
+  ];
+
+  const domainLimit = maxDataOffset + seriesConfig.length * seriesSpacing;
+
+  function generateNextValue(previousValue) {
+    const range = maxStepOffset - minStepOffset;
+    const offset = Math.random() * range + minStepOffset;
+
+    let direction;
+    if (previousValue >= maxDataOffset) {
+      direction = -1;
+    } else if (previousValue <= 0) {
+      direction = 1;
+    } else {
+      direction = Math.random() < 0.5 ? -1 : 1;
+    }
+
+    let newValue = previousValue + offset * direction;
+    newValue = Math.max(0, Math.min(maxDataOffset, newValue));
+    return newValue;
+  }
+
+  function generateInitialData() {
+    const data = [];
+
+    let previousValue = Math.random() * maxDataOffset;
+    data.push(previousValue);
+
+    for (let i = 1; i < dataCount; i++) {
+      const newValue = generateNextValue(previousValue);
+      data.push(newValue);
+      previousValue = newValue;
+    }
+
+    return data;
+  }
+
+  const MemoizedDottedArea = memo((props) => (
+    <DottedArea {...props} baselineOpacity={1} peakOpacity={1} />
+  ));
+
+  function AnimatedChart() {
+    const [data, setData] = useState(generateInitialData);
+
+    useEffect(() => {
+      const intervalId = setInterval(() => {
+        setData((currentData) => {
+          const lastValue = currentData[currentData.length - 1] ?? 0;
+          const newValue = generateNextValue(lastValue);
+
+          return [...currentData.slice(1), newValue];
+        });
+      }, updateInterval);
+
+      return () => clearInterval(intervalId);
+    }, []);
+
+    const series = seriesConfig.map((config, index) => ({
+      id: config.id,
+      label: config.label,
+      color: config.color,
+      // First series gets animated data, others get constant height
+      data: index === 0 ? data : Array(dataCount).fill(seriesSpacing),
+    }));
+
+    return (
+      <AreaChart
+        animate={false}
+        stacked
+        height={{ base: 200, tablet: 250, desktop: 300 }}
+        series={series}
+        curve="monotone"
+        type="dotted"
+        showLines
+        AreaComponent={MemoizedDottedArea}
+        inset={0}
+        showYAxis
+        yAxis={{
+          showGrid: true,
+          width: 0,
+          tickLabelFormatter: () => '',
+          domain: { min: 0, max: domainLimit },
+        }}
+      />
+    );
+  }
+
+  return <AnimatedChart />;
+}
+```
+
+## Gradients
+
+You can use the `gradient` prop on `series` or `Area` components to enable gradients.
+
+Each stop requires an `offset`, which is based on the data within the x/y scale and `color`, with an optional `opacity` (defaults to 1).
+
+Values in between stops will be interpolated smoothly using [srgb color space](https://www.w3.org/TR/SVG11/painting.html#ColorInterpolationProperty).
+
+```jsx live
+function ContinuousGradient() {
+  const data = [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58];
+
+  const chartAccessibilityLabel = `Price chart showing ${data.length} data points. Current value: ${data[data.length - 1]}`;
+
+  const scrubberAccessibilityLabel = useCallback(
+    (index: number) => {
+      return `Price at position ${index + 1} of ${data.length}: ${data[index]}`;
+    },
+    [data],
+  );
+
+  return (
+    <AreaChart
+      enableScrubbing
+      height={{ base: 150, tablet: 200, desktop: 250 }}
+      series={[
+        {
+          id: 'prices',
+          data: data,
+          gradient: {
+            stops: [
+              { offset: 0, color: 'rgb(var(--pink90))' },
+              { offset: 100, color: 'rgb(var(--pink10))' },
+            ],
+          }
+        },
+      ]}
+      curve="monotone"
+      showYAxis
+      yAxis={{
+        showGrid: true,
+      }}
+      accessibilityLabel={chartAccessibilityLabel}
+    >
+      <Scrubber accessibilityLabel={scrubberAccessibilityLabel} />
+    </AreaChart>
+  );
+}
+```
+
+### Discrete
+
+You can set multiple stops at the same offset to create a discrete gradient.
+
+```jsx live
+function DiscreteGradient() {
+  const data = [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58];
+
+  const chartAccessibilityLabel = `Price chart showing ${data.length} data points. Current value: ${data[data.length - 1]}`;
+
+  const scrubberAccessibilityLabel = useCallback(
+    (index: number) => {
+      return `Price at position ${index + 1} of ${data.length}: ${data[index]}`;
+    },
+    [data],
+  );
+
+  return (
+    <AreaChart
+      enableScrubbing
+      height={{ base: 150, tablet: 200, desktop: 250 }}
+      series={[
+        {
+          id: 'prices',
+          data: data,
+          gradient: {
+            stops: [
+              { offset: 0, color: 'rgb(var(--pink90))' },
+              { offset: 33, color: 'rgb(var(--pink90))' },
+              { offset: 33, color: 'rgb(var(--pink50))' },
+              { offset: 67, color: 'rgb(var(--pink50))' },
+              { offset: 67, color: 'rgb(var(--pink10))' },
+              { offset: 100, color: 'rgb(var(--pink10))' },
+            ],
+          }
+        },
+      ]}
+      showLines
+      strokeWidth={4}
+      curve="monotone"
+      showYAxis
+      yAxis={{
+        showGrid: true,
+      }}
+      fillOpacity={0.5}
+      accessibilityLabel={chartAccessibilityLabel}
+    >
+      <Scrubber accessibilityLabel={scrubberAccessibilityLabel} />
+    </AreaChart>
+  );
+}
+```
+
+### Axes
+
+By default, gradients will be applied to the y-axis. You can apply a gradient to the x-axis by setting `axis` to `x` in the gradient definition.
+
+```jsx live
+function XAxisGradient() {
+  const data = [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58];
+
+  const chartAccessibilityLabel = `Price chart showing ${data.length} data points. Current value: ${data[data.length - 1]}`;
+
+  const scrubberAccessibilityLabel = useCallback(
+    (index: number) => {
+      return `Price at position ${index + 1} of ${data.length}: ${data[index]}`;
+    },
+    [data],
+  );
+
+  return (
+    <AreaChart
+      enableScrubbing
+      height={{ base: 150, tablet: 200, desktop: 250 }}
+      series={[
+        {
+          id: 'prices',
+          data: data,
+          gradient: {
+            axis: 'x',
+            stops: [
+              { offset: 0, color: 'rgb(var(--pink90))', opacity: 0 },
+              { offset: data.length, color: 'rgb(var(--pink10))', opacity: 1 },
+            ],
+          }
+        },
+      ]}
+      curve="monotone"
+      showYAxis
+      yAxis={{
+        showGrid: true,
+      }}
+      accessibilityLabel={chartAccessibilityLabel}
+    >
+      <Scrubber accessibilityLabel={scrubberAccessibilityLabel} />
+    </AreaChart>
+  );
+}
+```
