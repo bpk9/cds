@@ -2,7 +2,7 @@ import { memo, useEffect, useRef } from 'react';
 import { m as motion, type Transition } from 'framer-motion';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import type { GradientConfig } from '../utils/gradient';
+import type { GradientStop } from '../utils';
 import { defaultTransition } from '../utils/transition';
 
 export type GradientProps = {
@@ -12,9 +12,9 @@ export type GradientProps = {
    */
   id: string;
   /**
-   * Gradient configuration with colors and positions.
+   * Gradient stops with colors and positions.
    */
-  config: GradientConfig;
+  stops: GradientStop[];
   /**
    * Axis that the gradient maps to.
    * - 'y': Vertical gradient (top to bottom)
@@ -53,10 +53,9 @@ export type GradientProps = {
  * The gradient can be referenced via `fill="url(#${id})"` or `stroke="url(#${id})"`.
  */
 export const Gradient = memo<GradientProps>(
-  ({ id, config, axis = 'y', yAxisId, animate: animateProp, transitionConfigs }) => {
+  ({ id, stops, axis = 'y', yAxisId, animate: animateProp, transitionConfigs }) => {
     const context = useCartesianChartContext();
     const animate = animateProp ?? context.animate;
-    const { colors, positions, opacities } = config;
     const isInitialRender = useRef(true);
 
     // Determine which transition to use
@@ -67,10 +66,10 @@ export const Gradient = memo<GradientProps>(
 
     // Mark as no longer initial render after first animation is set up
     useEffect(() => {
-      if (animate && config) {
+      if (animate && Array.isArray(stops)) {
         isInitialRender.current = false;
       }
-    }, [animate, config]);
+    }, [animate, stops]);
 
     const drawingArea = context.drawingArea;
     const yAxis = context.getYAxis(yAxisId);
@@ -116,17 +115,17 @@ export const Gradient = memo<GradientProps>(
 
     return (
       <linearGradient gradientUnits="userSpaceOnUse" id={id} {...coordinates}>
-        {colors.map((color, index) => {
-          const offset = `${positions[index] * 100}%`;
-          const opacity = opacities?.[index];
+        {stops.map((stop, index) => {
+          const offset = `${stop.offset * 100}%`;
+          const opacity = stop.opacity;
 
           if (!animate) {
             return (
               <stop
                 key={`${id}-stop-${index}`}
                 offset={offset}
-                stopColor={color}
-                {...(opacity !== undefined && { stopOpacity: opacity })}
+                stopColor={stop.color}
+                stopOpacity={opacity ?? 1}
               />
             );
           }
@@ -136,14 +135,12 @@ export const Gradient = memo<GradientProps>(
               key={`${id}-stop-${index}`}
               animate={{
                 offset,
-                stopColor: color,
-                ...(opacity !== undefined && { stopOpacity: opacity }),
               }}
               initial={{
                 offset,
-                stopColor: color,
-                ...(opacity !== undefined && { stopOpacity: opacity }),
               }}
+              stopColor={stop.color}
+              stopOpacity={opacity ?? 1}
               transition={transition}
             />
           );

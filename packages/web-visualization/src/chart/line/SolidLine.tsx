@@ -54,8 +54,8 @@ export const SolidLine = memo<SolidLineProps>(
             <Gradient
               animate={animate}
               axis={gradient?.axis}
-              config={gradientConfig}
               id={gradientId}
+              stops={gradientConfig}
               transitionConfigs={transitionConfigs}
               yAxisId={yAxisId}
             />

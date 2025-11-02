@@ -1,10 +1,5 @@
-import {
-  type CategoricalScale,
-  type ChartScaleFunction,
-  isCategoricalScale,
-  isNumericScale,
-  type NumericScale,
-} from './scale';
+import type { AxisBounds } from './chart';
+import { type ChartScaleFunction, isCategoricalScale, isNumericScale } from './scale';
 
 /**
  * A gradient stop defines a color transition point in the gradient
@@ -65,37 +60,24 @@ export type GradientDefinition = {
    * ]
    * ```
    */
-  stops: GradientStop[] | ((domain: { min: number; max: number }) => GradientStop[]);
+  stops: GradientStop[] | ((domain: AxisBounds) => GradientStop[]);
 };
 
 /**
  * Processed color information with normalized values
  */
-export type ProcessedColor = {
+type ProcessedColor = {
   color: string;
   opacity: number;
-};
-
-/**
- * Configuration for rendering a gradient using SVG linearGradient
- */
-export type GradientConfig = {
-  colors: string[];
-  positions: number[];
-  /**
-   * Optional array of opacities (0-1 range) corresponding to each color.
-   * When provided, uses stop-opacity attribute instead of color-mix with transparent.
-   */
-  opacities?: number[];
 };
 
 /**
  * Resolves gradient stops, handling both static arrays and function forms.
  * When stops is a function, calls it with the domain bounds.
  */
-export const resolveGradientStops = (
-  stops: GradientStop[] | ((domain: { min: number; max: number }) => GradientStop[]),
-  domain: { min: number; max: number },
+const getGradientStops = (
+  stops: GradientStop[] | ((domain: AxisBounds) => GradientStop[]),
+  domain: AxisBounds,
 ): GradientStop[] => {
   if (typeof stops === 'function') {
     return stops(domain);
@@ -115,7 +97,6 @@ export const normalizeGradientStop = (gradientStop: GradientStop): ProcessedColo
 
 /**
  * Applies an additional opacity multiplier to a color using CSS color-mix().
- * Works with any CSS color format including variables like var(--color-primary).
  */
 export const applyOpacityToColor = (colorString: string, opacityMultiplier: number): string => {
   if (opacityMultiplier >= 1) return colorString;
@@ -133,11 +114,11 @@ const processGradientStops = (
   stops: GradientStop[],
   domain: { min: number; max: number },
   scale: ChartScaleFunction,
-): GradientConfig | null => {
+): GradientStop[] | undefined => {
   // Handle edge cases
   if (stops.length === 0) {
     console.warn('Gradient has no stops - falling back to default');
-    return null;
+    return;
   }
 
   const { min: minValue, max: maxValue } = domain;
@@ -155,24 +136,14 @@ const processGradientStops = (
     effectiveStops = [{ offset: baselineOffset, color, opacity: 0 }, singleStop];
   }
 
-  // Process stops and extract colors and opacities separately
-  // For SVG gradients, we use stop-opacity attribute to avoid transparent-black mixing issues
-  const processedColors: string[] = [];
-  const opacities: number[] = [];
-  const offsets: number[] = [];
-
-  effectiveStops.forEach((stop) => {
-    const { color, opacity } = normalizeGradientStop(stop);
-    processedColors.push(color);
-    opacities.push(opacity);
-    offsets.push(stop.offset);
-  });
+  // Extract offsets from input stops (in data space)
+  const offsets = effectiveStops.map((stop) => stop.offset);
 
   // Validate offsets are in ascending order (allow equal values for hard transitions)
   for (let i = 1; i < offsets.length; i++) {
     if (offsets[i] < offsets[i - 1]) {
       console.warn(`Gradient: stop offsets must be in ascending order`);
-      return null;
+      return;
     }
   }
 
@@ -185,55 +156,29 @@ const processGradientStops = (
   const rangeSpan = Math.abs(rangeMax - rangeMin);
   if (rangeSpan === 0) {
     console.warn('Scale range has zero span');
-    return null;
+    return;
   }
 
   // Convert data value offsets to normalized positions (0-1) using scale
-  const positions = offsets.map((offset) => {
+  // Create normalized stops with positions instead of data-space offsets
+  const normalizedStops: GradientStop[] = effectiveStops.map((stop, index) => {
+    const offset = offsets[index];
     const stopPosition = scale(offset);
-    if (stopPosition === undefined) return 0;
-    const normalized = Math.abs(stopPosition - rangeMin) / rangeSpan;
-    // Clamp to [0, 1] to handle offsets outside domain
-    return Math.max(0, Math.min(1, normalized));
+    const normalized =
+      stopPosition === undefined
+        ? 0
+        : Math.max(0, Math.min(1, Math.abs(stopPosition - rangeMin) / rangeSpan));
+
+    const { color, opacity } = normalizeGradientStop(stop);
+
+    return {
+      offset: normalized, // Now 0-1 normalized (not data space)
+      color,
+      opacity,
+    };
   });
 
-  return {
-    colors: processedColors,
-    positions,
-    opacities,
-  };
-};
-
-/**
- * Processes a GradientDefinition configuration into a gradient configuration for SVG linearGradient.
- * Supports both numeric scales (linear, log) and categorical scales (band).
- *
- * @param gradient - The GradientDefinition configuration
- * @param scale - The d3 scale to use for domain extraction and value mapping
- * @returns Gradient configuration with colors and positions, or null if invalid
- */
-export const processGradient = (
-  gradient: GradientDefinition,
-  scale: ChartScaleFunction,
-): GradientConfig | null => {
-  if (!gradient) return null;
-
-  // Extract domain from scale
-  const scaleDomain = scale.domain();
-  let domain: { min: number; max: number };
-
-  if (isCategoricalScale(scale)) {
-    const domainArray = scaleDomain as number[];
-    domain = { min: domainArray[0], max: domainArray[domainArray.length - 1] };
-  } else {
-    const [min, max] = scaleDomain as [number, number];
-    domain = { min, max };
-  }
-
-  // Resolve stops (handle function form)
-  const resolvedStops = resolveGradientStops(gradient.stops, domain);
-
-  return processGradientStops(resolvedStops, domain, scale);
+  return normalizedStops;
 };
 
 /**
@@ -290,10 +235,10 @@ export const evaluateGradientAtValue = (
   gradient: GradientDefinition,
   dataValue: number,
   scale: ChartScaleFunction,
-): string | null => {
+): string | undefined => {
   // Extract domain from scale
   const scaleDomain = scale.domain();
-  let domain: { min: number; max: number };
+  let domain: AxisBounds;
 
   if (isCategoricalScale(scale)) {
     const domainArray = scaleDomain as number[];
@@ -304,9 +249,9 @@ export const evaluateGradientAtValue = (
   }
 
   // Resolve stops (handle function form)
-  const resolvedStops = resolveGradientStops(gradient.stops, domain);
+  const resolvedStops = getGradientStops(gradient.stops, domain);
 
-  if (resolvedStops.length === 0) return null;
+  if (resolvedStops.length === 0) return;
 
   const { min: minValue, max: maxValue } = domain;
 
@@ -406,7 +351,8 @@ export const evaluateGradientAtValue = (
 
 /**
  * Creates a gradient configuration for SVG components.
- * Convenience function that combines gradient scale retrieval and processing.
+ * Processes a GradientDefinition into a renderable GradientConfig.
+ * Supports both numeric scales (linear, log) and categorical scales (band).
  *
  * @param gradient - GradientDefinition configuration (required)
  * @param xScale - X-axis scale (required)
@@ -435,9 +381,25 @@ export const getGradientConfig = (
   gradient: GradientDefinition,
   xScale: ChartScaleFunction,
   yScale: ChartScaleFunction,
-): GradientConfig | null => {
-  const scale = getGradientScale(gradient, xScale, yScale);
-  if (!scale) return null;
+): GradientStop[] | undefined => {
+  if (!gradient) return;
 
-  return processGradient(gradient, scale);
+  // Get the scale based on axis
+  const scale = getGradientScale(gradient, xScale, yScale);
+  if (!scale) return;
+
+  // Extract domain from scale
+  const scaleDomain = scale.domain();
+  let domain: AxisBounds;
+
+  if (isCategoricalScale(scale)) {
+    const domainArray = scaleDomain as number[];
+    domain = { min: domainArray[0], max: domainArray[domainArray.length - 1] };
+  } else {
+    const [min, max] = scaleDomain as [number, number];
+    domain = { min, max };
+  }
+
+  const resolvedStops = getGradientStops(gradient.stops, domain);
+  return processGradientStops(resolvedStops, domain, scale);
 };

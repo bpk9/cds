@@ -120,7 +120,10 @@ export const GradientArea = memo<GradientAreaProps>(
       if (fillOpacity < 1) {
         return {
           ...config,
-          colors: config.colors.map((color: string) => applyOpacityToColor(color, fillOpacity)),
+          stops: config.stops.map((stop) => ({
+            ...stop,
+            color: applyOpacityToColor(stop.color, fillOpacity),
+          })),
         };
       }
 
