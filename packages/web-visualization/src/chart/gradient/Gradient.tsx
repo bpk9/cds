@@ -1,8 +1,9 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { m as motion, type Transition } from 'framer-motion';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import type { GradientStop } from '../utils';
+import type { GradientDefinition } from '../utils';
+import { getGradientConfig } from '../utils/gradient';
 import { defaultTransition } from '../utils/transition';
 
 export type GradientProps = {
@@ -12,18 +13,11 @@ export type GradientProps = {
    */
   id: string;
   /**
-   * Gradient stops with colors and positions.
+   * Gradient definition with stops, axis, and other configuration.
    */
-  stops: GradientStop[];
+  gradient: GradientDefinition;
   /**
-   * Axis that the gradient maps to.
-   * - 'y': Vertical gradient (top to bottom)
-   * - 'x': Horizontal gradient (left to right)
-   * @default 'y'
-   */
-  axis?: 'x' | 'y';
-  /**
-   * Y-axis ID to use when axis is 'y'.
+   * Y-axis ID to use for gradient processing.
    * When provided, the gradient will align with the specified y-axis range.
    * This ensures gradients work correctly when the axis has a custom range configuration.
    */
@@ -49,14 +43,23 @@ export type GradientProps = {
 };
 
 /**
- * Renders an SVG linearGradient element based on a GradientConfig.
+ * Renders an SVG linearGradient element based on a GradientDefinition.
  * The gradient can be referenced via `fill="url(#${id})"` or `stroke="url(#${id})"`.
  */
 export const Gradient = memo<GradientProps>(
-  ({ id, stops, axis = 'y', yAxisId, animate: animateProp, transitionConfigs }) => {
+  ({ id, gradient, yAxisId, animate: animateProp, transitionConfigs }) => {
     const context = useCartesianChartContext();
     const animate = animateProp ?? context.animate;
     const isInitialRender = useRef(true);
+
+    const xScale = context.getXScale();
+    const yScale = context.getYScale(yAxisId);
+
+    // Process gradient definition into stops
+    const stops = useMemo(() => {
+      if (!xScale || !yScale) return;
+      return getGradientConfig(gradient, xScale, yScale);
+    }, [gradient, xScale, yScale]);
 
     // Determine which transition to use
     const transition =
@@ -74,6 +77,11 @@ export const Gradient = memo<GradientProps>(
     const drawingArea = context.drawingArea;
     const yAxis = context.getYAxis(yAxisId);
     const xAxis = context.getXAxis();
+
+    // If gradient processing failed, don't render
+    if (!stops) return null;
+
+    const axis = gradient.axis ?? 'y';
 
     let coordinates: Record<string, number>;
 

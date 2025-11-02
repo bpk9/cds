@@ -2,73 +2,16 @@ import { scaleLinear } from 'd3-scale';
 
 import {
   evaluateGradientAtValue,
+  getGradientConfig,
   getGradientScale,
   type GradientDefinition,
-  normalizeGradientStop,
-  processGradient,
-  resolveGradientStops,
 } from '../gradient';
 import type { ChartScaleFunction } from '../scale';
 
 describe('gradient utilities', () => {
-  describe('normalizeGradientStop', () => {
-    it('should normalize gradient stop with opacity', () => {
-      const result = normalizeGradientStop({ offset: 0, color: '#ff0000', opacity: 0.5 });
-      expect(result).toEqual({ color: '#ff0000', opacity: 0.5 });
-    });
-
-    it('should normalize gradient stop without opacity (defaults to 1)', () => {
-      const result = normalizeGradientStop({ offset: 0, color: '#ff0000' });
-      expect(result).toEqual({ color: '#ff0000', opacity: 1 });
-    });
-
-    it('should normalize CSS variable gradient stop', () => {
-      const result = normalizeGradientStop({ offset: 0, color: 'var(--color-fgPositive)' });
-      expect(result).toEqual({ color: 'var(--color-fgPositive)', opacity: 1 });
-    });
-  });
-
-  describe('resolveGradientStops', () => {
-    const scale: ChartScaleFunction = scaleLinear().domain([0, 100]).range([0, 400]);
-
-    it('should return static stops array as-is', () => {
-      const stops = [
-        { offset: 0, color: 'red' },
-        { offset: 100, color: 'blue' },
-      ];
-      const result = resolveGradientStops(stops, scale);
-      expect(result).toEqual(stops);
-    });
-
-    it('should resolve function form with domain bounds', () => {
-      const stopsFn = ({ min, max }: { min: number; max: number }) => [
-        { offset: min, color: 'red' },
-        { offset: max, color: 'blue' },
-      ];
-      const result = resolveGradientStops(stopsFn, scale);
-      expect(result).toEqual([
-        { offset: 0, color: 'red' },
-        { offset: 100, color: 'blue' },
-      ]);
-    });
-
-    it('should resolve function form with calculated offsets', () => {
-      const stopsFn = ({ min, max }: { min: number; max: number }) => [
-        { offset: min, color: 'red' },
-        { offset: (min + max) / 2, color: 'yellow' },
-        { offset: max, color: 'green' },
-      ];
-      const result = resolveGradientStops(stopsFn, scale);
-      expect(result).toEqual([
-        { offset: 0, color: 'red' },
-        { offset: 50, color: 'yellow' },
-        { offset: 100, color: 'green' },
-      ]);
-    });
-  });
-
-  describe('processGradient', () => {
-    const scale: ChartScaleFunction = scaleLinear().domain([0, 100]).range([0, 400]);
+  describe('getGradientConfig', () => {
+    const xScale: ChartScaleFunction = scaleLinear().domain([0, 100]).range([0, 400]);
+    const yScale: ChartScaleFunction = scaleLinear().domain([0, 100]).range([400, 0]);
 
     describe('static stops', () => {
       it('should generate gradient config from stops', () => {
@@ -78,12 +21,10 @@ describe('gradient utilities', () => {
             { offset: 100, color: '#00ff00' },
           ],
         };
-        const result = processGradient(gradient, scale);
-        expect(result).toEqual({
-          colors: ['#ff0000', '#00ff00'],
-          positions: [0, 1],
-          opacities: [1, 1],
-        });
+        const result = getGradientConfig(gradient, xScale, yScale);
+        expect(result).toHaveLength(2);
+        expect(result?.[0]).toEqual({ offset: 0, color: '#ff0000', opacity: 1 });
+        expect(result?.[1]).toEqual({ offset: 1, color: '#00ff00', opacity: 1 });
       });
 
       it('should handle CSS variables in gradient config', () => {
@@ -93,9 +34,9 @@ describe('gradient utilities', () => {
             { offset: 100, color: 'var(--color-fgPositive)' },
           ],
         };
-        const result = processGradient(gradient, scale);
-        expect(result?.colors).toContain('var(--color-fgNegative)');
-        expect(result?.colors).toContain('var(--color-fgPositive)');
+        const result = getGradientConfig(gradient, xScale, yScale);
+        expect(result?.[0].color).toBe('var(--color-fgNegative)');
+        expect(result?.[1].color).toBe('var(--color-fgPositive)');
       });
 
       it('should handle custom stop positions', () => {
@@ -106,12 +47,11 @@ describe('gradient utilities', () => {
             { offset: 100, color: '#00ff00' },
           ],
         };
-        const result = processGradient(gradient, scale);
-        expect(result).toEqual({
-          colors: ['#ff0000', '#ffff00', '#00ff00'],
-          positions: [0, 0.3, 1],
-          opacities: [1, 1, 1],
-        });
+        const result = getGradientConfig(gradient, xScale, yScale);
+        expect(result).toHaveLength(3);
+        expect(result?.[0].offset).toBe(0);
+        expect(result?.[1].offset).toBeCloseTo(0.3);
+        expect(result?.[2].offset).toBe(1);
       });
 
       it('should handle opacity in gradient stops', () => {
@@ -121,10 +61,11 @@ describe('gradient utilities', () => {
             { offset: 100, color: '#00ff00' },
           ],
         };
-        const result = processGradient(gradient, scale);
-        expect(result?.colors[0]).toBe('#ff0000');
-        expect(result?.colors[1]).toBe('#00ff00');
-        expect(result?.opacities).toEqual([0.5, 1]);
+        const result = getGradientConfig(gradient, xScale, yScale);
+        expect(result?.[0].color).toBe('#ff0000');
+        expect(result?.[1].color).toBe('#00ff00');
+        expect(result?.[0].opacity).toBe(0.5);
+        expect(result?.[1].opacity).toBe(1);
       });
 
       it('should warn when stops are not in ascending order', () => {
@@ -135,8 +76,8 @@ describe('gradient utilities', () => {
             { offset: 0, color: '#00ff00' },
           ],
         };
-        const result = processGradient(gradient, scale);
-        expect(result).toBeNull();
+        const result = getGradientConfig(gradient, xScale, yScale);
+        expect(result).toBeUndefined();
         expect(warnSpy).toHaveBeenCalledWith(
           expect.stringContaining('stop offsets must be in ascending order'),
         );
@@ -152,11 +93,11 @@ describe('gradient utilities', () => {
             { offset: 100, color: '#00ff00' },
           ],
         };
-        const result = processGradient(gradient, scale);
-        expect(result).not.toBeNull();
-        expect(result?.colors).toHaveLength(4);
-        expect(result?.positions[1]).toBe(0.5);
-        expect(result?.positions[2]).toBe(0.5);
+        const result = getGradientConfig(gradient, xScale, yScale);
+        expect(result).not.toBeUndefined();
+        expect(result).toHaveLength(4);
+        expect(result?.[1].offset).toBeCloseTo(0.5);
+        expect(result?.[2].offset).toBeCloseTo(0.5);
       });
     });
 
@@ -168,12 +109,10 @@ describe('gradient utilities', () => {
             { offset: max, color: '#00ff00' },
           ],
         };
-        const result = processGradient(gradient, scale);
-        expect(result).toEqual({
-          colors: ['#ff0000', '#00ff00'],
-          positions: [0, 1],
-          opacities: [1, 1],
-        });
+        const result = getGradientConfig(gradient, xScale, yScale);
+        expect(result).toHaveLength(2);
+        expect(result?.[0]).toEqual({ offset: 0, color: '#ff0000', opacity: 1 });
+        expect(result?.[1]).toEqual({ offset: 1, color: '#00ff00', opacity: 1 });
       });
 
       it('should handle function form with calculated offsets', () => {
@@ -184,12 +123,11 @@ describe('gradient utilities', () => {
             { offset: max, color: '#00ff00' },
           ],
         };
-        const result = processGradient(gradient, scale);
-        expect(result).toEqual({
-          colors: ['#ff0000', '#ffff00', '#00ff00'],
-          positions: [0, 0.5, 1],
-          opacities: [1, 1, 1],
-        });
+        const result = getGradientConfig(gradient, xScale, yScale);
+        expect(result).toHaveLength(3);
+        expect(result?.[0].offset).toBe(0);
+        expect(result?.[1].offset).toBeCloseTo(0.5);
+        expect(result?.[2].offset).toBe(1);
       });
 
       it('should handle function form with opacity', () => {
@@ -201,11 +139,25 @@ describe('gradient utilities', () => {
             { offset: max, color: '#00ff00', opacity: 0.3 },
           ],
         };
-        const result = processGradient(gradient, scale);
-        expect(result).not.toBeNull();
-        expect(result?.colors).toHaveLength(4);
-        expect(result?.opacities).toEqual([0.3, 0, 0, 0.3]);
+        const result = getGradientConfig(gradient, xScale, yScale);
+        expect(result).not.toBeUndefined();
+        expect(result).toHaveLength(4);
+        expect(result?.[0].opacity).toBe(0.3);
+        expect(result?.[1].opacity).toBe(0);
+        expect(result?.[2].opacity).toBe(0);
+        expect(result?.[3].opacity).toBe(0.3);
       });
+    });
+
+    it('should return undefined for empty stops array', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const gradient: GradientDefinition = {
+        stops: [],
+      };
+      const result = getGradientConfig(gradient, xScale, yScale);
+      expect(result).toBeUndefined();
+      expect(warnSpy).toHaveBeenCalledWith('Gradient has no stops - falling back to default');
+      warnSpy.mockRestore();
     });
   });
 
@@ -340,12 +292,12 @@ describe('gradient utilities', () => {
       });
     });
 
-    it('should return null for empty stops array', () => {
+    it('should return undefined for empty stops array', () => {
       // This shouldn't happen in practice, but test for robustness
       const gradient: GradientDefinition = {
         stops: [],
       };
-      expect(evaluateGradientAtValue(gradient, 50, scale)).toBeNull();
+      expect(evaluateGradientAtValue(gradient, 50, scale)).toBeUndefined();
     });
   });
 

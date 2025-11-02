@@ -1,10 +1,9 @@
-import { memo, type SVGProps, useId, useMemo } from 'react';
+import { memo, type SVGProps, useId } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { Gradient } from '../gradient';
 import { Path, type PathProps } from '../Path';
-import { getGradientConfig } from '../utils/gradient';
 
 import type { LineComponentProps } from './Line';
 
@@ -37,25 +36,15 @@ export const SolidLine = memo<SolidLineProps>(
     ...props
   }) => {
     const gradientId = useId();
-    const context = useCartesianChartContext();
-
-    const xScale = context.getXScale();
-    const yScale = context.getYScale(yAxisId);
-
-    const gradientConfig = useMemo(() => {
-      if (!gradient || !xScale || !yScale) return;
-      return getGradientConfig(gradient, xScale, yScale);
-    }, [gradient, xScale, yScale]);
 
     return (
       <>
-        {gradientConfig && (
+        {gradient && (
           <defs>
             <Gradient
               animate={animate}
-              axis={gradient?.axis}
+              gradient={gradient}
               id={gradientId}
-              stops={gradientConfig}
               transitionConfigs={transitionConfigs}
               yAxisId={yAxisId}
             />
@@ -65,7 +54,7 @@ export const SolidLine = memo<SolidLineProps>(
           animate={animate}
           clipOffset={strokeWidth}
           fill={fill}
-          stroke={gradientConfig ? `url(#${gradientId})` : stroke}
+          stroke={gradient ? `url(#${gradientId})` : stroke}
           strokeLinecap={strokeLinecap}
           strokeLinejoin={strokeLinejoin}
           strokeOpacity={strokeOpacity}

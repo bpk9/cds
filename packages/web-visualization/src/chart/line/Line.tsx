@@ -250,7 +250,7 @@ export const Line = memo<LineProps>(
     }, [xAxis?.data]);
 
     const gradientScale = useMemo(() => {
-      if (!seriesGradient || !xScale || !yScale) return null;
+      if (!seriesGradient || !xScale || !yScale) return;
       return getGradientScale(seriesGradient, xScale, yScale);
     }, [seriesGradient, xScale, yScale]);
 

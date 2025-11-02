@@ -33,14 +33,6 @@ export type GradientDefinition = {
 };
 
 /**
- * Processed color information with normalized values
- */
-type ProcessedColor = {
-  color: string;
-  opacity: number;
-};
-
-/**
  * Resolves gradient stops, handling both static arrays and function forms.
  * When stops is a function, calls it with the domain bounds.
  */

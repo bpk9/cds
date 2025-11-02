@@ -1,10 +1,9 @@
-import { memo, type SVGProps, useId, useMemo } from 'react';
+import { memo, type SVGProps, useId } from 'react';
 import type { SharedProps } from '@coinbase/cds-common/types';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { Gradient } from '../gradient';
 import { Path, type PathProps } from '../Path';
-import { getGradientConfig, type GradientDefinition } from '../utils/gradient';
 
 import type { LineComponentProps } from './Line';
 
@@ -39,24 +38,14 @@ export const DottedLine = memo<DottedLineProps>(
     ...props
   }) => {
     const gradientId = useId();
-    const context = useCartesianChartContext();
-
-    const xScale = context.getXScale();
-    const yScale = context.getYScale(yAxisId);
-
-    const gradientConfig = useMemo(() => {
-      if (!gradient || !xScale || !yScale) return;
-      return getGradientConfig(gradient, xScale, yScale);
-    }, [gradient, xScale, yScale]);
 
     return (
       <>
-        {gradientConfig && (
+        {gradient && (
           <defs>
             <Gradient
               animate={animate}
-              axis={gradient?.axis}
-              config={gradientConfig}
+              gradient={gradient}
               id={gradientId}
               transitionConfigs={transitionConfigs}
               yAxisId={yAxisId}
@@ -67,7 +56,7 @@ export const DottedLine = memo<DottedLineProps>(
           animate={animate}
           clipOffset={strokeWidth}
           fill={fill}
-          stroke={gradientConfig ? `url(#${gradientId})` : stroke}
+          stroke={gradient ? `url(#${gradientId})` : stroke}
           strokeDasharray={strokeDasharray}
           strokeLinecap={strokeLinecap}
           strokeLinejoin={strokeLinejoin}

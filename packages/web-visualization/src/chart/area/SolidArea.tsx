@@ -1,9 +1,8 @@
-import { memo, useId, useMemo } from 'react';
+import { memo, useId } from 'react';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { Gradient } from '../gradient';
 import { Path, type PathProps } from '../Path';
-import { getGradientConfig } from '../utils';
 
 import type { AreaComponentProps } from './Area';
 
@@ -33,15 +32,7 @@ export const SolidArea = memo<SolidAreaProps>(
     const targetSeries = seriesId ? context.getSeries(seriesId) : undefined;
     const gradient = gradientProp ?? targetSeries?.gradient;
 
-    const xScale = context.getXScale();
-    const yScale = context.getYScale(yAxisId);
-
-    const gradientConfig = useMemo(() => {
-      if (!gradient || !xScale || !yScale) return;
-      return getGradientConfig(gradient, xScale, yScale);
-    }, [gradient, xScale, yScale]);
-
-    if (!gradientConfig) {
+    if (!gradient) {
       return (
         <Path
           animate={animate}
@@ -59,8 +50,7 @@ export const SolidArea = memo<SolidAreaProps>(
         <defs>
           <Gradient
             animate={animate}
-            axis={gradient?.axis}
-            config={gradientConfig}
+            gradient={gradient}
             id={patternId}
             transitionConfigs={transitionConfigs}
             yAxisId={yAxisId}

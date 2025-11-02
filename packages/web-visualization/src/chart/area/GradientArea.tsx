@@ -3,7 +3,7 @@ import { memo, useId, useMemo } from 'react';
 import { useCartesianChartContext } from '../ChartProvider';
 import { Gradient } from '../gradient';
 import { Path, type PathProps } from '../Path';
-import { applyOpacityToColor, getGradientConfig, type GradientDefinition } from '../utils';
+import type { GradientDefinition } from '../utils';
 
 import type { AreaComponentProps } from './Area';
 
@@ -68,11 +68,9 @@ export const GradientArea = memo<GradientAreaProps>(
     transitionConfigs,
     ...pathProps
   }) => {
-    const { getXScale, getYScale, getYAxis } = useCartesianChartContext();
+    const { getYAxis } = useCartesianChartContext();
     const patternId = useId();
 
-    const xScale = getXScale();
-    const yScale = getYScale(yAxisId);
     const yAxisConfig = getYAxis(yAxisId);
 
     const gradient = useMemo((): GradientDefinition | undefined => {
@@ -111,13 +109,7 @@ export const GradientArea = memo<GradientAreaProps>(
       };
     }, [gradientProp, yAxisConfig, fill, baseline, peakOpacity, baselineOpacity]);
 
-    const gradientConfig = useMemo(() => {
-      if (!gradient || !xScale || !yScale) return;
-
-      return getGradientConfig(gradient, xScale, yScale);
-    }, [gradient, xScale, yScale]);
-
-    if (!gradientConfig) {
+    if (!gradient) {
       return (
         <Path
           animate={animate}
@@ -135,8 +127,7 @@ export const GradientArea = memo<GradientAreaProps>(
         <defs>
           <Gradient
             animate={animate}
-            axis={gradient?.axis}
-            config={gradientConfig}
+            gradient={gradient}
             id={patternId}
             transitionConfigs={transitionConfigs}
             yAxisId={yAxisId}
