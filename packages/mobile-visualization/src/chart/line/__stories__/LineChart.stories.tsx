@@ -2415,6 +2415,9 @@ export default () => {
       <Example title="Animated Gain/Loss">
         <AnimatedGainLossChart />
       </Example>*/}
+      <Example title="Dotted">
+        <AssetPriceDotted />
+      </Example>
       <Example title="Basic">
         <LineChart
           enableScrubbing

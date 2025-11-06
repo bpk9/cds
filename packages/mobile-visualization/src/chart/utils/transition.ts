@@ -9,8 +9,10 @@ import {
   withTiming,
   type WithTimingConfig,
 } from 'react-native-reanimated';
-import { notifyChange, Skia, type SkPath } from '@shopify/react-native-skia';
+import { type AnimatedProp, notifyChange, Skia, type SkPath } from '@shopify/react-native-skia';
 import * as interpolate from 'd3-interpolate-path';
+
+import { unwrapAnimatedValue } from './chart';
 
 /**
  * Transition configuration for animations.
@@ -137,6 +139,8 @@ export const useInterpolator = <T>(
  * progress.value = buildTransition(1, { type: 'timing', duration: 500 });
  */
 export const buildTransition = (targetValue: number, config: TransitionConfig): number => {
+  'worklet';
+
   switch (config.type) {
     case 'timing': {
       const { type, ...timingConfig } = config;
@@ -158,10 +162,10 @@ export const buildTransition = (targetValue: number, config: TransitionConfig): 
  * Custom hook that manages path animation state and transitions.
  * Handles both simple path-to-path transitions and enter animations with different configs.
  * When path changes, the animation will start from the previous completed position to the new path.
+ * Supports AnimatedProp<string> for currentPath to respond to SharedValue changes without React re-renders.
  *
- * @param currentPath - Current target path to animate to
+ * @param currentPath - Current target path to animate to (can be string or SharedValue<string>)
  * @param initialPath - Initial path for enter animation. When provided, the first animation will go from initialPath to currentPath. If not provided, defaults to currentPath (no enter animation)
- * @param animate - Whether to animate path transitions (default: true)
  * @param transitionConfigs - Transition configurations for different animation phases
  * @returns Animated SkPath as a shared value
  *
@@ -169,9 +173,18 @@ export const buildTransition = (targetValue: number, config: TransitionConfig): 
  * // Simple path transition (like SolidLine)
  * const path = usePathTransition({
  *   currentPath: d ?? '',
- *   animate: shouldAnimate,
  *   transitionConfigs: {
  *     update: { type: 'timing', duration: 3000 }
+ *   }
+ * });
+ *
+ * @example
+ * // With SharedValue for currentPath
+ * const animatedPath = useSharedValue('M0,0 L100,100');
+ * const path = usePathTransition({
+ *   currentPath: animatedPath,
+ *   transitionConfigs: {
+ *     update: { type: 'spring', damping: 20, stiffness: 300 }
  *   }
  * });
  *
@@ -180,7 +193,6 @@ export const buildTransition = (targetValue: number, config: TransitionConfig): 
  * const path = usePathTransition({
  *   currentPath: targetPath,
  *   initialPath: baselinePath,
- *   animate: true,
  *   transitionConfigs: {
  *     enter: { type: 'timing', duration: 1000 },
  *     update: { type: 'timing', duration: 300 }
@@ -193,9 +205,9 @@ export const usePathTransition = ({
   transitionConfigs,
 }: {
   /**
-   * Current target path to animate to.
+   * Current target path to animate to (can be string or SharedValue<string>).
    */
-  currentPath: string;
+  currentPath: AnimatedProp<string>;
   /**
    * Initial path for enter animation.
    * When provided, the first animation will go from initialPath to currentPath.
@@ -217,67 +229,85 @@ export const usePathTransition = ({
   };
 }): SharedValue<SkPath> => {
   const isInitialRender = useRef(true);
-  const previousPathRef = useRef(initialPath ?? currentPath);
-  const targetPathRef = useRef(currentPath);
   const progress = useSharedValue(0);
 
-  const { fromPath, toPath } = useMemo(() => {
-    const isNewPath = targetPathRef.current !== currentPath;
+  // Get initial path value
+  const initialCurrentPath = unwrapAnimatedValue(currentPath);
+  const previousPathRef = useRef(initialPath ?? initialCurrentPath);
+  const targetPathRef = useRef(initialCurrentPath);
 
-    if (!isNewPath) {
-      return {
-        fromPath: previousPathRef.current,
-        toPath: targetPathRef.current,
-      };
-    }
+  // Shared values to track path state in worklet context
+  const fromPathSV = useSharedValue(previousPathRef.current);
+  const toPathSV = useSharedValue(targetPathRef.current);
 
-    const currentProgress = progress.value;
-    const isInterrupting = currentProgress > 0 && currentProgress < 1;
+  // Handle path changes using useAnimatedReaction for SharedValue support
+  useAnimatedReaction(
+    () => unwrapAnimatedValue(currentPath),
+    (newPath, previousPath) => {
+      'worklet';
 
-    if (isInterrupting) {
-      // Animation was interrupted - capture current interpolated path
-      const pathInterpolator = interpolate.interpolatePath(
-        previousPathRef.current,
-        targetPathRef.current,
-      );
-      const currentInterpolatedPath = pathInterpolator(currentProgress);
+      // Skip if path hasn't actually changed
+      if (newPath === previousPath) {
+        return;
+      }
 
-      return {
-        fromPath: currentInterpolatedPath,
-        toPath: currentPath,
-      };
-    }
+      const currentProgress = progress.value;
+      const isInterrupting = currentProgress > 0 && currentProgress < 1;
 
-    // Normal transition (from completed position to new target)
-    const startPath = isInitialRender.current && initialPath ? initialPath : targetPathRef.current;
+      let startPath: string;
 
-    return {
-      fromPath: startPath,
-      toPath: currentPath,
-    };
-  }, [currentPath, initialPath, progress]);
+      if (isInterrupting) {
+        // Animation was interrupted - capture current interpolated path
+        const pathInterpolator = interpolate.interpolatePath(fromPathSV.value, toPathSV.value);
+        startPath = pathInterpolator(currentProgress);
+      } else {
+        // Normal transition (from completed position to new target)
+        startPath = toPathSV.value;
+      }
 
-  useEffect(() => {
-    const isPathChange = targetPathRef.current !== currentPath;
-    const isInitialAnimation = isInitialRender.current && initialPath;
+      // Update path state
+      fromPathSV.value = startPath;
+      toPathSV.value = newPath;
 
-    // Trigger animation if path changed OR if this is the initial render with an initialPath
-    if (isPathChange || isInitialAnimation) {
-      // Update refs for next render
-      previousPathRef.current = fromPath;
-      targetPathRef.current = toPath;
+      // Determine which config to use
+      const configToUse = transitionConfigs?.update ?? defaultTransition;
 
-      const configToUse =
-        isInitialRender.current && transitionConfigs?.enter
-          ? transitionConfigs.enter
-          : (transitionConfigs?.update ?? defaultTransition);
-
+      // Start animation
       progress.value = 0;
       progress.value = buildTransition(1, configToUse);
+    },
+    [transitionConfigs],
+  );
+
+  // Handle initial render and enter animation
+  useEffect(() => {
+    if (isInitialRender.current) {
+      const currentPathValue = unwrapAnimatedValue(currentPath);
+      const hasInitialPath = initialPath !== undefined;
+
+      if (hasInitialPath) {
+        // Set up enter animation
+        fromPathSV.value = initialPath;
+        toPathSV.value = currentPathValue;
+
+        const configToUse = transitionConfigs?.enter ?? defaultTransition;
+        progress.value = 0;
+        progress.value = buildTransition(1, configToUse);
+      } else {
+        // No enter animation - start at current path
+        fromPathSV.value = currentPathValue;
+        toPathSV.value = currentPathValue;
+        progress.value = 1;
+      }
+
+      // Update refs
+      previousPathRef.current = fromPathSV.value;
+      targetPathRef.current = toPathSV.value;
 
       isInitialRender.current = false;
     }
-  }, [currentPath, initialPath, transitionConfigs, fromPath, toPath, progress]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPath, initialPath, transitionConfigs]);
 
-  return useD3PathInterpolation(progress, fromPath, toPath);
+  return useD3PathInterpolation(progress, fromPathSV.value, toPathSV.value);
 };
