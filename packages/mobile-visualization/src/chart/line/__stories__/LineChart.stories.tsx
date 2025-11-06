@@ -2472,7 +2472,7 @@ export default () => {
             tickLabelFormatter: (value) => `$${(value / 1000).toFixed(0)}k`,
           }}
         >
-          <Scrubber hideOverlay />
+          <Scrubber />
         </LineChart>
       </Example>
       <Example title="Discrete Gradient">

@@ -5,19 +5,18 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
   useState,
 } from 'react';
-import { useSharedValue, withTiming } from 'react-native-reanimated';
+import { useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useRefMap } from '@coinbase/cds-common/hooks/useRefMap';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import { useTheme } from '@coinbase/cds-mobile';
-import { Group, Rect } from '@shopify/react-native-skia';
+import { Group, Line, Rect, vec } from '@shopify/react-native-skia';
 
 import { useCartesianChartContext } from '../ChartProvider';
 import { ReferenceLine, type ReferenceLineProps } from '../line';
 import { ChartText } from '../text';
-import { type ChartScaleFunction, useScrubberContext } from '../utils';
+import { applySerializableScale, type ChartScaleFunction, useScrubberContext } from '../utils';
 
 import { ScrubberBeacon, type ScrubberBeaconProps, type ScrubberBeaconRef } from './ScrubberBeacon';
 import { ScrubberBeaconLabel, type ScrubberBeaconLabelProps } from './ScrubberBeaconLabel';
@@ -117,15 +116,8 @@ export const Scrubber = memo(
       },
       ref,
     ) => {
-      const renderCount = useRef(0);
-      renderCount.current++;
       const theme = useTheme();
       const ScrubberBeaconRefs = useRefMap<ScrubberBeaconRef>();
-
-      // Shared values for overlay and scrubber line positions
-      const overlayX = useSharedValue(0);
-      const overlayWidth = useSharedValue(0);
-      const scrubberLineX = useSharedValue(0);
 
       // Track label dimensions for collision detection
       const [labelDimensions, setLabelDimensions] = useState<Map<string, LabelDimensions>>(
@@ -133,8 +125,18 @@ export const Scrubber = memo(
       );
 
       const { scrubberPosition } = useScrubberContext();
-      const { getXScale, getYScale, getSeriesData, getXAxis, series, drawingArea, animate } =
-        useCartesianChartContext();
+      const {
+        getXSerializableScale,
+        getYScale,
+        getSeriesData,
+        getXAxis,
+        series,
+        drawingArea,
+        animate,
+      } = useCartesianChartContext();
+
+      const xAxis = useMemo(() => getXAxis(), [getXAxis]);
+      const xScale = useMemo(() => getXSerializableScale(), [getXSerializableScale]);
 
       // Animation state for delayed scrubber rendering (matches web timing)
       const scrubberOpacity = useSharedValue(animate ? 0 : 1);
@@ -159,32 +161,28 @@ export const Scrubber = memo(
         },
       }));
 
-      const { dataX, dataIndex } = useMemo(() => {
-        const xScale = getXScale() as ChartScaleFunction;
-        const xAxis = getXAxis();
-        if (!xScale) return { dataX: undefined, dataIndex: undefined };
-
-        const maxDataLength =
+      const maxDataLength = useMemo(
+        () =>
           series?.reduce((max: any, s: any) => {
             const seriesData = getSeriesData(s.id);
             return Math.max(max, seriesData?.length ?? 0);
-          }, 0) ?? 0;
+          }, 0) ?? 0,
+        [series, getSeriesData],
+      );
 
-        const dataIndex = scrubberPosition ?? Math.max(0, maxDataLength - 1);
+      const dataIndex = useDerivedValue(() => {
+        return scrubberPosition.value ?? Math.max(0, maxDataLength - 1);
+      }, [scrubberPosition, maxDataLength]);
 
-        // Convert index to actual x value if axis has data
-        let dataX: number;
-        if (xAxis?.data && Array.isArray(xAxis.data) && xAxis.data[dataIndex] !== undefined) {
-          const dataValue = xAxis.data[dataIndex];
-          dataX = typeof dataValue === 'string' ? dataIndex : dataValue;
-        } else {
-          dataX = dataIndex;
+      const dataX = useDerivedValue(() => {
+        if (xAxis?.data && Array.isArray(xAxis.data) && xAxis.data[dataIndex.value] !== undefined) {
+          const dataValue = xAxis.data[dataIndex.value];
+          return typeof dataValue === 'string' ? dataIndex.value : dataValue;
         }
+        return dataIndex.value;
+      }, [xAxis, dataIndex]);
 
-        return { dataX, dataIndex };
-      }, [getXScale, getXAxis, series, scrubberPosition, getSeriesData]);
-
-      const beaconPositions = useMemo(() => {
+      /*const beaconPositions = useMemo(() => {
         const xScale = getXScale() as ChartScaleFunction;
 
         if (!xScale || dataX === undefined || dataIndex === undefined) return [];
@@ -227,7 +225,7 @@ export const Scrubber = memo(
             })
             .filter((beacon: any) => beacon !== undefined) ?? []
         );
-      }, [getXScale, getYScale, dataX, dataIndex, series, seriesIds, getSeriesData]);
+      }, [getXScale, getYScale, dataX, dataIndex, series, seriesIds, getSeriesData]);*/
 
       const createScrubberBeaconRef = useCallback(
         (seriesId: string) => {
@@ -240,23 +238,25 @@ export const Scrubber = memo(
         [ScrubberBeaconRefs],
       );
 
-      const defaultXScale = getXScale();
+      const pixelX = useDerivedValue(() => {
+        return dataX.value !== undefined && xScale
+          ? applySerializableScale(dataX.value, xScale)
+          : undefined;
+      }, [dataX, xScale]);
 
-      const pixelX = dataX !== undefined && defaultXScale ? defaultXScale(dataX) : undefined;
-
-      const memoizedScrubberLabel: ReferenceLineProps['label'] = useMemo(() => {
+      /*const memoizedScrubberLabel: ReferenceLineProps['label'] = useMemo(() => {
         if (typeof label === 'function') {
           if (dataIndex === undefined) return undefined;
           return label(dataIndex);
         }
         return label;
-      }, [label, dataIndex]);
+      }, [label, dataIndex]);*/
 
       const labelVerticalInset = 2;
       const labelHorizontalInset = 4;
 
       // Calculate optimal label positioning strategy with collision detection
-      const labelPositioning = useMemo(() => {
+      /*const labelPositioning = useMemo(() => {
         // Build enriched dimensions with current beacon positions
         const dimensions = beaconPositions
           .map((beacon: any) => {
@@ -503,7 +503,7 @@ export const Scrubber = memo(
         }
 
         return { strategy: globalSide, adjustments };
-      }, [beaconPositions, labelDimensions, drawingArea, pixelX]);
+      }, [beaconPositions, labelDimensions, drawingArea, pixelX]);*/
 
       // Callback for labels to register their dimensions
       const registerLabelDimensions = useCallback((id: string, width: number, height: number) => {
@@ -522,7 +522,7 @@ export const Scrubber = memo(
       }, []);
 
       // Synchronize label positioning state when the position of any scrubber beacons change
-      useEffect(() => {
+      /*useEffect(() => {
         const currentBeaconIds = new Set(
           beaconPositions.map((beacon: any) => beacon?.targetSeries.id).filter(Boolean),
         );
@@ -551,48 +551,55 @@ export const Scrubber = memo(
           }
           return next;
         });
-      }, [beaconPositions]);
+      }, [beaconPositions]);*/
 
-      useEffect(() => {
-        if (pixelX !== undefined) {
-          scrubberLineX.value = pixelX;
-          overlayX.value = pixelX;
-          overlayWidth.value = drawingArea.x + drawingArea.width - pixelX + overlayOffset;
-        }
-      }, [pixelX, drawingArea, overlayOffset, scrubberLineX, overlayX, overlayWidth]);
+      const lineOpacity = useDerivedValue(() => {
+        return scrubberPosition.value !== undefined ? 1 : 0;
+      }, [scrubberPosition]);
 
-      if (!defaultXScale) return null;
+      const overlayOpacity = useDerivedValue(() => {
+        return scrubberPosition.value !== undefined ? 0.8 : 0;
+      }, [scrubberPosition]);
+
+      const overlayWidth = useDerivedValue(() => {
+        const pixelX =
+          dataX.value !== undefined && xScale ? applySerializableScale(dataX.value, xScale) : 0;
+        return drawingArea.x + drawingArea.width - pixelX + overlayOffset;
+      }, [dataX, xScale]);
+
+      const overlayX = useDerivedValue(() => {
+        const xValue =
+          dataX.value !== undefined && xScale ? applySerializableScale(dataX.value, xScale) : 0;
+        return xValue;
+      }, [dataX, xScale]);
+
+      if (!xScale) return;
 
       return (
         <Group opacity={scrubberOpacity}>
-          <ChartText color="red" x={40} y={60}>
-            {`renderCount: ${renderCount.current}`}
-          </ChartText>
-          {!hideOverlay &&
-            dataX !== undefined &&
-            scrubberPosition !== undefined &&
-            pixelX !== undefined && (
-              <Rect
-                color={theme.color.bg}
-                height={drawingArea.height + overlayOffset * 2}
-                opacity={0.8}
-                width={overlayWidth}
-                x={overlayX}
-                y={drawingArea.y - overlayOffset}
-              />
-            )}
-          {!hideLine && scrubberPosition !== undefined && dataX !== undefined && (
-            <LineComponent
-              dataX={dataX}
-              label={memoizedScrubberLabel}
+          {!hideOverlay && (
+            <Rect
+              color={theme.color.bg}
+              height={drawingArea.height + overlayOffset * 2}
+              opacity={overlayOpacity}
+              width={overlayWidth}
+              x={overlayX}
+              y={drawingArea.y - overlayOffset}
+            />
+          )}
+          {/*
+             label={memoizedScrubberLabel}
               labelProps={{
                 verticalAlignment: 'middle',
                 ...labelProps,
               }}
-              stroke={lineStroke}
-            />
+            */}
+          {!hideLine && (
+            <Group opacity={lineOpacity}>
+              <LineComponent dataX={dataX} />
+            </Group>
           )}
-          {beaconPositions.map((beacon: any) => {
+          {/*beaconPositions.map((beacon: any) => {
             if (!beacon) return null;
             const dotStroke = beacon.targetSeries?.color || theme.color.fgPrimary;
             const adjustment = labelPositioning.adjustments.get(beacon.targetSeries.id);
@@ -643,7 +650,7 @@ export const Scrubber = memo(
                   })()}
               </Group>
             );
-          })}
+          })*/}
         </Group>
       );
     },

@@ -5,7 +5,14 @@ import { runOnJS, useSharedValue } from 'react-native-reanimated';
 import { Haptics } from '@coinbase/cds-mobile/utils/haptics';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { isCategoricalScale, ScrubberContext, type ScrubberContextValue } from '../utils';
+import {
+  applySerializableScale,
+  getScaleBandwidth,
+  invertSerializableScale,
+  isCategoricalScale,
+  ScrubberContext,
+  type ScrubberContextValue,
+} from '../utils';
 
 export type ScrubberProviderProps = Partial<Pick<ScrubberContextValue, 'enableScrubbing'>> & {
   children: React.ReactNode;
@@ -36,23 +43,25 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
     throw new Error('ScrubberProvider must be used within a ChartContext');
   }
 
-  const { getXScale, getXAxis, series } = chartContext;
+  const { getXSerializableScale, getXAxis } = chartContext;
   const scrubberPosition = useSharedValue<number | undefined>(undefined);
+
+  const xAxis = useMemo(() => getXAxis(), [getXAxis]);
+  const xScale = useMemo(() => getXSerializableScale(), [getXSerializableScale]);
 
   const getDataIndexFromX = useCallback(
     (touchX: number): number => {
-      const xScale = getXScale();
-      const xAxis = getXAxis();
+      'worklet';
 
       if (!xScale || !xAxis) return 0;
 
-      if (isCategoricalScale(xScale)) {
-        const categories = xScale.domain?.() ?? xAxis.data ?? [];
-        const bandwidth = xScale.bandwidth?.() ?? 0;
+      if (xScale.type === 'band') {
+        const categories = xAxis.data ?? [];
+        const bandwidth = getScaleBandwidth(xScale) ?? 0;
         let closestIndex = 0;
         let closestDistance = Infinity;
         for (let i = 0; i < categories.length; i++) {
-          const xPos = xScale(i);
+          const xPos = applySerializableScale(i, xScale);
           if (xPos !== undefined) {
             const distance = Math.abs(touchX - (xPos + bandwidth / 2));
             if (distance < closestDistance) {
@@ -73,7 +82,7 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
 
           for (let i = 0; i < numericData.length; i++) {
             const xValue = numericData[i];
-            const xPos = xScale(xValue);
+            const xPos = applySerializableScale(xValue, xScale);
             if (xPos !== undefined) {
               const distance = Math.abs(touchX - xPos);
               if (distance < closestDistance) {
@@ -84,14 +93,14 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
           }
           return closestIndex;
         } else {
-          const xValue = xScale.invert(touchX);
+          const xValue = invertSerializableScale(touchX, xScale);
           const dataIndex = Math.round(xValue);
           const domain = xAxis.domain;
           return Math.max(domain.min ?? 0, Math.min(dataIndex, domain.max ?? 0));
         }
       }
     },
-    [getXScale, getXAxis],
+    [xAxis, xScale],
   );
 
   const handleStartEndHaptics = useCallback(() => {

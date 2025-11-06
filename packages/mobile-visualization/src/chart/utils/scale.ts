@@ -263,3 +263,79 @@ export function getScaleBandwidth(scale: SerializableBandScale): number {
   }
   return 0;
 }
+
+/**
+ * Invert a linear scale - convert from range value back to domain value
+ */
+export function invertLinearScale(rangeValue: number, scale: SerializableLinearScale): number {
+  'worklet';
+
+  const [d0, d1] = scale.domain;
+  const [r0, r1] = scale.range;
+
+  const t = (rangeValue - r0) / (r1 - r0); // normalize to [0, 1]
+  return d0 + t * (d1 - d0); // interpolate in domain
+}
+
+/**
+ * Invert a log scale - convert from range value back to domain value
+ */
+export function invertLogScale(rangeValue: number, scale: SerializableLogScale): number {
+  'worklet';
+
+  const [d0, d1] = scale.domain;
+  const [r0, r1] = scale.range;
+  const base = scale.base ?? 10;
+
+  const logBase =
+    base === 10
+      ? Math.log10
+      : base === Math.E
+        ? Math.log
+        : (x: number) => Math.log(x) / Math.log(base);
+
+  const t = (rangeValue - r0) / (r1 - r0); // normalize to [0, 1]
+  const logValue = logBase(d0) + t * (logBase(d1) - logBase(d0));
+
+  // Convert back from log space
+  return base === 10
+    ? Math.pow(10, logValue)
+    : base === Math.E
+      ? Math.exp(logValue)
+      : Math.pow(base, logValue);
+}
+
+/**
+ * Invert a band scale - convert from range value back to domain index
+ */
+export function invertBandScale(rangeValue: number, scale: SerializableBandScale): number {
+  'worklet';
+
+  const [r0, r1] = scale.range;
+  const n = scale.domain.length;
+  const step = (r1 - r0) / n;
+
+  // Find which band this range value falls into
+  const index = Math.floor((rangeValue - r0) / step);
+
+  // Clamp to valid range
+  return Math.max(0, Math.min(index, n - 1));
+}
+
+/**
+ * Universal serializable scale invert function that handles any scale type
+ */
+export function invertSerializableScale(rangeValue: number, scale: SerializableScale): number {
+  'worklet';
+
+  switch (scale.type) {
+    case 'linear':
+      return invertLinearScale(rangeValue, scale);
+    case 'log':
+      return invertLogScale(rangeValue, scale);
+    case 'band':
+      return invertBandScale(rangeValue, scale);
+    default:
+      return 0;
+  }
+}
