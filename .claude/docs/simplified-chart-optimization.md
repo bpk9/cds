@@ -16,21 +16,24 @@ A simple, web-compatible approach to optimize chart performance by pre-calculati
 // Add to CartesianChartContextValue
 export type CartesianChartContextValue = {
   // ... existing properties ...
-  
+
   /**
    * Pre-calculated coordinate arrays for fast lookups.
    * Simple arrays that work identically on web and mobile.
    */
   coordinateArrays: {
     // Global X coordinates (shared across all series)
-    xInputs: number[];     // [0, 1, 2, 3, ...] or [timestamp1, timestamp2, ...]
-    xOutputs: number[];    // [10, 20, 30, 40, ...] screen pixels
-    
+    xInputs: number[]; // [0, 1, 2, 3, ...] or [timestamp1, timestamp2, ...]
+    xOutputs: number[]; // [10, 20, 30, 40, ...] screen pixels
+
     // Per-series Y coordinates
-    seriesCoordinates: Record<string, {
-      yInputs: Array<[number, number] | null>;  // [[baseline, value], ...]
-      yOutputs: number[];                       // [100, 80, 120, ...] screen pixels
-    }>;
+    seriesCoordinates: Record<
+      string,
+      {
+        yInputs: Array<[number, number] | null>; // [[baseline, value], ...]
+        yOutputs: number[]; // [100, 80, 120, ...] screen pixels
+      }
+    >;
   };
 };
 ```
@@ -49,15 +52,12 @@ Create `packages/mobile-visualization/src/chart/utils/coordinateUtils.ts`:
  * Find closest data index from screen X coordinate.
  * Works on both web and mobile.
  */
-export function findClosestXIndex(
-  xOutputs: number[],
-  screenX: number
-): number {
+export function findClosestXIndex(xOutputs: number[], screenX: number): number {
   if (xOutputs.length === 0) return -1;
-  
+
   let closestIndex = 0;
   let minDistance = Math.abs(xOutputs[0] - screenX);
-  
+
   for (let i = 1; i < xOutputs.length; i++) {
     const distance = Math.abs(xOutputs[i] - screenX);
     if (distance < minDistance) {
@@ -65,22 +65,19 @@ export function findClosestXIndex(
       closestIndex = i;
     }
   }
-  
+
   return closestIndex;
 }
 
 /**
  * Binary search version for large datasets (optional optimization).
  */
-export function findClosestXIndexBinary(
-  xOutputs: number[],
-  screenX: number
-): number {
+export function findClosestXIndexBinary(xOutputs: number[], screenX: number): number {
   if (xOutputs.length === 0) return -1;
-  
+
   let left = 0;
   let right = xOutputs.length - 1;
-  
+
   while (left < right) {
     const mid = Math.floor((left + right) / 2);
     if (xOutputs[mid] < screenX) {
@@ -89,22 +86,19 @@ export function findClosestXIndexBinary(
       right = mid;
     }
   }
-  
+
   // Check if left-1 is closer
   if (left > 0 && Math.abs(xOutputs[left - 1] - screenX) < Math.abs(xOutputs[left] - screenX)) {
     return left - 1;
   }
-  
+
   return left;
 }
 
 /**
  * Get screen X coordinate from data index.
  */
-export function getScreenX(
-  xOutputs: number[],
-  dataIndex: number
-): number {
+export function getScreenX(xOutputs: number[], dataIndex: number): number {
   const clampedIndex = Math.max(0, Math.min(dataIndex, xOutputs.length - 1));
   return xOutputs[clampedIndex] ?? 0;
 }
@@ -112,10 +106,7 @@ export function getScreenX(
 /**
  * Get screen Y coordinate for a series at data index.
  */
-export function getScreenY(
-  yOutputs: number[],
-  dataIndex: number
-): number {
+export function getScreenY(yOutputs: number[], dataIndex: number): number {
   const clampedIndex = Math.max(0, Math.min(dataIndex, yOutputs.length - 1));
   return yOutputs[clampedIndex] ?? 0;
 }
@@ -125,7 +116,7 @@ export function getScreenY(
  */
 export function getDataY(
   yInputs: Array<[number, number] | null>,
-  dataIndex: number
+  dataIndex: number,
 ): [number, number] | null {
   const clampedIndex = Math.max(0, Math.min(dataIndex, yInputs.length - 1));
   return yInputs[clampedIndex] ?? null;
@@ -137,8 +128,11 @@ export function getDataY(
  */
 export function getAllSeriesCoordinatesAtIndex(
   xOutputs: number[],
-  seriesCoordinates: Record<string, { yInputs: Array<[number, number] | null>; yOutputs: number[] }>,
-  dataIndex: number
+  seriesCoordinates: Record<
+    string,
+    { yInputs: Array<[number, number] | null>; yOutputs: number[] }
+  >,
+  dataIndex: number,
 ): Array<{
   seriesId: string;
   screenX: number;
@@ -146,7 +140,7 @@ export function getAllSeriesCoordinatesAtIndex(
   dataY: [number, number] | null;
 }> {
   const screenX = getScreenX(xOutputs, dataIndex);
-  
+
   return Object.entries(seriesCoordinates).map(([seriesId, coords]) => ({
     seriesId,
     screenX,
@@ -166,17 +160,14 @@ Create `packages/mobile-visualization/src/chart/utils/coordinateWorklets.ts`:
  * These are identical to the regular functions but with 'worklet' directive.
  */
 
-export function findClosestXIndexWorklet(
-  xOutputs: number[],
-  screenX: number
-): number {
+export function findClosestXIndexWorklet(xOutputs: number[], screenX: number): number {
   'worklet';
-  
+
   if (xOutputs.length === 0) return -1;
-  
+
   let closestIndex = 0;
   let minDistance = Math.abs(xOutputs[0] - screenX);
-  
+
   for (let i = 1; i < xOutputs.length; i++) {
     const distance = Math.abs(xOutputs[i] - screenX);
     if (distance < minDistance) {
@@ -184,26 +175,20 @@ export function findClosestXIndexWorklet(
       closestIndex = i;
     }
   }
-  
+
   return closestIndex;
 }
 
-export function getScreenXWorklet(
-  xOutputs: number[],
-  dataIndex: number
-): number {
+export function getScreenXWorklet(xOutputs: number[], dataIndex: number): number {
   'worklet';
-  
+
   const clampedIndex = Math.max(0, Math.min(dataIndex, xOutputs.length - 1));
   return xOutputs[clampedIndex] ?? 0;
 }
 
-export function getScreenYWorklet(
-  yOutputs: number[],
-  dataIndex: number
-): number {
+export function getScreenYWorklet(yOutputs: number[], dataIndex: number): number {
   'worklet';
-  
+
   const clampedIndex = Math.max(0, Math.min(dataIndex, yOutputs.length - 1));
   return yOutputs[clampedIndex] ?? 0;
 }
@@ -227,10 +212,10 @@ const coordinateArrays = useMemo(() => {
   }
 
   // Build global X arrays
-  const maxLength = Math.max(...(series?.map(s => s.data?.length ?? 0) ?? [0]));
+  const maxLength = Math.max(...(series?.map((s) => s.data?.length ?? 0) ?? [0]));
   const xInputs: number[] = [];
   const xOutputs: number[] = [];
-  
+
   for (let i = 0; i < maxLength; i++) {
     const xValue = xAxis?.data?.[i] ?? i;
     xInputs.push(xValue);
@@ -238,10 +223,13 @@ const coordinateArrays = useMemo(() => {
   }
 
   // Build per-series Y arrays
-  const seriesCoordinates: Record<string, {
-    yInputs: Array<[number, number] | null>;
-    yOutputs: number[];
-  }> = {};
+  const seriesCoordinates: Record<
+    string,
+    {
+      yInputs: Array<[number, number] | null>;
+      yOutputs: number[];
+    }
+  > = {};
 
   series?.forEach((s) => {
     const yScale = yScales.get(s.yAxisId ?? defaultAxisId);
@@ -275,12 +263,12 @@ import { getScreenX, getScreenY } from '../utils/coordinateUtils';
 // Simple usage - just pass the arrays
 const pixelCoordinate = useDerivedValue(() => {
   if (scrubberPosition.value === undefined) return undefined;
-  
+
   const { xOutputs, seriesCoordinates } = coordinateArrays;
   const seriesCoords = seriesCoordinates[seriesId];
-  
+
   if (!seriesCoords) return undefined;
-  
+
   return {
     x: getScreenX(xOutputs, scrubberPosition.value),
     y: getScreenY(seriesCoords.yOutputs, scrubberPosition.value),
@@ -293,18 +281,14 @@ const pixelCoordinate = useDerivedValue(() => {
 ```typescript
 import { findClosestXIndexWorklet } from '../utils/coordinateWorklets';
 
-const gesture = Gesture.Pan()
-  .onUpdate((e) => {
-    'worklet';
-    
-    // Simple function call with arrays
-    const dataIndex = findClosestXIndexWorklet(
-      coordinateArrays.value.xOutputs,
-      e.x
-    );
-    
-    scrubberPosition.value = dataIndex;
-  });
+const gesture = Gesture.Pan().onUpdate((e) => {
+  'worklet';
+
+  // Simple function call with arrays
+  const dataIndex = findClosestXIndexWorklet(coordinateArrays.value.xOutputs, e.x);
+
+  scrubberPosition.value = dataIndex;
+});
 ```
 
 ### Web Compatibility
@@ -317,16 +301,99 @@ import { findClosestXIndex, getAllSeriesCoordinatesAtIndex } from '../utils/coor
 
 const handleMouseMove = (e: MouseEvent) => {
   const dataIndex = findClosestXIndex(coordinateArrays.xOutputs, e.clientX);
-  
+
   const allCoords = getAllSeriesCoordinatesAtIndex(
     coordinateArrays.xOutputs,
     coordinateArrays.seriesCoordinates,
-    dataIndex
+    dataIndex,
   );
-  
+
   // Update tooltip, etc.
 };
 ```
+
+## Handling AnimatedProps and Reactive Updates
+
+### Using unwrapAnimatedValue
+
+For components that accept `AnimatedProp<T>` (which can be either a static value or a Reanimated SharedValue), use the existing `unwrapAnimatedValue` utility:
+
+```typescript
+import { unwrapAnimatedValue } from '../utils/chart';
+
+// Instead of directly using the prop:
+const yPixel = getPointOnScale(dataY, yScale); // ❌ Won't work with SharedValues
+
+// Use unwrapAnimatedValue to extract the current value:
+const yPixel = getPointOnScale(unwrapAnimatedValue(dataY), yScale); // ✅ Works with both static and animated values
+```
+
+### Reactive Updates with useDerivedValue
+
+When dealing with animated props that can change over time, wrap coordinate calculations in `useDerivedValue` to ensure the UI updates reactively:
+
+```typescript
+import { useDerivedValue } from 'react-native-reanimated';
+import { getScreenX, getScreenY } from '../utils/coordinateUtils';
+
+// For components with animated coordinate props
+const pixelCoordinate = useDerivedValue(() => {
+  if (!coordinateArrays.xOutputs.length) return undefined;
+
+  // Extract current values from animated props
+  const currentDataX = unwrapAnimatedValue(dataX);
+  const currentDataY = unwrapAnimatedValue(dataY);
+
+  // Use optimized coordinate lookup instead of scale functions
+  const dataIndex = findClosestXIndex(coordinateArrays.xOutputs, currentDataX);
+
+  return {
+    x: getScreenX(coordinateArrays.xOutputs, dataIndex),
+    y: getScreenY(coordinateArrays.seriesCoordinates[seriesId]?.yOutputs ?? [], dataIndex),
+  };
+}, [coordinateArrays, dataX, dataY, seriesId]);
+```
+
+### Pattern for Reference Lines and Similar Components
+
+For components like ReferenceLine that position elements based on data coordinates:
+
+```typescript
+// Instead of direct scale usage:
+const yPixel = getPointOnScale(unwrapAnimatedValue(dataY), yScale); // ❌ Still uses scale functions
+
+// Use coordinate arrays with reactive updates:
+const yPixel = useDerivedValue(() => {
+  const currentDataY = unwrapAnimatedValue(dataY);
+
+  // Find the closest data point that matches our Y value
+  const seriesData = Object.values(coordinateArrays.seriesCoordinates)[0]; // or specific series
+  if (!seriesData) return 0;
+
+  // Find closest Y input value and use its corresponding output position
+  let closestIndex = 0;
+  let minDistance = Infinity;
+
+  seriesData.yInputs.forEach((inputValue, index) => {
+    if (inputValue) {
+      const distance = Math.abs(inputValue[1] - currentDataY); // Compare with top of stack
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = index;
+      }
+    }
+  });
+
+  return seriesData.yOutputs[closestIndex] ?? 0;
+}, [coordinateArrays, dataY]);
+```
+
+### Key Principles
+
+1. **Always use `unwrapAnimatedValue`** when extracting values from `AnimatedProp<T>`
+2. **Wrap in `useDerivedValue`** when the result needs to be reactive to SharedValue changes
+3. **Use coordinate arrays** instead of scale functions for better performance
+4. **Avoid scale function calls** in reactive contexts - they're not optimized for frequent updates
 
 ## Benefits of This Approach
 
@@ -336,6 +403,7 @@ const handleMouseMove = (e: MouseEvent) => {
 4. **Performant**: Pre-calculated coordinates, fast array lookups
 5. **Maintainable**: Easy to understand and debug
 6. **Testable**: Pure functions are easy to test
+7. **Reactive**: Proper handling of animated values with automatic UI updates
 
 ## Migration Strategy
 
