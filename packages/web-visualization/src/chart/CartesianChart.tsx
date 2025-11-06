@@ -121,9 +121,9 @@ export const CartesianChart = memo(
         };
       }, [chartHeight, chartWidth, userInset, axisPadding]);
 
-      // Axes contain the config along with domain and range, which get calculated here.
-      const xAxis = useMemo(() => {
-        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0) return undefined;
+      const { xAxis, xScale } = useMemo(() => {
+        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0)
+          return { xAxis: undefined, xScale: undefined };
 
         const domain = getAxisDomain(xAxisConfig, series ?? [], 'x');
         const range = getAxisRange(xAxisConfig, chartRect, 'x');
@@ -137,9 +137,31 @@ export const CartesianChart = memo(
           domainLimit: xAxisConfig.domainLimit,
         };
 
-        return axisConfig;
+        // Create the scale
+        const scale = getAxisScale({
+          config: axisConfig,
+          type: 'x',
+          range: axisConfig.range,
+          dataDomain: axisConfig.domain,
+        });
+
+        if (!scale) return { xAxis: undefined, xScale: undefined };
+
+        // Update axis config with actual scale domain (after .nice() or other adjustments)
+        const scaleDomain = scale.domain();
+        const actualDomain =
+          Array.isArray(scaleDomain) && scaleDomain.length === 2
+            ? { min: scaleDomain[0] as number, max: scaleDomain[1] as number }
+            : axisConfig.domain;
+
+        const finalAxisConfig = {
+          ...axisConfig,
+          domain: actualDomain,
+        };
+
+        return { xAxis: finalAxisConfig, xScale: scale };
       }, [xAxisConfig, series, chartRect]);
-      // Create both axes configs and scales together so we can store the actual scale domain
+
       const { yAxes, yScales } = useMemo(() => {
         const axes = new Map<string, AxisConfig>();
         const scales = new Map<string, ChartScaleFunction>();
@@ -193,19 +215,6 @@ export const CartesianChart = memo(
 
         return { yAxes: axes, yScales: scales };
       }, [yAxisConfig, series, chartRect]);
-
-      // Scales are the functions that convert data values to visual positions.
-      const xScale = useMemo(() => {
-        if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0 || xAxis === undefined)
-          return undefined;
-
-        return getAxisScale({
-          config: xAxis,
-          type: 'x',
-          range: xAxis.range,
-          dataDomain: xAxis.domain,
-        });
-      }, [chartRect, xAxis]);
 
       const getXAxis = useCallback(() => xAxis, [xAxis]);
       const getYAxis = useCallback((id?: string) => yAxes.get(id ?? defaultAxisId), [yAxes]);
