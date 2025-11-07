@@ -1,10 +1,11 @@
 import type { HTMLAttributes } from 'react';
 import { css } from '@linaria/core';
-import { flexRender, type Header } from '@tanstack/react-table';
+import { flexRender, type Header, type SortDirection } from '@tanstack/react-table';
 
 import { IconButton } from '../../buttons';
 import { cx } from '../../cx';
 import { Box } from '../../layout';
+import { TableCellSortIcon } from '../TableCellSortIcon';
 
 import { getColumnPinningStyles } from './getColumnPinningStyles';
 
@@ -33,6 +34,19 @@ const defaultPaddingCss = css`
 const compactPaddingCss = css`
   padding: var(--space-1) var(--space-1_5);
 `;
+
+const getAriaSortDirection = (
+  tanstackDirection: SortDirection | false,
+): React.TdHTMLAttributes<HTMLTableCellElement>['aria-sort'] => {
+  switch (tanstackDirection) {
+    case 'asc':
+      return 'ascending';
+    case 'desc':
+      return 'descending';
+    default:
+      return 'none';
+  }
+};
 
 export type TableHeadCellProps = HTMLAttributes<HTMLTableCellElement> & {
   hasLeftOverflow?: boolean;
@@ -75,10 +89,9 @@ export const TableHeadCell = ({
       }}
     >
       {flexRender(header.column.columnDef.header, header.getContext())}
-      {{
-        asc: ' 🔼',
-        desc: ' 🔽',
-      }[header.column.getIsSorted() as string] ?? null}
+      {header.column.getCanSort() ? (
+        <TableCellSortIcon direction={getAriaSortDirection(header.column.getIsSorted())} />
+      ) : null}
       {!header.isPlaceholder && header.column.getCanPin() && (
         <Box className={pinControlsCss}>
           {isPinned !== 'left' ? (
