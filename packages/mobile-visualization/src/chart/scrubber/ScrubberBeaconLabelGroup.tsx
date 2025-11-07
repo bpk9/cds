@@ -1,6 +1,6 @@
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
-import { useDerivedValue } from 'react-native-reanimated';
+import { runOnJS, useDerivedValue } from 'react-native-reanimated';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import { Group } from '@shopify/react-native-skia';
 
@@ -8,7 +8,7 @@ import { useCartesianChartContext } from '../ChartProvider';
 import { applySerializableScale, useScrubberContext } from '../utils';
 
 import { ScrubberBeaconLabel } from './ScrubberBeaconLabel';
-import { calculateLabelPositions } from './utils';
+import { calculateLabelSideStrategy, calculateLabelYPositions } from './utils';
 
 type LabelPosition = {
   id: string;
@@ -16,17 +16,43 @@ type LabelPosition = {
   y: number;
 };
 
+type LabelDimensions = {
+  width: number;
+  height: number;
+};
+
 const PositionedLabel = memo<{
   index: number;
   positions: SharedValue<LabelPosition[]>;
+  strategy: SharedValue<'left' | 'right'>; // Static strategy value
   label: string;
   color?: string;
-}>(({ index, positions, label, color }) => {
+  seriesId: string;
+  onDimensionsChange: (id: string, dimensions: LabelDimensions) => void;
+}>(({ index, positions, strategy, label, color, seriesId, onDimensionsChange }) => {
   const x = useDerivedValue(() => positions.value[index]?.x ?? 0, [positions, index]);
   const y = useDerivedValue(() => positions.value[index]?.y ?? 0, [positions, index]);
 
+  // Calculate dynamic offset based on strategy (matches web implementation)
+  const xOffset = useDerivedValue(() => {
+    return strategy.value === 'right' ? 16 : -16;
+  }, [strategy]);
+
+  // Static horizontal alignment based on strategy
+  const horizontalAlignment = useDerivedValue(
+    () => (strategy.value === 'right' ? 'left' : 'right'),
+    [strategy],
+  );
+
   return (
-    <ScrubberBeaconLabel color={color} horizontalAlignment="right" x={x} xOffset={-16} y={y}>
+    <ScrubberBeaconLabel
+      color={color}
+      horizontalAlignment={horizontalAlignment}
+      onDimensionsChange={(d) => onDimensionsChange(seriesId, d)}
+      x={x}
+      xOffset={xOffset}
+      y={y}
+    >
       {label}
     </ScrubberBeaconLabel>
   );
@@ -65,6 +91,30 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(({ l
     drawingArea,
   } = useCartesianChartContext();
   const { scrubberPosition } = useScrubberContext();
+
+  // Track label dimensions for accurate positioning
+  const [labelDimensions, setLabelDimensions] = useState<Record<string, LabelDimensions>>({});
+
+  // Callback for labels to register their dimensions
+  const handleDimensionsChange = useCallback((id: string, dimensions: LabelDimensions) => {
+    setLabelDimensions((prev) => {
+      const existing = prev[id];
+
+      // Only update if dimensions actually changed
+      if (
+        existing &&
+        existing.width === dimensions.width &&
+        existing.height === dimensions.height
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [id]: dimensions,
+      };
+    });
+  }, []);
 
   // Pre-calculate series information (non-reactive)
   const seriesInfo = useMemo(() => {
@@ -153,38 +203,45 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(({ l
     // Step 2: Define label dimensions
     const labelHeight = 21;
 
-    // Step 3: Complete collision detection using utility function
-    // Convert to LabelDimension format expected by utility
-    const dimensions = desiredPositions.map((pos) => ({
-      id: pos.id,
-      width: 60, // Approximate label width - could be made more accurate later
-      height: labelHeight,
-      preferredX: pos.x,
-      preferredY: pos.desiredY,
-    }));
-
-    // Use simplified label positioning algorithm (with separate X and Y positioning)
-    const { adjustments } = calculateLabelPositions(
-      dimensions,
-      drawingArea,
-      minLabelGap,
-      4,
-      labelHeight,
+    // Calculate max width from tracked dimensions, fallback to default if not available
+    const maxLabelWidth = Math.max(
+      60, // Minimum fallback width
+      ...Object.values(labelDimensions).map((dim) => dim.width),
     );
 
-    // Convert back to final positions array
-    const finalAdjustedPositions = desiredPositions.map((pos) => ({
-      ...pos,
-      adjustedY: adjustments.get(pos.id)?.y ?? pos.desiredY,
-    }));
+    // Step 3: Complete collision detection using utility function
+    // Convert to LabelDimension format expected by utility
+    const dimensions = desiredPositions.map((pos) => {
+      const trackedDimensions = labelDimensions[pos.id];
+      return {
+        id: pos.id,
+        width: trackedDimensions?.width ?? maxLabelWidth, // Use actual width or max width
+        height: trackedDimensions?.height ?? labelHeight, // Use actual height or default
+        preferredX: pos.x,
+        preferredY: pos.desiredY,
+      };
+    });
 
-    // Return final positions
-    return finalAdjustedPositions.map((pos) => ({
+    // Calculate Y positions with collision resolution
+    const yPositions = calculateLabelYPositions(dimensions, drawingArea, labelHeight, minLabelGap);
+
+    // Return final positions (strategy calculated separately)
+    return desiredPositions.map((pos) => ({
       id: pos.id,
       x: pos.x,
-      y: pos.adjustedY,
+      y: yPositions.get(pos.id) ?? pos.desiredY, // Use Y from collision resolution
     }));
-  }, [seriesInfo, dataIndex, dataX, xScale]);
+  }, [seriesInfo, dataIndex, dataX, xScale, labelDimensions]);
+
+  const currentStrategy = useDerivedValue(() => {
+    const pixelX =
+      dataX.value !== undefined && xScale ? applySerializableScale(dataX.value, xScale) : 0;
+
+    const maxWidth = Math.max(...Object.values(labelDimensions).map((dim) => dim.width));
+
+    const strategy = calculateLabelSideStrategy(pixelX, maxWidth, drawingArea, 16);
+    return strategy;
+  }, [dataX, xScale, labelDimensions, drawingArea]);
 
   return (
     <Group>
@@ -198,7 +255,10 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(({ l
             color={labelInfo.color}
             index={index}
             label={labelInfo.label}
+            onDimensionsChange={handleDimensionsChange}
             positions={allLabelPositions}
+            seriesId={info.id}
+            strategy={currentStrategy}
           />
         );
       })}

@@ -8,44 +8,31 @@ type LabelDimension = {
   preferredY: number;
 };
 
-type LabelAdjustment = {
-  x: number;
-  y: number;
-  side: 'left' | 'right';
-};
-
 /**
- * Determines the optimal side (left/right) and shared X position for label positioning.
+ * Determines which side (left/right) to place labels based on available space.
+ * Prefers right side, switches to left when labels would overflow.
  */
-export function calculateLabelXPositioning(
-  dimensions: LabelDimension[],
+export function calculateLabelSideStrategy(
+  beaconX: number,
+  maxLabelWidth: number,
   drawingArea: Rect,
-  labelHorizontalInset: number = 4,
-): { side: 'left' | 'right'; sharedX: number } {
+  xOffset: number = 16,
+): 'left' | 'right' {
   'worklet';
-
-  if (dimensions.length === 0) {
-    return { side: 'right', sharedX: 0 };
-  }
-
-  // Calculate shared pixel X from the first label's preferredX
-  const sharedX = dimensions[0].preferredX;
-
-  const anchorRadius = 10; // Same as used in ScrubberBeaconLabel
-  const bufferPx = 5; // Small buffer to prevent premature switching
 
   // Safety check for valid bounds
   if (drawingArea.width <= 0 || drawingArea.height <= 0) {
-    return { side: 'right', sharedX }; // Default to right if bounds are invalid
+    return 'right'; // Default to right if bounds are invalid
   }
 
-  // Check if labels would overflow when positioned on the right side
-  const wouldOverflow = dimensions.some((dim) => {
-    const labelRightEdge = sharedX + anchorRadius + labelHorizontalInset + dim.width + bufferPx;
-    return labelRightEdge > drawingArea.x + drawingArea.width;
-  });
+  // Calculate available space on the right side
+  const availableRightSpace = drawingArea.x + drawingArea.width - beaconX;
 
-  return { side: wouldOverflow ? 'left' : 'right', sharedX };
+  // Check if longest label + offset fits on the right side
+  const requiredSpace = maxLabelWidth + xOffset;
+
+  // Prefer right side, switch to left only if it doesn't fit
+  return requiredSpace <= availableRightSpace ? 'right' : 'left';
 }
 
 type LabelWithPosition = {
@@ -198,47 +185,4 @@ export function calculateLabelYPositions(
   }
 
   return result;
-}
-
-/**
- * Main function that orchestrates the complete label positioning algorithm.
- * Uses the new simplified approach with separate X and Y positioning.
- */
-export function calculateLabelPositions(
-  dimensions: LabelDimension[],
-  drawingArea: Rect,
-  minGap: number = 2,
-  labelHorizontalInset: number = 4,
-  labelHeight: number = 21, // Standard label height
-): { strategy: 'left' | 'right'; adjustments: Map<string, LabelAdjustment> } {
-  'worklet';
-
-  if (dimensions.length === 0) {
-    return { strategy: 'right', adjustments: new Map() };
-  }
-
-  // Step 1: Calculate X positioning and side strategy
-  const { side, sharedX } = calculateLabelXPositioning(
-    dimensions,
-    drawingArea,
-    labelHorizontalInset,
-  );
-
-  // Step 2: Calculate Y positions with overlap resolution
-  const yPositions = calculateLabelYPositions(dimensions, drawingArea, labelHeight, minGap);
-
-  // Step 3: Combine into final adjustments map
-  const adjustments = new Map<string, LabelAdjustment>();
-
-  for (const dimension of dimensions) {
-    const finalY = yPositions.get(dimension.id) ?? dimension.preferredY;
-
-    adjustments.set(dimension.id, {
-      x: sharedX,
-      y: finalY,
-      side,
-    });
-  }
-
-  return { strategy: side, adjustments };
 }

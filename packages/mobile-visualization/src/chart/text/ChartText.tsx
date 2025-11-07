@@ -177,12 +177,12 @@ export type ChartTextProps = SharedProps & {
    * Horizontal alignment of the text.
    * @default 'center'
    */
-  horizontalAlignment?: TextHorizontalAlignment;
+  horizontalAlignment?: AnimatedProp<TextHorizontalAlignment>;
   /**
    * Vertical alignment of the text.
    * @default 'middle'
    */
-  verticalAlignment?: TextVerticalAlignment;
+  verticalAlignment?: AnimatedProp<TextVerticalAlignment>;
   /**
    * When true, disables automatic repositioning to fit within bounds.
    */
@@ -478,11 +478,13 @@ export const ChartText = memo<ChartTextProps>(
 
     // Calculate background rect position based on alignment
     const backgroundRect = useDerivedValue(() => {
+      const horAlignment = unwrapAnimatedValue(horizontalAlignment);
+      const verAlignment = unwrapAnimatedValue(verticalAlignment);
       let rectX = unwrapAnimatedValue(x);
       let rectY = unwrapAnimatedValue(y);
 
       // Adjust for horizontal alignment
-      switch (horizontalAlignment) {
+      switch (horAlignment) {
         case 'center':
           rectX = rectX - backgroundRectSize.width / 2;
           break;
@@ -493,7 +495,7 @@ export const ChartText = memo<ChartTextProps>(
       }
 
       // Adjust for vertical alignment
-      switch (verticalAlignment) {
+      switch (verAlignment) {
         case 'middle':
           rectY = rectY - backgroundRectSize.height / 2;
           break;
