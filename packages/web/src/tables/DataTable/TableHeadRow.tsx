@@ -15,6 +15,7 @@ export type TableHeadRowProps = {
   virtualPaddingLeft?: number;
   virtualPaddingRight?: number;
   virtualizeColumns?: boolean;
+  compact?: boolean;
 };
 
 const rowCss = css`
@@ -38,6 +39,7 @@ export const TableHeadRow = ({
   virtualPaddingLeft,
   virtualPaddingRight,
   virtualizeColumns,
+  compact,
 }: TableHeadRowProps) => {
   const leftHeaders = headerGroup.headers.filter((h) => h.column.getIsPinned() === 'left');
   const centerHeaders = headerGroup.headers.filter((h) => !h.column.getIsPinned());
@@ -50,6 +52,7 @@ export const TableHeadRow = ({
         <TableHeadCell
           key={header.id}
           className={cx(spacerCellCss, pinnedHeaderCellCss)}
+          compact={compact}
           hasLeftOverflow={hasLeftOverflow}
           hasRightOverflow={hasRightOverflow}
           header={header}
@@ -65,6 +68,7 @@ export const TableHeadRow = ({
             return (
               <TableHeadCell
                 key={header.id}
+                compact={compact}
                 hasLeftOverflow={hasLeftOverflow}
                 hasRightOverflow={hasRightOverflow}
                 header={header}
@@ -74,6 +78,7 @@ export const TableHeadRow = ({
         : centerHeaders.map((header) => (
             <TableHeadCell
               key={header.id}
+              compact={compact}
               hasLeftOverflow={hasLeftOverflow}
               hasRightOverflow={hasRightOverflow}
               header={header}
@@ -86,6 +91,7 @@ export const TableHeadRow = ({
       {rightHeaders.map((header) => (
         <TableHeadCell
           key={header.id}
+          compact={compact}
           hasLeftOverflow={hasLeftOverflow}
           hasRightOverflow={hasRightOverflow}
           header={header}

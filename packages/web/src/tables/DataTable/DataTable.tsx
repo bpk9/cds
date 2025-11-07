@@ -119,6 +119,7 @@ const DataTableBase = <TData,>(
     estimateVirtualRowHeight,
     style,
     variant,
+    compact,
     ...props
   }: DataTableProps<TData>,
   ref: React.Ref<HTMLTableElement>,
@@ -254,6 +255,7 @@ const DataTableBase = <TData,>(
       {/* Head renders pinned + center columns and needs overflow state to decide when to draw borders */}
       <DataTableHead
         columnVirtualizer={columnVirtualizer}
+        compact={compact}
         hasLeftOverflow={hasLeftOverflow}
         hasRightOverflow={hasRightOverflow}
         sectionRef={headerRef}
@@ -266,6 +268,7 @@ const DataTableBase = <TData,>(
       {/* Body mirrors the head setup, forwarding virtualization + overflow metadata down to rows */}
       <DataTableBody
         columnVirtualizer={columnVirtualizer}
+        compact={compact}
         estimateVirtualRowHeight={estimateVirtualRowHeight}
         hasLeftOverflow={hasLeftOverflow}
         hasRightOverflow={hasRightOverflow}

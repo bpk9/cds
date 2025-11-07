@@ -14,11 +14,6 @@ const tableHeadCellCss = css`
   display: flex;
 `;
 
-const headCellContentCss = css`
-  align-items: center;
-  display: inline-flex;
-`;
-
 const sortableHeadCellCss = css`
   cursor: pointer;
   user-select: none;
@@ -31,14 +26,24 @@ const pinControlsCss = css`
   margin-inline-start: 8px;
 `;
 
+const defaultPaddingCss = css`
+  padding: var(--space-2) var(--space-2);
+`;
+
+const compactPaddingCss = css`
+  padding: var(--space-1) var(--space-1_5);
+`;
+
 export type TableHeadCellProps = HTMLAttributes<HTMLTableCellElement> & {
   hasLeftOverflow?: boolean;
   hasRightOverflow?: boolean;
   header: Header<any, unknown>;
   leftOffset?: number;
+  compact?: boolean;
 };
 
 export const TableHeadCell = ({
+  compact,
   hasLeftOverflow,
   hasRightOverflow,
   header,
@@ -56,19 +61,19 @@ export const TableHeadCell = ({
     <th
       key={header.id}
       {...props}
-      className={tableHeadCellCss}
+      className={cx(
+        tableHeadCellCss,
+        header.column.getCanSort() && sortableHeadCellCss,
+        compact ? compactPaddingCss : defaultPaddingCss,
+      )}
+      onClick={header.column.getToggleSortingHandler()}
       style={{
         width: header.getSize(),
         ...pinningStyles,
         ...styleProp,
       }}
     >
-      <Box
-        className={cx(headCellContentCss, header.column.getCanSort() && sortableHeadCellCss)}
-        onClick={header.column.getToggleSortingHandler()}
-      >
-        {flexRender(header.column.columnDef.header, header.getContext())}
-      </Box>
+      {flexRender(header.column.columnDef.header, header.getContext())}
       {{
         asc: ' 🔼',
         desc: ' 🔽',
@@ -78,7 +83,8 @@ export const TableHeadCell = ({
           {isPinned !== 'left' ? (
             <IconButton
               name="arrowLeft"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 header.column.pin('left');
               }}
               variant="secondary"
@@ -88,7 +94,8 @@ export const TableHeadCell = ({
             <IconButton
               compact
               name="close"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 header.column.pin(false);
               }}
               variant="secondary"
@@ -98,7 +105,8 @@ export const TableHeadCell = ({
             <IconButton
               compact
               name="arrowRight"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 header.column.pin('right');
               }}
             />

@@ -46,9 +46,11 @@ export type DataTableBodyProps = {
    * @default () => 33
    */
   estimateVirtualRowHeight?: (index: number) => number;
+  compact?: boolean;
 };
 
 export const DataTableBody = ({
+  compact,
   hasLeftOverflow,
   hasRightOverflow,
   columnVirtualizer,
@@ -95,6 +97,7 @@ export const DataTableBody = ({
               key={row.id}
               staticPosition
               columnVirtualizer={columnVirtualizer}
+              compact={compact}
               hasLeftOverflow={hasLeftOverflow}
               hasRightOverflow={hasRightOverflow}
               row={row}
@@ -118,6 +121,7 @@ export const DataTableBody = ({
               <DataTableBodyRow
                 key={row.id}
                 columnVirtualizer={columnVirtualizer}
+                compact={compact}
                 hasLeftOverflow={hasLeftOverflow}
                 hasRightOverflow={hasRightOverflow}
                 row={row}
@@ -137,6 +141,7 @@ export const DataTableBody = ({
               key={row.id}
               staticPosition
               columnVirtualizer={columnVirtualizer}
+              compact={compact}
               hasLeftOverflow={hasLeftOverflow}
               hasRightOverflow={hasRightOverflow}
               row={row}
@@ -156,6 +161,7 @@ export const DataTableBody = ({
               key={row.id}
               staticPosition
               columnVirtualizer={columnVirtualizer}
+              compact={compact}
               hasLeftOverflow={hasLeftOverflow}
               hasRightOverflow={hasRightOverflow}
               row={row}

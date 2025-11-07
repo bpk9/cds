@@ -8,7 +8,13 @@ import { Checkbox, Select, SelectOption } from '../../controls';
 import { Box, HStack, VStack } from '../../layout';
 import { Text } from '../../typography/Text';
 import type { ColumnDef, SortingState } from '../DataTable';
-import { ActionColumnIds, checkColumnConfig, DataTable, expandColumnConfig } from '../DataTable';
+import {
+  ActionColumnIds,
+  checkColumnConfig,
+  DataTable,
+  dragColumnConfig,
+  expandColumnConfig,
+} from '../DataTable';
 import type { TableVariant } from '../Table';
 
 export default {
@@ -32,11 +38,12 @@ export const DefautlDataTableDesign = () => {
   const [rowSelection, setRowSelection] = useState({});
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
-    left: [ActionColumnIds.select, ActionColumnIds.expand],
+    left: [ActionColumnIds.drag, ActionColumnIds.select, ActionColumnIds.expand],
     right: [],
   });
+  const [compact, setCompact] = useState(false);
   const actionColumns = useMemo<ColumnDef<RowData>[]>(
-    () => [expandColumnConfig, checkColumnConfig],
+    () => [dragColumnConfig, expandColumnConfig, checkColumnConfig],
     [],
   );
 
@@ -111,9 +118,13 @@ export const DefautlDataTableDesign = () => {
         <Checkbox checked={stickyHeader} onChange={() => setStickyHeader((value) => !value)}>
           Sticky Header
         </Checkbox>
+        <Checkbox checked={compact} onChange={() => setCompact((value) => !value)}>
+          Compact
+        </Checkbox>
       </HStack>
       <DataTable
         bordered={bordered}
+        compact={compact}
         onColumnChange={({ ids }) => {
           setColumnOrder(ids);
         }}

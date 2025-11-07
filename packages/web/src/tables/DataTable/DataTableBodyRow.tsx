@@ -33,6 +33,7 @@ export type DataTableBodyRowProps = {
   virtualRow?: VirtualItem;
   staticPosition?: boolean;
   virtualizeColumns?: boolean;
+  compact?: boolean;
 };
 
 export const DataTableBodyRow = ({
@@ -46,6 +47,7 @@ export const DataTableBodyRow = ({
   virtualRow,
   staticPosition = false,
   virtualizeColumns,
+  compact,
 }: DataTableBodyRowProps) => {
   const visibleCells = row.getVisibleCells();
   const leftCells = visibleCells.filter((c) => c.column.getIsPinned() === 'left');
@@ -75,6 +77,7 @@ export const DataTableBodyRow = ({
         <DataTableBodyCell
           key={cell.id}
           cell={cell}
+          compact={compact}
           hasLeftOverflow={hasLeftOverflow}
           hasRightOverflow={hasRightOverflow}
           rowDepth={rowDepth}
@@ -92,6 +95,7 @@ export const DataTableBodyRow = ({
               <DataTableBodyCell
                 key={cell.id}
                 cell={cell}
+                compact={compact}
                 hasLeftOverflow={hasLeftOverflow}
                 hasRightOverflow={hasRightOverflow}
                 isFirstCenterCell={cell.id === firstCenterCellId}
@@ -104,6 +108,7 @@ export const DataTableBodyRow = ({
             <DataTableBodyCell
               key={cell.id}
               cell={cell}
+              compact={compact}
               hasLeftOverflow={hasLeftOverflow}
               hasRightOverflow={hasRightOverflow}
               isFirstCenterCell={cell.id === firstCenterCellId}
@@ -119,6 +124,7 @@ export const DataTableBodyRow = ({
         <DataTableBodyCell
           key={cell.id}
           cell={cell}
+          compact={compact}
           hasLeftOverflow={hasLeftOverflow}
           hasRightOverflow={hasRightOverflow}
           rowDepth={rowDepth}

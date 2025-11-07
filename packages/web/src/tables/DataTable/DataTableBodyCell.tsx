@@ -14,6 +14,14 @@ const bodyCellCss = css`
   display: flex;
 `;
 
+const defaultPaddingCss = css`
+  padding: var(--space-2) var(--space-2);
+`;
+
+const compactPaddingCss = css`
+  padding: var(--space-1) var(--space-1_5);
+`;
+
 export type DataTableBodyCellProps = HTMLAttributes<HTMLTableCellElement> & {
   cell: Cell<any, unknown>;
   hasLeftOverflow?: boolean;
@@ -22,10 +30,12 @@ export type DataTableBodyCellProps = HTMLAttributes<HTMLTableCellElement> & {
   rowDepth?: number;
   selected?: boolean;
   leftOffset?: number;
+  compact?: boolean;
 };
 
 export const DataTableBodyCell = ({
   cell,
+  compact,
   hasLeftOverflow,
   hasRightOverflow,
   isFirstCenterCell,
@@ -49,7 +59,7 @@ export const DataTableBodyCell = ({
     <td
       key={cell.id}
       {...props}
-      className={cx(bodyCellCss, className)}
+      className={cx(bodyCellCss, className, compact ? compactPaddingCss : defaultPaddingCss)}
       style={{
         backgroundColor: selected ? 'var(--color-bgAlternate)' : undefined,
         paddingInlineStart:

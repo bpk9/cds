@@ -18,6 +18,7 @@ export type DataTableHeadProps = {
   /** Whether to virtualize center columns rendering */
   virtualizeColumns?: boolean;
   sectionRef?: Ref<HTMLTableSectionElement>;
+  compact?: boolean;
 };
 
 const tableHeadBaseCss = css`
@@ -34,6 +35,7 @@ export const DataTableHead = ({
   sticky,
   virtualizeColumns,
   sectionRef,
+  compact,
 }: DataTableHeadProps) => {
   return (
     <TableHeader ref={sectionRef} className={tableHeadBaseCss} sticky={sticky}>
@@ -41,6 +43,7 @@ export const DataTableHead = ({
         <TableHeadRow
           key={headerGroup.id}
           columnVirtualizer={columnVirtualizer}
+          compact={compact}
           hasLeftOverflow={hasLeftOverflow}
           hasRightOverflow={hasRightOverflow}
           headerGroup={headerGroup}

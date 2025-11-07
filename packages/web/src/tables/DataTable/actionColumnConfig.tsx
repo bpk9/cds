@@ -1,21 +1,42 @@
 import { css } from '@linaria/core';
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { IconButton } from '../../buttons/IconButton';
 import { Checkbox } from '../../controls';
+import { Icon } from '../../icons/Icon';
 import { Box } from '../../layout';
+import { Pressable } from '../../system';
 
 export const ActionColumnIds = {
   expand: 'cds-column-action-expand',
   select: 'cds-column-action-select',
+  drag: 'cds-column-action-drag',
 } as const;
 
 const actionCellCss = css`
   align-items: center;
   display: flex;
   justify-content: center;
-  padding: var(--space-2);
+  width: 100%;
 `;
+
+const iconPaddingCss = css`
+  padding: 0 var(--space-1) var(--space-1) 0;
+`;
+
+export const dragColumnConfig = {
+  id: ActionColumnIds.drag,
+  header: () => null,
+  cell: () => {
+    return (
+      <Pressable aria-label="Drag row" className={actionCellCss}>
+        <Icon className={iconPaddingCss} color="fg" name="drag" size="s" />
+      </Pressable>
+    );
+  },
+  enablePinning: false,
+  enableSorting: false,
+  size: 60,
+} satisfies ColumnDef<any>;
 
 export const expandColumnConfig = {
   id: ActionColumnIds.expand,
@@ -28,21 +49,25 @@ export const expandColumnConfig = {
     }
 
     return (
-      <Box className={actionCellCss}>
-        <IconButton
-          compact
-          aria-label={row.getIsExpanded?.() ? 'Collapse row' : 'Expand row'}
+      <Pressable
+        aria-label={row.getIsExpanded?.() ? 'Collapse row' : 'Expand row'}
+        className={actionCellCss}
+        onClick={() => {
+          row.toggleExpanded?.();
+        }}
+      >
+        <Icon
+          className={iconPaddingCss}
+          color="fg"
           name={row.getIsExpanded?.() ? 'caretDown' : 'caretRight'}
-          onClick={() => {
-            row.toggleExpanded?.();
-          }}
+          size="s"
         />
-      </Box>
+      </Pressable>
     );
   },
   enablePinning: false,
   enableSorting: false,
-  size: 72,
+  size: 60,
 } satisfies ColumnDef<any>;
 
 export const checkColumnConfig = {
