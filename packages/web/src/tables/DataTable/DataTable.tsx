@@ -9,7 +9,8 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
-import { Table } from '../Table';
+import { cx } from '../../cx';
+import { Table, type TableProps } from '../Table';
 
 import { DataTableBody } from './DataTableBody';
 import { DataTableHead } from './DataTableHead';
@@ -23,66 +24,67 @@ export type DataTableOptions<TData> = Omit<
   'getCoreRowModel' | 'getSortedRowModel'
 >;
 
-export type DataTableProps<TData> = React.HTMLAttributes<HTMLTableElement> & {
-  /**
-   * Options passed directly to TanStack's useReactTable to construct the table instance.
-   * This gives consumers full control over data, columns, state and all table behaviors.
-   */
-  tableOptions: DataTableOptions<TData>;
-  /**
-   * Called when a row reorder is completed via drag and drop. Consumers should update
-   * their underlying data to reflect the new order so the table re-renders accordingly.
-   * Provide both the move details and the full new ids order for convenience.
-   */
-  onRowChange?: (args: {
-    activeId: string;
-    overId: string;
-    oldIndex: number;
-    newIndex: number;
-    ids: string[];
-  }) => void;
-  /**
-   * Called when a center column reorder is completed via drag and drop. Consumers should
-   * update their table column order (e.g., TanStack's columnOrder) accordingly.
-   */
-  onColumnChange?: (args: {
-    activeId: string;
-    overId: string;
-    oldIndex: number;
-    newIndex: number;
-    ids: string[];
-  }) => void;
-  /**
-   * Enable/disable column virtualization for the center (unpinned) columns.
-   * Defaults to true to preserve existing behavior.
-   */
-  virtualizeColumns?: boolean;
-  /**
-   * Enable/disable row virtualization for center (unpinned) rows.
-   * Defaults to true to preserve existing behavior.
-   * When you set this to true, please set a fixed height to the table container through the `style` prop, otherwise it will still render all rows.
-   */
-  virtualizeRows?: boolean;
-  /**
-   * Estimate the size of a virtual column.
-   * @default (index) => centerColumns[index].getSize()
-   */
-  estimateVirtualColumnWidth?: (index: number) => number;
-  /**
-   * Estimate the height of a virtual row.
-   * @default () => 33
-   */
-  estimateVirtualRowHeight?: (index: number) => number;
-  /**
-   * Enable/disable sticky header for the table.
-   * Defaults to true to preserve existing behavior.
-   */
-  stickyHeader?: boolean;
-  /**
-   * Style the table container.
-   */
-  style?: React.CSSProperties;
-};
+export type DataTableProps<TData> = React.HTMLAttributes<HTMLTableElement> &
+  Omit<TableProps, 'children'> & {
+    /**
+     * Options passed directly to TanStack's useReactTable to construct the table instance.
+     * This gives consumers full control over data, columns, state and all table behaviors.
+     */
+    tableOptions: DataTableOptions<TData>;
+    /**
+     * Called when a row reorder is completed via drag and drop. Consumers should update
+     * their underlying data to reflect the new order so the table re-renders accordingly.
+     * Provide both the move details and the full new ids order for convenience.
+     */
+    onRowChange?: (args: {
+      activeId: string;
+      overId: string;
+      oldIndex: number;
+      newIndex: number;
+      ids: string[];
+    }) => void;
+    /**
+     * Called when a center column reorder is completed via drag and drop. Consumers should
+     * update their table column order (e.g., TanStack's columnOrder) accordingly.
+     */
+    onColumnChange?: (args: {
+      activeId: string;
+      overId: string;
+      oldIndex: number;
+      newIndex: number;
+      ids: string[];
+    }) => void;
+    /**
+     * Enable/disable column virtualization for the center (unpinned) columns.
+     * Defaults to true to preserve existing behavior.
+     */
+    virtualizeColumns?: boolean;
+    /**
+     * Enable/disable row virtualization for center (unpinned) rows.
+     * Defaults to true to preserve existing behavior.
+     * When you set this to true, please set a fixed height to the table container through the `style` prop, otherwise it will still render all rows.
+     */
+    virtualizeRows?: boolean;
+    /**
+     * Estimate the size of a virtual column.
+     * @default (index) => centerColumns[index].getSize()
+     */
+    estimateVirtualColumnWidth?: (index: number) => number;
+    /**
+     * Estimate the height of a virtual row.
+     * @default () => 33
+     */
+    estimateVirtualRowHeight?: (index: number) => number;
+    /**
+     * Enable/disable sticky header for the table.
+     * Defaults to true to preserve existing behavior.
+     */
+    stickyHeader?: boolean;
+    /**
+     * Style the table container.
+     */
+    style?: React.CSSProperties;
+  };
 
 const tableContainerCss = css`
   overflow: auto;
@@ -93,6 +95,16 @@ const tableContainerCss = css`
 const dataTableCss = css`
   display: grid;
   height: fit-content;
+`;
+
+// our CDS table component set thead border as a inset box-shadow, which is conflicting with the pinned columns shadow, so we override it here.
+const headerBorderOverrideCss = css`
+  table {
+    & > thead > tr > th {
+      border-bottom: 1px solid var(--color-bgLine);
+      box-shadow: none;
+    }
+  }
 `;
 
 const DataTableBase = <TData,>(
@@ -106,6 +118,7 @@ const DataTableBase = <TData,>(
     estimateVirtualColumnWidth,
     estimateVirtualRowHeight,
     style,
+    variant,
     ...props
   }: DataTableProps<TData>,
   ref: React.Ref<HTMLTableElement>,
@@ -227,9 +240,15 @@ const DataTableBase = <TData,>(
     <Table
       ref={ref}
       className={dataTableCss}
-      classNames={{ root: tableContainerCss }}
+      classNames={{
+        root: cx(
+          tableContainerCss,
+          (variant === 'ruled' || variant === 'graph') && headerBorderOverrideCss,
+        ),
+      }}
       containerRef={tableContainerRef}
       styles={{ root: style }}
+      variant={variant}
       {...props}
     >
       {/* Head renders pinned + center columns and needs overflow state to decide when to draw borders */}

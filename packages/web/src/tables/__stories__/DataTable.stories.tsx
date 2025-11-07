@@ -4,11 +4,12 @@ import type { Meta } from '@storybook/react';
 import type { ColumnPinningState, ExpandedState } from '@tanstack/react-table';
 
 import { IconButton } from '../../buttons/IconButton';
-import { Checkbox } from '../../controls';
+import { Checkbox, Select, SelectOption } from '../../controls';
 import { Box, HStack, VStack } from '../../layout';
 import { Text } from '../../typography/Text';
 import type { ColumnDef, SortingState } from '../DataTable';
 import { ActionColumnIds, checkColumnConfig, DataTable, expandColumnConfig } from '../DataTable';
+import type { TableVariant } from '../Table';
 
 export default {
   title: 'Components/Table/DataTable',
@@ -26,6 +27,8 @@ export const DefautlDataTableDesign = () => {
   const [virtualizeRows, setVirtualizeRows] = useState(true);
   const [virtualizeColumns, setVirtualizeColumns] = useState(true);
   const [stickyHeader, setStickyHeader] = useState(true);
+  const [bordered, setBordered] = useState(true);
+  const [variant, setVariant] = useState<TableVariant>('ruled');
   const [rowSelection, setRowSelection] = useState({});
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
@@ -75,8 +78,27 @@ export const DefautlDataTableDesign = () => {
   }, []);
 
   return (
-    <VStack gap={3}>
+    <VStack gap={3} padding={3}>
       <HStack alignItems="center" gap={4}>
+        <Select
+          compact
+          label="Variant"
+          onChange={(next: string | undefined) => {
+            if (next) {
+              setVariant(next as TableVariant);
+            }
+          }}
+          placeholder="Select variant"
+          value={variant}
+          width="200px"
+        >
+          {['default', 'graph', 'ruled'].map((option) => (
+            <SelectOption key={option} title={option} value={option} />
+          ))}
+        </Select>
+        <Checkbox checked={bordered} onChange={() => setBordered((value) => !value)}>
+          Bordered
+        </Checkbox>
         <Checkbox checked={virtualizeRows} onChange={() => setVirtualizeRows((value) => !value)}>
           Virtualize Rows
         </Checkbox>
@@ -91,6 +113,7 @@ export const DefautlDataTableDesign = () => {
         </Checkbox>
       </HStack>
       <DataTable
+        bordered={bordered}
         onColumnChange={({ ids }) => {
           setColumnOrder(ids);
         }}
@@ -99,7 +122,7 @@ export const DefautlDataTableDesign = () => {
         tableOptions={{
           data,
           columns,
-          enableRowSelection: (row) => Number(row.original.rowId.split('-')[0]) % 2 === 0,
+          enableRowSelection: true,
           enableExpanding: true,
           getSubRows: (row) => row.children,
           onExpandedChange: setExpanded,
@@ -110,6 +133,7 @@ export const DefautlDataTableDesign = () => {
           onColumnOrderChange: setColumnOrder,
           getRowId: (row) => row.rowId,
         }}
+        variant={variant}
         virtualizeColumns={virtualizeColumns}
         virtualizeRows={virtualizeRows}
       />
