@@ -8,6 +8,7 @@ import { useCartesianChartContext } from '../ChartProvider';
 import { applySerializableScale, useScrubberContext } from '../utils';
 
 import { ScrubberBeaconLabel } from './ScrubberBeaconLabel';
+import { calculateLabelPositions } from './utils';
 
 type LabelPosition = {
   id: string;
@@ -59,6 +60,7 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(({ l
     getYSerializableScale,
     getXAxis,
     series,
+    drawingArea,
   } = useCartesianChartContext();
   const { scrubberPosition } = useScrubberContext();
 
@@ -107,12 +109,13 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(({ l
     return dataIndex.value;
   }, [xAxis, dataIndex]);
 
-  // Calculate all label positions in a single derived value
+  // Calculate all label positions in a single derived value with collision detection
   const allLabelPositions = useDerivedValue(() => {
     const sharedPixelX =
       dataX.value !== undefined && xScale ? applySerializableScale(dataX.value, xScale) : 0;
 
-    return seriesInfo.map((info) => {
+    // Step 1: Get the 'desired' y values for each label
+    const desiredPositions = seriesInfo.map((info) => {
       // Calculate dataY for this series
       let dataY: number | undefined;
       if (xScale && info.yScale) {
@@ -135,15 +138,44 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(({ l
         }
       }
 
-      const pixelY =
+      const desiredY =
         dataY !== undefined && info.yScale ? applySerializableScale(dataY, info.yScale) : 0;
 
       return {
         id: info.id,
         x: sharedPixelX,
-        y: pixelY,
+        desiredY,
       };
     });
+
+    // Step 2: Define label dimensions
+    const labelHeight = 21;
+
+    // Step 3: Complete collision detection using utility function
+    // Convert to LabelDimension format expected by utility
+    const dimensions = desiredPositions.map((pos) => ({
+      id: pos.id,
+      width: 60, // Approximate label width - could be made more accurate later
+      height: labelHeight,
+      preferredX: pos.x,
+      preferredY: pos.desiredY,
+    }));
+
+    // Use complete label positioning algorithm (includes collision detection, connected groups, bounds checking)
+    const { adjustments } = calculateLabelPositions(dimensions, drawingArea, minLabelGap);
+
+    // Convert back to final positions array
+    const finalAdjustedPositions = desiredPositions.map((pos) => ({
+      ...pos,
+      adjustedY: adjustments.get(pos.id)?.y ?? pos.desiredY,
+    }));
+
+    // Return final positions
+    return finalAdjustedPositions.map((pos) => ({
+      id: pos.id,
+      x: pos.x,
+      y: pos.adjustedY,
+    }));
   }, [seriesInfo, dataIndex, dataX, xScale]);
 
   return (
