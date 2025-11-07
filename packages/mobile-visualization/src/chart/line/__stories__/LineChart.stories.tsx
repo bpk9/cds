@@ -30,7 +30,13 @@ import { TextLabel1 } from '@coinbase/cds-mobile/typography';
 import { Text } from '@coinbase/cds-mobile/typography/Text';
 import { FontWeight, Rect } from '@shopify/react-native-skia';
 
-import { type AreaComponentProps, DottedArea, GradientArea, SolidArea } from '../../area';
+import {
+  AreaChart,
+  type AreaComponentProps,
+  DottedArea,
+  GradientArea,
+  SolidArea,
+} from '../../area';
 import { XAxis, YAxis } from '../../axis';
 import { CartesianChart } from '../../CartesianChart';
 import { useCartesianChartContext } from '../../ChartProvider';
@@ -2468,10 +2474,11 @@ export default () => {
         </LineChart>
       </Example>
       <Example title="Continuous Gradient 2">
-        <LineChart
+        <AreaChart
           enableScrubbing
-          showArea
+          showLines
           showYAxis
+          stacked
           AreaComponent={(props) => <DottedArea {...props} fillOpacity={0.5} />}
           height={250}
           series={[
@@ -2479,19 +2486,19 @@ export default () => {
               id: 'prices',
               data: data.map((d) => d * 1.05),
               color: `rgb(${theme.spectrum.pink50})`,
-              label: 'test 1',
+              label: 'testing',
             },
             {
               id: 'prices2',
               data: data,
               color: `rgb(${theme.spectrum.red50})`,
-              label: 'test 2',
+              label: 'testing 2',
             },
             {
               id: 'prices3',
               data: data.map((d) => d * 0.95),
               color: `rgb(${theme.spectrum.chartreuse50})`,
-              label: 'test 3',
+              label: 'testing 3',
             },
           ]}
           strokeWidth={4}
@@ -2501,7 +2508,7 @@ export default () => {
           }}
         >
           <Scrubber idlePulse />
-        </LineChart>
+        </AreaChart>
       </Example>
       <Example title="Discrete Gradient 2">
         <LineChart
@@ -2510,7 +2517,6 @@ export default () => {
           showYAxis
           AreaComponent={PartialSolidArea}
           height={150}
-          renderPoints={() => true}
           series={[
             {
               id: 'prices',

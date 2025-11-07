@@ -1,3 +1,4 @@
+import { runOnJS } from 'react-native-reanimated';
 import type { Rect } from '@coinbase/cds-common/types';
 
 type LabelDimension = {
@@ -43,41 +44,59 @@ type LabelWithPosition = {
 };
 
 /**
- * Finds groups of labels that would overlap with the given spacing requirements.
+ * Simple approach: Find all connected overlapping labels in one pass using Union-Find
  */
-function findOverlappingGroups(
+function findConnectedGroups(
   labels: LabelWithPosition[],
   labelHeight: number,
   minGap: number,
 ): LabelWithPosition[][] {
   'worklet';
 
-  const groups: LabelWithPosition[][] = [];
-  const visited = new Set<string>();
-  const requiredSpace = labelHeight + minGap;
+  const requiredDistance = labelHeight + minGap;
+  const sortedLabels = [...labels].sort((a, b) => a.boundedY - b.boundedY);
 
-  for (const label of labels) {
-    if (visited.has(label.id)) continue;
-
-    const group = [label];
-    visited.add(label.id);
-
-    // Find all labels that would overlap with this one
-    for (const other of labels) {
-      if (visited.has(other.id)) continue;
-
-      // Check if labels would overlap or be too close
-      const distance = Math.abs(other.boundedY - label.boundedY);
-      if (distance < requiredSpace) {
-        group.push(other);
-        visited.add(other.id);
-      }
+  // Union-Find to group connected overlapping labels
+  const parent = new Map<string, string>();
+  const findRoot = (id: string): string => {
+    if (parent.get(id) !== id) {
+      parent.set(id, findRoot(parent.get(id)!));
     }
+    return parent.get(id)!;
+  };
 
-    groups.push(group);
+  // Initialize each label as its own parent
+  for (const label of sortedLabels) {
+    parent.set(label.id, label.id);
   }
 
-  return groups;
+  // Connect overlapping labels
+  for (let i = 0; i < sortedLabels.length - 1; i++) {
+    const current = sortedLabels[i];
+    const next = sortedLabels[i + 1];
+
+    const distance = next.boundedY - current.boundedY;
+    if (distance < requiredDistance) {
+      // Union: connect these labels
+      const rootA = findRoot(current.id);
+      const rootB = findRoot(next.id);
+      if (rootA !== rootB) {
+        parent.set(rootB, rootA);
+      }
+    }
+  }
+
+  // Group labels by their root parent
+  const groups = new Map<string, LabelWithPosition[]>();
+  for (const label of sortedLabels) {
+    const root = findRoot(label.id);
+    if (!groups.has(root)) {
+      groups.set(root, []);
+    }
+    groups.get(root)!.push(label);
+  }
+
+  return Array.from(groups.values());
 }
 
 /**
@@ -119,20 +138,37 @@ function redistributeGroup(
       currentY += labelHeight + compressedGap;
     }
   } else {
-    // Enough space - center the group around the average preferred position
+    // Enough space - center the group around the collective preferred position
     const groupCenter = group.reduce((sum, l) => sum + l.preferredY, 0) / group.length;
-    const groupTop = groupCenter - totalNeeded / 2;
 
-    // Ensure group fits within bounds
-    const minGroupTop = drawingArea.y + labelHeight / 2;
-    const maxGroupTop = drawingArea.y + drawingArea.height - totalNeeded + labelHeight / 2;
-    const clampedTop = Math.max(minGroupTop, Math.min(maxGroupTop, groupTop));
+    // Calculate ideal positioning - center the label centers around the group center
+    const totalSpanBetweenCenters = (group.length - 1) * (labelHeight + minGap);
+    const firstLabelCenterY = groupCenter - totalSpanBetweenCenters / 2;
+    const lastLabelCenterY = groupCenter + totalSpanBetweenCenters / 2;
 
-    // Distribute labels evenly within the group
-    let currentY = clampedTop;
+    // Calculate drawing area bounds for label centers
+    const drawingAreaTop = drawingArea.y + labelHeight / 2;
+    const drawingAreaBottom = drawingArea.y + drawingArea.height - labelHeight / 2;
+
+    // Check if ideal positioning fits within bounds
+    let finalFirstCenterY: number;
+
+    if (firstLabelCenterY >= drawingAreaTop && lastLabelCenterY <= drawingAreaBottom) {
+      // Perfect fit - use ideal positions
+      finalFirstCenterY = firstLabelCenterY;
+    } else if (firstLabelCenterY < drawingAreaTop) {
+      // Group extends above bounds - shift down minimally
+      finalFirstCenterY = drawingAreaTop;
+    } else {
+      // Group extends below bounds - shift up so last label center is at drawingAreaBottom
+      finalFirstCenterY = drawingAreaBottom - totalSpanBetweenCenters;
+    }
+
+    // Distribute labels with proper center positioning
+    let currentCenterY = finalFirstCenterY;
     for (const label of group) {
-      label.finalY = currentY;
-      currentY += labelHeight + minGap;
+      label.finalY = currentCenterY;
+      currentCenterY += labelHeight + minGap;
     }
   }
 }
@@ -169,12 +205,15 @@ export function calculateLabelYPositions(
   for (const label of sortedLabels) {
     // Clamp to bounds while preserving relative order
     label.boundedY = Math.max(minY, Math.min(maxY, label.preferredY));
+    // Initialize finalY to the clamped position
+    label.finalY = label.boundedY;
   }
 
-  // Step 3: Find overlapping groups and redistribute
-  const overlappingGroups = findOverlappingGroups(sortedLabels, labelHeight, minGap);
+  // Step 3: Find connected groups and redistribute in ONE pass
+  const connectedGroups = findConnectedGroups(sortedLabels, labelHeight, minGap);
 
-  for (const group of overlappingGroups) {
+  // Process each group once
+  for (const group of connectedGroups) {
     redistributeGroup(group, drawingArea, labelHeight, minGap);
   }
 

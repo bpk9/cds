@@ -14,8 +14,11 @@ import { type AnimatedProp, Circle, Group } from '@shopify/react-native-skia';
 import { useCartesianChartContext } from '../ChartProvider';
 import { applySerializableScale, unwrapAnimatedValue, useScrubberContext } from '../utils';
 import {
+  evaluateGradientAtValueWithPrecomputedStops,
   evaluateGradientAtValueWithSerializableScale,
+  getGradientStops,
   type GradientDefinition,
+  type GradientStop,
 } from '../utils/gradient';
 import { convertToSerializableScale } from '../utils/scale';
 import { buildTransition, defaultTransition, type TransitionConfig } from '../utils/transition';
@@ -125,6 +128,16 @@ export const ScrubberBeacon = memo(
         if (!scale) return;
         return convertToSerializableScale(scale);
       }, [gradient, getXScale, getYScale, targetSeries?.yAxisId]);
+
+      // Pre-compute gradient stops off the UI thread for better performance
+      const precomputedGradientStops = useMemo(() => {
+        if (!gradient || !gradientScale) return undefined;
+
+        // Extract domain from serializable scale
+        const domain = { min: gradientScale.domain[0], max: gradientScale.domain[1] };
+
+        return getGradientStops(gradient.stops, domain);
+      }, [gradient, gradientScale]);
 
       const isIdleState = useDerivedValue(() => {
         return scrubberPosition.value === undefined;
@@ -249,13 +262,13 @@ export const ScrubberBeacon = memo(
       // Create derived animated point for circles
 
       const pointColor = useDerivedValue(() => {
-        /*if (gradient && gradientScale) {
+        if (gradient && gradientScale && precomputedGradientStops) {
           const axis = gradient.axis ?? 'y';
           const dataValue = axis === 'x' ? dataX.value : dataY.value;
 
           if (dataValue !== undefined) {
-            const evaluatedColor = evaluateGradientAtValueWithSerializableScale(
-              gradient,
+            const evaluatedColor = evaluateGradientAtValueWithPrecomputedStops(
+              precomputedGradientStops,
               dataValue,
               gradientScale,
             );
@@ -263,12 +276,13 @@ export const ScrubberBeacon = memo(
               return evaluatedColor;
             }
           }
-        }*/
+        }
 
         return color ?? targetSeries?.color ?? theme.color.fgPrimary;
       }, [
         gradient,
         gradientScale,
+        precomputedGradientStops,
         dataX,
         dataY,
         color,
