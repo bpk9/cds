@@ -3,7 +3,8 @@ import { useTheme } from '@coinbase/cds-mobile';
 
 import { ChartText, type ChartTextProps } from '../text';
 
-export type ScrubberBeaconLabelProps = ChartTextProps;
+// We must disable repositioning
+export type ScrubberBeaconLabelProps = Omit<ChartTextProps, 'disableRepositioning'>;
 
 const labelVerticalInset = 2;
 const labelHorizontalInset = 4;
@@ -27,6 +28,7 @@ export const ScrubberBeaconLabel = memo<ScrubberBeaconLabelProps>(
     const theme = useTheme();
     return (
       <ChartText
+        disableRepositioning
         background={background ?? theme.color.bg}
         borderRadius={borderRadius}
         color={color ?? theme.color.fgPrimary}
