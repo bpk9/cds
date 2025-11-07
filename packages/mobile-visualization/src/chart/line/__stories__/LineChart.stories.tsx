@@ -2342,6 +2342,42 @@ const PartialSolidArea = memo((props: AreaComponentProps) => (
   <SolidArea {...props} fillOpacity={0.5} />
 ));
 
+function MultipleSeriesChart() {
+  const theme = useTheme();
+  const prices = [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58];
+  const volume = [4, 8, 11, 15, 16, 14, 16, 10, 12, 14, 16, 14, 16, 10];
+
+  return (
+    <LineChart
+      enableScrubbing
+      showYAxis
+      height={150}
+      series={[
+        {
+          id: 'prices',
+          data: prices,
+          label: 'Prices',
+          color: theme.color.accentBoldBlue,
+        },
+        {
+          id: 'volume',
+          data: volume,
+          label: 'Volume',
+          color: theme.color.accentBoldGreen,
+        },
+      ]}
+      yAxis={{
+        domain: {
+          min: 0,
+        },
+        showGrid: true,
+      }}
+    >
+      <Scrubber />
+    </LineChart>
+  );
+}
+
 export default () => {
   const theme = useTheme();
 
@@ -2441,19 +2477,19 @@ export default () => {
           series={[
             {
               id: 'prices',
-              data: data.map((d) => d * 3),
+              data: data.map((d) => d * 1.05),
               color: `rgb(${theme.spectrum.pink50})`,
               label: 'test 1',
             },
             {
               id: 'prices2',
-              data: data.map((d) => d * 2),
+              data: data,
               color: `rgb(${theme.spectrum.red50})`,
               label: 'test 2',
             },
             {
               id: 'prices3',
-              data: data,
+              data: data.map((d) => d * 0.95),
               color: `rgb(${theme.spectrum.chartreuse50})`,
               label: 'test 3',
             },
@@ -2498,6 +2534,9 @@ export default () => {
         >
           <Scrubber />
         </LineChart>
+      </Example>
+      <Example title="Multiple series">
+        <MultipleSeriesChart />
       </Example>
       {/*<Example title="X Axis Gradient 2">
         <LineChart

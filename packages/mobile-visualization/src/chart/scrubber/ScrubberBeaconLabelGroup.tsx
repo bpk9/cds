@@ -161,8 +161,14 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(({ l
       preferredY: pos.desiredY,
     }));
 
-    // Use complete label positioning algorithm (includes collision detection, connected groups, bounds checking)
-    const { adjustments } = calculateLabelPositions(dimensions, drawingArea, minLabelGap);
+    // Use simplified label positioning algorithm (with separate X and Y positioning)
+    const { adjustments } = calculateLabelPositions(
+      dimensions,
+      drawingArea,
+      minLabelGap,
+      4,
+      labelHeight,
+    );
 
     // Convert back to final positions array
     const finalAdjustedPositions = desiredPositions.map((pos) => ({

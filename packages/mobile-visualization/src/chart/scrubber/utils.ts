@@ -1,16 +1,11 @@
+import type { Rect } from '@coinbase/cds-common/types';
+
 type LabelDimension = {
   id: string;
   width: number;
   height: number;
   preferredX: number;
   preferredY: number;
-};
-
-type DrawingArea = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 };
 
 type LabelAdjustment = {
@@ -20,124 +15,75 @@ type LabelAdjustment = {
 };
 
 /**
- * Performs iterative collision detection between labels to resolve overlaps.
- * This is the core algorithm from the web version.
+ * Determines the optimal side (left/right) and shared X position for label positioning.
  */
-export function resolveCollisions(
+export function calculateLabelXPositioning(
   dimensions: LabelDimension[],
-  minGap: number,
-  maxIterations = 10,
-): Map<string, LabelAdjustment> {
+  drawingArea: Rect,
+  labelHorizontalInset: number = 4,
+): { side: 'left' | 'right'; sharedX: number } {
   'worklet';
-  const adjustments = new Map<string, LabelAdjustment>();
 
-  // Sort by Y position to handle overlaps systematically
-  const sortedDimensions = [...dimensions].sort((a, b) => a.preferredY - b.preferredY);
-
-  // Initialize all labels at their preferred positions (default to right side for now)
-  for (const dim of sortedDimensions) {
-    adjustments.set(dim.id, {
-      x: dim.preferredX,
-      y: dim.preferredY,
-      side: 'right',
-    });
+  if (dimensions.length === 0) {
+    return { side: 'right', sharedX: 0 };
   }
 
-  // Iterative collision resolution
-  let iteration = 0;
-  while (iteration < maxIterations) {
-    let hasCollisions = false;
-    iteration++;
+  // Calculate shared pixel X from the first label's preferredX
+  const sharedX = dimensions[0].preferredX;
 
-    // Sort by current Y position for systematic collision resolution
-    const currentPositions = sortedDimensions
-      .map((dim) => ({
-        ...dim,
-        currentY: adjustments.get(dim.id)!.y,
-      }))
-      .sort((a, b) => a.currentY - b.currentY);
+  const anchorRadius = 10; // Same as used in ScrubberBeaconLabel
+  const bufferPx = 5; // Small buffer to prevent premature switching
 
-    // Check adjacent labels for overlaps
-    for (let i = 0; i < currentPositions.length - 1; i++) {
-      const current = currentPositions[i];
-      const next = currentPositions[i + 1];
-
-      const currentAdjustment = adjustments.get(current.id)!;
-      const nextAdjustment = adjustments.get(next.id)!;
-
-      // Calculate required separation
-      const requiredSeparation = current.height / 2 + next.height / 2 + minGap;
-      const currentSeparation = nextAdjustment.y - currentAdjustment.y;
-
-      if (currentSeparation < requiredSeparation) {
-        hasCollisions = true;
-        const deficit = requiredSeparation - currentSeparation;
-
-        // Move labels apart - split the adjustment
-        const offsetPerLabel = deficit / 2;
-
-        adjustments.set(current.id, {
-          ...currentAdjustment,
-          y: currentAdjustment.y - offsetPerLabel,
-        });
-        adjustments.set(next.id, {
-          ...nextAdjustment,
-          y: nextAdjustment.y + offsetPerLabel,
-        });
-      }
-    }
-
-    if (!hasCollisions) {
-      break;
-    }
+  // Safety check for valid bounds
+  if (drawingArea.width <= 0 || drawingArea.height <= 0) {
+    return { side: 'right', sharedX }; // Default to right if bounds are invalid
   }
 
-  return adjustments;
+  // Check if labels would overflow when positioned on the right side
+  const wouldOverflow = dimensions.some((dim) => {
+    const labelRightEdge = sharedX + anchorRadius + labelHorizontalInset + dim.width + bufferPx;
+    return labelRightEdge > drawingArea.x + drawingArea.width;
+  });
+
+  return { side: wouldOverflow ? 'left' : 'right', sharedX };
 }
 
+type LabelWithPosition = {
+  id: string;
+  preferredY: number;
+  boundedY: number;
+  finalY: number;
+};
+
 /**
- * Finds groups of labels that are close together or overlapping.
- * This prevents distant labels from being unnecessarily shifted.
+ * Finds groups of labels that would overlap with the given spacing requirements.
  */
-export function findConnectedGroups(
-  dimensions: LabelDimension[],
-  adjustments: Map<string, LabelAdjustment>,
+function findOverlappingGroups(
+  labels: LabelWithPosition[],
+  labelHeight: number,
   minGap: number,
-): string[][] {
+): LabelWithPosition[][] {
   'worklet';
-  const labelIds = Array.from(adjustments.keys());
-  const groups: string[][] = [];
+
+  const groups: LabelWithPosition[][] = [];
   const visited = new Set<string>();
+  const requiredSpace = labelHeight + minGap;
 
-  for (const id of labelIds) {
-    if (visited.has(id)) continue;
+  for (const label of labels) {
+    if (visited.has(label.id)) continue;
 
-    const group: string[] = [id];
-    visited.add(id);
-    const queue = [id];
+    const group = [label];
+    visited.add(label.id);
 
-    while (queue.length > 0) {
-      const currentId = queue.shift()!;
-      const currentAdjustment = adjustments.get(currentId)!;
-      const currentDim = dimensions.find((d) => d.id === currentId)!;
+    // Find all labels that would overlap with this one
+    for (const other of labels) {
+      if (visited.has(other.id)) continue;
 
-      // Check if this label overlaps or is close to any other unvisited label
-      for (const otherId of labelIds) {
-        if (visited.has(otherId)) continue;
-
-        const otherAdjustment = adjustments.get(otherId)!;
-        const otherDim = dimensions.find((d) => d.id === otherId)!;
-
-        // Calculate distance between labels
-        const distance = Math.abs(currentAdjustment.y - otherAdjustment.y);
-        const minDistance = (currentDim.height + otherDim.height) / 2 + minGap * 2;
-
-        // Labels are considered connected if they're close enough to potentially overlap
-        if (distance <= minDistance) {
-          visited.add(otherId);
-          group.push(otherId);
-          queue.push(otherId);
-        }
+      // Check if labels would overlap or be too close
+      const distance = Math.abs(other.boundedY - label.boundedY);
+      if (distance < requiredSpace) {
+        group.push(other);
+        visited.add(other.id);
       }
     }
 
@@ -148,173 +94,151 @@ export function findConnectedGroups(
 }
 
 /**
- * Ensures label groups fit within the drawing area bounds.
- * Applies repositioning strategies for groups that overflow.
+ * Redistributes labels in a group to avoid overlaps while maintaining relative order.
  */
-export function applyBoundsChecking(
-  dimensions: LabelDimension[],
-  adjustments: Map<string, LabelAdjustment>,
-  connectedGroups: string[][],
-  drawingArea: DrawingArea,
+function redistributeGroup(
+  group: LabelWithPosition[],
+  drawingArea: Rect,
+  labelHeight: number,
   minGap: number,
 ): void {
   'worklet';
-  // Process each connected group independently
-  for (const groupIds of connectedGroups) {
-    // Check if any labels in this group are outside bounds
-    const groupOutOfBounds = groupIds.some((id) => {
-      const adjustment = adjustments.get(id)!;
-      const dim = dimensions.find((d) => d.id === id)!;
-      const labelTop = adjustment.y - dim.height / 2;
-      const labelBottom = adjustment.y + dim.height / 2;
-      return labelTop < drawingArea.y || labelBottom > drawingArea.y + drawingArea.height;
-    });
 
-    if (groupOutOfBounds) {
-      // Get labels in this group sorted by their preferred Y position
-      const groupLabels = groupIds
-        .map((id) => ({
-          id,
-          dim: dimensions.find((d) => d.id === id)!,
-          preferredY: dimensions.find((d) => d.id === id)!.preferredY,
-          currentY: adjustments.get(id)!.y,
-        }))
-        .sort((a, b) => a.preferredY - b.preferredY);
+  if (group.length === 1) {
+    // Single label - just ensure it's within bounds
+    const label = group[0];
+    const minY = drawingArea.y + labelHeight / 2;
+    const maxY = drawingArea.y + drawingArea.height - labelHeight / 2;
+    label.finalY = Math.max(minY, Math.min(maxY, label.boundedY));
+    return;
+  }
 
-      // Calculate total height needed for this group
-      const totalLabelHeight = groupLabels.reduce((sum, label) => sum + label.dim.height, 0);
-      const totalGaps = (groupLabels.length - 1) * minGap;
-      const totalNeeded = totalLabelHeight + totalGaps;
+  // Sort group by original preferred Y to maintain relative order
+  group.sort((a, b) => a.preferredY - b.preferredY);
 
-      if (totalNeeded > drawingArea.height) {
-        // Not enough space - use compressed equal spacing as fallback
-        const compressedGap = Math.max(
-          2,
-          (drawingArea.height - totalLabelHeight) / Math.max(1, groupLabels.length - 1),
-        );
-        let currentY = drawingArea.y + groupLabels[0].dim.height / 2;
+  // Calculate total space needed
+  const totalLabelSpace = group.length * labelHeight;
+  const totalGapSpace = (group.length - 1) * minGap;
+  const totalNeeded = totalLabelSpace + totalGapSpace;
 
-        for (const label of groupLabels) {
-          adjustments.set(label.id, {
-            ...adjustments.get(label.id)!,
-            y: currentY,
-          });
+  if (totalNeeded > drawingArea.height) {
+    // Not enough space - compress gaps if necessary
+    const availableGapSpace = drawingArea.height - totalLabelSpace;
+    const compressedGap = Math.max(1, availableGapSpace / Math.max(1, group.length - 1));
 
-          currentY += label.dim.height + compressedGap;
-        }
-      } else {
-        // Enough space - use minimal displacement algorithm for this group
-        const finalPositions = [...groupLabels];
+    let currentY = drawingArea.y + labelHeight / 2;
+    for (const label of group) {
+      label.finalY = currentY;
+      currentY += labelHeight + compressedGap;
+    }
+  } else {
+    // Enough space - center the group around the average preferred position
+    const groupCenter = group.reduce((sum, l) => sum + l.preferredY, 0) / group.length;
+    const groupTop = groupCenter - totalNeeded / 2;
 
-        // Ensure minimum spacing between adjacent labels in this group
-        for (let i = 1; i < finalPositions.length; i++) {
-          const prev = finalPositions[i - 1];
-          const current = finalPositions[i];
+    // Ensure group fits within bounds
+    const minGroupTop = drawingArea.y + labelHeight / 2;
+    const maxGroupTop = drawingArea.y + drawingArea.height - totalNeeded + labelHeight / 2;
+    const clampedTop = Math.max(minGroupTop, Math.min(maxGroupTop, groupTop));
 
-          // Calculate minimum Y position for current label
-          const minCurrentY =
-            prev.preferredY + prev.dim.height / 2 + minGap + current.dim.height / 2;
-
-          if (current.preferredY < minCurrentY) {
-            // Need to push this label down
-            current.preferredY = minCurrentY;
-          }
-        }
-
-        // Check if this specific group fits within bounds, if not shift only this group
-        const groupTop = finalPositions[0].preferredY - finalPositions[0].dim.height / 2;
-        const groupBottom =
-          finalPositions[finalPositions.length - 1].preferredY +
-          finalPositions[finalPositions.length - 1].dim.height / 2;
-
-        let shiftAmount = 0;
-
-        if (groupTop < drawingArea.y) {
-          // Group is too high, shift down
-          shiftAmount = drawingArea.y - groupTop;
-        } else if (groupBottom > drawingArea.y + drawingArea.height) {
-          // Group is too low, shift up
-          shiftAmount = drawingArea.y + drawingArea.height - groupBottom;
-        }
-
-        // Apply final positions with shift only to this group
-        for (const label of finalPositions) {
-          const finalY = label.preferredY + shiftAmount;
-
-          // Final bounds check for individual labels
-          const clampedY = Math.max(
-            drawingArea.y + label.dim.height / 2,
-            Math.min(drawingArea.y + drawingArea.height - label.dim.height / 2, finalY),
-          );
-
-          adjustments.set(label.id, {
-            ...adjustments.get(label.id)!,
-            y: clampedY,
-          });
-        }
-      }
+    // Distribute labels evenly within the group
+    let currentY = clampedTop;
+    for (const label of group) {
+      label.finalY = currentY;
+      currentY += labelHeight + minGap;
     }
   }
 }
 
 /**
- * Determines the optimal side (left/right) for label positioning based on overflow detection.
+ * Calculates Y positions for all labels avoiding overlaps while maintaining order.
  */
-export function determineGlobalSide(
+export function calculateLabelYPositions(
   dimensions: LabelDimension[],
-  drawingArea: DrawingArea,
-  labelHorizontalInset: number,
-): 'left' | 'right' {
+  drawingArea: Rect,
+  labelHeight: number,
+  minGap: number = 2,
+): Map<string, number> {
   'worklet';
-  const anchorRadius = 10; // Same as used in ScrubberBeaconLabel
-  const bufferPx = 5; // Small buffer to prevent premature switching
 
-  // Safety check for valid bounds
-  if (drawingArea.width <= 0 || drawingArea.height <= 0) {
-    return 'right'; // Default to right if bounds are invalid
+  if (dimensions.length === 0) {
+    return new Map();
   }
 
-  // Check if labels would overflow when positioned on the right side
-  const wouldOverflow = dimensions.some((dim) => {
-    const labelRightEdge =
-      dim.preferredX + anchorRadius + labelHorizontalInset + dim.width + bufferPx;
-    return labelRightEdge > drawingArea.x + drawingArea.width;
-  });
+  // Step 1: Sort by preferred Y values and create working labels
+  const sortedLabels: LabelWithPosition[] = [...dimensions]
+    .sort((a, b) => a.preferredY - b.preferredY)
+    .map((dim) => ({
+      id: dim.id,
+      preferredY: dim.preferredY,
+      boundedY: dim.preferredY,
+      finalY: dim.preferredY,
+    }));
 
-  return wouldOverflow ? 'left' : 'right';
+  // Step 2: Initial bounds fitting
+  const minY = drawingArea.y + labelHeight / 2;
+  const maxY = drawingArea.y + drawingArea.height - labelHeight / 2;
+
+  for (const label of sortedLabels) {
+    // Clamp to bounds while preserving relative order
+    label.boundedY = Math.max(minY, Math.min(maxY, label.preferredY));
+  }
+
+  // Step 3: Find overlapping groups and redistribute
+  const overlappingGroups = findOverlappingGroups(sortedLabels, labelHeight, minGap);
+
+  for (const group of overlappingGroups) {
+    redistributeGroup(group, drawingArea, labelHeight, minGap);
+  }
+
+  // Return final positions
+  const result = new Map<string, number>();
+  for (const label of sortedLabels) {
+    result.set(label.id, label.finalY);
+  }
+
+  return result;
 }
 
 /**
  * Main function that orchestrates the complete label positioning algorithm.
- * This combines all the individual steps from the web version.
+ * Uses the new simplified approach with separate X and Y positioning.
  */
 export function calculateLabelPositions(
   dimensions: LabelDimension[],
-  drawingArea: DrawingArea,
+  drawingArea: Rect,
   minGap: number = 2,
   labelHorizontalInset: number = 4,
+  labelHeight: number = 21, // Standard label height
 ): { strategy: 'left' | 'right'; adjustments: Map<string, LabelAdjustment> } {
   'worklet';
+
   if (dimensions.length === 0) {
     return { strategy: 'right', adjustments: new Map() };
   }
 
-  // Step 1: Determine global side strategy
-  const globalSide = determineGlobalSide(dimensions, drawingArea, labelHorizontalInset);
+  // Step 1: Calculate X positioning and side strategy
+  const { side, sharedX } = calculateLabelXPositioning(
+    dimensions,
+    drawingArea,
+    labelHorizontalInset,
+  );
 
-  // Step 2: Resolve collisions with iterative algorithm
-  const adjustments = resolveCollisions(dimensions, minGap);
+  // Step 2: Calculate Y positions with overlap resolution
+  const yPositions = calculateLabelYPositions(dimensions, drawingArea, labelHeight, minGap);
 
-  // Step 3: Update all adjustments with the determined side
-  for (const [id, adjustment] of adjustments) {
-    adjustments.set(id, { ...adjustment, side: globalSide });
+  // Step 3: Combine into final adjustments map
+  const adjustments = new Map<string, LabelAdjustment>();
+
+  for (const dimension of dimensions) {
+    const finalY = yPositions.get(dimension.id) ?? dimension.preferredY;
+
+    adjustments.set(dimension.id, {
+      x: sharedX,
+      y: finalY,
+      side,
+    });
   }
 
-  // Step 4: Find connected groups
-  const connectedGroups = findConnectedGroups(dimensions, adjustments, minGap);
-
-  // Step 5: Apply bounds checking and group repositioning
-  applyBoundsChecking(dimensions, adjustments, connectedGroups, drawingArea, minGap);
-
-  return { strategy: globalSide, adjustments };
+  return { strategy: side, adjustments };
 }
