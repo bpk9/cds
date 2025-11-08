@@ -52,7 +52,6 @@ export const DottedArea = memo<DottedAreaProps>(
     yAxisId,
     clipRect,
     gradient: gradientProp,
-    seriesId,
     animate: animateProp,
     transitionConfig,
   }) => {

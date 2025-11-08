@@ -20,10 +20,6 @@ export type LineComponentProps = {
   testID?: string;
   clipPath?: string;
   /**
-   * Series ID - used to retrieve gradient scale from context.
-   */
-  seriesId?: string;
-  /**
    * ID of the y-axis to use.
    * Required for components that need to map data values to pixel positions.
    */
@@ -72,7 +68,6 @@ export const SolidLine = memo<SolidLineProps>(
     strokeOpacity = 1,
     strokeWidth = 2,
     gradient,
-    seriesId,
     yAxisId,
     d,
     animate,
