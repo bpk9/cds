@@ -942,6 +942,8 @@ function AnimatedGainLossChart() {
       ],
     };
 
+    const myTransitionConfigs = { type: 'spring', stiffness: 700, damping: 20 } as const;
+
     return (
       <VStack gap={2}>
         <CartesianChart
@@ -962,9 +964,10 @@ function AnimatedGainLossChart() {
             AreaComponent={MyGradient}
             seriesId="prices"
             strokeWidth={3}
+            transitionConfig={myTransitionConfigs}
             type="solid"
           />
-          <Scrubber hideOverlay />
+          <Scrubber hideOverlay beaconTransitionConfig={{ update: myTransitionConfigs }} />
         </CartesianChart>
         <Button onPress={() => setData((d) => d.map((d) => -1 * d))}>Flip</Button>
       </VStack>
@@ -1149,14 +1152,10 @@ const AssetPriceDotted = () => {
               },
             },
           ]}
-          transitionConfig={{ type: 'timing', duration: 1500 }}
+          transitionConfig={{ type: 'timing', duration: 3000 }}
         >
           <Scrubber
             idlePulse
-            beaconTransitionConfig={{
-              update: { type: 'timing', duration: 1500 },
-              pulse: { type: 'timing', duration: 5000 },
-            }}
             label={scrubberLabel}
             labelProps={{
               yOffset: -28, // Elevate label 16 pixels above the default position
@@ -2446,10 +2445,13 @@ export default () => {
       </Example>
       <Example title="Dotted">
         <AssetPriceDotted />
+      </Example>*/}
+      <Example title="Imperative Handle">
+        <ScrubberWithImperativeHandle />
       </Example>
       <Example title="Animated Gain/Loss">
         <AnimatedGainLossChart />
-      </Example>*/}
+      </Example>
       <Example title="Dotted">
         <AssetPriceDotted />
       </Example>
@@ -2458,19 +2460,21 @@ export default () => {
           enableScrubbing
           showArea
           showYAxis
-          curve="bump"
-          height={defaultChartHeight}
+          height={150}
           series={[
             {
               id: 'prices',
               data: sampleData,
             },
           ]}
+          xAxis={{
+            range: ({ min, max }) => ({ min, max: max - 16 }),
+          }}
           yAxis={{
             showGrid: true,
           }}
         >
-          <Scrubber />
+          <Scrubber idlePulse />
         </LineChart>
       </Example>
       <Example title="Continuous Gradient 2">

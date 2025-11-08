@@ -171,6 +171,31 @@ export const ScrubberBeacon = memo(
         return dataIndex.value;
       }, [xAxis, dataIndex]);
 
+      // todo: we might not want to show a scrubber if the max data point for this one is less than some of the other series
+      // the solution would be to pass in max data index from Scrubber
+      const idleDataX = useMemo(() => {
+        if (
+          xAxis?.data &&
+          Array.isArray(xAxis.data) &&
+          xAxis.data[maxDataLength - 1] !== undefined
+        ) {
+          const dataValue = xAxis.data[maxDataLength - 1];
+          return typeof dataValue === 'string' ? maxDataLength - 1 : dataValue;
+        }
+        return maxDataLength - 1;
+      }, [xAxis, maxDataLength]);
+
+      const idleDataY = useMemo(() => {
+        if (sourceData && sourceData[maxDataLength - 1] !== undefined) {
+          const dataValue = sourceData[maxDataLength - 1];
+          if (Array.isArray(dataValue)) {
+            return dataValue[dataValue.length - 1];
+          } else if (dataValue !== null) {
+            return dataValue;
+          }
+        }
+      }, [sourceData, maxDataLength]);
+
       const dataY = useDerivedValue(() => {
         if (xScale && yScale) {
           if (
@@ -306,16 +331,12 @@ export const ScrubberBeacon = memo(
 
       const idleStatePoint = useDerivedValue(() => {
         const pixelX =
-          dataX.value !== undefined && xScale
-            ? applySerializableScale(dataX.value, xScale)
-            : undefined;
+          idleDataX !== undefined && xScale ? applySerializableScale(idleDataX, xScale) : undefined;
         const pixelY =
-          dataY.value !== undefined && yScale
-            ? applySerializableScale(dataY.value, yScale)
-            : undefined;
+          idleDataY !== undefined && yScale ? applySerializableScale(idleDataY, yScale) : undefined;
         if (pixelX === undefined || pixelY === undefined) return;
         return { x: pixelX, y: pixelY };
-      }, [dataX, dataY, xScale, yScale]);
+      }, [idleDataX, idleDataY, xScale, yScale]);
 
       const idleStateOpacity = useDerivedValue(() => {
         return isIdleState.value ? 1 : 0;

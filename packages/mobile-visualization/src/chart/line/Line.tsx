@@ -241,7 +241,6 @@ export const Line = memo<LineProps>(
           animate={animate}
           d={path}
           gradient={seriesGradient}
-          seriesId={seriesId}
           stroke={stroke}
           strokeOpacity={opacity}
           transitionConfig={transitionConfig}
