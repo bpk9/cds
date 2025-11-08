@@ -1156,6 +1156,7 @@ const AssetPriceDotted = () => {
         >
           <Scrubber
             idlePulse
+            beaconTransitionConfig={{ update: { type: 'timing', duration: 3000 } }}
             label={scrubberLabel}
             labelProps={{
               yOffset: -28, // Elevate label 16 pixels above the default position

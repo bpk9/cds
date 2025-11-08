@@ -1,6 +1,7 @@
 import { forwardRef, memo, useEffect, useImperativeHandle, useMemo } from 'react';
 import {
   cancelAnimation,
+  useAnimatedReaction,
   useDerivedValue,
   useSharedValue,
   withRepeat,
@@ -220,6 +221,60 @@ export const ScrubberBeacon = memo(
 
       const pulseOpacity = useSharedValue(0);
 
+      // Animated position values for idle state point only (the "follower")
+      const animatedIdleX = useSharedValue(0);
+      const animatedIdleY = useSharedValue(0);
+
+      // Calculate the target idle state point position (the "target")
+      const targetIdleStatePoint = useDerivedValue(() => {
+        const pixelX =
+          idleDataX !== undefined && xScale ? applySerializableScale(idleDataX, xScale) : undefined;
+        const pixelY =
+          idleDataY !== undefined && yScale ? applySerializableScale(idleDataY, yScale) : undefined;
+        if (pixelX === undefined || pixelY === undefined) return;
+        return { x: pixelX, y: pixelY };
+      }, [idleDataX, idleDataY, xScale, yScale]);
+
+      // Initialize animated idle position with current target position
+      useEffect(() => {
+        const targetPos = targetIdleStatePoint.value;
+        if (targetPos) {
+          animatedIdleX.value = targetPos.x;
+          animatedIdleY.value = targetPos.y;
+        }
+      }, [animatedIdleX, animatedIdleY, targetIdleStatePoint]);
+
+      // Animate idle state position changes when data updates
+      useAnimatedReaction(
+        () => {
+          return targetIdleStatePoint.value;
+        },
+        (newPosition, previousPosition) => {
+          if (
+            newPosition &&
+            (!previousPosition ||
+              newPosition.x !== previousPosition.x ||
+              newPosition.y !== previousPosition.y)
+          ) {
+            if (!animate) {
+              // Snap immediately when animations are disabled
+              animatedIdleX.value = newPosition.x;
+              animatedIdleY.value = newPosition.y;
+            } else {
+              // Animate to new position using the update transition config
+              animatedIdleX.value = buildTransition(newPosition.x, updateTransitionConfig);
+              animatedIdleY.value = buildTransition(newPosition.y, updateTransitionConfig);
+            }
+          }
+        },
+        [targetIdleStatePoint, animate, updateTransitionConfig],
+      );
+
+      // Create animated idle state point using the animated values
+      const animatedIdleStatePoint = useDerivedValue(() => {
+        return { x: animatedIdleX.value, y: animatedIdleY.value };
+      }, [animatedIdleX, animatedIdleY]);
+
       useImperativeHandle(ref, () => ({
         pulse: () => {
           if (isIdleState.value && animate) {
@@ -354,13 +409,22 @@ export const ScrubberBeacon = memo(
           </Group>
           <Group opacity={idleStateOpacity}>
             {/* Glow circle */}
-            <Circle c={idleStatePoint} color={pointColor} opacity={0.15} r={glowRadius} />
+            <Circle c={animatedIdleStatePoint} color={pointColor} opacity={0.15} r={glowRadius} />
             {/* Pulse circle */}
-            <Circle c={idleStatePoint} color={pointColor} opacity={pulseOpacity} r={pulseRadius} />
+            <Circle
+              c={animatedIdleStatePoint}
+              color={pointColor}
+              opacity={pulseOpacity}
+              r={pulseRadius}
+            />
             {/* Outer stroke circle */}
-            <Circle c={idleStatePoint} color={theme.color.bg} r={radius + strokeWidth / 2} />
+            <Circle
+              c={animatedIdleStatePoint}
+              color={theme.color.bg}
+              r={radius + strokeWidth / 2}
+            />
             {/* Inner fill circle */}
-            <Circle c={idleStatePoint} color={pointColor} r={radius - strokeWidth / 2} />
+            <Circle c={animatedIdleStatePoint} color={pointColor} r={radius - strokeWidth / 2} />
           </Group>
         </>
       );
