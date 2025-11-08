@@ -117,8 +117,10 @@ const AnimatedPath = memo<Omit<PathProps, 'animate' | 'clipRect' | 'clipOffset' 
     children,
     transitionConfigs,
   }) => {
+    const isAnimatedValue = typeof d !== 'string';
+
     const animatedPath = usePathTransition({
-      currentPath: d,
+      currentPath: isAnimatedValue ? d.value : d,
       initialPath,
       transitionConfigs,
     });
@@ -126,10 +128,12 @@ const AnimatedPath = memo<Omit<PathProps, 'animate' | 'clipRect' | 'clipOffset' 
     const isFilled = fill !== undefined && fill !== 'none';
     const isStroked = stroke !== undefined && stroke !== 'none';
 
+    const path = isAnimatedValue ? d : animatedPath;
+
     return (
       <>
         {isFilled && (
-          <SkiaPath color={fill} opacity={fillOpacity} path={animatedPath} style="fill">
+          <SkiaPath color={fill} opacity={fillOpacity} path={path} style="fill">
             {children}
           </SkiaPath>
         )}
@@ -137,7 +141,7 @@ const AnimatedPath = memo<Omit<PathProps, 'animate' | 'clipRect' | 'clipOffset' 
           <SkiaPath
             color={stroke}
             opacity={strokeOpacity}
-            path={animatedPath}
+            path={path}
             strokeCap={strokeLinecap}
             strokeJoin={strokeLinejoin}
             strokeWidth={strokeWidth}
