@@ -5,6 +5,7 @@ import { useToast } from '@coinbase/cds-web/overlays/useToast';
 import { Link } from '@coinbase/cds-web/typography/Link';
 import { useLocation } from '@docusaurus/router';
 import { usePlatformContext } from '@site/src/utils/PlatformContext';
+import { useAnalytics } from '@site/src/utils/useAnalytics';
 
 /**
  * A button group that provides access to LLM-friendly documentation.
@@ -13,6 +14,7 @@ export const LLMDocButtons = memo(() => {
   const { platform } = usePlatformContext();
   const toast = useToast();
   const location = useLocation();
+  const { trackGtagEvent, postMetric } = useAnalytics();
 
   // Parse the current URL to determine doc type and title
   const { docType, title } = useMemo(() => {
@@ -41,6 +43,24 @@ export const LLMDocButtons = memo(() => {
   // Construct the URL path to the LLM text file
   const llmDocUrl = `/llms/${platform}/${docType}/${title}.txt`;
 
+  const trackLLMDocAction = useCallback(
+    (action: 'copy' | 'view') => {
+      trackGtagEvent({
+        action: 'llm_doc_interaction',
+        category: 'LLM Documentation',
+        label: `${action}:${platform}/${docType}/${title}`,
+        value: 1,
+      });
+
+      postMetric('cdsDocs', {
+        command: 'llm_doc_interaction',
+        arguments: action,
+        context: `${platform}/${docType}/${title}`,
+      });
+    },
+    [trackGtagEvent, postMetric, platform, docType, title],
+  );
+
   const handleCopy = useCallback(async () => {
     try {
       // Fetch the text file content
@@ -53,11 +73,15 @@ export const LLMDocButtons = memo(() => {
       // Copy to clipboard
       await navigator.clipboard.writeText(text);
       toast.show('Copied to clipboard');
+
+      trackLLMDocAction('copy');
     } catch (error) {
       console.error('Failed to copy LLM doc:', error);
       toast.show('Failed to copy to clipboard');
     }
-  }, [llmDocUrl, toast]);
+  }, [llmDocUrl, toast, trackLLMDocAction]);
+
+  const handleViewMarkdown = useCallback(() => trackLLMDocAction('view'), [trackLLMDocAction]);
 
   return (
     <Box alignItems="flex-start" gap={2}>
@@ -69,7 +93,7 @@ export const LLMDocButtons = memo(() => {
         />{' '}
         Copy for LLM
       </Link>
-      <Link openInNewWindow font="label2" href={llmDocUrl}>
+      <Link openInNewWindow font="label2" href={llmDocUrl} onClick={handleViewMarkdown}>
         <Icon
           name="externalLink"
           size="s"
