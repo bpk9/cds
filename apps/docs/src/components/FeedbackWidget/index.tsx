@@ -1,14 +1,86 @@
 import React, { useCallback, useState } from 'react';
 import { Button } from '@coinbase/cds-web/buttons';
+import { ControlGroup, Radio, TextInput } from '@coinbase/cds-web/controls';
+import { NativeTextArea } from '@coinbase/cds-web/controls/NativeTextArea';
 import { HStack, VStack } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography/Text';
 import { useLocation } from '@docusaurus/router';
 import { useAnalytics } from '@site/src/utils/useAnalytics';
 
 type FeedbackType = 'positive' | 'negative' | null;
+type FeedbackCategory = string | null;
+
+type FeedbackOption = {
+  value: string;
+  label: string;
+  command: string;
+};
+
+const POSITIVE_OPTIONS: FeedbackOption[] = [
+  {
+    value: 'clear',
+    label: 'Clear explanations and easy to follow',
+    command: 'positive_clear',
+  },
+  {
+    value: 'examples',
+    label: 'Good code examples',
+    command: 'positive_examples',
+  },
+  {
+    value: 'api_docs',
+    label: 'Complete props/API documentation',
+    command: 'positive_api_docs',
+  },
+  {
+    value: 'visuals',
+    label: 'Helpful visual examples or demos',
+    command: 'positive_visuals',
+  },
+  {
+    value: 'other',
+    label: 'Something else',
+    command: 'positive_other',
+  },
+];
+
+const NEGATIVE_OPTIONS: FeedbackOption[] = [
+  {
+    value: 'confusing',
+    label: 'Explanation is confusing or unclear',
+    command: 'negative_confusing',
+  },
+  {
+    value: 'examples',
+    label: "Code examples are missing or don't work",
+    command: 'negative_examples',
+  },
+  {
+    value: 'incomplete_api',
+    label: 'Props/API documentation is incomplete',
+    command: 'negative_incomplete_api',
+  },
+  {
+    value: 'missing_info',
+    label: 'Missing information or use cases',
+    command: 'negative_missing_info',
+  },
+  {
+    value: 'bug',
+    label: 'Found a bug (typo, broken link, visual issue)',
+    command: 'negative_bug',
+  },
+  {
+    value: 'other',
+    label: 'Something else',
+    command: 'negative_other',
+  },
+];
 
 export function FeedbackWidget() {
   const [feedback, setFeedback] = useState<FeedbackType>(null);
+  const [category, setCategory] = useState<FeedbackCategory>(null);
+  const [additionalDetails, setAdditionalDetails] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const location = useLocation();
 
@@ -21,28 +93,28 @@ export function FeedbackWidget() {
     }
   }, []);
 
-  const handleClick = useCallback(
+  // Callback ref to focus the category selection when it's rendered
+  const categorySelectionRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      node.focus();
+    }
+  }, []);
+
+  const handleYesNoClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       try {
         // Get the feedback type from the data attribute
         const type = event.currentTarget.dataset.feedbackType as FeedbackType;
 
-        if (feedback === type) {
-          return;
-        }
-
+        if (feedback === type) return;
         setFeedback(type);
-        setSubmitted(true);
 
-        // Track the feedback event with GA4
         trackGtagEvent({
           action: 'doc_feedback',
           category: 'Documentation',
           label: location.pathname,
           value: type === 'positive' ? 1 : -1,
         });
-
-        // Track the feedback event with Coinbase analytics
         postMetric('cdsDocs', {
           command: 'feedback',
           arguments: type ?? 'unknown',
@@ -56,11 +128,50 @@ export function FeedbackWidget() {
     [feedback, location.pathname, trackGtagEvent, postMetric],
   );
 
+  const handleCategoryChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => setCategory(e.target.value),
+    [],
+  );
+
+  const handleAdditionalDetailsChange = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => setAdditionalDetails(event.target.value),
+    [],
+  );
+
+  const handleSubmit = useCallback(() => {
+    try {
+      if (!category || !feedback) {
+        return;
+      }
+
+      const options = feedback === 'positive' ? POSITIVE_OPTIONS : NEGATIVE_OPTIONS;
+      const selectedOption = options.find((opt) => opt.value === category);
+
+      if (!selectedOption) return;
+
+      postMetric('cdsDocs', {
+        command: selectedOption.command,
+        arguments: additionalDetails.trim() || undefined,
+        context: location.pathname,
+      });
+
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
+  }, [category, feedback, additionalDetails, location.pathname, postMetric]);
+
+  const handleSkip = useCallback(() => {
+    // Still submit if we have a category
+    if (category) handleSubmit();
+    setSubmitted(true);
+  }, [category, handleSubmit]);
+
+  const canSubmit = category;
+
   // Don't show feedback widget on home page
   const isHomePage = location.pathname === '/' || location.pathname === '/index.html';
-  if (isHomePage) {
-    return null;
-  }
+  if (isHomePage) return;
 
   return (
     <div key={location.pathname}>
@@ -71,9 +182,54 @@ export function FeedbackWidget() {
           borderRadius={500}
           gap={3}
           padding={4}
-          tabIndex={-1} // Makes the element focusable without keyboard navigation
+          tabIndex={-1}
         >
           <Text font="title3">Thank you for your feedback!</Text>
+        </VStack>
+      ) : feedback !== null ? (
+        <VStack
+          ref={categorySelectionRef}
+          aria-labelledby="feedback-category-heading"
+          background="bgAlternate"
+          borderRadius={500}
+          gap={3}
+          padding={4}
+          role="region"
+          tabIndex={-1}
+        >
+          <ControlGroup
+            ControlComponent={Radio}
+            label={
+              <Text as="h3" font="title3" id="feedback-category-heading">
+                {feedback === 'positive'
+                  ? 'Great! What worked best for you?'
+                  : 'How can we improve our product?'}
+              </Text>
+            }
+            onChange={handleCategoryChange}
+            options={feedback === 'positive' ? POSITIVE_OPTIONS : NEGATIVE_OPTIONS}
+            role="radiogroup"
+            value={category ?? ''}
+          />
+          <TextInput
+            inputNode={
+              <NativeTextArea
+                onChange={handleAdditionalDetailsChange}
+                rows={5}
+                style={{ resize: 'none' }}
+                value={additionalDetails}
+              />
+            }
+            label="Please tell us more"
+          />
+          <HStack gap={2}>
+            <Button compact disabled={!canSubmit} onClick={handleSubmit} variant="secondary">
+              Submit Feedback
+            </Button>
+            <Button compact transparent onClick={handleSkip} variant="secondary">
+              Skip
+            </Button>
+          </HStack>
         </VStack>
       ) : (
         <VStack
@@ -85,15 +241,15 @@ export function FeedbackWidget() {
           role="region"
         >
           <Text as="h3" font="title3" id="feedback-heading">
-            Is this page useful?
+            Was this page helpful?
           </Text>
           <HStack aria-label="Page feedback options" gap={2} role="group">
             <Button
               compact
               startIconActive
-              accessibilityLabel="Yes, this page is useful"
+              accessibilityLabel="Yes, this page is helpful"
               data-feedback-type="positive"
-              onClick={handleClick}
+              onClick={handleYesNoClick}
               startIcon="thumbsUp"
               variant="secondary"
             >
@@ -102,9 +258,9 @@ export function FeedbackWidget() {
             <Button
               compact
               startIconActive
-              accessibilityLabel="No, this page is not useful"
+              accessibilityLabel="No, this page is not helpful"
               data-feedback-type="negative"
-              onClick={handleClick}
+              onClick={handleYesNoClick}
               startIcon="thumbsDown"
               variant="secondary"
             >
