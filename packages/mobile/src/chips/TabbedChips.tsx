@@ -1,23 +1,28 @@
-import React, { forwardRef, memo, useCallback, useMemo } from 'react';
+import React, { forwardRef, memo, useCallback, useMemo, useState } from 'react';
 import { ScrollView } from 'react-native';
 import type { View } from 'react-native';
 import { useTabsContext } from '@coinbase/cds-common/tabs/TabsContext';
 import type { TabValue } from '@coinbase/cds-common/tabs/useTabs';
 
-import { useHorizontallyScrollingPressables } from '../hooks/useHorizontallyScrollingPressables';
+import { useHorizontalScrollToTarget } from '../hooks/useHorizontalScrollToTarget';
 import { Box, OverflowGradient } from '../layout';
 import { type TabNavigationBaseProps, Tabs } from '../tabs';
 
-import { Chip } from './Chip';
+import { MediaChip } from './MediaChip';
 
 const TabComponent = <T extends string = string>({ label = '', id, ...tabProps }: TabValue<T>) => {
   const { activeTab, updateActiveTab } = useTabsContext();
-  const isActive = activeTab?.id === id;
+  const isActive = useMemo(() => activeTab?.id === id, [activeTab, id]);
   const handleClick = useCallback(() => updateActiveTab(id), [id, updateActiveTab]);
   return (
-    <Chip aria-checked={isActive} inverted={isActive} onPress={handleClick} {...tabProps}>
+    <MediaChip
+      accessibilityState={{ selected: isActive }}
+      inverted={isActive}
+      onPress={handleClick}
+      {...tabProps}
+    >
       {label}
-    </Chip>
+    </MediaChip>
   );
 };
 
@@ -49,13 +54,14 @@ const TabbedChipsComponent = memo(
     ref: React.ForwardedRef<View>,
   ) {
     const activeTab = useMemo(() => tabs.find((tab) => tab.id === value), [tabs, value]);
-
+    const [scrollTarget, setScrollTarget] = useState<View | null>(null);
     const handleChange = useCallback(
       (tabValue: TabValue<T> | null) => {
         if (tabValue) onChange?.(tabValue.id);
       },
       [onChange],
     );
+
     const {
       scrollRef,
       isScrollContentOverflowing,
@@ -63,7 +69,7 @@ const TabbedChipsComponent = memo(
       handleScroll,
       handleScrollContainerLayout,
       handleScrollContentSizeChange,
-    } = useHorizontallyScrollingPressables(value);
+    } = useHorizontalScrollToTarget({ activeTarget: scrollTarget });
 
     return (
       <Box
@@ -88,8 +94,8 @@ const TabbedChipsComponent = memo(
             TabsActiveIndicatorComponent={TabsActiveIndicatorComponent}
             activeTab={activeTab || null}
             gap={1}
+            onActiveTabElementChange={setScrollTarget}
             onChange={handleChange}
-            role="radiogroup"
             tabs={tabs}
           />
         </ScrollView>

@@ -6,7 +6,7 @@ import { VStack } from '@coinbase/cds-web/layout/VStack';
 import { Link } from '@coinbase/cds-web/typography/Link';
 import { Text } from '@coinbase/cds-web/typography/Text';
 import DocusaurusLink from '@docusaurus/Link';
-import { DefaultBanner } from '@site/src/components/page/ComponentBanner/DefaultBanner';
+import { LLMDocButtons } from '@site/src/components/page/LLMDocButton';
 import { usePlatformContext } from '@site/src/utils/PlatformContext';
 import CodeBlock from '@theme/CodeBlock';
 
@@ -55,7 +55,6 @@ type ComponentHeaderProps = {
    * Banner to display at the top of the header.
    * Can be either a React node or image URL string.
    * Used for light mode and as fallback for dark mode if bannerDark is not provided.
-   * Defaults to <DefaultBanner /> if not provided.
    */
   banner?: React.ReactNode;
   /**
@@ -84,7 +83,7 @@ export const ContentHeader = memo(
     description,
     webMetadata,
     mobileMetadata,
-    banner = <DefaultBanner />,
+    banner,
     bannerDark,
   }: ComponentHeaderProps) => {
     const { platform } = usePlatformContext();
@@ -104,26 +103,29 @@ export const ContentHeader = memo(
     } = activeMetadata ?? {};
 
     const descriptionText = activeMetadata?.description ?? description;
+    const hasMetadataItems = importText || changelog || source || storybook || figma;
 
     return (
       <VStack background="bgAlternate" borderRadius={600} overflow="hidden" width="100%">
-        <VStack height={200} width="100%">
-          {typeof activeBanner === 'string' ? (
-            <img
-              alt={`${title} banner`}
-              src={activeBanner}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            activeBanner
-          )}
-        </VStack>
+        {activeBanner && (
+          <VStack display={{ base: 'flex', phone: 'none' }} height={200} width="100%">
+            {typeof activeBanner === 'string' ? (
+              <img
+                alt={`${title} banner`}
+                src={activeBanner}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              activeBanner
+            )}
+          </VStack>
+        )}
         <VStack gap={4} padding={4} paddingTop={4}>
           <VStack gap={3}>
             <Text font="display2">{title}</Text>
             {descriptionText && <Text font="title4">{descriptionText}</Text>}
           </VStack>
-          {activeMetadata && (
+          {hasMetadataItems && (
             <Grid
               alignItems="center"
               columnGap={2}
@@ -169,7 +171,7 @@ export const ContentHeader = memo(
                 <MetadataItem label="Figma">
                   <Text font="body">
                     <Link as={DocusaurusLink} target="_blank" to={figma}>
-                      View Figma
+                      View Figma (internal only)
                     </Link>
                   </Text>
                 </MetadataItem>
@@ -186,7 +188,6 @@ export const ContentHeader = memo(
               <HStack
                 as="ul"
                 flexWrap="wrap"
-                gap={1}
                 margin={0}
                 padding={0}
                 style={{
@@ -195,7 +196,7 @@ export const ContentHeader = memo(
               >
                 {dependencies.map((dependency, index) => (
                   <li key={dependency.name}>
-                    <Text font="label2">
+                    <Text font="label2" style={{ whiteSpace: 'pre-wrap' }}>
                       {dependency.url ? (
                         <Link as={DocusaurusLink} target="_blank" to={dependency.url}>
                           {dependency.name}
@@ -221,7 +222,6 @@ export const ContentHeader = memo(
               <HStack
                 as="ul"
                 flexWrap="wrap"
-                gap={1}
                 margin={0}
                 padding={0}
                 style={{
@@ -230,7 +230,7 @@ export const ContentHeader = memo(
               >
                 {relatedComponents.map((component, index) => (
                   <li key={component.url}>
-                    <Text font="label2">
+                    <Text font="label2" style={{ whiteSpace: 'pre-wrap' }}>
                       <Link as={DocusaurusLink} to={component.url}>
                         {component.label}
                       </Link>
@@ -242,6 +242,10 @@ export const ContentHeader = memo(
             </VStack>
           </>
         )}
+        <Divider />
+        <HStack paddingX={{ base: 4, phone: 2 }} paddingY={2}>
+          <LLMDocButtons />
+        </HStack>
       </VStack>
     );
   },

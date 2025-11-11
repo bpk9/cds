@@ -46,11 +46,11 @@ On web, all StyleProps support an optional responsive syntax for device-specific
 - **tablet:** <code>{media.tablet}</code>
 - **desktop:** <code>{media.desktop}</code>
 
-It is not possible to customize the breakpoint values at this time.
+It is not possible to customize the breakpoint values unless you compile CDS from the source code.
 
 Import the `media` object to use CDS breakpoints and media queries in your own custom styles.
 
-[See how breakpoints are defined in the `media` object &rarr;](https://github.com/coinbase/cds-staging/blob/master/packages/web/src/styles/media.ts)
+[See how breakpoints are defined in the `media` object &rarr;](https://github.com/coinbase/cds/blob/master/packages/web/src/styles/media.ts)
 
 ```jsx
 import styled from 'styled-components';
@@ -95,7 +95,15 @@ Some complex components support passing inline styles to subcomponents with the 
 />
 ```
 
-:::note
+Styles are merged together as objects in order of specificity.
+
+```jsx
+<PageHeader style={{ backgroundColor: 'red' }} styles={{ root: { backgroundColor: 'blue' } }} />
+```
+
+In the example above, `backgroundColor` will be blue.
+
+:::tip
 We will continue to add the `styles` prop to more components over time. Please feel free to request specific components that you think would benefit from this API.
 :::
 
@@ -127,7 +135,7 @@ Some complex components support passing classnames to subcomponents with the `cl
 />
 ```
 
-:::note
+:::tip
 We will continue to add the `classNames` prop to more components over time. Please feel free to request specific components that you think would benefit from this API.
 :::
 
@@ -171,7 +179,9 @@ Mix and match these styling techniques for complete customization!
 
 ## Global CSS reset
 
-CDS web global styles include a CSS reset which override the browser default styles for some elements. This ensures that polymorphic components render correctly, regardless of their HTML element. [See the full style reset here](https://github.com/coinbase/cds-staging/blob/master/packages/web/src/styles/global.ts).
+CDS web global styles include a CSS reset which override the browser default styles for some elements. This ensures that polymorphic components render correctly, regardless of their HTML element.
+
+[See the global CSS reset here &rarr;](https://github.com/coinbase/cds/blob/master/packages/web/src/styles/global.ts)
 
 </MDXArticle>
 </MDXSection>

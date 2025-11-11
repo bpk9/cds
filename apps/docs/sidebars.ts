@@ -21,12 +21,12 @@ const sidebars: SidebarsConfig = {
       items: [
         'getting-started/introduction',
         'getting-started/installation/installation',
+        'getting-started/templates/templates',
         // 'getting-started/api-overview/api-overview',
         'getting-started/theming/theming',
         'getting-started/styling/styling',
-        // 'getting-started/templates',
         'getting-started/playground',
-        'getting-started/mcp-server',
+        'getting-started/ai-overview',
       ],
     },
     {
@@ -103,17 +103,6 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Numbers',
-          items: [
-            {
-              type: 'doc',
-              id: 'components/numbers/RollingNumber/rollingNumber',
-              label: 'RollingNumber',
-            },
-          ],
-        },
-        {
-          type: 'category',
           label: 'Inputs',
           items: [
             {
@@ -169,6 +158,11 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
+              id: 'components/inputs/MediaChip/mediaChip',
+              label: 'MediaChip',
+            },
+            {
+              type: 'doc',
               id: 'components/inputs/Interactable/interactable',
               label: 'Interactable',
             },
@@ -193,7 +187,12 @@ const sidebars: SidebarsConfig = {
               id: 'components/inputs/RadioGroup/radioGroup',
               label: 'RadioGroup',
             },
-            { type: 'doc', id: 'components/inputs/Select/select', label: 'Select' },
+            {
+              type: 'doc',
+              id: 'components/inputs/SelectAlpha/select-alpha',
+              label: 'Select (Alpha)',
+            },
+            { type: 'doc', id: 'components/inputs/Select/select', label: 'Select (Deprecated)' },
             {
               type: 'doc',
               id: 'components/inputs/SelectOption/selectOption',
@@ -257,6 +256,11 @@ const sidebars: SidebarsConfig = {
               type: 'doc',
               id: 'components/media/RemoteImage/remoteImage',
               label: 'RemoteImage',
+            },
+            {
+              type: 'doc',
+              id: 'components/media/RemoteImageGroup/remoteImageGroup',
+              label: 'RemoteImageGroup',
             },
             {
               type: 'doc',
@@ -576,23 +580,84 @@ const sidebars: SidebarsConfig = {
           items: [
             {
               type: 'doc',
+              id: 'components/graphs/AreaChart/areaChart',
+              label: 'AreaChart',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/BarChart/barChart',
+              label: 'BarChart',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/CartesianChart/cartesianChart',
+              label: 'CartesianChart',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/LineChart/lineChart',
+              label: 'LineChart',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/ReferenceLine/referenceLine',
+              label: 'ReferenceLine',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/PeriodSelector/periodSelector',
+              label: 'PeriodSelector',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/Point/point',
+              label: 'Point',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/Scrubber/scrubber',
+              label: 'Scrubber',
+            },
+            {
+              type: 'doc',
               id: 'components/graphs/Sparkline/sparkline',
-              label: 'Sparkline',
+              label: 'Sparkline (Deprecated)',
             },
             {
               type: 'doc',
               id: 'components/graphs/SparklineGradient/sparklineGradient',
-              label: 'SparklineGradient',
+              label: 'SparklineGradient (Deprecated)',
             },
             {
               type: 'doc',
               id: 'components/graphs/SparklineInteractive/sparklineInteractive',
-              label: 'SparklineInteractive',
+              label: 'SparklineInteractive (Deprecated)',
             },
             {
               type: 'doc',
               id: 'components/graphs/SparklineInteractiveHeader/sparklineInteractiveHeader',
-              label: 'SparklineInteractiveHeader',
+              label: 'SparklineInteractiveHeader (Deprecated)',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/XAxis/xAxis',
+              label: 'XAxis',
+            },
+            {
+              type: 'doc',
+              id: 'components/graphs/YAxis/yAxis',
+              label: 'YAxis',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Numbers',
+          items: [
+            {
+              type: 'doc',
+              id: 'components/numbers/RollingNumber/rollingNumber',
+              label: 'RollingNumber',
             },
           ],
         },
@@ -770,7 +835,7 @@ const sidebars: SidebarsConfig = {
       items: [
         {
           type: 'link',
-          href: 'https://github.com/coinbase/cds-staging/blob/master/packages/common/CHANGELOG.md',
+          href: 'https://github.com/coinbase/cds/blob/master/packages/common/CHANGELOG.md',
           label: '@coinbase/cds-common',
           customProps: {
             kbar: {
@@ -780,7 +845,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'link',
-          href: 'https://github.com/coinbase/cds-staging/blob/master/packages/mobile/CHANGELOG.md',
+          href: 'https://github.com/coinbase/cds/blob/master/packages/mobile/CHANGELOG.md',
           label: '@coinbase/cds-mobile',
           customProps: {
             kbar: {
@@ -790,7 +855,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'link',
-          href: 'https://github.com/coinbase/cds-staging/blob/master/packages/web/CHANGELOG.md',
+          href: 'https://github.com/coinbase/cds/blob/master/packages/web/CHANGELOG.md',
           label: '@coinbase/cds-web',
           customProps: {
             kbar: {
@@ -800,7 +865,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'link',
-          href: 'https://github.com/coinbase/cds-staging/blob/master/packages/icons/CHANGELOG.md',
+          href: 'https://github.com/coinbase/cds/blob/master/packages/icons/CHANGELOG.md',
           label: '@coinbase/cds-icons',
           customProps: {
             kbar: {
@@ -810,7 +875,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'link',
-          href: 'https://github.com/coinbase/cds-staging/blob/master/packages/illustrations/CHANGELOG.md',
+          href: 'https://github.com/coinbase/cds/blob/master/packages/illustrations/CHANGELOG.md',
           label: '@coinbase/cds-illustrations',
           customProps: {
             kbar: {
@@ -820,7 +885,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'link',
-          href: 'https://github.com/coinbase/cds-staging/blob/master/packages/mobile-visualization/CHANGELOG.md',
+          href: 'https://github.com/coinbase/cds/blob/master/packages/mobile-visualization/CHANGELOG.md',
           label: '@coinbase/cds-mobile-visualization',
           customProps: {
             kbar: {
@@ -830,7 +895,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'link',
-          href: 'https://github.com/coinbase/cds-staging/blob/master/packages/web-visualization/CHANGELOG.md',
+          href: 'https://github.com/coinbase/cds/blob/master/packages/web-visualization/CHANGELOG.md',
           label: '@coinbase/cds-web-visualization',
           customProps: {
             kbar: {

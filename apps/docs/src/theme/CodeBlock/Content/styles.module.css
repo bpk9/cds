@@ -5,10 +5,12 @@
 .codeBlockContent {
   /* rtl:ignore */
   direction: ltr;
+  overflow: hidden;
 }
 
 /* If you update these styles make sure to also change apps/docs/src/theme/Playground/styles.module.css */
 .codeBlockContent pre {
+  width: 100%;
   white-space: pre !important;
   scrollbar-width: thin;
   background-color: transparent !important;
@@ -27,10 +29,12 @@
     white-space: pre-wrap;
   }
 }
+
 .buttonGroup button {
   transition: opacity var(--ifm-transition-fast) ease-in-out;
   opacity: 0;
 }
+
 .codeBlock:hover .buttonGroup button {
   opacity: 0.4;
 }
@@ -43,5 +47,9 @@
 @media screen and (max-width: 768px) {
   .codeBlock {
     margin-bottom: var(--space-2);
+  }
+
+  .buttonGroup button {
+    opacity: 1;
   }
 }

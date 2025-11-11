@@ -183,13 +183,13 @@ The InvertedThemeProvider automatically inherits from its parent theme and flips
 <MDXArticle>
 ## `ThemeConfig` vs `Theme` type
 
-Use the `ThemeConfig` type when creating a theme, or when passing to the `theme` prop to the ThemeProvider.
+Use the `ThemeConfig` type when creating a theme, or when passing the `theme` prop to the ThemeProvider.
 
 Use the `Theme` type for the return value of the `useTheme` hook. The `Theme` type includes all the properties of `ThemeConfig` - plus the `activeColorScheme`, `color`, and `spectrum` properties.
 
-[See the `ThemeConfig` type definition here &rarr;](https://github.com/coinbase/cds-staging/blob/master/packages/web/src/core/theme.ts#L4)
+[See the `ThemeConfig` type definition here &rarr;](https://github.com/coinbase/cds/blob/master/packages/web/src/core/theme.ts#L4)
 
-[See the `Theme` type definition here &rarr;](https://github.com/coinbase/cds-staging/blob/master/packages/web/src/core/theme.ts#L43)
+[See the `Theme` type definition here &rarr;](https://github.com/coinbase/cds/blob/master/packages/web/src/core/theme.ts#L43)
 
 :::tip
 Although the `Theme` type includes extra properties, you can still pass the `useTheme` return value directly to the ThemeProvider `theme` prop as shown in the [theme inheritence section.](#theme-inheritence)
@@ -214,7 +214,7 @@ The `color` variables have semantic names which describe their application in th
 const theme = useTheme();
 theme.lightSpectrum.gray0; // "255,255,255"
 theme.darkSpectrum.gray0; // "10,11,13"
-theme.spectrum.gray100; // "255,255,255" or "10,11,13", depends on activeColorScheme
+theme.spectrum.gray0; // "255,255,255" or "10,11,13", depends on activeColorScheme
 theme.lightColor.bg; // "rgb(255,255,255)"
 theme.darkColor.bg; // "rgb(10,11,13)"
 theme.color.bg; // "rgb(255,255,255)" or "rgb(10,11,13)", depends on activeColorScheme
@@ -318,7 +318,7 @@ Use the `ThemeConfig` type with TypeScript's `satisfies` keyword to enforce type
 
 The `defaultTheme` is a good example of a complete `ThemeConfig`. You can use it as an example when developing your own themes.
 
-[See the `defaultTheme` source code here &rarr;](https://github.com/coinbase/cds-staging/blob/master/packages/web/src/themes/defaultTheme.ts)
+[See the `defaultTheme` source code here &rarr;](https://github.com/coinbase/cds/blob/master/packages/web/src/themes/defaultTheme.ts)
 
 <JSONCodeBlock json={defaultTheme} />
 

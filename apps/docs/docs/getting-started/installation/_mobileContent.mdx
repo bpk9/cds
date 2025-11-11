@@ -3,18 +3,6 @@ import { MDXArticle } from '@site/src/components/page/MDXArticle';
 
 <MDXSection>
 <MDXArticle>
-## Prerequisites
-
-Before you begin, make sure your development environment meets the following requirements:
-
-- **Node.js**: Version 18 or later.
-- **React Native**: Version 0.64 or later (for mobile applications).
-
-</MDXArticle>
-</MDXSection>
-
-<MDXSection>
-<MDXArticle>
 ## Installation
 
 To install the CDS library for React Native applications, run the following command:
@@ -29,7 +17,7 @@ Alternatively, if you are using Yarn:
 yarn add @coinbase/cds-mobile
 ```
 
-:::note
+:::tip
 For React Native projects, ensure you have set up your environment for React Native development. Refer to the [React Native Environment Setup Guide](https://reactnative.dev/docs/environment-setup) if needed.
 :::
 
@@ -50,13 +38,11 @@ import { ThemeProvider } from '@coinbase/cds-mobile';
 import { defaultTheme } from '@coinbase/cds-mobile/themes/defaultTheme';
 import App from './App';
 
-const Index = () => {
-  return (
-    <ThemeProvider theme={defaultTheme} activeColorScheme="light">
-      <App />
-    </ThemeProvider>
-  );
-};
+const Index = () => (
+  <ThemeProvider theme={defaultTheme} activeColorScheme="light">
+    <App />
+  </ThemeProvider>
+);
 
 export default Index;
 ```
@@ -70,9 +56,7 @@ Try importing and rendering a simple CDS component.
 ```tsx
 import { Button } from '@coinbase/cds-mobile/buttons';
 
-const Test = () => (
-  <Button>Click Me</Button>;
-)
+const Test = () => <Button>Click Me</Button>;
 ```
 
 </MDXArticle>

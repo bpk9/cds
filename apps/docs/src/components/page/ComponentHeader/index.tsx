@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { Banner } from '@coinbase/cds-web/banner/Banner';
 import { Grid } from '@coinbase/cds-web/layout';
 import { Divider } from '@coinbase/cds-web/layout/Divider';
 import { HStack } from '@coinbase/cds-web/layout/HStack';
@@ -6,7 +7,7 @@ import { VStack } from '@coinbase/cds-web/layout/VStack';
 import { Link } from '@coinbase/cds-web/typography/Link';
 import { Text } from '@coinbase/cds-web/typography/Text';
 import DocusaurusLink from '@docusaurus/Link';
-import { DefaultBanner } from '@site/src/components/page/ComponentBanner/DefaultBanner';
+import { LLMDocButtons } from '@site/src/components/page/LLMDocButton';
 import { VersionLabel } from '@site/src/components/page/VersionLabel';
 import { useDocsTheme } from '@site/src/theme/Layout/Provider/UnifiedThemeContext';
 import { usePlatformContext } from '@site/src/utils/PlatformContext';
@@ -37,6 +38,7 @@ type MetadataType = {
   storybook?: string;
   figma?: string;
   description?: string;
+  warning?: string;
   relatedComponents?: RelatedComponent[];
   /** Dependencies required by this component */
   dependencies?: Dependency[];
@@ -55,7 +57,6 @@ type ContentHeaderProps = {
    * Banner to display at the top of the header.
    * Can be either a React node or image URL string.
    * Used for light mode and as fallback for dark mode if bannerDark is not provided.
-   * Defaults to <DefaultBanner /> if not provided.
    */
   banner?: React.ReactNode;
   /**
@@ -79,14 +80,7 @@ const MetadataItem = ({ label, children }: MetadataItemProps) => (
 );
 
 export const ComponentHeader = memo(
-  ({
-    title,
-    description,
-    webMetadata,
-    mobileMetadata,
-    banner = <DefaultBanner />,
-    bannerDark,
-  }: ContentHeaderProps) => {
+  ({ title, description, webMetadata, mobileMetadata, banner, bannerDark }: ContentHeaderProps) => {
     const { platform } = usePlatformContext();
     const { colorScheme } = useDocsTheme();
 
@@ -101,6 +95,7 @@ export const ComponentHeader = memo(
       figma,
       relatedComponents,
       dependencies,
+      warning,
     } = activeMetadata ?? {};
 
     const descriptionText = activeMetadata?.description ?? description;
@@ -110,32 +105,39 @@ export const ComponentHeader = memo(
 
     return (
       <VStack background="bgAlternate" borderRadius={600} overflow="hidden" width="100%">
-        <VStack height={200} width="100%">
-          {typeof activeBanner === 'string' ? (
-            <img
-              alt={`${title} banner`}
-              src={activeBanner}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            activeBanner
-          )}
-        </VStack>
-        <VStack gap={4} padding={4} paddingTop={4}>
+        {activeBanner && (
+          <VStack display={{ base: 'flex', phone: 'none' }} height={200} width="100%">
+            {typeof activeBanner === 'string' ? (
+              <img
+                alt={`${title} banner`}
+                src={activeBanner}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              activeBanner
+            )}
+          </VStack>
+        )}
+        <VStack gap={4} padding={{ base: 4, phone: 2 }}>
           <VStack gap={3}>
             <HStack alignItems="center" flexWrap="wrap" gap={2} justifyContent="space-between">
               <Text font="display2">{title}</Text>
               <VersionLabel packageName={packageName} />
             </HStack>
             {descriptionText && <Text font="title4">{descriptionText}</Text>}
+            {warning && (
+              <Banner startIcon="warning" variant="warning">
+                {warning}
+              </Banner>
+            )}
           </VStack>
           {activeMetadata && (
             <Grid
               alignItems="center"
               columnGap={2}
-              columns={2}
-              gridTemplateColumns="100px 1fr"
-              rowGap={1.5}
+              gridTemplateColumns={{ base: '100px minmax(0, 1fr)', phone: 'minmax(0, 1fr)' }}
+              overflow="hidden"
+              rowGap={{ base: 1.5, phone: 1 }}
             >
               {importText && (
                 <MetadataItem label="Import">
@@ -175,7 +177,7 @@ export const ComponentHeader = memo(
                 <MetadataItem label="Figma">
                   <Text font="body">
                     <Link as={DocusaurusLink} target="_blank" to={figma}>
-                      View Figma
+                      View Figma (internal only)
                     </Link>
                   </Text>
                 </MetadataItem>
@@ -187,12 +189,11 @@ export const ComponentHeader = memo(
         {dependencies && dependencies.length > 0 && (
           <>
             <Divider />
-            <VStack gap={1} paddingX={4} paddingY={2}>
+            <VStack gap={{ base: 1, phone: 0 }} paddingX={{ base: 4, phone: 2 }} paddingY={2}>
               <Text font="label1">Peer dependencies</Text>
               <HStack
                 as="ul"
                 flexWrap="wrap"
-                gap={1}
                 margin={0}
                 padding={0}
                 style={{
@@ -201,7 +202,7 @@ export const ComponentHeader = memo(
               >
                 {dependencies.map((dependency, index) => (
                   <li key={dependency.name}>
-                    <Text font="label2">
+                    <Text font="label2" style={{ whiteSpace: 'pre-wrap' }}>
                       {dependency.url ? (
                         <Link as={DocusaurusLink} target="_blank" to={dependency.url}>
                           {dependency.name}
@@ -222,12 +223,11 @@ export const ComponentHeader = memo(
         {relatedComponents && relatedComponents.length > 0 && (
           <>
             <Divider />
-            <VStack gap={1} paddingX={4} paddingY={2}>
+            <VStack gap={{ base: 1, phone: 0 }} paddingX={{ base: 4, phone: 2 }} paddingY={2}>
               <Text font="label1">Related components</Text>
               <HStack
                 as="ul"
                 flexWrap="wrap"
-                gap={1}
                 margin={0}
                 padding={0}
                 style={{
@@ -236,7 +236,7 @@ export const ComponentHeader = memo(
               >
                 {relatedComponents.map((component, index) => (
                   <li key={component.url}>
-                    <Text font="label2">
+                    <Text font="label2" style={{ whiteSpace: 'pre-wrap' }}>
                       <Link as={DocusaurusLink} to={component.url}>
                         {component.label}
                       </Link>
@@ -248,6 +248,10 @@ export const ComponentHeader = memo(
             </VStack>
           </>
         )}
+        <Divider />
+        <HStack paddingX={{ base: 4, phone: 2 }} paddingY={2}>
+          <LLMDocButtons />
+        </HStack>
       </VStack>
     );
   },

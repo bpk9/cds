@@ -714,3 +714,81 @@ WithCustomStyles.parameters = {
     },
   },
 };
+
+export const DottedFillType = () => (
+  <React.StrictMode>
+    <SparklineInteractiveWrapper
+      data={sparklineInteractiveData}
+      fillType="dotted"
+      strokeColor={strokeColor}
+    />
+  </React.StrictMode>
+);
+
+DottedFillType.bind({});
+DottedFillType.parameters = {
+  percy: { enableJavaScript: true },
+  a11y: {
+    config: {
+      rules: [{ id: 'color-contrast', enabled: false }],
+    },
+  },
+};
+
+export const YScaleCustom = () => (
+  <React.StrictMode>
+    <SparklineInteractiveWrapper
+      data={sparklineInteractiveData}
+      fillType="dotted"
+      strokeColor={strokeColor}
+      yAxisScalingFactor={0.1}
+    />
+  </React.StrictMode>
+);
+
+YScaleCustom.bind({});
+YScaleCustom.parameters = {
+  percy: { enableJavaScript: true },
+  a11y: {
+    config: {
+      rules: [{ id: 'color-contrast', enabled: false }],
+    },
+  },
+};
+
+const centeredContainerCss = css`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 100vw;
+  background-color: var(--color-bgSecondary);
+  padding: var(--space-4);
+`;
+
+const narrowSparklineCss = css`
+  max-width: 750px;
+  width: 100%;
+  background-color: var(--color-bg);
+  padding: var(--space-4);
+  border-radius: var(--borderRadius-200);
+`;
+
+export const CenteredNarrowOnWideScreen = () => (
+  <React.StrictMode>
+    <div className={centeredContainerCss}>
+      <div className={narrowSparklineCss}>
+        <SparklineInteractiveWrapper data={sparklineInteractiveData} strokeColor={strokeColor} />
+      </div>
+    </div>
+  </React.StrictMode>
+);
+
+CenteredNarrowOnWideScreen.bind({});
+CenteredNarrowOnWideScreen.parameters = {
+  percy: { enableJavaScript: true },
+  a11y: {
+    config: {
+      rules: [{ id: 'color-contrast', enabled: false }],
+    },
+  },
+};

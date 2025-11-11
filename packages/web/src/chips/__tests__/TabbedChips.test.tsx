@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import useMeasure from 'react-use-measure';
 import { sampleTabs } from '@coinbase/cds-common/internal/data/tabs';
+import { renderA11y } from '@coinbase/cds-web-utils';
 import { render, screen } from '@testing-library/react';
 
 import { DefaultThemeProvider } from '../../utils/test';
@@ -15,6 +16,16 @@ jest.mock('../../hooks/useDimensions', () => ({
 }));
 
 jest.mock('react-use-measure');
+
+// Mock ResizeObserver
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
+
+// Mock Element.scrollTo
+Element.prototype.scrollTo = jest.fn();
 
 const mockUseMeasure = (mocks: Partial<ReturnType<typeof useMeasure>>) => {
   (useMeasure as jest.Mock).mockReturnValue(mocks);
@@ -48,6 +59,10 @@ const Demo = () => {
 describe('TabbedChips', () => {
   beforeEach(() => {
     mockUseMeasure(mockDimensions);
+  });
+
+  it('passes a11y', async () => {
+    expect(await renderA11y(<Demo />)).toHaveNoViolations();
   });
 
   it('renders a custom tab label with injected testID', () => {

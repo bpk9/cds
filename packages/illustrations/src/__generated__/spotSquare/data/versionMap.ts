@@ -232,15 +232,15 @@ const versionMap: Record<SpotSquareName, number> = {
   basePeopleMedium: 0,
   baseMintNftMedium: 0,
   baseCheckMedium: 0,
-  baseChartMedium: 0,
+  baseChartMedium: 1,
   basePiechartMedium: 0,
   baseCoinCryptoMedium: 0,
   baseLocationMedium: 0,
   baseLoadingMedium: 0,
   baseErrorButterflyMedium: 0,
   baseNftMedium: 0,
-  baseIdMedium: 0,
-  baseCoinNetworkMedium: 0,
+  baseIdMedium: 1,
+  baseCoinNetworkMedium: 1,
   baseTargetMedium: 0,
   baseDiamondMedium: 0,
   baseDecentralizationMedium: 0,
@@ -259,6 +259,9 @@ const versionMap: Record<SpotSquareName, number> = {
   baseRewardPlate: 0,
   baseRewardSun: 0,
   baseRewardTrophyStars: 0,
+  coinbaseUnlockOffers: 0,
+  baseCreatorCoin: 0,
+  cryptoEconomyArrows: 1,
 };
 
 export default versionMap;

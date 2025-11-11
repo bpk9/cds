@@ -16,67 +16,169 @@ const outerSpacing: CellSpacing = {
 const Fallbacks = () => {
   return (
     <>
-      <ListCellFallback disableRandomRectWidth title />
-      <ListCellFallback description disableRandomRectWidth title />
-      <ListCellFallback detail disableRandomRectWidth title />
-      <ListCellFallback disableRandomRectWidth subdetail title />
-      <ListCellFallback description detail disableRandomRectWidth title />
-      <ListCellFallback description detail disableRandomRectWidth subdetail title />
-      <ListCellFallback disableRandomRectWidth title media="icon" />
-      <ListCellFallback description disableRandomRectWidth title media="asset" />
-      <ListCellFallback detail disableRandomRectWidth title media="image" />
-      <ListCellFallback disableRandomRectWidth subdetail title media="avatar" />
-      <ListCellFallback description detail disableRandomRectWidth title media="icon" />
-      <ListCellFallback description detail disableRandomRectWidth subdetail title media="asset" />
-      <ListCellFallback description detail subdetail title media="asset" rectWidthVariant={0} />
-      <ListCellFallback description detail subdetail title media="asset" rectWidthVariant={1} />
-      <ListCellFallback description detail subdetail title media="asset" rectWidthVariant={2} />
-      <ListCellFallback compact disableRandomRectWidth title />
-      <ListCellFallback compact description disableRandomRectWidth title />
-      <ListCellFallback compact detail disableRandomRectWidth title />
-      <ListCellFallback compact disableRandomRectWidth subdetail title />
-      <ListCellFallback compact description detail disableRandomRectWidth title />
-      <ListCellFallback compact description detail disableRandomRectWidth subdetail title />
-      <ListCellFallback compact disableRandomRectWidth title media="icon" />
-      <ListCellFallback compact description disableRandomRectWidth title media="asset" />
-      <ListCellFallback compact detail disableRandomRectWidth title media="image" />
-      <ListCellFallback compact disableRandomRectWidth subdetail title media="avatar" />
-      <ListCellFallback compact description detail disableRandomRectWidth title media="icon" />
+      <ListCellFallback disableRandomRectWidth title spacingVariant="condensed" />
+      <ListCellFallback description disableRandomRectWidth title spacingVariant="condensed" />
+      <ListCellFallback detail disableRandomRectWidth title spacingVariant="condensed" />
+      <ListCellFallback disableRandomRectWidth subdetail title spacingVariant="condensed" />
       <ListCellFallback
-        compact
+        description
+        detail
+        disableRandomRectWidth
+        title
+        spacingVariant="condensed"
+      />
+      <ListCellFallback
+        description
+        detail
+        disableRandomRectWidth
+        subdetail
+        title
+        spacingVariant="condensed"
+      />
+      <ListCellFallback disableRandomRectWidth title media="icon" spacingVariant="condensed" />
+      <ListCellFallback
+        description
+        disableRandomRectWidth
+        title
+        media="asset"
+        spacingVariant="condensed"
+      />
+      <ListCellFallback
+        detail
+        disableRandomRectWidth
+        title
+        media="image"
+        spacingVariant="condensed"
+      />
+      <ListCellFallback
+        disableRandomRectWidth
+        subdetail
+        title
+        media="avatar"
+        spacingVariant="condensed"
+      />
+      <ListCellFallback
+        description
+        detail
+        disableRandomRectWidth
+        title
+        media="icon"
+        spacingVariant="condensed"
+      />
+      <ListCellFallback
         description
         detail
         disableRandomRectWidth
         subdetail
         title
         media="asset"
+        spacingVariant="condensed"
       />
       <ListCellFallback
-        compact
         description
         detail
         subdetail
         title
         media="asset"
         rectWidthVariant={0}
+        spacingVariant="condensed"
       />
       <ListCellFallback
-        compact
         description
         detail
         subdetail
         title
         media="asset"
         rectWidthVariant={1}
+        spacingVariant="condensed"
       />
       <ListCellFallback
-        compact
         description
         detail
         subdetail
         title
         media="asset"
         rectWidthVariant={2}
+        spacingVariant="condensed"
+      />
+      <ListCellFallback disableRandomRectWidth title spacingVariant="compact" />
+      <ListCellFallback description disableRandomRectWidth title spacingVariant="compact" />
+      <ListCellFallback detail disableRandomRectWidth title spacingVariant="compact" />
+      <ListCellFallback disableRandomRectWidth subdetail title spacingVariant="compact" />
+      <ListCellFallback description detail disableRandomRectWidth title spacingVariant="compact" />
+      <ListCellFallback
+        description
+        detail
+        disableRandomRectWidth
+        subdetail
+        title
+        spacingVariant="compact"
+      />
+      <ListCellFallback disableRandomRectWidth title media="icon" spacingVariant="compact" />
+      <ListCellFallback
+        description
+        disableRandomRectWidth
+        title
+        media="asset"
+        spacingVariant="compact"
+      />
+      <ListCellFallback
+        detail
+        disableRandomRectWidth
+        title
+        media="image"
+        spacingVariant="compact"
+      />
+      <ListCellFallback
+        disableRandomRectWidth
+        subdetail
+        title
+        media="avatar"
+        spacingVariant="compact"
+      />
+      <ListCellFallback
+        description
+        detail
+        disableRandomRectWidth
+        title
+        media="icon"
+        spacingVariant="compact"
+      />
+      <ListCellFallback
+        description
+        detail
+        disableRandomRectWidth
+        subdetail
+        title
+        media="asset"
+        spacingVariant="compact"
+      />
+      <ListCellFallback
+        description
+        detail
+        subdetail
+        title
+        media="asset"
+        rectWidthVariant={0}
+        spacingVariant="compact"
+      />
+      <ListCellFallback
+        description
+        detail
+        subdetail
+        title
+        media="asset"
+        rectWidthVariant={1}
+        spacingVariant="compact"
+      />
+      <ListCellFallback
+        description
+        detail
+        subdetail
+        title
+        media="asset"
+        rectWidthVariant={2}
+        spacingVariant="compact"
       />
       <ListCellFallback
         disableRandomRectWidth
@@ -84,8 +186,8 @@ const Fallbacks = () => {
         innerSpacing={innerSpacing}
         outerSpacing={outerSpacing}
       />
-      <ListCellFallback disableRandomRectWidth helperText />
-      <ListCellFallback disableRandomRectWidth helperText title />
+      <ListCellFallback disableRandomRectWidth helperText spacingVariant="condensed" />
+      <ListCellFallback disableRandomRectWidth helperText title spacingVariant="condensed" />
       <ListCellFallback
         description
         detail
@@ -94,6 +196,7 @@ const Fallbacks = () => {
         subdetail
         title
         media="image"
+        spacingVariant="compact"
         styles={{ helperText: { paddingLeft: 64 } }}
       />
       <ListCellFallback
@@ -101,14 +204,15 @@ const Fallbacks = () => {
         helperText
         title
         media="icon"
+        spacingVariant="compact"
         styles={{ helperText: { paddingLeft: 48 } }}
       />
       <ListCellFallback
-        compact
         disableRandomRectWidth
         helperText
         title
         media="icon"
+        spacingVariant="compact"
         styles={{ helperText: { paddingLeft: 48 } }}
       />
     </>
