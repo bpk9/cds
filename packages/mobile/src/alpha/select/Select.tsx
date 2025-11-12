@@ -180,7 +180,7 @@ export type SelectControlComponent<
   SelectOptionValue extends string = string,
 > = React.FC<
   SelectControlProps<Type, SelectOptionValue> & {
-    ref?: React.Ref<TouchableOpacity>;
+    ref?: React.Ref<React.ElementRef<typeof TouchableOpacity>>;
   }
 >;
 

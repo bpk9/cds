@@ -29,7 +29,9 @@ type DefaultSelectControlComponent = <
   Type extends SelectType,
   SelectOptionValue extends string = string,
 >(
-  props: SelectControlProps<Type, SelectOptionValue> & { ref?: React.Ref<TouchableOpacity> },
+  props: SelectControlProps<Type, SelectOptionValue> & {
+    ref?: React.Ref<React.ElementRef<typeof TouchableOpacity>>;
+  },
 ) => React.ReactElement;
 
 export const DefaultSelectControlComponent = memo(
@@ -60,7 +62,7 @@ export const DefaultSelectControlComponent = memo(
         styles,
         ...props
       }: SelectControlProps<Type, SelectOptionValue>,
-      ref: React.Ref<TouchableOpacity>,
+      ref: React.Ref<React.ElementRef<typeof TouchableOpacity>>,
     ) => {
       type ValueType = Type extends 'multi'
         ? SelectOptionValue | SelectOptionValue[] | null
