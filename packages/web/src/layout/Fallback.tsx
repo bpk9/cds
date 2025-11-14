@@ -3,6 +3,7 @@ import type { Shape } from '@coinbase/cds-common/types';
 import { css } from '@linaria/core';
 
 import type { Polymorphic } from '../core/polymorphism';
+import { cx } from '../cx';
 
 import { Box, type BoxBaseProps } from './Box';
 
@@ -107,6 +108,18 @@ export type FallbackBaseProps = Polymorphic.ExtendableProps<
     rectWidthVariant?: number;
     /** Convert width to a percentage. */
     percentage?: boolean;
+    classNames?: {
+      /** Class name applied to the outer wrapper. */
+      root?: string;
+      /** Class name applied to the animated fallback element. */
+      inner?: string;
+    };
+    styles?: {
+      /** Styles applied to the outer wrapper. */
+      root?: React.CSSProperties;
+      /** Styles applied to the animated fallback element. */
+      inner?: React.CSSProperties;
+    };
   }
 >;
 
@@ -131,6 +144,10 @@ export const Fallback: FallbackComponent = memo(
         percentage,
         disableRandomRectWidth,
         rectWidthVariant,
+        classNames,
+        styles,
+        className,
+        style,
         ...props
       }: FallbackProps<AsComponent>,
       ref?: Polymorphic.Ref<AsComponent>,
@@ -146,7 +163,7 @@ export const Fallback: FallbackComponent = memo(
 
       const backgroundSizeHeight = typeof height === 'number' ? `${height}px` : height;
 
-      const style = useMemo(
+      const innerStyle = useMemo(
         () => ({
           width: percentage ? `100%` : width,
           backgroundSize: `600px ${backgroundSizeHeight}`,
@@ -160,12 +177,17 @@ export const Fallback: FallbackComponent = memo(
         <Box
           ref={ref}
           as={Component}
+          className={cx(className, classNames?.root)}
           flexGrow={0}
           flexShrink={0}
+          style={{ ...styles?.root, ...style }}
           width={percentage && typeof width === 'number' ? `${Math.min(width, 100)}%` : width}
           {...props}
         >
-          <Box className={fallbackCss} style={style}>
+          <Box
+            className={cx(fallbackCss, classNames?.inner)}
+            style={{ ...innerStyle, ...styles?.inner }}
+          >
             &nbsp;
           </Box>
         </Box>

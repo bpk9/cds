@@ -27,6 +27,12 @@ export type FallbackBaseProps = {
    * Variants map to a predetermined set of width values, which are cycled through repeatedly when the set is exhausted.
    */
   rectWidthVariant?: number;
+  styles?: {
+    root?: ViewStyle;
+    inner?: ViewStyle;
+    animatedContainer?: ViewStyle;
+    linearGradient?: ViewStyle;
+  };
 };
 
 export type FallbackProps = Omit<BoxProps, 'borderRadius' | 'height' | 'width'> & FallbackBaseProps;
@@ -37,6 +43,8 @@ export const Fallback = memo(function Fallback({
   width: baseWidth,
   disableRandomRectWidth,
   rectWidthVariant,
+  styles: stylesProp,
+  style,
   ...props
 }: FallbackProps) {
   const fallbackShapeOptions = useMemo(
@@ -94,11 +102,12 @@ export const Fallback = memo(function Fallback({
   );
 
   return (
-    <Box width={width} {...props}>
-      <View style={containerStyle}>
+    <Box style={[style, stylesProp?.root]} width={width} {...props}>
+      <View style={[containerStyle, stylesProp?.inner]}>
         <Animated.View
           style={[
-            styles.child,
+            fallbackStyles.child,
+            stylesProp?.animatedContainer,
             {
               transform: [
                 {
@@ -116,7 +125,7 @@ export const Fallback = memo(function Fallback({
             end={gradEnd}
             start={gradStart}
             stops={gradLocations}
-            style={styles.child}
+            style={[fallbackStyles.child, stylesProp?.linearGradient]}
           />
         </Animated.View>
       </View>
@@ -128,7 +137,7 @@ const gradStart = { x: -1, y: 0.5 };
 const gradEnd = { x: 2, y: 0.5 };
 const gradLocations = [0.3, 0.5, 0.7];
 
-const styles = StyleSheet.create({
+const fallbackStyles = StyleSheet.create({
   child: {
     flex: 1,
   },

@@ -1,18 +1,54 @@
-import { type CSSProperties, memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { FallbackRectWidthProps, SharedProps } from '@coinbase/cds-common/types';
 import { getRectWidthVariant } from '@coinbase/cds-common/utils/getRectWidthVariant';
+import { css } from '@linaria/core';
 
+import { cx } from '../cx';
 import { VStack } from '../layout';
 import { Fallback } from '../layout/Fallback';
 
 import { Cell } from './Cell';
+import { CellAccessory, type CellAccessoryType } from './CellAccessory';
 import type { CellMediaType } from './CellMedia';
 import { condensedInnerSpacing, condensedOuterSpacing, type ListCellBaseProps } from './ListCell';
 import { MediaFallback } from './MediaFallback';
 
+// Note these fallback colors are not exact matches to the figma designs, since we need to have shimmering effects.
+// These are the specs that looks close enough to the figma designs.
+
+const titleFallbackCss = css`
+  background-color: rgb(var(--gray20));
+`;
+
+const subtitleFallbackCss = css`
+  background-color: rgba(var(--gray80), 0.4);
+`;
+
+const mediaFallbackCss = css`
+  background-color: rgba(var(--gray100), 0.2);
+  background-repeat: no-repeat;
+  background-image: linear-gradient(
+    to right,
+    rgb(var(--gray100), 0.05) 0%,
+    rgb(var(--gray100), 0) 25%,
+    rgb(var(--gray100), 0.1) 50%,
+    rgb(var(--gray100), 0) 75%,
+    rgb(var(--gray100), 0.05) 100%
+  );
+`;
+
+const fallbackCss = css`
+  background-color: rgba(var(--gray15), 0.5);
+`;
+
 export type ListCellFallbackBaseProps = SharedProps &
   FallbackRectWidthProps &
   Pick<ListCellBaseProps, 'innerSpacing' | 'outerSpacing' | 'spacingVariant'> & {
+    /** Accessory to display at the end of the cell. */
+    accessory?: CellAccessoryType;
+    /** Custom accessory rendered at the end of the cell. Takes precedence over `accessory`. */
+    accessoryNode?: ReactNode;
     /** Display description shimmer. */
     description?: boolean;
     /** Display detail shimmer. */
@@ -30,7 +66,7 @@ export type ListCellFallbackBaseProps = SharedProps &
   };
 
 export type ListCellFallbackProps = ListCellFallbackBaseProps & {
-  /** Class names to apply to the detail, bottomContent, and title. */
+  /** Class names to apply to parts of the fallback cell. */
   classNames?: {
     /** Class name for the bottom content (helper text). */
     helperText?: string;
@@ -38,6 +74,8 @@ export type ListCellFallbackProps = ListCellFallbackBaseProps & {
     detail?: string;
     /** Class name for the subdetail shimmer. */
     subdetail?: string;
+    /** Class name for the accessory container. */
+    accessory?: string;
     /** Class name for the subtitle shimmer. */
     subtitle?: string;
     /** Class name for the title shimmer. */
@@ -45,7 +83,7 @@ export type ListCellFallbackProps = ListCellFallbackBaseProps & {
     /** Class name for the description shimmer. */
     description?: string;
   };
-  /** Styles to apply to the detail, bottomContent, and title. */
+  /** Styles to apply to parts of the fallback cell. */
   styles?: {
     /** Style to apply to the bottom content (helper text shimmer). */
     helperText?: CSSProperties;
@@ -53,6 +91,8 @@ export type ListCellFallbackProps = ListCellFallbackBaseProps & {
     detail?: CSSProperties;
     /** Style to apply to the subdetail shimmer. */
     subdetail?: CSSProperties;
+    /** Style to apply to the accessory container. */
+    accessory?: CSSProperties;
     /** Style to apply to the subtitle shimmer. */
     subtitle?: CSSProperties;
     /** Style to apply to the title shimmer. */
@@ -63,6 +103,8 @@ export type ListCellFallbackProps = ListCellFallbackBaseProps & {
 };
 
 export const ListCellFallback = memo(function ListCellFallback({
+  accessory,
+  accessoryNode,
   classNames,
   styles,
   title,
@@ -91,6 +133,7 @@ export const ListCellFallback = memo(function ListCellFallback({
       <Fallback
         percentage
         className={classNames?.helperText}
+        classNames={{ inner: fallbackCss }}
         disableRandomRectWidth={disableRandomRectWidth}
         height={22}
         rectWidthVariant={getRectWidthVariant(rectWidthVariant, 4)}
@@ -124,6 +167,7 @@ export const ListCellFallback = memo(function ListCellFallback({
         <Fallback
           percentage
           className={classNames?.detail}
+          classNames={{ inner: fallbackCss }}
           disableRandomRectWidth={disableRandomRectWidth}
           height={22}
           rectWidthVariant={getRectWidthVariant(rectWidthVariant, 0)}
@@ -133,6 +177,7 @@ export const ListCellFallback = memo(function ListCellFallback({
         <Fallback
           percentage
           className={classNames?.subdetail}
+          classNames={{ inner: fallbackCss }}
           disableRandomRectWidth={disableRandomRectWidth}
           height={spacingVariant === 'condensed' ? 18 : 22}
           rectWidthVariant={getRectWidthVariant(rectWidthVariant, 1)}
@@ -162,6 +207,7 @@ export const ListCellFallback = memo(function ListCellFallback({
       <Fallback
         percentage
         className={classNames?.title}
+        classNames={{ inner: titleFallbackCss }}
         disableRandomRectWidth={disableRandomRectWidth}
         height={22}
         rectWidthVariant={getRectWidthVariant(rectWidthVariant, 2)}
@@ -181,6 +227,7 @@ export const ListCellFallback = memo(function ListCellFallback({
       <Fallback
         percentage
         className={classNames?.subtitle}
+        classNames={{ inner: subtitleFallbackCss }}
         disableRandomRectWidth={disableRandomRectWidth}
         height={18}
         rectWidthVariant={getRectWidthVariant(rectWidthVariant, 2)}
@@ -200,6 +247,7 @@ export const ListCellFallback = memo(function ListCellFallback({
       <Fallback
         percentage
         className={classNames?.description}
+        classNames={{ inner: fallbackCss }}
         disableRandomRectWidth={disableRandomRectWidth}
         height={spacingVariant === 'condensed' ? 18 : 22}
         rectWidthVariant={getRectWidthVariant(rectWidthVariant, 3)}
@@ -222,13 +270,22 @@ export const ListCellFallback = memo(function ListCellFallback({
       return undefined;
     }
 
-    return <MediaFallback testID="list-cell-fallback-media" type={media} />;
+    return (
+      <MediaFallback
+        classNames={{ inner: mediaFallbackCss }}
+        testID="list-cell-fallback-media"
+        type={media}
+      />
+    );
   }, [media]);
 
   return (
     <Cell
+      accessory={accessory ? <CellAccessory type={accessory} /> : undefined}
+      accessoryNode={accessoryNode}
       bottomContent={bottomContentFallback}
-      detail={detailFallback}
+      classNames={classNames?.accessory ? { accessory: classNames.accessory } : undefined}
+      end={detailFallback}
       innerSpacing={
         innerSpacing ?? (spacingVariant === 'condensed' ? condensedInnerSpacing : undefined)
       }
@@ -236,6 +293,7 @@ export const ListCellFallback = memo(function ListCellFallback({
       outerSpacing={
         outerSpacing ?? (spacingVariant === 'condensed' ? condensedOuterSpacing : undefined)
       }
+      styles={styles?.accessory ? { accessory: styles.accessory } : undefined}
       {...props}
     >
       <VStack gap={0.5}>
