@@ -45,6 +45,7 @@ module.exports = {
    */
   sourceFiles: [
     'alpha/select/Select',
+    'alpha/tabbed-chips/TabbedChips',
     'animation/Lottie',
     'animation/LottieStatusAnimation',
     'accordion/Accordion',
@@ -77,7 +78,7 @@ module.exports = {
     'chart/axis/XAxis',
     'chart/axis/YAxis',
     'chart/PeriodSelector',
-    'chart/Point',
+    'chart/point/Point',
     'chart/scrubber/Scrubber',
     'chips/Chip',
     'chips/InputChip',

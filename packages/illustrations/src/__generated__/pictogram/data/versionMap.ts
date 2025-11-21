@@ -495,6 +495,15 @@ const versionMap: Record<PictogramName, number> = {
   baseStack: 0,
   baseDoor: 0,
   baseRibbon: 0,
+  bigBtcSend: 0,
+  btcOneHundred: 0,
+  calendarHighlight: 0,
+  cryptoCoins: 0,
+  pieChartData: 0,
+  crystalBallInsight: 0,
+  moneyCrypto: 0,
+  loop: 0,
+  podium: 0,
 };
 
 export default versionMap;

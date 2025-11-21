@@ -754,6 +754,10 @@ const svgJsMap = {
     light: () => require('../svgJs/light/baseTile-0.js').content,
     dark: () => require('../svgJs/dark/baseTile-0.js').content,
   },
+  bigBtcSend: {
+    light: () => require('../svgJs/light/bigBtcSend-0.js').content,
+    dark: () => require('../svgJs/dark/bigBtcSend-0.js').content,
+  },
   bitcoin: {
     light: () => require('../svgJs/light/bitcoin-1.js').content,
     dark: () => require('../svgJs/dark/bitcoin-1.js').content,
@@ -806,6 +810,10 @@ const svgJsMap = {
     light: () => require('../svgJs/light/browserTransaction-3.js').content,
     dark: () => require('../svgJs/dark/browserTransaction-3.js').content,
   },
+  btcOneHundred: {
+    light: () => require('../svgJs/light/btcOneHundred-0.js').content,
+    dark: () => require('../svgJs/dark/btcOneHundred-0.js').content,
+  },
   bundle: {
     light: () => require('../svgJs/light/bundle-3.js').content,
     dark: () => require('../svgJs/dark/bundle-3.js').content,
@@ -825,6 +833,10 @@ const svgJsMap = {
   calendarCaution: {
     light: () => require('../svgJs/light/calendarCaution-4.js').content,
     dark: () => require('../svgJs/dark/calendarCaution-4.js').content,
+  },
+  calendarHighlight: {
+    light: () => require('../svgJs/light/calendarHighlight-0.js').content,
+    dark: () => require('../svgJs/dark/calendarHighlight-0.js').content,
   },
   candleSticksGraph: {
     light: () => require('../svgJs/light/candleSticksGraph-4.js').content,
@@ -1010,9 +1022,17 @@ const svgJsMap = {
     light: () => require('../svgJs/light/cryptoCard-3.js').content,
     dark: () => require('../svgJs/dark/cryptoCard-3.js').content,
   },
+  cryptoCoins: {
+    light: () => require('../svgJs/light/cryptoCoins-0.js').content,
+    dark: () => require('../svgJs/dark/cryptoCoins-0.js').content,
+  },
   cryptoFolder: {
     light: () => require('../svgJs/light/cryptoFolder-3.js').content,
     dark: () => require('../svgJs/dark/cryptoFolder-3.js').content,
+  },
+  crystalBallInsight: {
+    light: () => require('../svgJs/light/crystalBallInsight-0.js').content,
+    dark: () => require('../svgJs/dark/crystalBallInsight-0.js').content,
   },
   custodialJourney: {
     light: () => require('../svgJs/light/custodialJourney-5.js').content,
@@ -1358,6 +1378,10 @@ const svgJsMap = {
     light: () => require('../svgJs/light/lock-3.js').content,
     dark: () => require('../svgJs/dark/lock-3.js').content,
   },
+  loop: {
+    light: () => require('../svgJs/light/loop-0.js').content,
+    dark: () => require('../svgJs/dark/loop-0.js').content,
+  },
   lowFees: {
     light: () => require('../svgJs/light/lowFees-4.js').content,
     dark: () => require('../svgJs/dark/lowFees-4.js').content,
@@ -1393,6 +1417,10 @@ const svgJsMap = {
   mobileWarning: {
     light: () => require('../svgJs/light/mobileWarning-3.js').content,
     dark: () => require('../svgJs/dark/mobileWarning-3.js').content,
+  },
+  moneyCrypto: {
+    light: () => require('../svgJs/light/moneyCrypto-0.js').content,
+    dark: () => require('../svgJs/dark/moneyCrypto-0.js').content,
   },
   moneyEarn: {
     light: () => require('../svgJs/light/moneyEarn-3.js').content,
@@ -1534,6 +1562,10 @@ const svgJsMap = {
     light: () => require('../svgJs/light/pieChart-3.js').content,
     dark: () => require('../svgJs/dark/pieChart-3.js').content,
   },
+  pieChartData: {
+    light: () => require('../svgJs/light/pieChartData-0.js').content,
+    dark: () => require('../svgJs/dark/pieChartData-0.js').content,
+  },
   pizza: {
     light: () => require('../svgJs/light/pizza-3.js').content,
     dark: () => require('../svgJs/dark/pizza-3.js').content,
@@ -1545,6 +1577,10 @@ const svgJsMap = {
   pluginBrowser: {
     light: () => require('../svgJs/light/pluginBrowser-4.js').content,
     dark: () => require('../svgJs/dark/pluginBrowser-4.js').content,
+  },
+  podium: {
+    light: () => require('../svgJs/light/podium-0.js').content,
+    dark: () => require('../svgJs/dark/podium-0.js').content,
   },
   positiveReviews: {
     light: () => require('../svgJs/light/positiveReviews-3.js').content,
