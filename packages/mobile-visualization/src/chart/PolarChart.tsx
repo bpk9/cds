@@ -1,10 +1,12 @@
-import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
+import React, { forwardRef, memo, useCallback, useMemo } from 'react';
+import { type StyleProp, type View, type ViewStyle } from 'react-native';
 import type { Rect } from '@coinbase/cds-common/types';
-import { cx } from '@coinbase/cds-web';
-import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
-import { Box, type BoxBaseProps, type BoxProps } from '@coinbase/cds-web/layout';
-import { css } from '@linaria/core';
+import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
+import type { BoxBaseProps, BoxProps } from '@coinbase/cds-mobile/layout';
+import { Box } from '@coinbase/cds-mobile/layout';
+import { Canvas, Skia, type SkTypefaceFontProvider } from '@shopify/react-native-skia';
 
+import { useChartContextBridge } from './ChartContextBridge';
 import { PolarChartProvider } from './polar/PolarChartProvider';
 import type { PolarSeries } from './polar/utils';
 import {
@@ -15,17 +17,19 @@ import {
 import type { PolarChartContextValue } from './utils/context';
 import { type ChartInset, defaultChartInset, getChartInset } from './utils';
 
-const focusStylesCss = css`
-  &:focus {
-    outline: none;
-  }
-  &:focus-visible {
-    outline: 2px solid var(--color-bgPrimary);
-    outline-offset: 2px;
-  }
-`;
+const ChartCanvas = memo(
+  ({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) => {
+    const ContextBridge = useChartContextBridge();
 
-export type PolarChartBaseProps = BoxBaseProps & {
+    return (
+      <Canvas style={[{ width: '100%', height: '100%' }, style]}>
+        <ContextBridge>{children}</ContextBridge>
+      </Canvas>
+    );
+  },
+);
+
+export type PolarChartBaseProps = Omit<BoxBaseProps, 'fontFamily'> & {
   /**
    * Configuration object that defines the data to visualize.
    */
@@ -100,29 +104,24 @@ export type PolarChartBaseProps = BoxBaseProps & {
   inset?: number | Partial<ChartInset>;
 };
 
-export type PolarChartProps = Omit<BoxProps<'div'>, 'title'> &
-  PolarChartBaseProps & {
+export type PolarChartProps = PolarChartBaseProps &
+  Omit<BoxProps, 'fontFamily'> & {
     /**
-     * Custom class name for the root element.
+     * Default font families to use within ChartText.
+     * If not provided, will be the default for the system.
+     * @example
+     * ['Helvetica', 'sans-serif']
      */
-    className?: string;
+    fontFamilies?: string[];
     /**
-     * Custom class names for the component.
+     * Skia font provider to allow for custom fonts.
+     * If not provided, the only available fonts will be those defined by the system.
      */
-    classNames?: {
-      /**
-       * Custom class name for the root element.
-       */
-      root?: string;
-      /**
-       * Custom class name for the chart SVG element.
-       */
-      chart?: string;
-    };
+    fontProvider?: SkTypefaceFontProvider;
     /**
      * Custom styles for the root element.
      */
-    style?: React.CSSProperties;
+    style?: StyleProp<ViewStyle>;
     /**
      * Custom styles for the component.
      */
@@ -130,11 +129,11 @@ export type PolarChartProps = Omit<BoxProps<'div'>, 'title'> &
       /**
        * Custom styles for the root element.
        */
-      root?: React.CSSProperties;
+      root?: StyleProp<ViewStyle>;
       /**
-       * Custom styles for the chart SVG element.
+       * Custom styles for the chart canvas element.
        */
-      chart?: React.CSSProperties;
+      chart?: StyleProp<ViewStyle>;
     };
   };
 
@@ -143,7 +142,7 @@ export type PolarChartProps = Omit<BoxProps<'div'>, 'title'> &
  * Provides context and layout for polar chart child components.
  */
 export const PolarChart = memo(
-  forwardRef<SVGSVGElement, PolarChartProps>(
+  forwardRef<View, PolarChartProps>(
     (
       {
         series = [],
@@ -154,17 +153,22 @@ export const PolarChart = memo(
         inset: insetInput,
         width = '100%',
         height = '100%',
-        className,
-        classNames,
         style,
         styles,
-        overflow,
+        fontFamilies,
+        fontProvider: fontProviderProp,
+        // React Native will collapse views by default when only used
+        // to group children, which interferes with gesture-handler
+        // https://docs.swmansion.com/react-native-gesture-handler/docs/gestures/gesture-detector/#:~:text=%7B%0A%20%20return%20%3C-,View,-collapsable%3D%7B
+        collapsable = false,
         ...props
       },
       ref,
     ) => {
-      const { observe, width: chartWidth, height: chartHeight } = useDimensions();
-      const svgRef = useRef<SVGSVGElement | null>(null);
+      const [containerLayout, onContainerLayout] = useLayout();
+
+      const chartWidth = containerLayout.width;
+      const chartHeight = containerLayout.height;
 
       const inset = useMemo(() => {
         return getChartInset(insetInput, defaultChartInset);
@@ -250,6 +254,11 @@ export const PolarChart = memo(
         [radialAxes],
       );
 
+      const fontProvider = useMemo(() => {
+        if (fontProviderProp) return fontProviderProp;
+        return Skia.TypefaceFontProvider.Make();
+      }, [fontProviderProp]);
+
       const contextValue: PolarChartContextValue = useMemo(
         () => ({
           series,
@@ -257,6 +266,8 @@ export const PolarChart = memo(
           animate,
           width: chartWidth,
           height: chartHeight,
+          fontFamilies,
+          fontProvider,
           drawingArea,
           angularAxes,
           radialAxes,
@@ -269,6 +280,8 @@ export const PolarChart = memo(
           animate,
           chartWidth,
           chartHeight,
+          fontFamilies,
+          fontProvider,
           drawingArea,
           angularAxes,
           radialAxes,
@@ -277,51 +290,28 @@ export const PolarChart = memo(
         ],
       );
 
-      const rootClassNames = useMemo(
-        () => cx(className, classNames?.root),
-        [className, classNames],
-      );
-      const rootStyles = useMemo(() => ({ ...style, ...styles?.root }), [style, styles?.root]);
+      const rootStyles = useMemo(() => {
+        return [style, styles?.root];
+      }, [style, styles?.root]);
 
       return (
         <PolarChartProvider value={contextValue}>
-        <Box
-          ref={(node) => {
-            observe(node as unknown as HTMLElement);
-            }}
-            className={rootClassNames}
+          <Box
+            ref={ref}
+            accessibilityLiveRegion="polite"
+            accessibilityRole="image"
+            collapsable={collapsable}
             height={height}
+            onLayout={onContainerLayout}
             style={rootStyles}
             width={width}
             {...props}
           >
-            <Box
-              ref={(node) => {
-                const svgElement = node as unknown as SVGSVGElement;
-                svgRef.current = svgElement;
-                // Forward the ref to the user
-            if (ref) {
-              if (typeof ref === 'function') {
-                    ref(svgElement);
-              } else {
-                    (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
-              }
-            }
-          }}
-          aria-live="polite"
-          as="svg"
-              className={cx(focusStylesCss, classNames?.chart)}
-              height="100%"
-          overflow={overflow}
-          role="figure"
-              style={styles?.chart}
-              width="100%"
-        >
-              {children}
-            </Box>
-        </Box>
+            <ChartCanvas style={styles?.chart}>{children}</ChartCanvas>
+          </Box>
         </PolarChartProvider>
       );
     },
   ),
 );
+

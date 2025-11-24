@@ -1,4 +1,5 @@
 import {
+  arc as d3Arc,
   area as d3Area,
   curveBumpX,
   curveCatmullRom,
@@ -350,4 +351,64 @@ export const getDottedAreaPath = (
   }
 
   return path.trim();
+};
+
+/**
+ * Generates an SVG arc path string for pie/donut charts.
+ * Uses D3's arc generator for consistent arc rendering.
+ *
+ * @param startAngle - Start angle in radians (0 at top, increasing clockwise)
+ * @param endAngle - End angle in radians (0 at top, increasing clockwise)
+ * @param innerRadius - Inner radius in pixels (0 for pie chart)
+ * @param outerRadius - Outer radius in pixels
+ * @param cornerRadius - Corner radius in pixels
+ * @param padAngle - Padding angle in radians between adjacent arcs
+ * @returns SVG path string for the arc
+ *
+ * @example
+ * ```typescript
+ * const arcPath = getArcPath({
+ *   startAngle: 0,
+ *   endAngle: Math.PI,
+ *   innerRadius: 0,
+ *   outerRadius: 100,
+ *   cornerRadius: 4,
+ *   padAngle: 0.02
+ * });
+ * ```
+ */
+export const getArcPath = ({
+  startAngle,
+  endAngle,
+  innerRadius,
+  outerRadius,
+  cornerRadius = 0,
+  padAngle = 0,
+}: {
+  /** Start angle in radians (0 at top, increasing clockwise) */
+  startAngle: number;
+  /** End angle in radians (0 at top, increasing clockwise) */
+  endAngle: number;
+  /** Inner radius in pixels (0 for pie chart) */
+  innerRadius: number;
+  /** Outer radius in pixels */
+  outerRadius: number;
+  /** Corner radius in pixels */
+  cornerRadius?: number;
+  /** Padding angle in radians between adjacent arcs */
+  padAngle?: number;
+}): string => {
+  if (outerRadius <= 0) return '';
+
+  // Ensure we always have a valid path even for collapsed arcs
+  const effectiveEndAngle = startAngle === endAngle ? startAngle + 0.0001 : endAngle;
+
+  const path = d3Arc().cornerRadius(cornerRadius).padAngle(padAngle)({
+    innerRadius: Math.max(0, innerRadius),
+    outerRadius: Math.max(0, outerRadius),
+    startAngle,
+    endAngle: effectiveEndAngle,
+  });
+
+  return path ?? '';
 };
