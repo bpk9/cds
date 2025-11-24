@@ -7,11 +7,12 @@ import { Fallback } from '../layout/Fallback';
 
 import { Cell, type CellBaseProps } from './Cell';
 import type { CellMediaType } from './CellMedia';
+import { condensedInnerSpacing, condensedOuterSpacing, type ListCellBaseProps } from './ListCell';
 import { MediaFallback } from './MediaFallback';
 
 export type ListCellFallbackBaseProps = SharedProps &
   FallbackRectWidthProps &
-  Pick<CellBaseProps, 'innerSpacing' | 'outerSpacing'> & {
+  Pick<ListCellBaseProps, 'innerSpacing' | 'outerSpacing' | 'spacingVariant'> & {
     /** Display description shimmer. */
     description?: boolean;
     /** Display detail shimmer. */
@@ -66,6 +67,9 @@ export const ListCellFallback = memo(function ListCellFallback({
   disableRandomRectWidth,
   rectWidthVariant,
   helperText,
+  spacingVariant,
+  innerSpacing,
+  outerSpacing,
   ...props
 }: ListCellFallbackProps) {
   // We cant use ListCell here as we need to account for percentage based widths.
@@ -197,7 +201,13 @@ export const ListCellFallback = memo(function ListCellFallback({
     <Cell
       bottomContent={bottomContentFallback}
       detail={detailFallback}
+      innerSpacing={
+        innerSpacing ?? (spacingVariant === 'condensed' ? condensedInnerSpacing : undefined)
+      }
       media={mediaFallback}
+      outerSpacing={
+        outerSpacing ?? (spacingVariant === 'condensed' ? condensedOuterSpacing : undefined)
+      }
       {...props}
     >
       <VStack gap={0.5}>

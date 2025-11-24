@@ -50,7 +50,7 @@ export type TabComponent<T extends string = string> = React.FC<TabValue<T>>;
 
 export type TabsActiveIndicatorComponent = React.FC<TabsActiveIndicatorProps>;
 
-export type TabsProps<T extends string = string> = {
+export type TabsBaseProps<T extends string = string> = {
   /** The array of tabs data. Each tab may optionally define a custom Component to render. */
   tabs: (TabValue<T> & { Component?: TabComponent<T> })[];
   /** The default Component to render each tab. */
@@ -59,7 +59,11 @@ export type TabsProps<T extends string = string> = {
   TabsActiveIndicatorComponent: TabsActiveIndicatorComponent;
   /** Background color passed to the TabsActiveIndicatorComponent. */
   activeBackground?: ThemeVars.Color;
-} & Omit<TabsOptions<T>, 'tabs'> &
+  /** Optional callback to receive the active tab element. */
+  onActiveTabElementChange?: (element: HTMLElement | null) => void;
+} & Omit<TabsOptions<T>, 'tabs'>;
+
+export type TabsProps<T extends string = string> = TabsBaseProps<T> &
   Omit<HStackProps<HStackDefaultElement>, 'onChange' | 'ref'>;
 
 type TabsFC = <T extends string = string>(
@@ -75,6 +79,7 @@ const TabsComponent = memo(
         TabsActiveIndicatorComponent,
         activeBackground,
         activeTab,
+        onActiveTabElementChange,
         disabled,
         onChange,
         role = 'tablist',
@@ -85,9 +90,7 @@ const TabsComponent = memo(
       }: TabsProps<T>,
       ref: React.ForwardedRef<HTMLElement>,
     ) => {
-      const refMap = useRefMap<HTMLElement>();
       const api = useTabs<T>({ tabs, activeTab, disabled, onChange });
-      const activeTabRef = activeTab ? refMap.getRef(activeTab.id) : null;
 
       const [tabsContainerRef, tabsContainerRect] = useMeasure({
         debounce: 20,
@@ -95,7 +98,10 @@ const TabsComponent = memo(
 
       const mergedContainerRefs = useMergeRefs(ref, tabsContainerRef);
 
+      const refMap = useRefMap<HTMLElement>();
+
       const activeTabRect: Rect = useMemo(() => {
+        const activeTabRef = activeTab ? refMap.getRef(activeTab.id) : null;
         if (!activeTabRef || !tabsContainerRect.width) return defaultRect;
 
         return {
@@ -104,24 +110,21 @@ const TabsComponent = memo(
           width: activeTabRef.offsetWidth,
           height: activeTabRef.offsetHeight,
         };
-      }, [activeTabRef, tabsContainerRect]);
-
-      const tabComponents = useMemo(
-        () =>
-          tabs.map(({ id, Component: CustomTabComponent, disabled: tabDisabled, ...props }) => {
-            const RenderedTab = CustomTabComponent ?? TabComponent;
-            return (
-              <TabContainer key={id} id={id} registerRef={refMap.registerRef}>
-                <RenderedTab disabled={tabDisabled} id={id} {...props} />
-              </TabContainer>
-            );
-          }),
-        [tabs, TabComponent, refMap.registerRef],
-      );
+      }, [activeTab, refMap, tabsContainerRect.width]);
 
       const containerStyle = useMemo(
         () => ({ opacity: disabled ? accessibleOpacityDisabled : 1, ...style }),
         [disabled, style],
+      );
+
+      const registerRef = useCallback(
+        (tabId: string, ref: HTMLElement) => {
+          refMap.registerRef(tabId, ref);
+          if (activeTab?.id === tabId) {
+            onActiveTabElementChange?.(ref);
+          }
+        },
+        [activeTab, onActiveTabElementChange, refMap],
       );
 
       return (
@@ -138,7 +141,14 @@ const TabsComponent = memo(
               activeTabRect={activeTabRect}
               background={activeBackground}
             />
-            {tabComponents}
+            {tabs.map(({ id, Component: CustomTabComponent, disabled: tabDisabled, ...props }) => {
+              const RenderedTab = CustomTabComponent ?? TabComponent;
+              return (
+                <TabContainer key={id} id={id} registerRef={registerRef}>
+                  <RenderedTab disabled={tabDisabled} id={id} {...props} />
+                </TabContainer>
+              );
+            })}
           </TabsContext.Provider>
         </HStack>
       );

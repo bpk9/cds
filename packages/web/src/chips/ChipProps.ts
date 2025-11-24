@@ -16,10 +16,11 @@ export type ChipBaseProps = SharedProps &
     | 'accessibilityHint'
     | 'accessibilityLabelledBy'
     | 'onChange'
+    | 'value'
   > &
   Pick<SharedAccessibilityProps, 'accessibilityLabel'> & {
     /** ReactNode placed in the center of the Chip */
-    children: React.ReactNode;
+    children?: React.ReactNode;
     /** ReactNode placed before the value */
     start?: React.ReactNode;
     /** ReactNode placed after the value */
@@ -33,8 +34,15 @@ export type ChipBaseProps = SharedProps &
      * Invert the foreground and background colors to emphasize the Chip.
      * Depending on your theme, it may be dangerous to use this prop in conjunction with `transparentWhileInactive`.
      * @default false
+     * @deprecated Use the invertColorScheme prop instead
      */
     inverted?: boolean;
+    /**
+     * Invert the foreground and background colors to emphasize the Chip.
+     * Depending on your theme, it may be dangerous to use this prop in conjunction with `transparentWhileInactive`.
+     * @default false
+     */
+    invertColorScheme?: boolean;
     /** Reduces spacing around Chip content */
     compact?: boolean;
     /**
@@ -42,13 +50,29 @@ export type ChipBaseProps = SharedProps &
      * @default 1
      */
     numberOfLines?: number;
-    /** Apply styles to Chip content. */
+    /**
+     * @deprecated Use `styles.content` instead.
+     * Apply styles to Chip content.
+     */
     contentStyle?: React.CSSProperties;
+    /** Apply styles to the container and content. */
+    styles?: {
+      root?: React.CSSProperties;
+      content?: React.CSSProperties;
+    };
+    /** Class names for the components */
+    classNames?: {
+      root?: string;
+      content?: string;
+    };
   };
 
 export type ChipProps = ChipBaseProps;
 
-export type InputChipProps = {
-  /** Value indicates what is currently selected */
-  value: string;
-} & Omit<ChipProps, 'end' | 'inverted' | 'children' | 'noScaleOnPress'>;
+export type InputChipProps = ChipProps & {
+  /**
+   * Value indicates what is currently selected
+   * @deprecated Use the `children` prop instead
+   */
+  value?: string;
+};

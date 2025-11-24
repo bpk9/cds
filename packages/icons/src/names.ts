@@ -425,5 +425,16 @@ export const names: IconName[] = [
   'distribution',
   'disabledPhone',
   'config',
-  'location'
+  'location',
+  'unfollowPeople',
+  'tokenSales',
+  'baseQuickBuy',
+  'arrowsUpDown',
+  'moneyCardCoin',
+  'singleCoin',
+  'calendarBlank',
+  'pieChartData',
+  'coinsCrypto',
+  'crystalBallInsight',
+  'loop'
 ];

@@ -21,12 +21,12 @@ const sidebars: SidebarsConfig = {
       items: [
         'getting-started/introduction',
         'getting-started/installation/installation',
+        'getting-started/templates/templates',
         // 'getting-started/api-overview/api-overview',
         'getting-started/theming/theming',
         'getting-started/styling/styling',
-        // 'getting-started/templates',
         'getting-started/playground',
-        'getting-started/mcp-server',
+        'getting-started/ai-overview',
       ],
     },
     {
@@ -158,6 +158,11 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
+              id: 'components/inputs/MediaChip/mediaChip',
+              label: 'MediaChip',
+            },
+            {
+              type: 'doc',
               id: 'components/inputs/Interactable/interactable',
               label: 'Interactable',
             },
@@ -182,7 +187,12 @@ const sidebars: SidebarsConfig = {
               id: 'components/inputs/RadioGroup/radioGroup',
               label: 'RadioGroup',
             },
-            { type: 'doc', id: 'components/inputs/Select/select', label: 'Select' },
+            {
+              type: 'doc',
+              id: 'components/inputs/SelectAlpha/select-alpha',
+              label: 'Select (Alpha)',
+            },
+            { type: 'doc', id: 'components/inputs/Select/select', label: 'Select (Deprecated)' },
             {
               type: 'doc',
               id: 'components/inputs/SelectOption/selectOption',
@@ -519,7 +529,7 @@ const sidebars: SidebarsConfig = {
             {
               type: 'doc',
               id: 'components/navigation/TabNavigation/tabNavigation',
-              label: 'TabNavigation',
+              label: 'TabNavigation (Deprecated)',
             },
             {
               type: 'doc',
@@ -534,7 +544,12 @@ const sidebars: SidebarsConfig = {
             {
               type: 'doc',
               id: 'components/navigation/TabbedChips/tabbedChips',
-              label: 'TabbedChips',
+              label: 'TabbedChips (Deprecated)',
+            },
+            {
+              type: 'doc',
+              id: 'components/navigation/TabbedChipsAlpha/tabbedChipsAlpha',
+              label: 'TabbedChips (Alpha)',
             },
             {
               type: 'doc',

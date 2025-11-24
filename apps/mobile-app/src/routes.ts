@@ -311,6 +311,10 @@ export const routes = [
       require('@coinbase/cds-mobile/animation/__stories__/LottieStatusAnimation.stories').default,
   },
   {
+    key: 'MediaChip',
+    getComponent: () => require('@coinbase/cds-mobile/chips/__stories__/MediaChip.stories').default,
+  },
+  {
     key: 'ModalBackButton',
     getComponent: () =>
       require('@coinbase/cds-mobile/overlays/__stories__/ModalBackButton.stories').default,
@@ -504,7 +508,8 @@ export const routes = [
   },
   {
     key: 'Select',
-    getComponent: () => require('@coinbase/cds-mobile/controls/__stories__/Select.stories').default,
+    getComponent: () =>
+      require('@coinbase/cds-mobile/alpha/select/__stories__/Select.stories').default,
   },
   {
     key: 'SelectChip',
@@ -599,7 +604,7 @@ export const routes = [
   {
     key: 'TabbedChips',
     getComponent: () =>
-      require('@coinbase/cds-mobile/chips/__stories__/TabbedChips.stories').default,
+      require('@coinbase/cds-mobile/alpha/tabbed-chips/__stories__/TabbedChips.stories').default,
   },
   {
     key: 'TabIndicator',

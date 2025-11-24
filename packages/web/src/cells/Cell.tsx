@@ -1,5 +1,4 @@
 import React, { forwardRef, memo, useMemo } from 'react';
-import type { ThemeVars } from '@coinbase/cds-common/core/theme';
 import type { CellPriority } from '@coinbase/cds-common/types';
 import { hasCellPriority } from '@coinbase/cds-common/utils/cell';
 import { css } from '@linaria/core';
@@ -75,18 +74,48 @@ export type CellSpacing = Pick<
 export type CellBaseProps = Polymorphic.ExtendableProps<
   BoxBaseProps,
   Pick<PressableProps<'a'>, 'href' | 'target'> & {
+    /**
+     * @deprecated Use `classNames.contentContainer` instead. `contentClassName` will be removed in a future major release.
+     */
     contentClassName?: string;
+    /** Key down handler for keyboard interaction. */
     onKeyDown?: React.KeyboardEventHandler;
+    /** Key up handler for keyboard interaction. */
     onKeyUp?: React.KeyboardEventHandler;
+    /** Click handler. */
     onClick?: React.MouseEventHandler;
+    /** Accessory element rendered at the end of the cell (e.g., chevron). */
     accessory?: React.ReactElement<CellAccessoryProps>;
+    /** Custom accessory node rendered at the end of the cell. Takes precedence over `accessory`. */
+    accessoryNode?: React.ReactNode;
+    /** Main content of the cell; typically title/description content. */
     children: React.ReactNode;
+    /**
+     * End-aligned content (e.g., value, status).
+     * Replaces the deprecated `detail` prop.
+     */
+    end?: React.ReactNode;
+    /**
+     * @deprecated Use `end` instead. `detail` will be removed in a future major release.
+     */
     detail?: React.ReactNode;
+    /** Middle content between main content and detail. */
     intermediary?: React.ReactNode;
+    /** Media rendered at the start of the cell (icon, avatar, image, etc). */
     media?: React.ReactElement;
+    /**
+     * @deprecated Use `shouldTruncate` instead. `shouldOverflow` will be removed in a future release.
+     */
     shouldOverflow?: boolean;
-    borderRadius?: ThemeVars.BorderRadius;
-    /** Apply a fixed width to the detail (end). */
+    /**
+     * Controls whether the main content should truncate with an ellipsis.
+     * Defaults to true (truncates) when not provided.
+     * @default true
+     */
+    shouldTruncate?: boolean;
+    /**
+     * @deprecated Use `styles.end` instead. `detailWidth` will be removed in a future major release.
+     */
     detailWidth?: number | string;
     /** Is the cell disabled? Will apply opacity and disable interaction. */
     disabled?: boolean;
@@ -100,6 +129,32 @@ export type CellBaseProps = Polymorphic.ExtendableProps<
     innerSpacing?: CellSpacing;
     /** The content to display below the main cell content */
     bottomContent?: React.ReactNode;
+    /** Styles for the components */
+    styles?: {
+      root?: React.CSSProperties;
+      contentContainer?: React.CSSProperties;
+      topContent?: React.CSSProperties;
+      bottomContent?: React.CSSProperties;
+      pressable?: React.CSSProperties;
+      media?: React.CSSProperties;
+      intermediary?: React.CSSProperties;
+      /** Applied to the container of detail or action */
+      end?: React.CSSProperties;
+      accessory?: React.CSSProperties;
+    };
+    /** Class names for the components */
+    classNames?: {
+      root?: string;
+      contentContainer?: string;
+      topContent?: string;
+      bottomContent?: string;
+      pressable?: string;
+      media?: string;
+      intermediary?: string;
+      /** Applied to the container of detail or action */
+      end?: string;
+      accessory?: string;
+    };
   }
 >;
 
@@ -119,11 +174,16 @@ export const Cell: CellComponent = memo(
       {
         as,
         accessory,
+        accessoryNode,
         alignItems = 'center',
         borderRadius = 200,
         children,
+        style,
+        styles,
+        classNames,
         className,
         contentClassName,
+        end,
         detail,
         detailWidth,
         disabled,
@@ -150,12 +210,14 @@ export const Cell: CellComponent = memo(
          *
          * */
         shouldOverflow,
+        shouldTruncate = !shouldOverflow,
         accessibilityLabel,
         accessibilityLabelledBy,
         accessibilityHint,
         innerSpacing: innerSpacingProp,
         outerSpacing: outerSpacingProp,
         bottomContent: bottom,
+        background = 'bgAlternate',
         ...props
       }: CellProps<AsComponent>,
       ref?: Polymorphic.Ref<AsComponent>,
@@ -170,31 +232,36 @@ export const Cell: CellComponent = memo(
       const isAnchor = Boolean(href);
       const isButton = Boolean(onClick ?? onKeyDown ?? onKeyUp);
       const linkable = isAnchor || isButton;
-      const contentTruncationStyle = cx(baseCss, !shouldOverflow && truncationCss);
+      const contentTruncationStyle = cx(baseCss, shouldTruncate && truncationCss);
       const content = useMemo(() => {
         // props for the entire inner container that wraps the top content
         // (media, children, intermediary, detail, accessory) and the bottom content
-        const innerContainerProps = {
+        const contentContainerProps = {
           borderRadius,
-          className: contentClassName,
+          className: cx(contentClassName, classNames?.contentContainer),
           testID,
-          ...(selected ? { background: 'bgAlternate' as const } : {}),
+          ...(selected ? { background } : {}),
           ...(linkable ? innerSpacingWithoutMarginX : innerSpacing),
+          style: styles?.contentContainer,
         };
 
         // props for the container of the top content only(media, children, intermediary, detail, accessory)
-        const topContentContainerProps = {
+        const topContentProps = {
           alignItems: alignItems,
           flexGrow: 1,
           gap: columnGap || gap,
           width: '100%',
+          className: classNames?.topContent,
+          style: styles?.topContent,
         } as const;
+
+        const endWidth = styles?.end?.width ?? detailWidth;
 
         // content that is displayed horizontally above the bottom content
         const topContent = (
           <>
             {media && (
-              <Box flexGrow={0} flexShrink={0}>
+              <Box className={classNames?.media} flexGrow={0} flexShrink={0} style={styles?.media}>
                 {media}
               </Box>
             )}
@@ -210,32 +277,39 @@ export const Cell: CellComponent = memo(
 
             {!!intermediary && (
               <Box
-                className={contentTruncationStyle}
+                className={cx(contentTruncationStyle, classNames?.intermediary)}
                 flexGrow={0}
                 flexShrink={hasCellPriority('middle', priority) ? 0 : 1}
                 justifyContent="center"
+                style={styles?.intermediary}
               >
                 {intermediary}
               </Box>
             )}
 
-            {!!detail && (
+            {!!(end ?? detail) && (
               <Box
                 alignItems="flex-end"
-                className={contentTruncationStyle}
+                className={cx(contentTruncationStyle, classNames?.end)}
                 flexDirection="column"
-                flexGrow={detailWidth ? undefined : 1}
-                flexShrink={detailWidth ? undefined : hasCellPriority('end', priority) ? 0 : 1}
+                flexGrow={endWidth ? undefined : 1}
+                flexShrink={endWidth ? undefined : hasCellPriority('end', priority) ? 0 : 1}
                 justifyContent="flex-end"
+                style={styles?.end}
                 width={detailWidth}
               >
-                {detail}
+                {end ?? detail}
               </Box>
             )}
 
-            {!!accessory && (
-              <Box flexGrow={0} flexShrink={0}>
-                {accessory}
+            {!!(accessoryNode ?? accessory) && (
+              <Box
+                className={classNames?.accessory}
+                flexGrow={0}
+                flexShrink={0}
+                style={styles?.accessory}
+              >
+                {accessoryNode ?? accessory}
               </Box>
             )}
           </>
@@ -243,7 +317,7 @@ export const Cell: CellComponent = memo(
 
         if (!bottom) {
           return (
-            <HStack {...topContentContainerProps} {...innerContainerProps}>
+            <HStack {...topContentProps} {...contentContainerProps}>
               {topContent}
             </HStack>
           );
@@ -255,20 +329,37 @@ export const Cell: CellComponent = memo(
             flexGrow={1}
             gap={rowGap}
             width="100%"
-            {...innerContainerProps}
+            {...contentContainerProps}
           >
-            <HStack {...topContentContainerProps}>{topContent}</HStack>
-            <Box>{bottom}</Box>
+            <HStack {...topContentProps}>{topContent}</HStack>
+            <Box className={classNames?.bottomContent} style={styles?.bottomContent}>
+              {bottom}
+            </Box>
           </VStack>
         );
       }, [
         borderRadius,
         contentClassName,
+        classNames?.contentContainer,
+        classNames?.topContent,
+        classNames?.media,
+        classNames?.intermediary,
+        classNames?.end,
+        classNames?.accessory,
+        classNames?.bottomContent,
         testID,
         selected,
+        background,
         linkable,
         innerSpacingWithoutMarginX,
         innerSpacing,
+        styles?.contentContainer,
+        styles?.topContent,
+        styles?.media,
+        styles?.intermediary,
+        styles?.end,
+        styles?.accessory,
+        styles?.bottomContent,
         alignItems,
         columnGap,
         gap,
@@ -277,14 +368,16 @@ export const Cell: CellComponent = memo(
         priority,
         children,
         intermediary,
+        end,
         detail,
         detailWidth,
         accessory,
+        accessoryNode,
         bottom,
         rowGap,
       ]);
 
-      const wrappedContent = useMemo(() => {
+      const pressableWrappedContent = useMemo(() => {
         const pressableSharedProps = {
           noScaleOnPress: true,
           transparentWhileInactive: true,
@@ -293,7 +386,7 @@ export const Cell: CellComponent = memo(
           accessibilityLabelledBy,
           background: 'bg' as const,
           borderRadius,
-          className: cx(pressCss, insetFocusRingCss),
+          className: cx(pressCss, insetFocusRingCss, classNames?.pressable),
           disabled,
           marginX: innerSpacingMarginX,
           onClick,
@@ -301,6 +394,7 @@ export const Cell: CellComponent = memo(
           onKeyUp,
           tabIndex,
           testID: testID && `${testID}-cell-pressable`,
+          style: styles?.pressable,
         };
         if (isAnchor)
           return (
@@ -318,11 +412,11 @@ export const Cell: CellComponent = memo(
 
         return content;
       }, [
-        isButton,
         accessibilityHint,
         accessibilityLabel,
         accessibilityLabelledBy,
         borderRadius,
+        classNames?.pressable,
         disabled,
         innerSpacingMarginX,
         onClick,
@@ -330,10 +424,12 @@ export const Cell: CellComponent = memo(
         onKeyUp,
         tabIndex,
         testID,
-        content,
+        styles?.pressable,
         isAnchor,
         href,
         target,
+        content,
+        isButton,
       ]);
 
       return (
@@ -341,14 +437,15 @@ export const Cell: CellComponent = memo(
           ref={ref}
           alignItems="stretch"
           as={Component}
-          className={className}
+          className={cx(className, classNames?.root)}
           maxHeight={maxHeight}
           minHeight={minHeight}
+          style={{ ...style, ...styles?.root }}
           width="100%"
           {...outerSpacing}
           {...props}
         >
-          {wrappedContent}
+          {pressableWrappedContent}
         </Box>
       );
     },

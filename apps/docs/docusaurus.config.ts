@@ -259,6 +259,12 @@ const config: Config = {
     ],
     ['@coinbase/docusaurus-plugin-docgen', docgenConfig],
     webpackPlugin,
+    [
+      '@coinbase/docusaurus-plugin-llm-dev-server',
+      {
+        generatorPath: path.join(__dirname, 'ai-doc-generator'),
+      },
+    ],
   ],
 };
 
