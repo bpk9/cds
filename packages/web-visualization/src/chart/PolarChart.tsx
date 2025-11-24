@@ -2,7 +2,7 @@ import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
 import { cx } from '@coinbase/cds-web';
 import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
-import { Box, type BoxProps } from '@coinbase/cds-web/layout';
+import { Box, type BoxBaseProps, type BoxProps } from '@coinbase/cds-web/layout';
 import { css } from '@linaria/core';
 
 import { PolarChartProvider } from './polar/PolarChartProvider';
@@ -25,7 +25,7 @@ const focusStylesCss = css`
   }
 `;
 
-export type PolarChartBaseProps = {
+export type PolarChartBaseProps = BoxBaseProps & {
   /**
    * Configuration object that defines the data to visualize.
    */
@@ -100,11 +100,43 @@ export type PolarChartBaseProps = {
   inset?: number | Partial<ChartInset>;
 };
 
-export type PolarChartProps = Pick<
-  BoxProps<'svg'>,
-  'width' | 'height' | 'className' | 'style' | 'children' | 'overflow'
-> &
-  PolarChartBaseProps & {};
+export type PolarChartProps = Omit<BoxProps<'div'>, 'title'> &
+  PolarChartBaseProps & {
+    /**
+     * Custom class name for the root element.
+     */
+    className?: string;
+    /**
+     * Custom class names for the component.
+     */
+    classNames?: {
+      /**
+       * Custom class name for the root element.
+       */
+      root?: string;
+      /**
+       * Custom class name for the chart SVG element.
+       */
+      chart?: string;
+    };
+    /**
+     * Custom styles for the root element.
+     */
+    style?: React.CSSProperties;
+    /**
+     * Custom styles for the component.
+     */
+    styles?: {
+      /**
+       * Custom styles for the root element.
+       */
+      root?: React.CSSProperties;
+      /**
+       * Custom styles for the chart SVG element.
+       */
+      chart?: React.CSSProperties;
+    };
+  };
 
 /**
  * Base component for polar coordinate charts (pie, donut).
@@ -123,14 +155,16 @@ export const PolarChart = memo(
         width = '100%',
         height = '100%',
         className,
+        classNames,
         style,
+        styles,
         overflow,
         ...props
       },
       ref,
     ) => {
       const { observe, width: chartWidth, height: chartHeight } = useDimensions();
-      const internalSvgRef = useRef<SVGSVGElement>(null);
+      const svgRef = useRef<SVGSVGElement | null>(null);
 
       const inset = useMemo(() => {
         return getChartInset(insetInput, defaultChartInset);
@@ -243,35 +277,50 @@ export const PolarChart = memo(
         ],
       );
 
+      const rootClassNames = useMemo(
+        () => cx(className, classNames?.root),
+        [className, classNames],
+      );
+      const rootStyles = useMemo(() => ({ ...style, ...styles?.root }), [style, styles?.root]);
+
       return (
-        <Box
-          ref={(node) => {
-            // Handle the observe ref, internal ref, and forwarded ref
-            observe(node as unknown as HTMLElement);
-            if (internalSvgRef.current !== node) {
-              (internalSvgRef as React.MutableRefObject<SVGSVGElement | null>).current =
-                node as unknown as SVGSVGElement;
-            }
-            if (ref) {
-              if (typeof ref === 'function') {
-                ref(node as unknown as SVGSVGElement);
-              } else {
-                ref.current = node as unknown as SVGSVGElement;
-              }
-            }
-          }}
-          aria-live="polite"
-          as="svg"
-          className={cx(focusStylesCss, className)}
-          height={height}
-          overflow={overflow}
-          role="figure"
-          style={style}
-          width={width}
-          {...props}
-        >
-          <PolarChartProvider value={contextValue}>{children}</PolarChartProvider>
-        </Box>
+        <PolarChartProvider value={contextValue}>
+          <Box
+            ref={(node) => {
+              observe(node as unknown as HTMLElement);
+            }}
+            className={rootClassNames}
+            height={height}
+            style={rootStyles}
+            width={width}
+            {...props}
+          >
+            <Box
+              ref={(node) => {
+                const svgElement = node as unknown as SVGSVGElement;
+                svgRef.current = svgElement;
+                // Forward the ref to the user
+                if (ref) {
+                  if (typeof ref === 'function') {
+                    ref(svgElement);
+                  } else {
+                    (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
+                  }
+                }
+              }}
+              aria-live="polite"
+              as="svg"
+              className={cx(focusStylesCss, classNames?.chart)}
+              height="100%"
+              overflow={overflow}
+              role="figure"
+              style={styles?.chart}
+              width="100%"
+            >
+              {children}
+            </Box>
+          </Box>
+        </PolarChartProvider>
       );
     },
   ),
