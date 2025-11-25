@@ -151,9 +151,7 @@ android
 artifacts/playground-screenshots 
 # failed detox test screenshots
 apps/mobile-app/artifacts
-apps/mobile-app/prebuilds/android-*
-!apps/mobile-app/prebuilds/android-release-*.zip
-!apps/mobile-app/credentials/android-release-*.keystore
+apps/mobile-app/prebuilds/android-debug-*
 # temporary build directory for native compilation
 apps/mobile-app/build/
 
