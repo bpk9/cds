@@ -55,8 +55,19 @@ export const routes = [
       require('@coinbase/cds-mobile/buttons/__stories__/AvatarButton.stories').default,
   },
   {
-    key: 'Banner',
-    getComponent: () => require('@coinbase/cds-mobile/banner/__stories__/Banner.stories').default,
+    key: 'BannerContent',
+    getComponent: () =>
+      require('@coinbase/cds-mobile/banner/__stories__/BannerContent.stories').default,
+  },
+  {
+    key: 'BannerCustomization',
+    getComponent: () =>
+      require('@coinbase/cds-mobile/banner/__stories__/BannerCustomization.stories').default,
+  },
+  {
+    key: 'BannerVariants',
+    getComponent: () =>
+      require('@coinbase/cds-mobile/banner/__stories__/BannerVariants.stories').default,
   },
   {
     key: 'BarChart',
