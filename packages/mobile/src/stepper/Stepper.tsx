@@ -359,14 +359,19 @@ const StepperBase = memo(
             // Going to complete: animate from activeStepIndex+1 to end
             stepsToAnimate = Array.from(
               { length: steps.length - activeStepIndex - 1 },
-              (_, i) => activeStepIndex + 1 + i,
+              // Start filling bars from the current active step index.
+              // If activeStepIndex is -1 (no active step), start from 0.
+              // This ensures the bar originating from the current step is filled.
+              (_, i) => Math.max(0, activeStepIndex) + i,
             );
             isAnimatingForward = true;
           } else {
             // Going from complete: animate from end down to activeStepIndex+1
             stepsToAnimate = Array.from(
               { length: steps.length - activeStepIndex - 1 },
-              (_, i) => steps.length - 1 - i,
+              // Start un-filling bars from the second-to-last index (steps.length - 2).
+              // The last progress bar is at index steps.length - 2 because there are N steps but only N-1 bars connecting them.
+              (_, i) => steps.length - 2 - i,
             );
             isAnimatingForward = false;
           }
@@ -378,14 +383,19 @@ const StepperBase = memo(
             // Forward: animate from previousActiveStepIndex+1 to activeStepIndex
             stepsToAnimate = Array.from(
               { length: activeStepIndex - previousActiveStepIndex },
-              (_, i) => previousActiveStepIndex + 1 + i,
+              // Fill the bar that originates from the previous step.
+              // e.g., moving from step 0 to step 1: we need to fill the bar at index 0.
+              (_, i) => previousActiveStepIndex + i,
             );
             isAnimatingForward = true;
           } else {
             // Backward: animate from previousActiveStepIndex down to activeStepIndex+1
             stepsToAnimate = Array.from(
               { length: previousActiveStepIndex - activeStepIndex },
-              (_, i) => previousActiveStepIndex - i,
+              // Un-fill the bar connecting back to the previous step.
+              // e.g., moving from step 1 back to step 0: we need to un-fill bar 0.
+              // previousActiveStepIndex is 1, so 1 - 1 - i = 0.
+              (_, i) => previousActiveStepIndex - 1 - i,
             );
             isAnimatingForward = false;
           }
