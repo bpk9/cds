@@ -8,6 +8,24 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 8.25.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Add emphasis prop to Tag. [[#197](https://github.com/coinbase/cds/pull/197)]
+
+## 8.24.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Support labelNode in TextInput. [[#198](https://github.com/coinbase/cds/pull/198)]
+
+## 8.23.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Enable custom text label for "First" and "Last" buttons of Pagination. [[#192](https://github.com/coinbase/cds/pull/192)] [DX-4997]
+
 ## 8.22.2 (11/26/2025 PST)
 
 #### 🐞 Fixes
