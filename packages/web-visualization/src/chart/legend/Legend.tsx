@@ -1,26 +1,35 @@
-import React, { memo } from 'react';
-import { cx } from '@coinbase/cds-web';
-import { Box, type BoxProps, HStack, VStack } from '@coinbase/cds-web/layout';
-import { Text } from '@coinbase/cds-web/typography';
-import { css } from '@linaria/core';
+import React, { memo, useMemo } from 'react';
+import { Box, type BoxProps } from '@coinbase/cds-web/layout';
 
 import { ChartOverlay } from '../ChartOverlay';
 import { useCartesianChartContext } from '../ChartProvider';
+import type { Series } from '../utils';
 
-import { LegendMedia } from './LegendMedia';
+import {
+  DefaultLegendItem,
+  type LegendItemComponent,
+  type LegendItemProps,
+} from './DefaultLegendItem';
 
-const legendItemCss = css`
-  gap: var(--space-0_5);
-  align-items: center;
-`;
-
-export type LegendProps = Omit<BoxProps<'div'>, 'position'> & {
+export type LegendBaseProps = {
   /**
    * The position of the legend relative to the chart.
    * @default 'top'
    */
   position?: 'top' | 'bottom' | 'left' | 'right';
+  /**
+   * Array of series IDs to display in the legend.
+   * By default, all series will be displayed.
+   */
+  seriesIds?: Series['id'][];
+  /**
+   * Custom component to render each legend item.
+   * @default DefaultLegendItem
+   */
+  ItemComponent?: LegendItemComponent;
 };
+
+export type LegendProps = Omit<BoxProps<'div'>, 'position'> & LegendBaseProps;
 
 export const Legend = memo(function Legend({
   position = 'top',
@@ -29,11 +38,19 @@ export const Legend = memo(function Legend({
   alignItems = position === 'top' || position === 'bottom' ? 'center' : 'flex-start',
   flexWrap = 'wrap',
   gap = 1,
+  seriesIds,
+  ItemComponent = DefaultLegendItem,
   ...props
 }: LegendProps) {
   const { series, slotRefs } = useCartesianChartContext();
 
-  if (!series || series.length === 0) return;
+  const filteredSeries = useMemo(() => {
+    if (!series) return [];
+    if (seriesIds === undefined) return series;
+    return series.filter((s) => seriesIds.includes(s.id));
+  }, [series, seriesIds]);
+
+  if (filteredSeries.length === 0) return null;
 
   const slotRef =
     position === 'top'
@@ -54,11 +71,14 @@ export const Legend = memo(function Legend({
         justifyContent={justifyContent}
         {...props}
       >
-        {series.map((s) => (
-          <HStack key={s.id} className={legendItemCss}>
-            <LegendMedia color={s.color} shape={s.legendShape} />
-            <Text font="label2">{s.label ?? s.id}</Text>
-          </HStack>
+        {filteredSeries.map((s) => (
+          <ItemComponent
+            key={s.id}
+            color={s.color}
+            label={s.label ?? s.id}
+            legendShape={s.legendShape}
+            seriesId={s.id}
+          />
         ))}
       </Box>
     </ChartOverlay>

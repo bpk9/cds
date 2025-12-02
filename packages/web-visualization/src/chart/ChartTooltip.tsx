@@ -1,11 +1,19 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Divider, HStack, VStack, type VStackProps } from '@coinbase/cds-web/layout';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Box, Divider, HStack, VStack, type VStackProps } from '@coinbase/cds-web/layout';
 import { Portal } from '@coinbase/cds-web/overlays/Portal';
 import { tooltipContainerId } from '@coinbase/cds-web/overlays/PortalProvider';
 import { Text } from '@coinbase/cds-web/typography';
 import { flip, offset, shift, useFloating, type VirtualElement } from '@floating-ui/react-dom';
+import { css } from '@linaria/core';
 
 import { LegendMedia } from './legend/LegendMedia';
+
+const legendMediaWrapperCss = css`
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 import type { LegendShape } from './utils/chart';
 import { useCartesianChartContext } from './ChartProvider';
 import { isCategoricalScale, useScrubberContext } from './utils';
@@ -35,7 +43,7 @@ export const ChartTooltip = ({
   label,
   seriesIds,
   valueFormatter,
-  gap = 2,
+  gap = 1,
   minWidth = 320,
   ...props
 }: ChartTooltipProps) => {
@@ -46,6 +54,8 @@ export const ChartTooltip = ({
   const [internalScrubberPosition, setInternalScrubberPosition] = useState<number | undefined>(
     undefined,
   );
+  const [legendMediaWidth, setLegendMediaWidth] = useState<number>(0);
+  const legendMediaRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
   // Use scrubberPosition if available (from context), otherwise track internal state
   const currentDataIndex = scrubberPosition ?? internalScrubberPosition;
@@ -253,6 +263,40 @@ export const ChartTooltip = ({
     };
   }, [currentDataIndex, label, seriesIds, series, getSeriesData, getXAxis, valueFormatter]);
 
+  // Measure legend media widths and find the maximum
+  useLayoutEffect(() => {
+    if (seriesItems.length === 0) {
+      setLegendMediaWidth(0);
+      return;
+    }
+
+    let maxWidth = 0;
+    legendMediaRefs.current.forEach((el) => {
+      if (el) {
+        const width = el.scrollWidth;
+        if (width > maxWidth) {
+          maxWidth = width;
+        }
+      }
+    });
+
+    if (maxWidth !== legendMediaWidth) {
+      setLegendMediaWidth(maxWidth);
+    }
+  }, [seriesItems, legendMediaWidth]);
+
+  // Create a ref callback for each legend media item
+  const setLegendMediaRef = useCallback(
+    (id: string) => (el: HTMLDivElement | null) => {
+      if (el) {
+        legendMediaRefs.current.set(id, el);
+      } else {
+        legendMediaRefs.current.delete(id);
+      }
+    },
+    [],
+  );
+
   if (!isTooltipVisible || (!resolvedLabel && seriesItems.length === 0)) {
     return null;
   }
@@ -277,9 +321,15 @@ export const ChartTooltip = ({
         {seriesItems.length > 0 && (
           <VStack gap={1}>
             {seriesItems.map((item) => (
-              <HStack key={item.id} alignItems="center" gap={1} justifyContent="space-between">
-                <HStack alignItems="center">
-                  <LegendMedia color={item.color} shape={item.shape} />
+              <HStack key={item.id} alignItems="center" justifyContent="space-between">
+                <HStack alignItems="center" gap={1}>
+                  <Box
+                    ref={setLegendMediaRef(item.id)}
+                    className={legendMediaWrapperCss}
+                    style={legendMediaWidth > 0 ? { width: legendMediaWidth } : undefined}
+                  >
+                    <LegendMedia color={item.color} shape={item.shape} />
+                  </Box>
                   <Text font="label1">{item.label ?? item.id}</Text>
                 </HStack>
                 {item.value}
