@@ -6,7 +6,7 @@ import { Text } from '@coinbase/cds-web/typography';
 import { flip, offset, shift, useFloating, type VirtualElement } from '@floating-ui/react-dom';
 import { css } from '@linaria/core';
 
-import { LegendMedia } from './legend/LegendMedia';
+import { DefaultLegendIndicator } from './legend/DefaultLegendIndicator';
 
 const legendMediaWrapperCss = css`
   height: 24px;
@@ -14,7 +14,7 @@ const legendMediaWrapperCss = css`
   align-items: center;
   justify-content: center;
 `;
-import type { LegendShape } from './utils/chart';
+import type { LegendIndicator } from './utils/chart';
 import { useCartesianChartContext } from './ChartProvider';
 import { useScrubberContext } from './utils';
 
@@ -171,7 +171,7 @@ export const ChartTooltip = ({
         id: s.id,
         label: s.label,
         color: s.color,
-        shape: s.legendShape,
+        indicator: s.legendIndicator,
         value: formattedValue,
       });
     });
@@ -247,7 +247,7 @@ export const ChartTooltip = ({
                     className={legendMediaWrapperCss}
                     style={legendMediaWidth > 0 ? { width: legendMediaWidth } : undefined}
                   >
-                    <LegendMedia color={item.color} shape={item.shape} />
+                    <DefaultLegendIndicator color={item.color} indicator={item.indicator} />
                   </Box>
                   <Text font="label1">{item.label ?? item.id}</Text>
                 </HStack>
@@ -265,6 +265,6 @@ type TooltipSeriesItem = {
   id: string;
   label?: string;
   color?: string;
-  shape?: LegendShape;
+  indicator?: LegendIndicator;
   value: React.ReactNode;
 };

@@ -5,6 +5,7 @@ import { ChartOverlay } from '../ChartOverlay';
 import { useCartesianChartContext } from '../ChartProvider';
 import type { Series } from '../utils';
 
+import type { LegendIndicatorComponent } from './DefaultLegendIndicator';
 import { DefaultLegendItem, type LegendItemComponent } from './DefaultLegendItem';
 
 export type LegendBaseProps = {
@@ -23,6 +24,12 @@ export type LegendBaseProps = {
    * @default DefaultLegendItem
    */
   ItemComponent?: LegendItemComponent;
+  /**
+   * Custom component to render the legend indicator within each item.
+   * Only used when ItemComponent is not provided or is DefaultLegendItem.
+   * @default DefaultLegendIndicator
+   */
+  IndicatorComponent?: LegendIndicatorComponent;
 };
 
 export type LegendProps = Omit<BoxProps<'div'>, 'position'> & LegendBaseProps;
@@ -36,6 +43,7 @@ export const Legend = memo(function Legend({
   gap = 1,
   seriesIds,
   ItemComponent = DefaultLegendItem,
+  IndicatorComponent,
   width = position === 'top' || position === 'bottom' ? '100%' : undefined,
   height = position === 'left' || position === 'right' ? '100%' : undefined,
   ...props
@@ -74,9 +82,10 @@ export const Legend = memo(function Legend({
         {filteredSeries.map((s) => (
           <ItemComponent
             key={s.id}
+            IndicatorComponent={IndicatorComponent}
             color={s.color}
             label={s.label ?? s.id}
-            legendShape={s.legendShape}
+            legendIndicator={s.legendIndicator}
             seriesId={s.id}
           />
         ))}

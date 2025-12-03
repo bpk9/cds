@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import { Example, ExampleScreen } from '@coinbase/cds-mobile/examples/ExampleScreen';
 import { HStack, VStack } from '@coinbase/cds-mobile/layout';
 
-import type { LegendShape } from '../../utils/chart';
-import { LegendMedia } from '..';
+import type { LegendIndicatorVariant } from '../../utils/chart';
+import { DefaultLegendIndicator } from '..';
 
-const shapes: LegendShape[] = ['pill', 'circle', 'squircle', 'square'];
+const indicators: LegendIndicatorVariant[] = ['pill', 'circle', 'squircle', 'square'];
 
 const spectrumColors = [
   'blue',
@@ -26,16 +26,16 @@ const LegendStories = () => {
 
   return (
     <ExampleScreen>
-      <Example title="Shapes">
+      <Example title="Indicators">
         <VStack gap={2}>
-          {shapes.map((shape) => (
-            <HStack key={shape} gap={0.5}>
+          {indicators.map((indicator) => (
+            <HStack key={indicator} gap={0.5}>
               {colorPalette.map((color, index) => (
-                <LegendMedia
-                  key={`${shape}-${index}`}
+                <DefaultLegendIndicator
+                  key={`${indicator}-${index}`}
                   color={color}
-                  shape={shape}
-                  testID={`legend-media-${shape}-${index}`}
+                  indicator={indicator}
+                  testID={`legend-indicator-${indicator}-${index}`}
                 />
               ))}
             </HStack>

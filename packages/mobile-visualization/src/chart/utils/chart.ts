@@ -6,7 +6,9 @@ import type { GradientDefinition } from './gradient';
 
 export const defaultStackId = 'DEFAULT_STACK_ID';
 
-export type LegendShape = 'circle' | 'square' | 'squircle' | 'pill';
+export type LegendIndicatorVariant = 'circle' | 'square' | 'squircle' | 'pill';
+
+export type LegendIndicator = LegendIndicatorVariant;
 
 export type AxisBounds = {
   min: number;
@@ -62,10 +64,11 @@ export type Series = {
    */
   stackId?: string;
   /**
-   * Shape of the legend media for this series.
+   * Legend indicator for this series.
+   * Can be a preset shape: 'circle', 'square', 'squircle', or 'pill'.
    * @default 'circle'
    */
-  legendShape?: LegendShape;
+  legendIndicator?: LegendIndicator;
 };
 
 /**

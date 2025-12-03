@@ -128,7 +128,7 @@ export const AreaChart = memo(
             gradient: s.gradient,
             yAxisId: s.yAxisId,
             stackId: s.stackId,
-            legendShape: s.legendShape,
+            legendIndicator: s.legendIndicator,
           }),
         );
       }, [series]);

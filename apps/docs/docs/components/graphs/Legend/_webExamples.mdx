@@ -169,7 +169,7 @@ The `position` prop controls where the legend appears. Use `justifyContent` to a
       data: [455, 520, 380, 455, 285, 235],
       yAxisId: 'revenue',
       color: 'rgb(var(--yellow40))',
-      legendShape: 'squircle',
+      legendIndicator: 'squircle',
     },
     {
       id: 'profitMargin',
@@ -177,7 +177,7 @@ The `position` prop controls where the legend appears. Use `justifyContent` to a
       data: [23, 20, 16, 38, 12, 9],
       yAxisId: 'profitMargin',
       color: 'var(--color-fgPositive)',
-      legendShape: 'squircle',
+      legendIndicator: 'squircle',
     },
   ]}
   xAxis={{
@@ -234,7 +234,7 @@ function CustomLegendWithValues() {
       label: 'Candidate A',
       data: [48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 38],
       color: 'rgb(var(--blue40))',
-      legendShape: 'circle',
+      legendIndicator: 'circle',
     },
     {
       id: 'candidate-b',
@@ -242,19 +242,19 @@ function CustomLegendWithValues() {
       // Candidate B entered the race in April and gained momentum
       data: [null, null, null, 6, 10, 14, 18, 22, 26, 29, 32, 35],
       color: 'rgb(var(--orange40))',
-      legendShape: 'circle',
+      legendIndicator: 'circle',
     },
     {
       id: 'candidate-c',
       label: 'Candidate C',
       data: [52, 53, 54, 49, 46, 43, 40, 37, 34, 32, 30, 27],
       color: 'rgb(var(--gray40))',
-      legendShape: 'circle',
+      legendIndicator: 'circle',
     },
   ];
 
   // Custom legend item component that displays the current scrubbed value
-  const ValueLegendItem = memo(({ seriesId, label, color, legendShape }: LegendItemProps) => {
+  const ValueLegendItem = memo(({ seriesId, label, color, legendIndicator }: LegendItemProps) => {
     const { scrubberPosition } = useScrubberContext();
     const { series, dataLength } = useCartesianChartContext();
 
@@ -271,7 +271,7 @@ function CustomLegendWithValues() {
 
     return (
       <HStack alignItems="center" gap={1}>
-        <LegendMedia color={color} shape={legendShape} />
+        <DefaultLegendIndicator color={color} indicator={legendIndicator} />
         <Text font="label2">{label}</Text>
         <Text font="label1" tabularNumbers>
           {formattedValue}
@@ -309,11 +309,205 @@ function CustomLegendWithValues() {
 }
 ```
 
+## Interactive Legend
+
+Create clickable legend items that emphasize specific series on the chart. In this example, clicking a legend item highlights that series while dimming the others. Clicking the same item again returns all series to normal.
+
+```jsx live
+function InteractiveLegend() {
+  const [emphasizedId, setEmphasizedId] = useState<string | null>(null);
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const seriesConfig = [
+    {
+      id: 'revenue',
+      label: 'Revenue',
+      data: [120, 150, 180, 165, 190, 210, 240, 220, 260, 280, 310, 350],
+      baseColor: '--blue',
+    },
+    {
+      id: 'expenses',
+      label: 'Expenses',
+      data: [80, 95, 110, 105, 120, 130, 145, 140, 155, 165, 180, 195],
+      baseColor: '--orange',
+    },
+    {
+      id: 'profit',
+      label: 'Profit',
+      data: [40, 55, 70, 60, 70, 80, 95, 80, 105, 115, 130, 155],
+      baseColor: '--green',
+    },
+  ];
+
+  // Toggle emphasis - clicking the same item de-emphasizes it
+  const handleToggle = useCallback((seriesId: string) => {
+    setEmphasizedId((prev) => (prev === seriesId ? null : seriesId));
+  }, []);
+
+  // Custom legend item using Chip for interactivity
+  const ChipLegendItem = memo(({ seriesId, label, color }: LegendItemProps) => {
+    const isEmphasized = emphasizedId === seriesId;
+    const config = seriesConfig.find((s) => s.id === seriesId);
+    const baseColor = config?.baseColor ?? '--gray';
+
+    console.log('emphasizedId', isEmphasized);
+
+    return (
+      <Chip
+        inverted={isEmphasized}
+        compact
+        style={{
+          backgroundColor: `rgb(var(${baseColor}10))`,
+          color: 'var(--color-fg)',
+          borderWidth: 0,
+        }}
+        onClick={() => handleToggle(seriesId)}
+      >
+        <HStack
+          alignItems="center"
+          gap={1}
+        >
+          <DefaultLegendIndicator color={`rgb(var(${baseColor}50))`} />
+          {label}
+        </HStack>
+      </Chip>
+    );
+  });
+
+  // Build series with dynamic opacity based on emphasis state
+  const series = useMemo(() => {
+    return seriesConfig.map((config) => {
+      const isEmphasized = emphasizedId === config.id;
+      const isDimmed = emphasizedId !== null && !isEmphasized;
+
+      return {
+        id: config.id,
+        label: config.label,
+        data: config.data,
+        color: `rgb(var(${config.baseColor}40))`,
+        opacity: isDimmed ? 0.3 : 1,
+      };
+    });
+  }, [emphasizedId]);
+
+  return (
+    <VStack gap={2}>
+      <Text font="headline" textAlign="center">
+        Financial Overview
+      </Text>
+      <LineChart
+        showArea
+        showXAxis
+        showYAxis
+        height={{ base: 200, tablet: 250, desktop: 300 }}
+        series={series}
+        xAxis={{
+          data: months,
+        }}
+        yAxis={{
+          domain: { min: 0 },
+          showGrid: true,
+          tickLabelFormatter: (value) => `$${value}k`,
+        }}
+      >
+        <Legend position="top" ItemComponent={ChipLegendItem} gap={1} />
+      </LineChart>
+    </VStack>
+  );
+}
+```
+
+## Custom Indicator Component
+
+The `IndicatorComponent` prop allows you to customize how the legend indicator is rendered while keeping the default item layout. This is useful when you want a custom visual style for the indicator without rebuilding the entire legend item.
+
+In this example, we create an indicator with a semi-transparent fill and a solid border to differentiate projected data from actual data.
+
+```jsx live
+function CustomIndicatorExample() {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const actualData = [120, 150, 180, 210, 240, null];
+  const projectedData = [null, null, null, null, null, 270];
+
+  // Custom indicator component that renders a squircle with 50% fill opacity and solid border
+  const OutlinedIndicator = memo(({ color, indicator }: LegendIndicatorProps) => {
+    // If custom ReactNode is passed, render it directly
+    if (indicator && typeof indicator !== 'string') {
+      return <>{indicator}</>;
+    }
+
+    return (
+      <Box
+        borderRadius={200}
+        style={{
+          width: 10,
+          height: 10,
+          backgroundColor: color,
+          opacity: 0.5,
+          border: `2px solid ${color}`,
+          boxSizing: 'border-box',
+        }}
+      />
+    );
+  });
+
+  return (
+    <VStack gap={2}>
+      <Text font="headline" textAlign="center">
+        Sales Performance
+      </Text>
+      <CartesianChart
+        height={{ base: 200, tablet: 250, desktop: 300 }}
+        inset={0}
+        series={[
+          {
+            id: 'actual',
+            label: 'Actual',
+            data: actualData,
+            color: 'rgb(var(--blue40))',
+            legendIndicator: 'squircle',
+          },
+          {
+            id: 'projected',
+            label: 'Projected',
+            data: projectedData,
+            color: 'rgb(var(--blue40))',
+            legendIndicator: 'squircle',
+          },
+        ]}
+        xAxis={{
+          data: months,
+          scaleType: 'band',
+        }}
+        yAxis={{
+          domain: { min: 0 },
+          showGrid: true,
+        }}
+      >
+        <XAxis showLine showTickMarks />
+        <YAxis
+          showLine
+          showTickMarks
+          position="left"
+          requestedTickCount={5}
+          width={60}
+          tickLabelFormatter={(value) => `$${value}k`}
+        />
+        <BarPlot />
+        <Legend position="top" IndicatorComponent={OutlinedIndicator} seriesIds={['projected']} />
+        <Legend position="top" seriesIds={['actual']} />
+      </CartesianChart>
+    </VStack>
+  );
+}
+```
+
 ## Styling
 
-### Legend Shape
+### Legend Indicator
 
-Series can use different shapes for their legend indicators via the `legendShape` property. Available shapes are `pill`, `circle`, `square`, and `squircle`. This is useful for distinguishing between different data types, such as actual vs. forecasted values.
+Series can use different indicators via the `legendIndicator` property. Available presets are `pill`, `circle`, `square`, and `squircle`. This is useful for distinguishing between different data types, such as actual vs. forecasted values.
 
 ```jsx live
 function RevenueForecast() {
@@ -406,7 +600,7 @@ function RevenueForecast() {
             label: 'Historical',
             data: actualRevenue,
             color: 'var(--color-fgPositive)',
-            legendShape: 'squircle',
+            legendIndicator: 'squircle',
             stackId: 'revenue',
           },
           {
@@ -414,7 +608,7 @@ function RevenueForecast() {
             label: 'Forecasted',
             data: forecastRevenue,
             color: 'var(--color-fgPositive)',
-            legendShape: DottedLegendShape,
+            legendIndicator: DottedLegendShape,
             stackId: 'revenue',
             BarComponent: DottedBarComponent,
           },

@@ -1,1 +1,1 @@
-export * from './LegendMedia';
+export * from './DefaultLegendIndicator';

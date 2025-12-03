@@ -6,9 +6,13 @@ import { css } from '@linaria/core';
 
 import type { Series } from '../utils';
 
-import { LegendMedia } from './LegendMedia';
+import {
+  DefaultLegendIndicator,
+  type LegendIndicatorComponent,
+  type LegendIndicatorProps,
+} from './DefaultLegendIndicator';
 
-const legendMediaWrapperCss = css`
+const indicatorWrapperCss = css`
   width: 10px;
   height: 24px;
   display: flex;
@@ -34,9 +38,14 @@ export type LegendItemProps = SharedProps & {
    */
   color?: Series['color'];
   /**
-   * The shape to display in the legend media.
+   * The indicator to display in the legend.
    */
-  legendShape?: Series['legendShape'];
+  legendIndicator?: Series['legendIndicator'];
+  /**
+   * Custom component to render the legend indicator.
+   * @default DefaultLegendIndicator
+   */
+  IndicatorComponent?: LegendIndicatorComponent;
   /**
    * Custom className for styling.
    */
@@ -52,15 +61,16 @@ export type LegendItemComponent = React.FC<LegendItemProps>;
 export const DefaultLegendItem = memo(function DefaultLegendItem({
   label,
   color,
-  legendShape,
+  legendIndicator,
+  IndicatorComponent = DefaultLegendIndicator,
   className,
   style,
   testID,
 }: LegendItemProps) {
   return (
     <HStack className={className ?? legendItemCss} data-testid={testID} gap={1} style={style}>
-      <Box className={legendMediaWrapperCss}>
-        <LegendMedia color={color} shape={legendShape} />
+      <Box className={indicatorWrapperCss}>
+        <IndicatorComponent color={color} indicator={legendIndicator} />
       </Box>
       <Text font="label2">{label}</Text>
     </HStack>

@@ -4,12 +4,12 @@ import { Text } from '@coinbase/cds-web/typography';
 import { CartesianChart } from '../../CartesianChart';
 import { Line, LineChart } from '../../line';
 import { Scrubber } from '../../scrubber';
-import type { LegendShape } from '../../utils/chart';
+import type { LegendIndicatorVariant } from '../../utils/chart';
+import { DefaultLegendIndicator } from '../DefaultLegendIndicator';
 import { Legend } from '../Legend';
-import { LegendMedia } from '../LegendMedia';
 
 export default {
-  component: LegendMedia,
+  component: DefaultLegendIndicator,
   title: 'Components/Chart/Legend',
 };
 
@@ -41,18 +41,18 @@ const spectrumColors = [
   'chartreuse',
 ];
 
-const shapes: LegendShape[] = ['pill', 'circle', 'squircle', 'square'];
+const indicators: LegendIndicatorVariant[] = ['pill', 'circle', 'squircle', 'square'];
 
 export const All = () => {
   return (
     <VStack gap={8}>
-      <Example title="Shapes">
+      <Example title="Indicators">
         <VStack gap={2}>
-          {shapes.map((shape) => (
-            <HStack key={shape} gap={1}>
+          {indicators.map((indicator) => (
+            <HStack key={indicator} gap={1}>
               {spectrumColors.map((color) => (
                 <Box key={color} justifyContent="center" style={{ width: 10 }}>
-                  <LegendMedia color={`rgb(var(--${color}40))`} shape={shape} />
+                  <DefaultLegendIndicator color={`rgb(var(--${color}40))`} indicator={indicator} />
                 </Box>
               ))}
             </HStack>

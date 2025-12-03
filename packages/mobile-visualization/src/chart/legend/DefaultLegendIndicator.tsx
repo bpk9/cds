@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { useTheme } from '@coinbase/cds-mobile';
 import { Box, type BoxProps } from '@coinbase/cds-mobile/layout';
 
-import type { LegendShape } from '../utils';
+import type { LegendIndicator } from '../utils';
 
 const shapeDimensions = StyleSheet.create({
   pill: {
@@ -24,37 +24,40 @@ const shapeDimensions = StyleSheet.create({
   },
 });
 
-export type LegendMediaProps = Omit<BoxProps, 'color'> & {
+export type LegendIndicatorProps = Omit<BoxProps, 'color'> & {
   /**
    * The color of the legend indicator.
    * @default theme.color.fg
    */
   color?: string;
   /**
-   * Shape of the legend indicator.
+   * The indicator to display.
    * @default 'circle'
    */
-  shape?: LegendShape;
+  indicator?: LegendIndicator;
 };
 
+export type LegendIndicatorComponent = React.FC<LegendIndicatorProps>;
+
 /**
- * Media for a chart legend.
+ * Default indicator component for chart legends.
+ * Renders a colored shape (pill, circle, square, or squircle).
  */
-export const LegendMedia = memo<LegendMediaProps>(
-  ({ color: colorProp, shape = 'circle', style, testID, ...props }) => {
+export const DefaultLegendIndicator = memo<LegendIndicatorProps>(
+  ({ color: colorProp, indicator = 'circle', style, testID, ...props }) => {
     const theme = useTheme();
     const color = colorProp ?? theme.color.fg;
-    const dimensionStyle = shapeDimensions[shape] ?? shapeDimensions.circle;
+    const dimensionStyle = shapeDimensions[indicator] ?? shapeDimensions.circle;
 
     const borderRadiusStyle = useMemo(() => {
-      if (shape === 'square') {
+      if (indicator === 'square') {
         return { borderRadius: 0 };
       }
-      if (shape === 'squircle') {
+      if (indicator === 'squircle') {
         return { borderRadius: theme.borderRadius[200] };
       }
       return { borderRadius: theme.borderRadius[1000] };
-    }, [shape, theme.borderRadius]);
+    }, [indicator, theme.borderRadius]);
 
     return (
       <Box
