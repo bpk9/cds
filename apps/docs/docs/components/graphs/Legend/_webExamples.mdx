@@ -165,7 +165,7 @@ The `position` prop controls where the legend appears. Use `justifyContent` to a
   series={[
     {
       id: 'revenue',
-      label: 'Revenue ($)',
+      label: 'Revenue',
       data: [455, 520, 380, 455, 285, 235],
       yAxisId: 'revenue',
       color: 'rgb(var(--yellow40))',
@@ -173,7 +173,7 @@ The `position` prop controls where the legend appears. Use `justifyContent` to a
     },
     {
       id: 'profitMargin',
-      label: 'Profit Margin (%)',
+      label: 'Profit Margin',
       data: [23, 20, 16, 38, 12, 9],
       yAxisId: 'profitMargin',
       color: 'var(--color-fgPositive)',
@@ -245,43 +245,75 @@ function RevenueForecast() {
   const dotSize = 1;
   const patternId = useId();
   const maskId = useId();
+  const legendPatternId = useId();
 
-  // Custom bar component that renders forecast bars with dotted pattern fill
-  const ForecastBarComponent = memo((props) => {
-    const { seriesId, dataX } = props;
-    const isForecast = seriesId === 'forecast';
+  // Custom legend shape that matches the dotted bar pattern
+  const DottedLegendShape = (
+    <svg width={10} height={10} viewBox="0 0 10 10">
+      <defs>
+        <pattern
+          id={legendPatternId}
+          patternUnits="userSpaceOnUse"
+          width={patternSize / 2}
+          height={patternSize / 2}
+        >
+          <circle cx={patternSize / 4} cy={patternSize / 4} r={dotSize / 2} fill="white" />
+        </pattern>
+        <mask id={`${legendPatternId}-mask`}>
+          <rect x={1} y={1} width={8} height={8} rx={2} fill={`url(#${legendPatternId})`} />
+        </mask>
+      </defs>
+      <g mask={`url(#${legendPatternId}-mask)`}>
+        <rect x={1} y={1} width={8} height={8} rx={2} fill="var(--color-fgPositive)" />
+      </g>
+      <rect x={1} y={1} width={8} height={8} rx={2} fill="transparent" stroke="var(--color-fgPositive)" strokeWidth={2} />
+    </svg>
+  );
 
-    if (true) {
-      // Render bar with dotted pattern mask for forecast
-      const uniqueMaskId = `${maskId}-${dataX}`;
-      return (
+  // Custom bar component that renders bars with dotted pattern fill
+  const DottedBarComponent = memo((props) => {
+    const { dataX, x, y } = props;
+    // Create unique IDs per bar so patterns are scoped to each bar
+    const uniqueMaskId = `${maskId}-${dataX}`;
+    const uniquePatternId = `${patternId}-${dataX}`;
+    return (
+      <>
+        <defs>
+          {/* Pattern positioned relative to this bar's origin */}
+          <pattern
+            id={uniquePatternId}
+            patternUnits="userSpaceOnUse"
+            width={patternSize}
+            height={patternSize}
+            x={x}
+            y={y}
+          >
+            <circle cx={patternSize / 2} cy={patternSize / 2} r={dotSize} fill="white" />
+          </pattern>
+          <mask id={uniqueMaskId}>
+            <DefaultBar {...props} fill={`url(#${uniquePatternId})`} />
+          </mask>
+        </defs>
         <g mask={`url(#${uniqueMaskId})`}>
-          <defs>
-            <mask id={uniqueMaskId}>
-              <DefaultBar {...props} fill={`url(#${patternId})`} stroke={props.fill} strokeWidth={2} />
-            </mask>
-          </defs>
           <DefaultBar {...props} />
         </g>
-      );
-    }
-
-    // Render default bar for actual data
-    return <DefaultBar {...props} />;
+        <DefaultBar {...props} fill="transparent" stroke={props.fill} strokeWidth={4} />
+      </>
+    );
   });
 
   return (
     <VStack gap={2}>
       <Text font="headline" textAlign="center">
-        2024 Revenue Performance
+        Annual Revenue
       </Text>
       <CartesianChart
         height={{ base: 200, tablet: 250, desktop: 300 }}
-        inset={{ top: 8, bottom: 8, left: 0, right: 0 }}
+        inset={0}
         series={[
           {
             id: 'actual',
-            label: 'Actual Revenue',
+            label: 'Historical',
             data: actualRevenue,
             color: 'var(--color-fgPositive)',
             legendShape: 'squircle',
@@ -289,11 +321,12 @@ function RevenueForecast() {
           },
           {
             id: 'forecast',
-            label: 'Forecasted Revenue',
+            label: 'Forecasted',
             data: forecastRevenue,
-            color: 'var(--color-fgNegative)',
-            legendShape: 'pill',
+            color: 'var(--color-fgPositive)',
+            legendShape: DottedLegendShape,
             stackId: 'revenue',
+            BarComponent: DottedBarComponent,
           },
         ]}
         xAxis={{
@@ -305,17 +338,6 @@ function RevenueForecast() {
           showGrid: true,
         }}
       >
-        {/* Pattern definition for dotted forecast bars */}
-        <defs>
-          <pattern
-            id={patternId}
-            patternUnits="userSpaceOnUse"
-            width={patternSize}
-            height={patternSize}
-          >
-            <circle cx={patternSize / 2} cy={patternSize / 2} r={dotSize} fill="white" />
-          </pattern>
-        </defs>
         <XAxis showLine showTickMarks />
         <YAxis
           showLine
@@ -325,8 +347,8 @@ function RevenueForecast() {
           width={60}
           tickLabelFormatter={numberFormatter}
         />
-        <BarPlot BarComponent={ForecastBarComponent} />
-        <Legend position="top" width="100%" />
+        <BarPlot />
+        <Legend position='top'/>
       </CartesianChart>
     </VStack>
   );

@@ -9,7 +9,7 @@ import type { Series } from '../utils';
 import { LegendMedia } from './LegendMedia';
 
 const legendMediaWrapperCss = css`
-  width: 24px;
+  width: 10px;
   height: 24px;
   display: flex;
   align-items: center;

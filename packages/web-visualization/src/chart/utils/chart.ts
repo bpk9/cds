@@ -17,7 +17,9 @@ export type AxisBounds = {
 export const isValidBounds = (bounds: Partial<AxisBounds>): bounds is AxisBounds =>
   bounds.min !== undefined && bounds.max !== undefined;
 
-export type LegendShape = 'circle' | 'square' | 'squircle' | 'pill';
+export type LegendShapePreset = 'circle' | 'square' | 'squircle' | 'pill';
+
+export type LegendShape = LegendShapePreset | React.ReactNode;
 
 export type Series = {
   /**

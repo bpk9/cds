@@ -11,6 +11,16 @@ import { DefaultBarStack } from './DefaultBarStack';
 
 const EPSILON = 1e-4;
 
+/**
+ * Extended series type that includes bar-specific properties.
+ */
+export type BarSeries = Series & {
+  /**
+   * Custom component to render bars for this series.
+   */
+  BarComponent?: BarComponent;
+};
+
 export type BarStackBaseProps = Pick<
   BarProps,
   'BarComponent' | 'fillOpacity' | 'stroke' | 'strokeWidth' | 'borderRadius'
@@ -18,7 +28,7 @@ export type BarStackBaseProps = Pick<
   /**
    * Array of series configurations that belong to this stack.
    */
-  series: Series[];
+  series: BarSeries[];
   /**
    * The category index for this stack.
    */
@@ -272,6 +282,7 @@ export const BarStack = memo<BarStackProps>(
           width,
           height,
           dataY: value, // Store the actual data value
+          BarComponent: (s as BarSeries).BarComponent,
           fill: barFill,
           // Check if the bar should be rounded based on the baseline, with an epsilon to handle floating-point rounding
           roundTop: roundBaseline || Math.abs(barTop - baseline) >= EPSILON,
@@ -687,6 +698,7 @@ export const BarStack = memo<BarStackProps>(
         originY={baseline}
         roundBottom={bar.roundBottom}
         roundTop={bar.roundTop}
+        seriesId={bar.seriesId}
         stroke={bar.stroke ?? defaultStroke}
         strokeWidth={bar.strokeWidth ?? defaultStrokeWidth}
         transition={transition}

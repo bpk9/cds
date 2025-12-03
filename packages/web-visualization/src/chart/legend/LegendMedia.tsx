@@ -1,9 +1,9 @@
-import { memo } from 'react';
+import React, { memo } from 'react';
 import { cx } from '@coinbase/cds-web';
 import { Box, type BoxProps } from '@coinbase/cds-web/layout';
 import { css } from '@linaria/core';
 
-import type { LegendShape } from '../utils/chart';
+import type { LegendShape, LegendShapePreset } from '../utils/chart';
 
 const pillCss = css`
   width: 6px;
@@ -28,12 +28,15 @@ const squircleCss = css`
   border-radius: 2px;
 `;
 
-const stylesByShape: Record<LegendShape, string> = {
+const stylesByShape: Record<LegendShapePreset, string> = {
   pill: pillCss,
   circle: circleCss,
   square: squareCss,
   squircle: squircleCss,
 };
+
+const isPresetShape = (shape: LegendShape): shape is LegendShapePreset =>
+  typeof shape === 'string' && shape in stylesByShape;
 
 export type LegendMediaProps = BoxProps<'div'> & {
   /**
@@ -42,7 +45,7 @@ export type LegendMediaProps = BoxProps<'div'> & {
    */
   color?: string;
   /**
-   * The shape of the legend media.
+   * The shape of the legend media. Can be a preset shape or a custom ReactNode.
    * @default 'circle'
    */
   shape?: LegendShape;
@@ -53,7 +56,12 @@ export type LegendMediaProps = BoxProps<'div'> & {
  */
 export const LegendMedia = memo<LegendMediaProps>(
   ({ color = 'var(--color-fgPrimary)', shape = 'circle', className, style, ...props }) => {
-    const shapeStyle = stylesByShape[shape] || stylesByShape.circle;
+    // If shape is a custom ReactNode, render it directly
+    if (!isPresetShape(shape)) {
+      return <>{shape}</>;
+    }
+
+    const shapeStyle = stylesByShape[shape];
 
     return (
       <Box

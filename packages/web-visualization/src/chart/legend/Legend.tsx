@@ -5,11 +5,7 @@ import { ChartOverlay } from '../ChartOverlay';
 import { useCartesianChartContext } from '../ChartProvider';
 import type { Series } from '../utils';
 
-import {
-  DefaultLegendItem,
-  type LegendItemComponent,
-  type LegendItemProps,
-} from './DefaultLegendItem';
+import { DefaultLegendItem, type LegendItemComponent } from './DefaultLegendItem';
 
 export type LegendBaseProps = {
   /**
@@ -40,6 +36,8 @@ export const Legend = memo(function Legend({
   gap = 1,
   seriesIds,
   ItemComponent = DefaultLegendItem,
+  width = position === 'top' || position === 'bottom' ? '100%' : undefined,
+  height = position === 'left' || position === 'right' ? '100%' : undefined,
   ...props
 }: LegendProps) {
   const { series, slotRefs } = useCartesianChartContext();
@@ -68,7 +66,9 @@ export const Legend = memo(function Legend({
         flexDirection={flexDirection}
         flexWrap={flexWrap}
         gap={gap}
+        height={height}
         justifyContent={justifyContent}
+        width={width}
         {...props}
       >
         {filteredSeries.map((s) => (

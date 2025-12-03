@@ -429,7 +429,7 @@ export const CartesianChart = memo(
               {...props}
             >
               {/* Top slot */}
-              <Box ref={topSlotRef} />
+              <Box ref={topSlotRef} width="100%" />
               {/* Middle row - Left, Center (SVG), Right */}
               <Box style={{ display: 'flex', flex: 1, minHeight: 0 }}>
                 {/* Left slot */}
