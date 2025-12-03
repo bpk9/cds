@@ -14,6 +14,7 @@ import { NAVIGATION_KEYS } from '../../overlays/FocusTrap';
 import { DefaultSelectControl } from '../select/DefaultSelectControl';
 import type {
   SelectBaseProps,
+  SelectControlComponent,
   SelectControlProps,
   SelectOption,
   SelectProps,
@@ -23,6 +24,8 @@ import type {
 import { Select } from '../select/Select';
 import type { SelectOptionList } from '../select';
 
+import { DefaultComboboxControl } from './DefaultComboboxControl';
+
 export type ComboboxControlProps<
   Type extends SelectType = 'single',
   SelectOptionValue extends string = string,
@@ -31,6 +34,8 @@ export type ComboboxControlProps<
   searchText: string;
   /** Search text change handler */
   onSearch: (searchText: string) => void;
+  /** Hide the search input */
+  hideSearchInput?: boolean;
 };
 
 export type ComboboxControlComponent<
@@ -89,8 +94,7 @@ const ComboboxBase = memo(
         onSearch: onSearchProp,
         defaultSearchText = '',
         filterFunction,
-        SelectControlComponent = DefaultSelectControl,
-        hideSearchInput,
+        ComboboxControlComponent = DefaultComboboxControl,
         ...props
       }: ComboboxProps<Type, SelectOptionValue>,
       ref: React.Ref<ComboboxRef>,
@@ -160,60 +164,117 @@ const ComboboxBase = memo(
         setSearchTextRef.current(event.target.value);
       }, []);
 
-      const ComboboxControlComponent = useMemo(
-        () => (props: SelectControlProps<Type, SelectOptionValue>) => {
-          const hasValue =
-            valueRef.current !== null &&
-            !(Array.isArray(valueRef.current) && valueRef.current.length === 0);
+      // const ComboboxControlComponent = useMemo(
+      //   () => (props: ComboboxControlProps<Type, SelectOptionValue>) => {
+      //     const hasValue =
+      //       valueRef.current !== null &&
+      //       !(Array.isArray(valueRef.current) && valueRef.current.length === 0);
 
-          return (
-            <SelectControlComponent
-              ref={controlRef.current?.refs.setReference}
-              {...props}
-              contentNode={
-                hideSearchInput ? null : (
-                  <NativeInput
-                    onChange={handleSearchChange}
-                    onKeyDown={(event) => {
-                      if (!NAVIGATION_KEYS.includes(event.key)) {
-                        event.stopPropagation();
-                      }
-                      if (
-                        event.key === 'Enter' ||
-                        (!NAVIGATION_KEYS.includes(event.key) && !event.shiftKey)
-                      ) {
-                        setOpen(true);
-                      }
-                    }}
-                    placeholder={typeof placeholder === 'string' ? placeholder : undefined}
-                    style={{
-                      padding: 0,
-                      paddingTop: valueRef.current?.length && valueRef.current?.length > 0 ? 8 : 0,
-                      width: '100%',
-                    }}
-                    tabIndex={0}
-                    value={searchTextRef.current}
-                  />
-                )
-              }
-              options={optionsRef.current}
-              placeholder={null}
-              styles={{
-                controlEndNode: {
-                  alignItems: hasValue && !hideSearchInput ? 'flex-end' : 'center',
-                },
-              }}
-              tabIndex={-1}
-            />
-          );
-        },
-        [SelectControlComponent, handleSearchChange, hideSearchInput, placeholder, setOpen],
+      //     return (
+      //       <SelectControlComponent
+      //         ref={controlRef.current?.refs.setReference}
+      //         {...props}
+      //         contentNode={
+      //           hideSearchInput ? null : (
+      //             <NativeInput
+      //               onChange={handleSearchChange}
+      //               onKeyDown={(event) => {
+      //                 if (!NAVIGATION_KEYS.includes(event.key)) {
+      //                   event.stopPropagation();
+      //                 }
+      //                 if (
+      //                   event.key === 'Enter' ||
+      //                   (!NAVIGATION_KEYS.includes(event.key) && !event.shiftKey)
+      //                 ) {
+      //                   setOpen(true);
+      //                 }
+      //               }}
+      //               placeholder={typeof placeholder === 'string' ? placeholder : undefined}
+      //               style={{
+      //                 padding: 0,
+      //                 paddingTop: valueRef.current?.length && valueRef.current?.length > 0 ? 8 : 0,
+      //                 width: '100%',
+      //               }}
+      //               tabIndex={0}
+      //               value={searchTextRef.current}
+      //             />
+      //           )
+      //         }
+      //         options={optionsRef.current}
+      //         placeholder={null}
+      //         styles={{
+      //           controlEndNode: {
+      //             alignItems: hasValue && !hideSearchInput ? 'flex-end' : 'center',
+      //           },
+      //         }}
+      //         tabIndex={-1}
+      //       />
+      //     );
+      //   },
+      //   [SelectControlComponent, handleSearchChange, hideSearchInput, placeholder, setOpen],
+      // );
+
+      // const ComboboxControlComponent = useMemo(
+      //   () =>
+      //     forwardRef<HTMLElement, SelectControlProps<Type, SelectOptionValue>>((props, forwardedRef) => (
+      //       <DefaultComboboxControl
+      //         {...props}
+      //         ref={forwardedRef}
+      //         value={value}
+      //         options={optionsRef.current}
+      //         searchText={searchTextRef.current}
+      //         onSearch={handleSearchChange}
+      //         placeholder={placeholder}
+      //         hideSearchInput={hideSearchInput}
+      //         setOpen={setOpen}
+      //         hasValue={hasValue}
+      //         setReference={controlRef.current?.refs.setReference}
+      //       />
+      //     )),
+      //   [handleSearchChange, hideSearchInput, placeholder, setOpen],
+      // );
+
+      const SelectControlComponent = useMemo(
+        () =>
+          forwardRef<HTMLDivElement, SelectControlProps<Type, SelectOptionValue>>(
+            (props, forwardedRef) => (
+              <ComboboxControlComponent
+                ref={forwardedRef}
+                {...props}
+                onChange={handleChange}
+                onSearch={setSearchText}
+                open={open}
+                options={optionsRef.current}
+                placeholder={placeholder}
+                searchText={searchTextRef.current}
+                setOpen={setOpen}
+                value={value}
+              />
+            ),
+          ),
+        [ComboboxControlComponent, handleChange, open, placeholder, setOpen, setSearchText, value],
       );
 
       return (
         <Select
           ref={controlRef}
-          SelectControlComponent={ComboboxControlComponent}
+          // SelectControlComponent={
+          //   SelectControlComponent as unknown as SelectControlComponent<Type, SelectOptionValue>
+          // }
+          SelectControlComponent={
+            <ComboboxControlComponent
+              ref={controlRef.current?.refs.setReference}
+              {...props}
+              onChange={handleChange}
+              onSearch={setSearchText}
+              open={open}
+              options={optionsRef.current}
+              placeholder={placeholder}
+              searchText={searchTextRef.current}
+              setOpen={setOpen}
+              value={value}
+            />
+          }
           accessibilityLabel={accessibilityLabel}
           defaultOpen={defaultOpen}
           onChange={handleChange}
