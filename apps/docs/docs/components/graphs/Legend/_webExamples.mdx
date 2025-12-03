@@ -219,6 +219,96 @@ The `position` prop controls where the legend appears. Use `justifyContent` to a
 </CartesianChart>
 ```
 
+## Custom Legend Item
+
+The `ItemComponent` prop allows you to create custom legend items that display dynamic data. This example shows the current value at the scrubber position, falling back to the last data point when not scrubbing. The `Legend` component passes `seriesId` to each `ItemComponent`, which you can use to look up the series data from context.
+
+```jsx live
+function CustomLegendWithValues() {
+  // Sample polling data over time
+  const timeLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const series = [
+    {
+      id: 'candidate-a',
+      label: 'Candidate A',
+      data: [48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 38],
+      color: 'rgb(var(--blue40))',
+      legendShape: 'circle',
+    },
+    {
+      id: 'candidate-b',
+      label: 'Candidate B',
+      // Candidate B entered the race in April and gained momentum
+      data: [null, null, null, 6, 10, 14, 18, 22, 26, 29, 32, 35],
+      color: 'rgb(var(--orange40))',
+      legendShape: 'circle',
+    },
+    {
+      id: 'candidate-c',
+      label: 'Candidate C',
+      data: [52, 53, 54, 49, 46, 43, 40, 37, 34, 32, 30, 27],
+      color: 'rgb(var(--gray40))',
+      legendShape: 'circle',
+    },
+  ];
+
+  // Custom legend item component that displays the current scrubbed value
+  const ValueLegendItem = memo(({ seriesId, label, color, legendShape }: LegendItemProps) => {
+    const { scrubberPosition } = useScrubberContext();
+    const { series, dataLength } = useCartesianChartContext();
+
+    // Get the data index - use scrubber position or fall back to last point
+    const dataIndex = scrubberPosition ?? dataLength - 1;
+
+    // Find the series using seriesId prop and get the value at the current index
+    const seriesData = series.find((s) => s.id === seriesId);
+    const rawValue = seriesData?.data?.[dataIndex];
+
+    // Format the value - show '--' if no data, otherwise show whole number with %
+    const formattedValue =
+      rawValue === null || rawValue === undefined ? '--' : `${Math.round(rawValue)}%`;
+
+    return (
+      <HStack alignItems="center" gap={1}>
+        <LegendMedia color={color} shape={legendShape} />
+        <Text font="label2">{label}</Text>
+        <Text font="label1" tabularNumbers>
+          {formattedValue}
+        </Text>
+      </HStack>
+    );
+  });
+
+  return (
+    <VStack gap={2}>
+      <Text font="headline" textAlign="center">
+        Election Polls
+      </Text>
+      <LineChart
+        enableScrubbing
+        showArea
+        showXAxis
+        showYAxis
+        height={{ base: 200, tablet: 250, desktop: 300 }}
+        series={series}
+        xAxis={{
+          data: timeLabels,
+        }}
+        yAxis={{
+          domain: { min: 0, max: 100 },
+          showGrid: true,
+          tickLabelFormatter: (value) => `${value}%`,
+        }}
+      >
+        <Scrubber hideBeaconLabels />
+        <Legend position="top" ItemComponent={ValueLegendItem} justifyContent="flex-start" />
+      </LineChart>
+    </VStack>
+  );
+}
+```
+
 ## Styling
 
 ### Legend Shape
