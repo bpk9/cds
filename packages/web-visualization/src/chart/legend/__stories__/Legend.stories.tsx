@@ -1,4 +1,4 @@
-import { memo, useCallback, useId, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Chip } from '@coinbase/cds-web/chips';
 import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
@@ -21,15 +21,12 @@ export default {
   title: 'Components/Chart/Legend',
 };
 
-const Example: React.FC<
-  React.PropsWithChildren<{ title: string; description?: string | React.ReactNode }>
-> = ({ children, title, description }) => {
+const Example: React.FC<React.PropsWithChildren<{ title: string }>> = ({ children, title }) => {
   return (
     <VStack gap={2}>
       <Text as="h2" display="block" font="title3">
         {title}
       </Text>
-      {description}
       {children}
     </VStack>
   );
@@ -307,10 +304,7 @@ export const IndicatorVariants = () => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
   return (
-    <Example
-      description="Series can use different indicators via the legendIndicator property. Available variants are pill, circle, square, and squircle."
-      title="Indicator Variants"
-    >
+    <Example title="Indicator Variants">
       <LineChart
         showArea
         showXAxis
@@ -506,12 +500,21 @@ export const Interactive = () => {
   }, []);
 
   const ChipLegendItem = memo(function ChipLegendItem({ seriesId, label }: LegendItemProps) {
+    const chipRef = useRef<HTMLButtonElement>(null);
     const isEmphasized = emphasizedId === seriesId;
     const config = seriesConfig.find((s) => s.id === seriesId);
     const baseColor = config?.baseColor ?? '--gray';
 
+    // Restore focus when chip becomes emphasized
+    useEffect(() => {
+      if (isEmphasized && chipRef.current) {
+        chipRef.current.focus();
+      }
+    }, [isEmphasized]);
+
     return (
       <Chip
+        ref={chipRef}
         compact
         aria-label={`${isEmphasized ? 'Remove emphasis from' : 'Emphasize'} ${label} series`}
         aria-pressed={isEmphasized}
@@ -526,7 +529,7 @@ export const Interactive = () => {
       >
         <HStack alignItems="center" gap={1}>
           <DefaultLegendIndicator color={`rgb(var(${baseColor}50))`} />
-          {label}
+          <Text font="label2">{label}</Text>
         </HStack>
       </Chip>
     );
@@ -678,10 +681,7 @@ export const LegendIndicators = () => {
   });
 
   return (
-    <Example
-      description="Series can use different indicators via the legendIndicator property. Available variants are pill, circle, square, and squircle."
-      title="Legend Indicators"
-    >
+    <Example title="Legend Indicators">
       <VStack gap={2}>
         <Text font="headline" textAlign="center">
           Annual Revenue

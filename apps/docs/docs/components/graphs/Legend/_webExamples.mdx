@@ -402,12 +402,21 @@ function InteractiveLegend() {
 
   // Custom legend item using Chip for interactivity
   const ChipLegendItem = memo(({ seriesId, label }: LegendItemProps) => {
+    const chipRef = useRef<HTMLButtonElement>(null);
     const isEmphasized = emphasizedId === seriesId;
     const config = seriesConfig.find((s) => s.id === seriesId);
     const baseColor = config?.baseColor ?? '--gray';
 
+    // Restore focus when chip becomes emphasized
+    useEffect(() => {
+      if (isEmphasized && chipRef.current) {
+        chipRef.current.focus();
+      }
+    }, [isEmphasized]);
+
     return (
       <Chip
+        ref={chipRef}
         aria-label={`${isEmphasized ? 'Remove emphasis from' : 'Emphasize'} ${label} series`}
         aria-pressed={isEmphasized}
         compact
