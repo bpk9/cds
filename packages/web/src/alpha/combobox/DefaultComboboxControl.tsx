@@ -61,6 +61,8 @@ const DefaultComboboxControlComponent = memo(
           }
           placeholder={null}
           styles={{
+            // TODO add
+            ...props.styles,
             controlEndNode: {
               alignItems: hasValue && !hideSearchInput ? 'flex-end' : 'center',
             },
@@ -72,4 +74,4 @@ const DefaultComboboxControlComponent = memo(
   ),
 );
 
-export const DefaultComboboxControl = DefaultComboboxControlComponent;
+export const DefaultComboboxControl = DefaultComboboxControlComponent as ComboboxControlComponent;
