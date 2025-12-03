@@ -16,7 +16,7 @@ const legendMediaWrapperCss = css`
 `;
 import type { LegendShape } from './utils/chart';
 import { useCartesianChartContext } from './ChartProvider';
-import { isCategoricalScale, useScrubberContext } from './utils';
+import { useScrubberContext } from './utils';
 
 export type ChartTooltipProps = VStackProps<'div'> & {
   /**
@@ -47,21 +47,13 @@ export const ChartTooltip = ({
   minWidth = 320,
   ...props
 }: ChartTooltipProps) => {
-  const { svgRef, series, getSeriesData, getXAxis, getXScale, dataLength } =
-    useCartesianChartContext();
-  const { scrubberPosition } = useScrubberContext();
-  const [isPointerActive, setIsPointerActive] = useState(false);
-  const [internalScrubberPosition, setInternalScrubberPosition] = useState<number | undefined>(
-    undefined,
-  );
+  const { svgRef, series, getSeriesData, getXAxis } = useCartesianChartContext();
+  const { scrubberPosition, enableScrubbing } = useScrubberContext();
   const [legendMediaWidth, setLegendMediaWidth] = useState<number>(0);
   const legendMediaRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
-  // Use scrubberPosition if available (from context), otherwise track internal state
-  const currentDataIndex = scrubberPosition ?? internalScrubberPosition;
-
-  const isTooltipVisible =
-    (isPointerActive || scrubberPosition !== undefined) && currentDataIndex !== undefined;
+  // Use scrubberPosition from context as the single source of truth for data index
+  const isTooltipVisible = enableScrubbing && scrubberPosition !== undefined;
 
   const { refs, floatingStyles } = useFloating({
     open: isTooltipVisible,
@@ -85,71 +77,10 @@ export const ChartTooltip = ({
     ],
   });
 
-  const getDataIndexFromX = useCallback(
-    (mouseX: number): number | undefined => {
-      const xScale = getXScale();
-      const xAxis = getXAxis();
-
-      if (!xScale || !xAxis) return undefined;
-
-      if (isCategoricalScale(xScale)) {
-        const categories = xScale.domain?.() ?? xAxis.data ?? [];
-        const bandwidth = xScale.bandwidth?.() ?? 0;
-        let closestIndex = 0;
-        let closestDistance = Infinity;
-        for (let i = 0; i < categories.length; i++) {
-          const xPos = xScale(i);
-          if (xPos !== undefined) {
-            const distance = Math.abs(mouseX - (xPos + bandwidth / 2));
-            if (distance < closestDistance) {
-              closestDistance = distance;
-              closestIndex = i;
-            }
-          }
-        }
-        return closestIndex;
-      }
-
-      const axisData = xAxis.data;
-      if (axisData && Array.isArray(axisData) && typeof axisData[0] === 'number') {
-        const numericData = axisData as number[];
-        let closestIndex = 0;
-        let closestDistance = Infinity;
-
-        for (let i = 0; i < numericData.length; i++) {
-          const xValue = numericData[i];
-          const xPos = xScale(xValue);
-          if (xPos !== undefined) {
-            const distance = Math.abs(mouseX - xPos);
-            if (distance < closestDistance) {
-              closestDistance = distance;
-              closestIndex = i;
-            }
-          }
-        }
-        return closestIndex;
-      }
-
-      if (
-        'invert' in xScale &&
-        typeof (xScale as { invert?: (value: number) => number }).invert === 'function'
-      ) {
-        const xValue = (xScale as { invert: (value: number) => number }).invert(mouseX);
-        const domain = xAxis.domain;
-        const min = domain.min ?? 0;
-        const max = domain.max ?? (dataLength ? dataLength - 1 : min);
-        const clamped = Math.max(min, Math.min(Math.round(xValue), max));
-        return clamped;
-      }
-
-      return undefined;
-    },
-    [dataLength, getXAxis, getXScale],
-  );
-
+  // Track mouse position only for tooltip floating UI positioning
   useEffect(() => {
     const element = svgRef?.current;
-    if (!element) return;
+    if (!element || !enableScrubbing) return;
 
     const handleMouseMove = (event: Event) => {
       const { clientX, clientY } = event as MouseEvent;
@@ -168,43 +99,31 @@ export const ChartTooltip = ({
         },
       };
       refs.setReference(virtualEl);
-      const rect = element.getBoundingClientRect();
-      const x = clientX - rect.left;
-      const dataIndex = getDataIndexFromX(x);
-      setInternalScrubberPosition(dataIndex);
-      setIsPointerActive(true);
-    };
-
-    const handleMouseLeave = () => {
-      setIsPointerActive(false);
-      setInternalScrubberPosition(undefined);
     };
 
     element.addEventListener('mousemove', handleMouseMove);
-    element.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
       element.removeEventListener('mousemove', handleMouseMove);
-      element.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [getDataIndexFromX, refs, svgRef]);
+  }, [enableScrubbing, refs, svgRef]);
 
   const { resolvedLabel, seriesItems } = useMemo(() => {
-    if (currentDataIndex === undefined) {
+    if (scrubberPosition === undefined) {
       return { resolvedLabel: null, seriesItems: [] as TooltipSeriesItem[] };
     }
 
     // Resolve label
     let resolvedLabel: React.ReactNode;
     if (label !== undefined) {
-      resolvedLabel = typeof label === 'function' ? label(currentDataIndex) : label;
+      resolvedLabel = typeof label === 'function' ? label(scrubberPosition) : label;
     } else {
       // Default to x-axis data value
       const xAxis = getXAxis();
-      if (xAxis?.data && xAxis.data[currentDataIndex] !== undefined) {
-        resolvedLabel = xAxis.data[currentDataIndex];
+      if (xAxis?.data && xAxis.data[scrubberPosition] !== undefined) {
+        resolvedLabel = xAxis.data[scrubberPosition];
       } else {
-        resolvedLabel = currentDataIndex;
+        resolvedLabel = scrubberPosition;
       }
     }
 
@@ -220,14 +139,14 @@ export const ChartTooltip = ({
     const seriesItems: TooltipSeriesItem[] = [];
     filteredSeries.forEach((s) => {
       const data = getSeriesData(s.id);
-      const dataPoint = data?.[currentDataIndex];
+      const dataPoint = data?.[scrubberPosition];
       let value: number | undefined;
 
       if (dataPoint && dataPoint !== null) {
         const [start, end] = dataPoint;
         value = end - start;
       } else if (s.data) {
-        const rawPoint = s.data[currentDataIndex];
+        const rawPoint = s.data[scrubberPosition];
         if (rawPoint !== undefined && rawPoint !== null) {
           value = Array.isArray(rawPoint) ? (rawPoint[1] ?? undefined) : (rawPoint as number);
         }
@@ -261,7 +180,7 @@ export const ChartTooltip = ({
       resolvedLabel: resolvedLabel ?? null,
       seriesItems,
     };
-  }, [currentDataIndex, label, seriesIds, series, getSeriesData, getXAxis, valueFormatter]);
+  }, [scrubberPosition, label, seriesIds, series, getSeriesData, getXAxis, valueFormatter]);
 
   // Measure legend media widths and find the maximum
   useLayoutEffect(() => {
