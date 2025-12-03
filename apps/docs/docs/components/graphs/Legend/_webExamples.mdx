@@ -1,6 +1,6 @@
 ## Basics
 
-The Legend component displays series labels with their corresponding colors and shapes. By default, it appears at the top of the chart.
+The Legend component displays series labels with their corresponding colors and indicators. By default, it appears at the top of the chart.
 
 ```jsx live
 function BasicLegend() {
@@ -219,7 +219,7 @@ The `position` prop controls where the legend appears. Use `justifyContent` to a
 </CartesianChart>
 ```
 
-## Custom Legend Item
+## Dynamic Data
 
 The `ItemComponent` prop allows you to create custom legend items that display dynamic data. This example shows the current value at the scrubber position, falling back to the last data point when not scrubbing. The `Legend` component passes `seriesId` to each `ItemComponent`, which you can use to look up the series data from context.
 
@@ -309,7 +309,9 @@ function CustomLegendWithValues() {
 }
 ```
 
-## Interactive Legend
+## Styling
+
+### Interaction
 
 Create clickable legend items that emphasize specific series on the chart. In this example, clicking a legend item highlights that series while dimming the others. Clicking the same item again returns all series to normal.
 
@@ -346,12 +348,10 @@ function InteractiveLegend() {
   }, []);
 
   // Custom legend item using Chip for interactivity
-  const ChipLegendItem = memo(({ seriesId, label, color }: LegendItemProps) => {
+  const ChipLegendItem = memo(({ seriesId, label }: LegendItemProps) => {
     const isEmphasized = emphasizedId === seriesId;
     const config = seriesConfig.find((s) => s.id === seriesId);
     const baseColor = config?.baseColor ?? '--gray';
-
-    console.log('emphasizedId', isEmphasized);
 
     return (
       <Chip
@@ -359,15 +359,13 @@ function InteractiveLegend() {
         compact
         style={{
           backgroundColor: `rgb(var(${baseColor}10))`,
+          outlineColor: `rgb(var(${baseColor}50))`,
           color: 'var(--color-fg)',
           borderWidth: 0,
         }}
         onClick={() => handleToggle(seriesId)}
       >
-        <HStack
-          alignItems="center"
-          gap={1}
-        >
+        <HStack alignItems="center" gap={1}>
           <DefaultLegendIndicator color={`rgb(var(${baseColor}50))`} />
           {label}
         </HStack>
@@ -400,7 +398,7 @@ function InteractiveLegend() {
         showArea
         showXAxis
         showYAxis
-        height={{ base: 200, tablet: 250, desktop: 300 }}
+        height={{ base: 300, tablet: 350, desktop: 400 }}
         series={series}
         xAxis={{
           data: months,
@@ -411,103 +409,16 @@ function InteractiveLegend() {
           tickLabelFormatter: (value) => `$${value}k`,
         }}
       >
-        <Legend position="top" ItemComponent={ChipLegendItem} gap={1} />
+        <Legend position="top" ItemComponent={ChipLegendItem} gap={1} paddingTop={1} />
       </LineChart>
     </VStack>
   );
 }
 ```
 
-## Custom Indicator Component
+### Indicator
 
-The `IndicatorComponent` prop allows you to customize how the legend indicator is rendered while keeping the default item layout. This is useful when you want a custom visual style for the indicator without rebuilding the entire legend item.
-
-In this example, we create an indicator with a semi-transparent fill and a solid border to differentiate projected data from actual data.
-
-```jsx live
-function CustomIndicatorExample() {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const actualData = [120, 150, 180, 210, 240, null];
-  const projectedData = [null, null, null, null, null, 270];
-
-  // Custom indicator component that renders a squircle with 50% fill opacity and solid border
-  const OutlinedIndicator = memo(({ color, indicator }: LegendIndicatorProps) => {
-    // If custom ReactNode is passed, render it directly
-    if (indicator && typeof indicator !== 'string') {
-      return <>{indicator}</>;
-    }
-
-    return (
-      <Box
-        borderRadius={200}
-        style={{
-          width: 10,
-          height: 10,
-          backgroundColor: color,
-          opacity: 0.5,
-          border: `2px solid ${color}`,
-          boxSizing: 'border-box',
-        }}
-      />
-    );
-  });
-
-  return (
-    <VStack gap={2}>
-      <Text font="headline" textAlign="center">
-        Sales Performance
-      </Text>
-      <CartesianChart
-        height={{ base: 200, tablet: 250, desktop: 300 }}
-        inset={0}
-        series={[
-          {
-            id: 'actual',
-            label: 'Actual',
-            data: actualData,
-            color: 'rgb(var(--blue40))',
-            legendIndicator: 'squircle',
-          },
-          {
-            id: 'projected',
-            label: 'Projected',
-            data: projectedData,
-            color: 'rgb(var(--blue40))',
-            legendIndicator: 'squircle',
-          },
-        ]}
-        xAxis={{
-          data: months,
-          scaleType: 'band',
-        }}
-        yAxis={{
-          domain: { min: 0 },
-          showGrid: true,
-        }}
-      >
-        <XAxis showLine showTickMarks />
-        <YAxis
-          showLine
-          showTickMarks
-          position="left"
-          requestedTickCount={5}
-          width={60}
-          tickLabelFormatter={(value) => `$${value}k`}
-        />
-        <BarPlot />
-        <Legend position="top" IndicatorComponent={OutlinedIndicator} seriesIds={['projected']} />
-        <Legend position="top" seriesIds={['actual']} />
-      </CartesianChart>
-    </VStack>
-  );
-}
-```
-
-## Styling
-
-### Legend Indicator
-
-Series can use different indicators via the `legendIndicator` property. Available presets are `pill`, `circle`, `square`, and `squircle`. This is useful for distinguishing between different data types, such as actual vs. forecasted values.
+Series can use different indicators via the `legendIndicator` property. Available variants are `pill`, `circle`, `square`, and `squircle`. This is useful for distinguishing between different data types, such as actual vs. forecasted values.
 
 ```jsx live
 function RevenueForecast() {
@@ -531,8 +442,8 @@ function RevenueForecast() {
   const maskId = useId();
   const legendPatternId = useId();
 
-  // Custom legend shape that matches the dotted bar pattern
-  const DottedLegendShape = (
+  // Custom legend indicator that matches the dotted bar pattern
+  const DottedLegendIndicator = (
     <svg width={10} height={10} viewBox="0 0 10 10">
       <defs>
         <pattern
@@ -608,7 +519,7 @@ function RevenueForecast() {
             label: 'Forecasted',
             data: forecastRevenue,
             color: 'var(--color-fgPositive)',
-            legendIndicator: DottedLegendShape,
+            legendIndicator: DottedLegendIndicator,
             stackId: 'revenue',
             BarComponent: DottedBarComponent,
           },
@@ -632,7 +543,88 @@ function RevenueForecast() {
           tickLabelFormatter={numberFormatter}
         />
         <BarPlot />
-        <Legend position='top'/>
+        <Legend position="top" />
+      </CartesianChart>
+    </VStack>
+  );
+}
+```
+
+You can use `IndicatorComponent` to customize how the legend indicator is rendered while keeping the default item layout. This is useful when you want a custom visual style for the indicator without rebuilding the entire legend item.
+
+```jsx live
+function CustomIndicatorExample() {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const actualData = [120, 150, 180, 210, 240, null];
+  const projectedData = [null, null, null, null, null, 270];
+
+  // Custom indicator component that renders a squircle with 50% fill opacity and solid border
+  const OutlinedIndicator = memo(({ color, indicator }: LegendIndicatorProps) => {
+    // If custom ReactNode is passed, render it directly
+    if (indicator && typeof indicator !== 'string') {
+      return <>{indicator}</>;
+    }
+
+    return (
+      <Box
+        borderRadius={200}
+        style={{
+          width: 10,
+          height: 10,
+          backgroundColor: color,
+          opacity: 0.5,
+          border: `2px solid ${color}`,
+          boxSizing: 'border-box',
+        }}
+      />
+    );
+  });
+
+  return (
+    <VStack gap={2}>
+      <Text font="headline" textAlign="center">
+        Sales Performance
+      </Text>
+      <CartesianChart
+        height={{ base: 200, tablet: 250, desktop: 300 }}
+        inset={0}
+        series={[
+          {
+            id: 'actual',
+            label: 'Actual',
+            data: actualData,
+            color: 'rgb(var(--blue40))',
+            legendIndicator: 'squircle',
+          },
+          {
+            id: 'projected',
+            label: 'Projected',
+            data: projectedData,
+            color: 'rgb(var(--blue40))',
+            legendIndicator: 'squircle',
+          },
+        ]}
+        xAxis={{
+          data: months,
+          scaleType: 'band',
+        }}
+        yAxis={{
+          domain: { min: 0 },
+          showGrid: true,
+        }}
+      >
+        <XAxis showLine showTickMarks />
+        <YAxis
+          showLine
+          showTickMarks
+          position="left"
+          requestedTickCount={5}
+          width={60}
+          tickLabelFormatter={(value) => `$${value}k`}
+        />
+        <BarPlot />
+        <Legend position="top" IndicatorComponent={OutlinedIndicator} seriesIds={['projected']} />
+        <Legend position="top" seriesIds={['actual']} />
       </CartesianChart>
     </VStack>
   );
