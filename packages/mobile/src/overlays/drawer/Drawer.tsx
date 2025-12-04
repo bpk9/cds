@@ -272,7 +272,13 @@ export const Drawer = memo(
           }}
         />
       ),
-      [showHandleBarInside, handleBarAccessibilityLabel, handleClose, styles?.handleBarHandle],
+      [
+        handleBarAccessibilityLabel,
+        showHandleBarInside,
+        handleClose,
+        styles?.handleBar,
+        styles?.handleBarHandle,
+      ],
     );
 
     return (
