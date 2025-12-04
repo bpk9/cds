@@ -8,7 +8,13 @@ import React, {
   useRef,
 } from 'react';
 import { Animated, Modal, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import type { ModalProps } from 'react-native';
+import type {
+  ModalProps,
+  PressableProps,
+  PressableStateCallbackType,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import {
   drawerAnimationDefaultDuration,
   MAX_OVER_DRAG,
@@ -61,6 +67,11 @@ export type DrawerBaseProps = SharedProps &
      */
     preventHardwareBackBehaviorAndroid?: boolean;
     /**
+     * The HandleBar can be rendered inside or outside the drawer.
+     * @default 'outside'
+     */
+    handleBarVariant?: 'inside' | 'outside';
+    /**
      * The HandleBar by default only is used for a bottom pinned drawer. This removes it.
      * @default false
      * */
@@ -92,7 +103,16 @@ export type DrawerBaseProps = SharedProps &
     stickyFooter?: DrawerRenderChildren | React.ReactNode;
   };
 
-export type DrawerProps = DrawerBaseProps;
+export type DrawerProps = DrawerBaseProps & {
+  styles?: {
+    root?: StyleProp<ViewStyle>;
+    overlay?: StyleProp<ViewStyle>;
+    container?: StyleProp<ViewStyle>;
+    handleBar?: PressableProps['style'];
+    handleBarHandle?: StyleProp<ViewStyle>;
+    drawer?: StyleProp<ViewStyle>;
+  };
+};
 
 const overlayContentContextValue: OverlayContentContextValue = {
   isDrawer: true,
@@ -106,11 +126,14 @@ export const Drawer = memo(
       onCloseComplete,
       preventDismissGestures = false,
       preventHardwareBackBehaviorAndroid = false,
+      handleBarVariant = 'outside',
       hideHandleBar = false,
       disableCapturePanGestureToDismiss = false,
       onBlur,
       verticalDrawerPercentageOfView = defaultVerticalDrawerPercentageOfView,
       handleBarAccessibilityLabel = 'Dismiss',
+      style,
+      styles,
       ...props
     },
     ref,
@@ -129,7 +152,7 @@ export const Drawer = memo(
     const [opacityAnimation, animateOverlayIn, animateOverlayOut] = useOverlayAnimation(
       drawerAnimationDefaultDuration,
     );
-    const spacingStyles = useDrawerSpacing(pin);
+    const spacingStyle = useDrawerSpacing(pin);
     const isMounted = useRef(false);
 
     const handleClose = useCallback(() => {
@@ -179,7 +202,9 @@ export const Drawer = memo(
     });
 
     const isPinHorizontal = pin === 'left' || pin === 'right';
-    const shouldShowHandleBar = !hideHandleBar && pin === 'bottom';
+    const showHandleBar = !hideHandleBar && pin === 'bottom';
+    const showHandleBarOutside = showHandleBar && handleBarVariant === 'outside';
+    const showHandleBarInside = showHandleBar && handleBarVariant === 'inside';
 
     // leave 15% of the screenwidth as open area for menu drawer
     const horizontalDrawerWidth = useMemo(
@@ -203,26 +228,47 @@ export const Drawer = memo(
       }
     }, [handleClose, preventDismissGestures, onBlur]);
 
-    const cardStyles = StyleSheet.create({
-      spacing: {
-        ...spacingStyles,
-      },
-      overflowStyles: {
-        overflow: 'hidden',
-      },
-    });
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        handleClose,
-      }),
-      [handleClose],
-    );
+    useImperativeHandle(ref, () => ({ handleClose }), [handleClose]);
 
     const content = useMemo(
       () => (typeof children === 'function' ? children({ handleClose }) : children),
       [children, handleClose],
+    );
+
+    const rootStyle = useMemo(() => [style, styles?.root], [style, styles?.root]);
+
+    const containerStyle = useMemo(
+      () => [drawerAnimationStyles, styles?.container],
+      [drawerAnimationStyles, styles?.container],
+    );
+
+    const drawerStyle = useMemo(
+      () => [
+        spacingStyle,
+        showHandleBarOutside && { overflow: 'visible' as const },
+        styles?.drawer,
+      ],
+      [spacingStyle, showHandleBarOutside, styles?.drawer],
+    );
+
+    const handleBar = useMemo(
+      () => (
+        <HandleBar
+          accessibilityLabel={handleBarAccessibilityLabel}
+          accessibilityRole="button"
+          background="bgInverse"
+          onAccessibilityPress={handleClose}
+          pointerEvents={showHandleBarInside ? 'none' : 'auto'}
+          styles={{
+            handle: [
+              { opacity: 0.4 },
+              showHandleBarInside && { width: 32 },
+              styles?.handleBarHandle,
+            ],
+          }}
+        />
+      ),
+      [showHandleBarInside, handleBarAccessibilityLabel, handleClose, styles?.handleBarHandle],
     );
 
     return (
@@ -230,42 +276,39 @@ export const Drawer = memo(
         hardwareAccelerated
         transparent
         visible
+        accessibilityRole="alert"
         animationType="none"
         onRequestClose={handleRequestClose}
+        style={rootStyle}
         {...props}
-        accessibilityRole="alert"
       >
         <OverlayContentContext.Provider value={overlayContentContextValue}>
           <DrawerStatusBar visible pin={pin} />
           <Overlay
             onTouchStart={handleOverlayPress}
             opacity={opacityAnimation}
+            style={styles?.overlay}
             testID="drawer-overlay"
           />
           <Box
             {...getPanGestureHandlers}
             animated
-            onAccessibilityEscape={handleClose}
             // close modal when user performs the "escape" accessibility gesture
             // https://reactnative.dev/docs/accessibility#onaccessibilityescape-ios
+            onAccessibilityEscape={handleClose}
             pin={pin}
-            style={drawerAnimationStyles}
+            style={containerStyle}
             width={isPinHorizontal ? horizontalDrawerWidth : '100%'}
           >
-            {shouldShowHandleBar && (
-              <HandleBar
-                accessibilityLabel={handleBarAccessibilityLabel}
-                accessibilityRole="button"
-                onAccessibilityPress={handleClose}
-              />
-            )}
+            {showHandleBarOutside && handleBar}
             <Box
               borderRadius={isPinHorizontal ? 0 : 400}
               bordered={activeColorScheme === 'dark'}
               elevation={2}
               maxHeight={!isPinHorizontal ? verticalDrawerMaxHeight : '100%'}
-              style={[cardStyles.spacing, shouldShowHandleBar && cardStyles.overflowStyles]}
+              style={drawerStyle}
             >
+              {showHandleBarInside && handleBar}
               {content}
             </Box>
           </Box>
