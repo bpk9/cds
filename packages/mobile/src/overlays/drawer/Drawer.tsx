@@ -256,13 +256,17 @@ export const Drawer = memo(
         <HandleBar
           accessibilityLabel={handleBarAccessibilityLabel}
           accessibilityRole="button"
-          background="bgInverse"
+          background={showHandleBarInside ? 'bgInverse' : undefined}
           onAccessibilityPress={handleClose}
           pointerEvents={showHandleBarInside ? 'none' : 'auto'}
           styles={{
+            root: styles?.handleBar,
             handle: [
-              { opacity: 0.4 },
-              showHandleBarInside && { width: 32 },
+              showHandleBarInside && {
+                width: 32,
+                // We use a semi-opaque bgInverse for the background when handleBarVariant="inside"
+                opacity: 0.4,
+              },
               styles?.handleBarHandle,
             ],
           }}
@@ -302,7 +306,7 @@ export const Drawer = memo(
           >
             {showHandleBarOutside && handleBar}
             <Box
-              borderRadius={isPinHorizontal ? 0 : 400}
+              borderRadius={isPinHorizontal ? 0 : 600}
               bordered={activeColorScheme === 'dark'}
               elevation={2}
               maxHeight={!isPinHorizontal ? verticalDrawerMaxHeight : '100%'}
