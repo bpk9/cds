@@ -35,7 +35,7 @@
     },
     {
       "name": "react-native-reanimated",
-      "version": "3.16.7"
+      "version": "^3.16.7"
     }
   ]
 }

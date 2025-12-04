@@ -1,5 +1,5 @@
 import { forwardRef, memo, useMemo } from 'react';
-import { Pressable, TouchableOpacity } from 'react-native';
+import { Pressable, TouchableOpacity, View } from 'react-native';
 import type { ThemeVars } from '@coinbase/cds-common/core/theme';
 import { useInputVariant } from '@coinbase/cds-common/hooks/useInputVariant';
 
@@ -36,7 +36,7 @@ type DefaultSelectControlComponent = <
   SelectOptionValue extends string = string,
 >(
   props: SelectControlProps<Type, SelectOptionValue> & {
-    ref?: React.Ref<React.ElementRef<typeof TouchableOpacity>>;
+    ref?: React.Ref<View>;
   },
 ) => React.ReactElement;
 
@@ -68,7 +68,7 @@ export const DefaultSelectControlComponent = memo(
         styles,
         ...props
       }: SelectControlProps<Type, SelectOptionValue>,
-      ref: React.Ref<React.ElementRef<typeof TouchableOpacity>>,
+      ref: React.Ref<View>,
     ) => {
       type ValueType = Type extends 'multi'
         ? SelectOptionValue | SelectOptionValue[] | null
@@ -248,7 +248,7 @@ export const DefaultSelectControlComponent = memo(
       const inputNode = useMemo(
         () => (
           <TouchableOpacity
-            ref={ref}
+            ref={ref as React.Ref<React.ElementRef<typeof TouchableOpacity>>}
             accessibilityHint={accessibilityHint}
             accessibilityLabel={accessibilityLabel}
             accessibilityRole="button"

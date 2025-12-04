@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { AccessibilityRole, StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
+import type { AccessibilityRole, StyleProp, View, ViewStyle } from 'react-native';
 import type { SharedAccessibilityProps } from '@coinbase/cds-common/types';
 
 import type { CellBaseProps } from '../../cells/Cell';
@@ -286,7 +286,7 @@ export type SelectControlComponent<
   SelectOptionValue extends string = string,
 > = React.FC<
   SelectControlProps<Type, SelectOptionValue> & {
-    ref?: React.Ref<TouchableOpacity>;
+    ref?: React.Ref<View>;
   }
 >;
 
