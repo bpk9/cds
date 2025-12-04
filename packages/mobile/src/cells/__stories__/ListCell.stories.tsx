@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { CellPriority } from '@coinbase/cds-common';
 import { assets, squareAssets } from '@coinbase/cds-common/internal/data/assets';
 import { selectCellSpacingConfig } from '@coinbase/cds-common/tokens/select';
@@ -6,6 +6,7 @@ import { gutter } from '@coinbase/cds-common/tokens/sizing';
 
 import { Button } from '../../buttons/Button';
 import { IconButton } from '../../buttons/IconButton';
+import { Switch } from '../../controls/Switch';
 import { Example, ExampleScreen } from '../../examples/ExampleScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { Icon } from '../../icons/Icon';
@@ -17,6 +18,7 @@ import { Tag } from '../../tag/Tag';
 import { Text } from '../../typography/Text';
 import { CellHelperText } from '../CellHelperText';
 import { ListCell } from '../ListCell';
+import { ListCellFallback } from '../ListCellFallback';
 
 const onPressConsole = () => console.log('onPress');
 const cellPriorities: CellPriority[] = ['middle', 'end'];
@@ -476,77 +478,88 @@ const PriorityContent = () => (
   </>
 );
 
-const WithAccessory = () => (
-  <>
-    <ListCell accessory="arrow" spacingVariant="condensed" title="Title" />
-    <ListCell accessory="more" detail="Detail" spacingVariant="condensed" title="Title" />
-    <ListCell
-      accessory="selected"
-      description="Description"
-      spacingVariant="condensed"
-      title="Title"
-    />
-    <ListCell
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      title="Title"
-    />
-    <ListCell
-      selected
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      title="Title"
-    />
-    <ListCell
-      disableSelectionAccessory
-      selected
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      title="Title"
-    />
-    <ListCell
-      accessory="more"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      subdetail="Neutral"
-      title="Title"
-    />
-    <ListCell
-      accessory="selected"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      subdetail="+Positive"
-      title="Title"
-      variant="positive"
-    />
-    <ListCell
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      subdetail="-Negative"
-      title="Title"
-      variant="negative"
-    />
-    <ListCell
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      subdetail="Warning"
-      title="Title"
-      variant="warning"
-    />
-  </>
-);
+const WithAccessory = () => {
+  const [isSelected, setIsSelected] = useState(false);
+  return (
+    <>
+      <ListCell accessory="arrow" spacingVariant="condensed" title="Title" />
+      <ListCell
+        accessory={isSelected ? 'selected' : 'unselected'}
+        description="Selected state uses the same space, no layout shift when selected"
+        onPress={() => setIsSelected((prev) => !prev)}
+        selected={isSelected}
+        spacingVariant="condensed"
+        title="Leverage unselected state"
+      />
+      <ListCell accessory="more" detail="Detail" spacingVariant="condensed" title="Title" />
+      <ListCell
+        accessory="selected"
+        description="Description"
+        spacingVariant="condensed"
+        title="Title"
+      />
+      <ListCell
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        title="Title"
+      />
+      <ListCell
+        selected
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        title="Title"
+      />
+      <ListCell
+        disableSelectionAccessory
+        selected
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        title="Title"
+      />
+      <ListCell
+        accessory="more"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        subdetail="Neutral"
+        title="Title"
+      />
+      <ListCell
+        accessory="selected"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        subdetail="+Positive"
+        title="Title"
+        variant="positive"
+      />
+      <ListCell
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        subdetail="-Negative"
+        title="Title"
+        variant="negative"
+      />
+      <ListCell
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        subdetail="Warning"
+        title="Title"
+        variant="warning"
+      />
+    </>
+  );
+};
 
 const WithMedia = () => (
   <>
@@ -620,6 +633,47 @@ const WithActions = () => (
     />
   </>
 );
+
+const Fallback = () => {
+  const [showFallback, setShowFallback] = React.useState(false);
+
+  return (
+    <VStack gap={2}>
+      <Switch
+        checked={showFallback}
+        onChange={(_, nextChecked) => setShowFallback(Boolean(nextChecked))}
+      >
+        Show fallback state
+      </Switch>
+      {showFallback ? (
+        <ListCellFallback
+          description
+          detail
+          disableRandomRectWidth
+          helperText
+          subdetail
+          subtitle
+          title
+          accessory="more"
+          media="asset"
+          spacingVariant="condensed"
+        />
+      ) : (
+        <ListCell
+          accessory="more"
+          description="Review portfolio performance"
+          detail="$12,345.00"
+          helperText={<CellHelperText>Balance reflects live market data</CellHelperText>}
+          media={<Avatar src={assets.eth.imageUrl} />}
+          spacingVariant="condensed"
+          subdetail="+5.43%"
+          subtitle="ETH"
+          title="Ethereum"
+        />
+      )}
+    </VStack>
+  );
+};
 
 const WithIntermediary = () => (
   <>
@@ -821,6 +875,36 @@ const CondensedListCell = () => {
           },
         }}
         subdetail="Subdetail"
+        title="Title"
+      />
+      <ListCell
+        multiline
+        description="Long description with multiple lines. This section can be arbitrarily long and occupy many many lines."
+        detail="Detail"
+        end={
+          <HStack alignItems="center" gap={1}>
+            <Text color="fgMuted" font="label2">
+              Meta
+            </Text>
+            <Icon color="fg" name="caretRight" size="s" />
+          </HStack>
+        }
+        media={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
+        onPress={onPressConsole}
+        priority="end"
+        spacingVariant="condensed"
+        styles={{
+          media: {
+            marginTop: theme.space[1],
+            alignSelf: 'flex-start',
+          },
+          end: {
+            marginTop: theme.space[1],
+            alignSelf: 'flex-start',
+          },
+        }}
+        subdetail="Subdetail"
+        subtitle="Subtitle"
         title="Title"
       />
       <ListCell
@@ -1084,58 +1168,56 @@ const UseCaseShowcase = () => {
 
 const ListCellScreen = () => {
   return (
-    <ExampleScreen>
-      <Example inline paddingX={0} title="Content" titlePadding={titlePadding}>
+    <ExampleScreen paddingX={0}>
+      <Example inline title="Content" titlePadding={titlePadding}>
         <Content />
       </Example>
-      <Example inline paddingX={0} title="CustomNodes" titlePadding={titlePadding}>
+      <Example inline title="CustomNodes" titlePadding={titlePadding}>
         <CustomNodes />
       </Example>
-      <Example inline paddingX={0} title="CompactContent(deprecated)" titlePadding={titlePadding}>
+      <Example inline title="CompactContent(deprecated)" titlePadding={titlePadding}>
         <CompactContent />
       </Example>
-      <Example inline paddingX={0} title="PressableContent" titlePadding={titlePadding}>
+      <Example inline title="PressableContent" titlePadding={titlePadding}>
         <PressableContent />
       </Example>
-      <Example
-        inline
-        paddingX={0}
-        title="CompactPressableContent(deprecated)"
-        titlePadding={titlePadding}
-      >
+      <Example inline title="CompactPressableContent(deprecated)" titlePadding={titlePadding}>
         <CompactPressableContent />
       </Example>
-      <Example inline paddingX={0} title="LongContent" titlePadding={titlePadding}>
+      <Example inline title="LongContent" titlePadding={titlePadding}>
         <LongContent />
       </Example>
-      <Example inline paddingX={0} title="PriorityContent" titlePadding={titlePadding}>
+      <Example inline title="PriorityContent" titlePadding={titlePadding}>
         <PriorityContent />
       </Example>
-      <Example inline paddingX={0} title="WithAccessory" titlePadding={titlePadding}>
+      <Example inline title="WithAccessory" titlePadding={titlePadding}>
         <WithAccessory />
       </Example>
-      <Example inline paddingX={0} title="WithMedia" titlePadding={titlePadding}>
+      <Example inline title="WithMedia" titlePadding={titlePadding}>
         <WithMedia />
       </Example>
-      <Example inline paddingX={0} title="WithActions" titlePadding={titlePadding}>
+      <Example inline title="WithActions" titlePadding={titlePadding}>
         <WithActions />
       </Example>
-      <Example inline paddingX={0} title="WithIntermediary" titlePadding={titlePadding}>
+      <Example inline title="Fallback" titlePadding={titlePadding}>
+        <Fallback />
+      </Example>
+      <Example inline title="WithIntermediary" titlePadding={titlePadding}>
         <WithIntermediary />
       </Example>
-      <Example inline paddingX={0} title="WithHelperText" titlePadding={titlePadding}>
+      <Example inline title="WithHelperText" titlePadding={titlePadding}>
         <WithHelperText />
       </Example>
-      <Example inline paddingX={0} title="CustomSpacing" titlePadding={titlePadding}>
+      <Example inline title="CustomSpacing" titlePadding={titlePadding}>
         <CustomSpacing />
       </Example>
-      <Example inline paddingX={0} title="CondensedListCell" titlePadding={titlePadding}>
+      <Example inline title="CondensedListCell" titlePadding={titlePadding}>
         <CondensedListCell />
       </Example>
-      <Example inline paddingX={0} title="SpacingVariant" titlePadding={titlePadding}>
+      <Example inline title="SpacingVariant" titlePadding={titlePadding}>
         <SpacingVariant />
       </Example>
-      <Example inline paddingX={0} title="UseCaseShowcase" titlePadding={titlePadding}>
+      <Example inline title="UseCaseShowcase" titlePadding={titlePadding}>
         <UseCaseShowcase />
       </Example>
     </ExampleScreen>

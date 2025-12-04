@@ -8,6 +8,123 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 8.27.1 (12/4/2025 PST)
+
+#### 🐞 Fixes
+
+- Fix mobile safari not rendering radio icon issue. [[#208](https://github.com/coinbase/cds/pull/208)]
+
+## 8.27.0 (12/3/2025 PST)
+
+#### 🚀 Updates
+
+- Feat: introduce `unselected` state for ListCell. [[#194](https://github.com/coinbase/cds/pull/194)] [DX-4947]
+
+## 8.26.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Add SelectChip alpha component. [[#180](https://github.com/coinbase/cds/pull/180)]
+- Add support for option grouping. [[#180](https://github.com/coinbase/cds/pull/180)]
+
+#### 🐞 Fixes
+
+- Fix Select select all when options disabled. [[#180](https://github.com/coinbase/cds/pull/180)]
+
+## 8.25.1 (12/1/2025 PST)
+
+#### 🐞 Fixes
+
+- Improve keyboard navigation for Tabs components and upadate ARIA roles. [[#96](https://github.com/coinbase/cds/pull/96)]
+
+## 8.25.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Add emphasis prop to Tag. [[#197](https://github.com/coinbase/cds/pull/197)]
+
+## 8.24.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Support labelNode in TextInput. [[#198](https://github.com/coinbase/cds/pull/198)]
+
+## 8.23.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Enable custom text label for "First" and "Last" buttons of Pagination. [[#192](https://github.com/coinbase/cds/pull/192)] [DX-4997]
+
+## 8.22.2 (11/26/2025 PST)
+
+#### 🐞 Fixes
+
+- Wrap Select labels instead of truncating them. [[#179](https://github.com/coinbase/cds/pull/179)]
+
+## 8.22.1 (11/24/2025 PST)
+
+#### 🐞 Fixes
+
+- Fix the borderRadius prop issue in Banner. [[#190](https://github.com/coinbase/cds/pull/190)]
+
+## 8.22.0 (11/24/2025 PST)
+
+#### 🚀 Updates
+
+- Added `subtitle` for ListCell and accessory for `ListCellFallback`. [[#149](https://github.com/coinbase/cds/pull/149)] [DX-5015]
+
+## 8.21.8 (11/21/2025 PST)
+
+#### 🐞 Fixes
+
+- Feat: added default a11y label for banner close button. [[#185](https://github.com/coinbase/cds/pull/185)]
+
+## 8.21.7 ((11/21/2025, 09:39 AM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.21.6 (11/21/2025 PST)
+
+#### 🐞 Fixes
+
+- Fix text input border color missing issue. [[#147](https://github.com/coinbase/cds/pull/147)] [DX-5030]
+
+## 8.21.5 (11/19/2025 PST)
+
+#### 🐞 Fixes
+
+- Auto-fill DatePicker width. [[#118](https://github.com/coinbase/cds/pull/118)] [DX-4988]
+
+## 8.21.4 (11/18/2025 PST)
+
+#### 🐞 Fixes
+
+- Update styling of DefaultSelectControl to use compact chips. [[#156](https://github.com/coinbase/cds/pull/156)]
+
+## 8.21.3 ((11/17/2025, 10:03 AM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.21.2 (11/13/2025 PST)
+
+#### 🐞 Fixes
+
+- Uniform flex alignment for all Avatar variants. [[#162](https://github.com/coinbase/cds/pull/162)] [DX-4991]
+
+## 8.21.1 (11/13/2025 PST)
+
+#### 🐞 Fixes
+
+- Fixed select alpha dropdown zIndex. [[#161](https://github.com/coinbase/cds/pull/161)]
+- Corrected ListCell spacingVariant jsdoc. [[#161](https://github.com/coinbase/cds/pull/161)]
+- Updated docs of FullscreenMoal and FullscreenModalLayout to show a more precise 3-column layout example. [[#161](https://github.com/coinbase/cds/pull/161)]
+
+## 8.21.0 (11/12/2025 PST)
+
+#### 🚀 Updates
+
+- Deprecate TabbedChips and create new TabbedChips(Alpha), whose props mirror Tabs' props. [[#138](https://github.com/coinbase/cds/pull/138)]
+
 ## 8.20.2 (11/12/2025 PST)
 
 #### 🐞 Fixes

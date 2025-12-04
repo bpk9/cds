@@ -455,7 +455,9 @@ export const descriptionMap: Record<string, IconName[]> = {
     'ethereum',
     'currencies',
     'stake',
-    'crypto'
+    'crypto',
+    'baseQuickBuy',
+    'coinsCrypto'
   ],
   'adventure': [
     'planet'
@@ -714,7 +716,8 @@ export const descriptionMap: Record<string, IconName[]> = {
     'star',
     'crypto',
     'peopleStar',
-    'creatorCoin'
+    'creatorCoin',
+    'baseQuickBuy'
   ],
   '🌕': [
     'moon'
@@ -974,7 +977,10 @@ export const descriptionMap: Record<string, IconName[]> = {
     'leadChart',
     'grid',
     'fscsProtection',
-    'config'
+    'config',
+    'baseQuickBuy',
+    'moneyCardCoin',
+    'crystalBallInsight'
   ],
   'profile': [
     'account',
@@ -1764,7 +1770,8 @@ export const descriptionMap: Record<string, IconName[]> = {
     'leadChart',
     'savingsBank',
     'creatorCoin',
-    'distribution'
+    'distribution',
+    'baseQuickBuy'
   ],
   'defi': [
     'defi'
@@ -2381,7 +2388,8 @@ export const descriptionMap: Record<string, IconName[]> = {
   ],
   'calendar': [
     'calendar',
-    'calendarEmpty'
+    'calendarEmpty',
+    'calendarBlank'
   ],
   'date': [
     'calendar',
@@ -2745,7 +2753,8 @@ export const descriptionMap: Record<string, IconName[]> = {
     'upArrow',
     'allTimeHigh',
     'sendReceive',
-    'candlesticks'
+    'candlesticks',
+    'arrowsUpDown'
   ],
   '👍': [
     'thumbsUpOutline',
@@ -2769,7 +2778,8 @@ export const descriptionMap: Record<string, IconName[]> = {
     'diagonalDownArrow',
     'sortDoubleArrow',
     'sendReceive',
-    'candlesticks'
+    'candlesticks',
+    'arrowsUpDown'
   ],
   '👎': [
     'thumbsDown',
@@ -3716,7 +3726,8 @@ export const descriptionMap: Record<string, IconName[]> = {
     'expandAddress',
     'initiator',
     'arrowsHorizontal',
-    'sendReceive'
+    'sendReceive',
+    'arrowsUpDown'
   ],
   'gear': [
     'gear',
@@ -4594,7 +4605,8 @@ export const descriptionMap: Record<string, IconName[]> = {
   'coins': [
     'circulatingSupply',
     'derivatives',
-    'cashCoins'
+    'cashCoins',
+    'coinsCrypto'
   ],
   'amount': [
     'circulatingSupply'
@@ -5020,7 +5032,8 @@ export const descriptionMap: Record<string, IconName[]> = {
     'verifiedBadge',
     'staggeredList',
     'gitHubLogo',
-    'gitHubLogo'
+    'gitHubLogo',
+    'baseQuickBuy'
   ],
   'login': [
     'logout',
@@ -5556,7 +5569,8 @@ export const descriptionMap: Record<string, IconName[]> = {
     'allocation'
   ],
   'piechart': [
-    'allocation'
+    'allocation',
+    'pieChartData'
   ],
   'Verification': [
     'baseVerification'
@@ -5587,5 +5601,14 @@ export const descriptionMap: Record<string, IconName[]> = {
   ],
   'sales': [
     'tokenSales'
+  ],
+  'quick buy': [
+    'baseQuickBuy'
+  ],
+  'single Coin': [
+    'singleCoin'
+  ],
+  'loop': [
+    'loop'
   ]
 };

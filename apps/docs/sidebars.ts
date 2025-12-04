@@ -200,8 +200,13 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
+              id: 'components/inputs/SelectChipAlpha/selectChipAlpha',
+              label: 'SelectChip (Alpha)',
+            },
+            {
+              type: 'doc',
               id: 'components/inputs/SelectChip/selectChip',
-              label: 'SelectChip',
+              label: 'SelectChip (Deprecated)',
             },
             { type: 'doc', id: 'components/inputs/Switch/switch', label: 'Switch' },
             {
@@ -529,7 +534,7 @@ const sidebars: SidebarsConfig = {
             {
               type: 'doc',
               id: 'components/navigation/TabNavigation/tabNavigation',
-              label: 'TabNavigation',
+              label: 'TabNavigation (Deprecated)',
             },
             {
               type: 'doc',
@@ -544,7 +549,12 @@ const sidebars: SidebarsConfig = {
             {
               type: 'doc',
               id: 'components/navigation/TabbedChips/tabbedChips',
-              label: 'TabbedChips',
+              label: 'TabbedChips (Deprecated)',
+            },
+            {
+              type: 'doc',
+              id: 'components/navigation/TabbedChipsAlpha/tabbedChipsAlpha',
+              label: 'TabbedChips (Alpha)',
             },
             {
               type: 'doc',

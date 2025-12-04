@@ -1,11 +1,14 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { DateInputValidationError } from '@coinbase/cds-common/dates/DateInputValidationError';
 import { LocaleProvider } from '@coinbase/cds-common/system/LocaleProvider';
 
+import { InputLabel } from '../../controls/InputLabel';
+import { TextInput } from '../../controls/TextInput';
+import { Icon } from '../../icons';
 import { Box } from '../../layout/Box';
-import { Group } from '../../layout/Group';
 import { HStack } from '../../layout/HStack';
 import { VStack } from '../../layout/VStack';
+import { Tooltip } from '../../overlays/tooltip/Tooltip';
 import { ThemeProvider } from '../../system';
 import { defaultTheme } from '../../themes/defaultTheme';
 import { DatePicker } from '../DatePicker';
@@ -42,10 +45,10 @@ export const Examples = () => {
   const [error, setError] = useState<DateInputValidationError | null>(null);
   const props = { date, onChangeDate: setDate, error, onErrorDate: setError };
   return (
-    <Group gap={8}>
+    <VStack gap={8}>
       <VStack>
         <Note>DatePicker</Note>
-        <DatePicker {...exampleProps} {...props} />
+        <DatePicker helperText="" {...exampleProps} {...props} />
       </VStack>
       <VStack>
         <Note>DatePicker ES-es locale</Note>
@@ -63,8 +66,40 @@ export const Examples = () => {
         <Note>DatePicker compact</Note>
         <DatePicker compact {...exampleProps} {...props} />
       </VStack>
+      <VStack>
+        <Note>DatePicker with labelNode</Note>
+        <DatePicker
+          {...exampleProps}
+          {...props}
+          label="Date of birth"
+          labelNode={
+            <InputLabel>
+              <HStack alignItems="center" gap={1}>
+                Date of birth
+                <Tooltip content="This will be visible to other users.">
+                  <Icon active color="fg" name="info" size="xs" tabIndex={0} />
+                </Tooltip>
+              </HStack>
+            </InputLabel>
+          }
+        />
+      </VStack>
+      <VStack>
+        <Note>DatePicker and TextInput (auto width)</Note>
+        <HStack gap={2}>
+          <TextInput placeholder="1" />
+          <DatePicker {...exampleProps} {...props} />
+        </HStack>
+      </VStack>
+      <VStack>
+        <Note>DatePicker and TextInput (30% width)</Note>
+        <HStack gap={2}>
+          <TextInput placeholder="1" width="30%" />
+          <DatePicker {...exampleProps} {...props} />
+        </HStack>
+      </VStack>
       <Box height={100} />
-    </Group>
+    </VStack>
   );
 };
 
@@ -75,7 +110,7 @@ export const AccessibilityLabels = () => {
   const [error, setError] = useState<DateInputValidationError | null>(null);
   const props = { date, onChangeDate: setDate, error, onErrorDate: setError };
   return (
-    <Group gap={8}>
+    <VStack gap={8}>
       <VStack>
         <Note>
           DatePicker with all props (except disabled)
@@ -126,7 +161,7 @@ export const AccessibilityLabels = () => {
           previousArrowAccessibilityLabel="Previous month"
         />
       </VStack>
-    </Group>
+    </VStack>
   );
 };
 
@@ -135,6 +170,8 @@ export const MultiplePickers = () => {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [startError, setStartError] = useState<DateInputValidationError | null>(null);
   const [endError, setEndError] = useState<DateInputValidationError | null>(null);
+  const [date, setDate] = useState<Date | null>(null);
+  const [error, setError] = useState<DateInputValidationError | null>(null);
 
   const handleStartDate = useCallback((date: Date | null) => {
     const suggestedEndDate = date
@@ -144,37 +181,51 @@ export const MultiplePickers = () => {
     setEndDate(suggestedEndDate);
   }, []);
 
+  const props = { date, onChangeDate: setDate, error, onErrorDate: setError };
+
   return (
-    <>
-      <Note>
-        When a value is selected on the first DatePicker we suggest a value for the second
-        DatePicker accordingly.
-        <br />
-        <br />
-        We use both DatePicker values to highlight a range of dates.
-      </Note>
-      <Group direction="horizontal" gap={2}>
-        <DatePicker
-          {...exampleProps}
-          date={startDate}
-          error={startError}
-          highlightedDates={startDate && endDate ? [[startDate, endDate]] : undefined}
-          label="Start date"
-          onChangeDate={handleStartDate}
-          onErrorDate={setStartError}
-        />
-        <DatePicker
-          {...exampleProps}
-          date={endDate}
-          disabledDates={startDate ? [startDate] : undefined}
-          error={endError}
-          highlightedDates={startDate && endDate ? [[startDate, endDate]] : undefined}
-          label="End date"
-          onChangeDate={setEndDate}
-          onErrorDate={setEndError}
-        />
-      </Group>
-    </>
+    <VStack gap={8}>
+      <VStack>
+        <Note>
+          When a value is selected on the first DatePicker we suggest a value for the second
+          DatePicker accordingly.
+          <br />
+          <br />
+          We use both DatePicker values to highlight a range of dates.
+        </Note>
+        <HStack gap={2}>
+          <DatePicker
+            {...exampleProps}
+            date={startDate}
+            error={startError}
+            highlightedDates={startDate && endDate ? [[startDate, endDate]] : undefined}
+            label="Start date"
+            onChangeDate={handleStartDate}
+            onErrorDate={setStartError}
+          />
+          <DatePicker
+            {...exampleProps}
+            date={endDate}
+            disabledDates={startDate ? [startDate] : undefined}
+            error={endError}
+            highlightedDates={startDate && endDate ? [[startDate, endDate]] : undefined}
+            label="End date"
+            onChangeDate={setEndDate}
+            onErrorDate={setEndError}
+          />
+        </HStack>
+      </VStack>
+      <VStack>
+        <VStack>
+          <Note>DatePicker fit-content</Note>
+          <HStack flexWrap="wrap" gap={2}>
+            <DatePicker width="fit-content" {...exampleProps} {...props} />
+            <DatePicker width="fit-content" {...exampleProps} {...props} />
+            <DatePicker width="fit-content" {...exampleProps} {...props} />
+          </HStack>
+        </VStack>
+      </VStack>
+    </VStack>
   );
 };
 

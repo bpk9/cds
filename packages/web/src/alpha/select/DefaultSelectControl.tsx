@@ -2,7 +2,6 @@ import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
 import type { ThemeVars } from '@coinbase/cds-common/core/theme';
 import { css } from '@linaria/core';
 
-import { Chip } from '../../chips/Chip';
 import { InputChip } from '../../chips/InputChip';
 import { HelperText } from '../../controls/HelperText';
 import { InputLabel } from '../../controls/InputLabel';
@@ -14,7 +13,18 @@ import { Pressable } from '../../system/Pressable';
 import { Text } from '../../typography/Text';
 import { findClosestNonDisabledNodeIndex } from '../../utils/findClosestNonDisabledNodeIndex';
 
-import type { SelectControlProps, SelectOption, SelectType } from './Select';
+import {
+  isSelectOptionGroup,
+  type SelectControlProps,
+  type SelectOption,
+  type SelectType,
+} from './Select';
+
+// The height is smaller for the inside label variant since the label takes
+// up space above the input.
+const LABEL_VARIANT_INSIDE_HEIGHT = 32;
+const COMPACT_HEIGHT = 40;
+const DEFAULT_HEIGHT = 56;
 
 const noFocusOutlineCss = css`
   &:focus,
@@ -78,6 +88,52 @@ const DefaultSelectControlComponent = memo(
       const isMultiSelect = type === 'multi';
       const hasValue = value !== null && !(Array.isArray(value) && value.length === 0);
 
+      // Map of options to their values
+      // If multiple options share the same value, the first occurrence wins (matches native HTML select behavior)
+      const optionsMap = useMemo(() => {
+        const map = new Map<SelectOptionValue, SelectOption<SelectOptionValue>>();
+        const isDev = process.env.NODE_ENV !== 'production';
+
+        options.forEach((option, optionIndex) => {
+          if (isSelectOptionGroup<Type, SelectOptionValue>(option)) {
+            option.options.forEach((groupOption, groupOptionIndex) => {
+              if (groupOption.value !== null) {
+                const value = groupOption.value as SelectOptionValue;
+                // Only set if not already present (first wins)
+                if (!map.has(value)) {
+                  map.set(value, groupOption);
+                } else if (isDev) {
+                  console.warn(
+                    `[Select] Duplicate option value detected: "${value}". ` +
+                      `The first occurrence will be used for display. ` +
+                      `Found duplicate in group "${option.label}" at index ${groupOptionIndex}. ` +
+                      `First occurrence was at option index ${optionIndex}.`,
+                  );
+                }
+              }
+            });
+          } else {
+            // It's a single option
+            const singleOption = option as SelectOption<SelectOptionValue>;
+            if (singleOption.value !== null) {
+              const value = singleOption.value;
+              if (!map.has(value)) {
+                map.set(value, singleOption);
+              } else if (isDev) {
+                const existingOption = map.get(value);
+                console.warn(
+                  `[Select] Duplicate option value detected: "${value}". ` +
+                    `The first occurrence will be used for display. ` +
+                    `Found duplicate at option index ${optionIndex}. ` +
+                    `First occurrence label: "${existingOption?.label ?? existingOption?.value ?? 'unknown'}".`,
+                );
+              }
+            }
+          }
+        });
+        return map;
+      }, [options]);
+
       const controlPressableRef = useRef<HTMLButtonElement>(null);
       const valueNodeContainerRef = useRef<HTMLDivElement>(null);
       const handleUnselectValue = useCallback(
@@ -140,6 +196,7 @@ const DefaultSelectControlComponent = memo(
               noScaleOnPress
               className={classNames?.controlLabelNode}
               disabled={disabled}
+              height={28}
               onClick={() => setOpen((s) => !s)}
               style={styles?.controlLabelNode}
               tabIndex={-1}
@@ -165,11 +222,11 @@ const DefaultSelectControlComponent = memo(
         if (hasValue && isMultiSelect) {
           const valuesToShow =
             value.length <= maxSelectedOptionsToShow
-              ? (value as string[])
-              : (value as string[]).slice(0, maxSelectedOptionsToShow);
+              ? (value as SelectOptionValue[])
+              : (value as SelectOptionValue[]).slice(0, maxSelectedOptionsToShow);
           const optionsToShow = valuesToShow
-            .map((value) => options.find((option) => option.value === value))
-            .filter(Boolean) as SelectOption[];
+            .map((value) => optionsMap.get(value))
+            .filter((option): option is SelectOption<SelectOptionValue> => option !== undefined);
           return (
             <HStack flexWrap="wrap" gap={1}>
               {optionsToShow.map((option, index) => {
@@ -182,8 +239,10 @@ const DefaultSelectControlComponent = memo(
                 return (
                   <InputChip
                     key={option.value}
+                    compact
                     data-selected-value
                     accessibilityLabel={`${removeSelectedOptionAccessibilityLabel} ${accessibilityLabel}`}
+                    borderWidth={0}
                     disabled={option.disabled}
                     invertColorScheme={false}
                     maxWidth={200}
@@ -194,13 +253,15 @@ const DefaultSelectControlComponent = memo(
                 );
               })}
               {value.length - maxSelectedOptionsToShow > 0 && (
-                <Chip>{`+${value.length - maxSelectedOptionsToShow} ${hiddenSelectedOptionsLabel}`}</Chip>
+                <InputChip compact borderWidth={0} end={null} invertColorScheme={false}>
+                  {`+${value.length - maxSelectedOptionsToShow} ${hiddenSelectedOptionsLabel}`}
+                </InputChip>
               )}
             </HStack>
           );
         }
 
-        const option = options.find((option) => option.value === value);
+        const option = !isMultiSelect ? optionsMap.get(value as SelectOptionValue) : undefined;
         const label = option?.label ?? option?.description ?? option?.value ?? placeholder;
         const content = hasValue ? label : placeholder;
         return typeof content === 'string' ? (
@@ -219,7 +280,7 @@ const DefaultSelectControlComponent = memo(
       }, [
         hasValue,
         isMultiSelect,
-        options,
+        optionsMap,
         placeholder,
         value,
         maxSelectedOptionsToShow,
@@ -238,14 +299,22 @@ const DefaultSelectControlComponent = memo(
             aria-haspopup={ariaHaspopup}
             background="transparent"
             blendStyles={interactableBlendStyles}
+            borderWidth={0}
             className={cx(noFocusOutlineCss, classNames?.controlInputNode)}
             disabled={disabled}
+            flexGrow={1}
             focusable={false}
-            minHeight={isMultiSelect ? 76 : undefined}
+            minHeight={
+              labelVariant === 'inside'
+                ? LABEL_VARIANT_INSIDE_HEIGHT
+                : compact
+                  ? COMPACT_HEIGHT
+                  : DEFAULT_HEIGHT
+            }
+            minWidth={0}
             onClick={() => setOpen((s) => !s)}
             paddingStart={1}
             style={styles?.controlInputNode}
-            width="100%"
           >
             {!!startNode && (
               <HStack
@@ -261,7 +330,7 @@ const DefaultSelectControlComponent = memo(
               </HStack>
             )}
             {shouldShowCompactLabel ? (
-              <HStack alignItems="center" height="100%" maxWidth="40%" padding={1}>
+              <HStack alignItems="center" height="100%" paddingStart={1} width="40%">
                 <InputLabel color="fg" overflow="truncate">
                   {label}
                 </InputLabel>
@@ -270,9 +339,8 @@ const DefaultSelectControlComponent = memo(
             <HStack
               alignItems="center"
               borderRadius={200}
-              height="100%"
               justifyContent="space-between"
-              width="100%"
+              width={shouldShowCompactLabel ? '60%' : '100%'}
             >
               <HStack
                 ref={valueNodeContainerRef}
@@ -282,12 +350,11 @@ const DefaultSelectControlComponent = memo(
                 flexShrink={1}
                 flexWrap="wrap"
                 gap={1}
-                height="100%"
                 justifyContent={shouldShowCompactLabel ? 'flex-end' : 'flex-start'}
                 overflow="auto"
-                paddingTop={labelVariant === 'inside' ? 0 : compact ? 1 : 2}
+                paddingTop={labelVariant === 'inside' ? 0 : undefined}
                 paddingX={1}
-                paddingY={labelVariant === 'inside' || compact ? 1 : 2}
+                paddingY={labelVariant === 'inside' || compact ? 0.5 : 1.5}
                 style={styles?.controlValueNode}
               >
                 {valueNode}
@@ -303,7 +370,6 @@ const DefaultSelectControlComponent = memo(
           classNames?.controlStartNode,
           classNames?.controlValueNode,
           disabled,
-          isMultiSelect,
           styles?.controlInputNode,
           styles?.controlStartNode,
           styles?.controlValueNode,

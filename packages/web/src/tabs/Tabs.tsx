@@ -46,11 +46,21 @@ export type TabsActiveIndicatorProps = {
 } & BoxProps<BoxDefaultElement> &
   MotionProps;
 
-export type TabComponent<T extends string = string> = React.FC<TabValue<T>>;
+export type TabComponentProps<T extends string = string> = TabValue<T> & {
+  /** The tab index for the tab. Automatically set to manage focus behavior. */
+  tabIndex?: number;
+  /**
+   * The role for the tab.
+   * @default "tab"
+   */
+  role?: string;
+};
+
+export type TabComponent<T extends string = string> = React.FC<TabComponentProps<T>>;
 
 export type TabsActiveIndicatorComponent = React.FC<TabsActiveIndicatorProps>;
 
-export type TabsProps<T extends string = string> = {
+export type TabsBaseProps<T extends string = string> = {
   /** The array of tabs data. Each tab may optionally define a custom Component to render. */
   tabs: (TabValue<T> & { Component?: TabComponent<T> })[];
   /** The default Component to render each tab. */
@@ -61,7 +71,9 @@ export type TabsProps<T extends string = string> = {
   activeBackground?: ThemeVars.Color;
   /** Optional callback to receive the active tab element. */
   onActiveTabElementChange?: (element: HTMLElement | null) => void;
-} & Omit<TabsOptions<T>, 'tabs'> &
+} & Omit<TabsOptions<T>, 'tabs'>;
+
+export type TabsProps<T extends string = string> = TabsBaseProps<T> &
   Omit<HStackProps<HStackDefaultElement>, 'onChange' | 'ref'>;
 
 type TabsFC = <T extends string = string>(
@@ -110,6 +122,59 @@ const TabsComponent = memo(
         };
       }, [activeTab, refMap, tabsContainerRect.width]);
 
+      const handleTabsContainerKeyDown = useCallback(
+        (event: React.KeyboardEvent<HTMLElement>) => {
+          const keyEventsToHandle = ['ArrowRight', 'ArrowLeft', 'Home', 'End'];
+          if (!keyEventsToHandle.includes(event.key)) return;
+
+          const focusedElement = document.activeElement;
+          if (!focusedElement) return;
+
+          // Find the focused tab's index
+          let focusedTabId: T | null = null;
+          for (const tab of tabs) {
+            const tabRef = refMap.getRef(tab.id);
+            if (tabRef && tabRef.contains(focusedElement)) {
+              focusedTabId = tab.id;
+              break;
+            }
+          }
+          if (!focusedTabId) return;
+
+          const focusedTabIndex = tabs.findIndex((tab) => tab.id === focusedTabId);
+          if (focusedTabIndex === -1) return;
+
+          event.preventDefault();
+
+          // For ArrowLeft and End key events, we need to iterate backwards so a for loop is used
+          let targetTab;
+          if (event.key === 'ArrowRight') {
+            targetTab = tabs.slice(focusedTabIndex + 1).find((tab) => !tab.disabled);
+          } else if (event.key === 'ArrowLeft') {
+            targetTab = tabs
+              .slice(0, focusedTabIndex)
+              .reverse()
+              .find((tab) => !tab.disabled);
+          } else if (event.key === 'Home') {
+            targetTab = tabs.find((tab) => !tab.disabled);
+          } else if (event.key === 'End') {
+            targetTab = tabs
+              .slice(0)
+              .reverse()
+              .find((tab) => !tab.disabled);
+          }
+
+          if (targetTab) {
+            const targetRef = refMap.getRef(targetTab.id);
+            const focusableElement = targetRef?.querySelector<HTMLElement>(
+              '[data-rendered-tab], [tabindex]:not([tabindex="-1"])',
+            );
+            focusableElement?.focus();
+          }
+        },
+        [tabs, refMap],
+      );
+
       const containerStyle = useMemo(
         () => ({ opacity: disabled ? accessibleOpacityDisabled : 1, ...style }),
         [disabled, style],
@@ -128,6 +193,7 @@ const TabsComponent = memo(
       return (
         <HStack
           ref={mergedContainerRefs}
+          onKeyDown={handleTabsContainerKeyDown}
           position={position}
           role={role}
           style={containerStyle}
@@ -143,7 +209,14 @@ const TabsComponent = memo(
               const RenderedTab = CustomTabComponent ?? TabComponent;
               return (
                 <TabContainer key={id} id={id} registerRef={registerRef}>
-                  <RenderedTab disabled={tabDisabled} id={id} {...props} />
+                  <RenderedTab
+                    data-rendered-tab
+                    disabled={tabDisabled}
+                    id={id}
+                    role="tab"
+                    tabIndex={activeTab?.id === id || !activeTab ? 0 : -1}
+                    {...props}
+                  />
                 </TabContainer>
               );
             })}

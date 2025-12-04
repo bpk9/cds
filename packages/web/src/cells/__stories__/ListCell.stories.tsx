@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { assets, squareAssets } from '@coinbase/cds-common/internal/data/assets';
 import type { CellPriority } from '@coinbase/cds-common/types/CellBaseProps';
 
 import { Button, IconButton } from '../../buttons';
+import { Switch } from '../../controls/Switch';
 import { Icon } from '../../icons/Icon';
 import { Pictogram } from '../../illustrations/Pictogram';
 import { HStack, VStack } from '../../layout';
@@ -13,6 +14,7 @@ import { Text } from '../../typography/Text';
 import { CellHelperText } from '../CellHelperText';
 import { CellMedia } from '../CellMedia';
 import { ListCell } from '../ListCell';
+import { ListCellFallback } from '../ListCellFallback';
 
 const parameters = {
   percy: { enableJavaScript: true },
@@ -538,87 +540,97 @@ const PriorityContent = () => (
   </>
 );
 
-const WithAccessory = () => (
-  <>
-    <ListCell accessory="arrow" spacingVariant="condensed" title="Title" />
+const WithAccessory = () => {
+  const [isSelected, setIsSelected] = useState(false);
+  return (
+    <>
+      <ListCell accessory="arrow" spacingVariant="condensed" title="Title" />
+      <ListCell
+        accessory={isSelected ? 'selected' : 'unselected'}
+        description="Selected state uses the same space, no layout shift when selected"
+        onClick={() => setIsSelected((prev) => !prev)}
+        selected={isSelected}
+        spacingVariant="condensed"
+        title="Unselected placeholder"
+      />
 
-    <ListCell accessory="more" detail="Detail" spacingVariant="condensed" title="Title" />
+      <ListCell accessory="more" detail="Detail" spacingVariant="condensed" title="Title" />
 
-    <ListCell
-      accessory="selected"
-      description="Description"
-      spacingVariant="condensed"
-      title="Title"
-    />
+      <ListCell
+        accessory="selected"
+        description="Description"
+        spacingVariant="condensed"
+        title="Title"
+      />
 
-    <ListCell
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      title="Title"
-    />
+      <ListCell
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        title="Title"
+      />
 
-    <ListCell
-      selected
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      title="Title"
-    />
+      <ListCell
+        selected
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        title="Title"
+      />
 
-    <ListCell
-      disableSelectionAccessory
-      selected
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      title="Title"
-    />
+      <ListCell
+        disableSelectionAccessory
+        selected
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        title="Title"
+      />
 
-    <ListCell
-      accessory="more"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      subdetail="Neutral"
-      title="Title"
-    />
+      <ListCell
+        accessory="more"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        subdetail="Neutral"
+        title="Title"
+      />
 
-    <ListCell
-      accessory="selected"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      subdetail="+Positive"
-      title="Title"
-      variant="positive"
-    />
+      <ListCell
+        accessory="selected"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        subdetail="+Positive"
+        title="Title"
+        variant="positive"
+      />
 
-    <ListCell
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      subdetail="-Negative"
-      title="Title"
-      variant="negative"
-    />
+      <ListCell
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        subdetail="-Negative"
+        title="Title"
+        variant="negative"
+      />
 
-    <ListCell
-      accessory="arrow"
-      description="Description"
-      detail="Detail"
-      spacingVariant="condensed"
-      subdetail="Warning"
-      title="Title"
-      variant="warning"
-    />
-  </>
-);
-
+      <ListCell
+        accessory="arrow"
+        description="Description"
+        detail="Detail"
+        spacingVariant="condensed"
+        subdetail="Warning"
+        title="Title"
+        variant="warning"
+      />
+    </>
+  );
+};
 const WithMedia = () => (
   <>
     <ListCell media={<Icon active name="email" />} spacingVariant="condensed" title="Icon" />
@@ -699,6 +711,48 @@ const WithActions = () => (
     />
   </>
 );
+
+const Fallback = () => {
+  const [showFallback, setShowFallback] = React.useState(false);
+
+  return (
+    <VStack gap={4}>
+      <Switch
+        checked={showFallback}
+        onChange={(event) => setShowFallback(event.currentTarget.checked)}
+      >
+        Show fallback state
+      </Switch>
+      {showFallback ? (
+        <ListCellFallback
+          description
+          detail
+          disableRandomRectWidth
+          helperText
+          subtitle
+          title
+          accessory="more"
+          media="asset"
+          spacingVariant="condensed"
+        />
+      ) : (
+        <ListCell
+          accessory="more"
+          description="Check your portfolio performance"
+          detail="$12,345.00"
+          helperText={
+            <CellHelperText variant="information">Balance reflects live market data</CellHelperText>
+          }
+          media={<Avatar src={assets.eth.imageUrl} />}
+          spacingVariant="condensed"
+          subdetail="+5.43%"
+          subtitle="Ethereum"
+          title="ETH"
+        />
+      )}
+    </VStack>
+  );
+};
 
 const WithIntermediary = () => (
   <>
@@ -930,6 +984,35 @@ const CondensedListCell = () => {
         title="Title"
       />
       <ListCell
+        multiline
+        description="Long description with multiple lines. This section can be arbitrarily long and occupy many many lines."
+        end={
+          <HStack alignItems="center" gap={2}>
+            <Text color="fgMuted" font="label2">
+              Meta
+            </Text>
+            <Icon color="fg" name="caretRight" size="s" />
+          </HStack>
+        }
+        media={<Avatar shape="circle" size="l" src={assets.eth.imageUrl} />}
+        onClick={onClickConsole}
+        priority="end"
+        spacingVariant="condensed"
+        styles={{
+          media: {
+            marginTop: 'var(--space-0_5)',
+            alignSelf: 'flex-start',
+          },
+          end: {
+            marginTop: 'var(--space-0_5)',
+            alignSelf: 'flex-start',
+          },
+        }}
+        subdetail="Subdetail"
+        subtitle="Subtitle"
+        title="Title"
+      />
+      <ListCell
         accessory="more"
         description="Description"
         detail="Detail"
@@ -1151,6 +1234,7 @@ export {
   CondensedListCell,
   Content,
   CustomNodes,
+  Fallback,
   LongContent,
   PressableContent,
   PriorityContent,

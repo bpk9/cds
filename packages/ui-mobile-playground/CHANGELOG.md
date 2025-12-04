@@ -8,6 +8,28 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 4.5.9 (12/2/2025 PST)
+
+#### 🐞 Fixes
+
+- Regenerate routes. [[#200](https://github.com/coinbase/cds/pull/200)]
+
+## 4.5.8 (12/1/2025 PST)
+
+#### 🐞 Fixes
+
+- Chore: QOL improvements for searching/navigating example component routes. [[#199](https://github.com/coinbase/cds/pull/199)]
+
+## 4.5.7 (11/19/2025 PST)
+
+#### 🐞 Fixes
+
+- Update icon map. [[#177](https://github.com/coinbase/cds/pull/177)]
+
+#### 📘 Misc
+
+- Update icon svg map. [[#138](https://github.com/coinbase/cds/pull/138)]
+
 ## 4.5.6 (11/4/2025 PST)
 
 This is an artificial version bump with no new change.

@@ -8,6 +8,21 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 3.4.0-beta.7 (12/2/2025 PST)
+
+#### 🐞 Fixes
+
+- Improve opacity customization for ReferenceLine. [[#201](https://github.com/coinbase/cds/pull/201)]
+
+## 3.4.0-beta.6 (10/16/2025 PST)
+
+#### 🚀 Updates
+
+- Support connecting null values in Area and Line
+- Added label to XAxis and YAxis
+- Added gradient support
+- Improved charts accessibility support
+
 ## 3.4.0-beta.5 (11/4/2025 PST)
 
 This is an artificial version bump with no new change.
