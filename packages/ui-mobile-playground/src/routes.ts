@@ -44,6 +44,11 @@ export const routes = [
       require('@coinbase/cds-mobile/alpha/select/__stories__/AlphaSelect.stories').default,
   },
   {
+    key: 'AlphaSelectChip',
+    getComponent: () =>
+      require('@coinbase/cds-mobile/alpha/select-chip/__stories__/AlphaSelectChip.stories').default,
+  },
+  {
     key: 'AlphaTabbedChips',
     getComponent: () =>
       require('@coinbase/cds-mobile/alpha/tabbed-chips/__stories__/AlphaTabbedChips.stories')
@@ -774,6 +779,11 @@ export const routes = [
     key: 'TrayFeedCard',
     getComponent: () =>
       require('@coinbase/cds-mobile/overlays/__stories__/TrayFeedCard.stories').default,
+  },
+  {
+    key: 'TrayHandleBarInside',
+    getComponent: () =>
+      require('@coinbase/cds-mobile/overlays/__stories__/TrayHandleBarInside.stories').default,
   },
   {
     key: 'TrayInformational',
