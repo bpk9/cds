@@ -112,9 +112,6 @@ export type ReferenceLineBaseProps = SharedProps & {
    * @default 'var(--color-bgLine)'
    */
   stroke?: string;
-};
-
-export type HorizontalReferenceLineProps = ReferenceLineBaseProps & {
   /**
    * Opacity applied to both the line and label.
    * @default 1
