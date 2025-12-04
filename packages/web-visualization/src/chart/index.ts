@@ -12,6 +12,7 @@ export * from './pie/index';
 export * from './point/index';
 export * from './polar/index';
 export * from './PolarChart';
+export * from './point/index';
 export * from './scrubber/index';
 export * from './text/index';
 export * from './utils/index';

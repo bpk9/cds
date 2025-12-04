@@ -13,6 +13,7 @@ export * from './pie';
 export * from './point';
 export * from './polar';
 export * from './PolarChart';
+export * from './point';
 export * from './scrubber';
 export * from './text';
 export * from './utils';

@@ -8,6 +8,69 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 8.27.1 ((12/4/2025, 06:51 AM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.27.0 (12/3/2025 PST)
+
+#### 🚀 Updates
+
+- Feat: introduce `unselected` state for ListCell. [[#194](https://github.com/coinbase/cds/pull/194)] [DX-4947]
+
+## 8.26.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Add SelectChip alpha component. [[#180](https://github.com/coinbase/cds/pull/180)]
+- Add support for option grouping. [[#180](https://github.com/coinbase/cds/pull/180)]
+
+#### 🐞 Fixes
+
+- Fix Select select all when options disabled. [[#180](https://github.com/coinbase/cds/pull/180)]
+
+#### 📘 Misc
+
+- Update storybook examples. [[#200](https://github.com/coinbase/cds/pull/200)]
+
+## 8.25.1 ((12/1/2025, 11:18 AM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.25.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Add emphasis prop to Tag. [[#197](https://github.com/coinbase/cds/pull/197)]
+
+## 8.24.0 (12/1/2025 PST)
+
+#### 🚀 Updates
+
+- Support labelNode in TextInput. [[#198](https://github.com/coinbase/cds/pull/198)]
+
+## 8.23.0 ((12/1/2025, 06:33 AM PST))
+
+This is an artificial version bump with no new change.
+
+## 8.22.2 (11/26/2025 PST)
+
+#### 🐞 Fixes
+
+- Wrap Select labels instead of truncating them. [[#179](https://github.com/coinbase/cds/pull/179)]
+
+## 8.22.1 (11/24/2025 PST)
+
+#### 🐞 Fixes
+
+- Fix the borderRadius prop issue in Banner. [[#190](https://github.com/coinbase/cds/pull/190)]
+
+## 8.22.0 (11/24/2025 PST)
+
+#### 🚀 Updates
+
+- Added `subtitle` for ListCell and accessory for `ListCellFallback`. [[#149](https://github.com/coinbase/cds/pull/149)] [DX-5015]
+
 ## 8.21.8 (11/21/2025 PST)
 
 #### 🐞 Fixes
