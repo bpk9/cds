@@ -12,11 +12,6 @@ export const TrayHandleBarInside = () => {
       <Example title="Tray with Handle Bar Inside">
         <ScrollableTray
           handleBarVariant="inside"
-          styles={{
-            drawer: {
-              borderRadius: theme.borderRadius[600],
-            },
-          }}
           title="Tray with Handle Bar Inside"
           verticalDrawerPercentageOfView={0.9}
         />

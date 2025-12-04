@@ -65,6 +65,10 @@ const TrayFallbackContent = () => {
   );
 };
 
+const spacingStyles = {
+  paddingBottom: 200,
+};
+
 export const ScrollableTray = ({
   fallbackEnabled,
   ...props
@@ -84,13 +88,6 @@ export const ScrollableTray = ({
       setTimeout(() => setIsLoading(false), __DEV__ ? 2000 : 20000);
     }
   }, [isTrayVisible, fallbackEnabled]);
-
-  const spacingStyles = useMemo(
-    () => ({
-      paddingBottom: 200,
-    }),
-    [],
-  );
 
   const handleOptionPress = useCallback(() => {
     trayRef.current?.handleClose();
