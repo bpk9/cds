@@ -1,8 +1,6 @@
-import { createContext, useContext } from 'react';
+import { useContext } from 'react';
 
-import type { PolarChartContextValue } from '../utils/context';
-
-const PolarChartContext = createContext<PolarChartContextValue | undefined>(undefined);
+import { PolarChartContext, type PolarChartContextValue } from '../utils/context';
 
 /**
  * Hook to access the PolarChart context.

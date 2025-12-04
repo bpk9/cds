@@ -21,8 +21,13 @@ import {
   type Transforms3d,
 } from '@shopify/react-native-skia';
 
-import { useCartesianChartContext } from '../ChartProvider';
-import { type ChartInset, getChartInset, getColorWithOpacity, unwrapAnimatedValue } from '../utils';
+import {
+  type ChartInset,
+  getChartInset,
+  getColorWithOpacity,
+  unwrapAnimatedValue,
+  useChartContext,
+} from '../utils';
 
 /**
  * Converts a fontWeight from Theme to a Skia FontWeight
@@ -234,7 +239,7 @@ export const ChartText = memo<ChartTextProps>(
       height: chartHeight,
       fontFamilies: contextFontFamilies,
       fontProvider,
-    } = useCartesianChartContext();
+    } = useChartContext();
 
     const inset = useMemo(() => getChartInset(insetInput), [insetInput]);
 

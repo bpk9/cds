@@ -5,8 +5,7 @@ import { Box, type BoxProps } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
 import { m as motion } from 'framer-motion';
 
-import { useCartesianChartContext } from '../ChartProvider';
-import { type ChartInset, getChartInset } from '../utils';
+import { type ChartInset, getChartInset, useChartContext } from '../utils';
 
 type ValidChartTextChildElements =
   | React.ReactElement<React.SVGProps<SVGTSpanElement>, 'tspan'>
@@ -184,7 +183,7 @@ export const ChartText = memo<ChartTextProps>(
     className,
     classNames,
   }) => {
-    const { animate, width: chartWidth, height: chartHeight } = useCartesianChartContext();
+    const { animate, width: chartWidth, height: chartHeight } = useChartContext();
     const fullChartBounds = useMemo(
       () => ({ x: 0, y: 0, width: chartWidth, height: chartHeight }),
       [chartWidth, chartHeight],

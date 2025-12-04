@@ -76,7 +76,7 @@ const RewardsBackgroundArcs = memo<{
   }) => {
     const { drawingArea } = usePolarChartContext();
 
-    const { centerX, centerY, radius, innerRadius, outerRadius } = useMemo(() => {
+    const { centerX, centerY, innerRadius, outerRadius } = useMemo(() => {
       const cx = drawingArea.x + drawingArea.width / 2;
       const cy = drawingArea.y + drawingArea.height / 2;
       const r = Math.min(drawingArea.width, drawingArea.height) / 2;
@@ -143,6 +143,64 @@ const RewardsBackgroundArcs = memo<{
     );
   },
 );
+
+/**
+ * Variable Radius Pie Arcs component.
+ * Each slice's outer radius is proportional to its value.
+ */
+const VariableRadiusPieArcs = memo(() => {
+  const { drawingArea } = usePolarChartContext();
+
+  const data = useMemo(
+    () => [
+      { id: 'a', value: 2548, color: '#5B8DEF' },
+      { id: 'b', value: 1754, color: '#9B6DD4' },
+      { id: 'c', value: 390, color: '#E67C5C' },
+      { id: 'd', value: 250, color: '#4CAF93' },
+      { id: 'e', value: 280, color: '#6DD4E0' },
+    ],
+    [],
+  );
+
+  const maxRadius = Math.min(drawingArea.width, drawingArea.height) / 2;
+  const minRadius = maxRadius * 0.5;
+  const maxValue = Math.max(...data.map((d) => d.value));
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const centerX = drawingArea.x + drawingArea.width / 2;
+  const centerY = drawingArea.y + drawingArea.height / 2;
+
+  const arcs = useMemo(() => {
+    let currentAngle = -Math.PI / 2;
+    return data.map((d) => {
+      const angleSpan = (d.value / total) * 2 * Math.PI;
+      const startAngle = currentAngle;
+      const endAngle = currentAngle + angleSpan;
+      currentAngle = endAngle;
+
+      const outerRadius = minRadius + (d.value / maxValue) * (maxRadius - minRadius);
+
+      return {
+        id: d.id,
+        color: d.color,
+        path: getArcPath({
+          startAngle,
+          endAngle,
+          innerRadius: 0,
+          outerRadius,
+          cornerRadius: 0,
+        }),
+      };
+    });
+  }, [data, total, maxValue, minRadius, maxRadius]);
+
+  return (
+    <g transform={`translate(${centerX}, ${centerY})`}>
+      {arcs.map((arc) => (
+        <path key={arc.id} d={arc.path} fill={arc.color} stroke="var(--color-bg)" strokeWidth={2} />
+      ))}
+    </g>
+  );
+});
 
 const CoinbaseOneRewardsChart = () => {
   // Chart parameters
@@ -230,6 +288,31 @@ const WalletBreakdownPieChart = () => {
       ]}
       width={100}
     />
+  );
+};
+
+const SemicircleChart = () => {
+  return (
+    <PieChart
+      animate
+      angularAxis={{ range: { min: -90, max: 90 } }}
+      height={60}
+      inset={0}
+      series={[
+        { id: 'low', data: 25, label: 'Low', color: '#4CAF93' },
+        { id: 'medium', data: 50, label: 'Medium', color: '#F5A623' },
+        { id: 'high', data: 25, label: 'High', color: '#E67C5C' },
+      ]}
+      width={100}
+    />
+  );
+};
+
+const VariableRadiusPieChart = () => {
+  return (
+    <PolarChart animate height={100} inset={0} series={[]} width={100}>
+      <VariableRadiusPieArcs />
+    </PolarChart>
   );
 };
 
@@ -552,6 +635,12 @@ const QuadrantChart = () => {
 export const All = () => {
   return (
     <VStack gap={2}>
+      <Example title="Variable Radius">
+        <VariableRadiusPieChart />
+      </Example>
+      <Example title="Semicircle">
+        <SemicircleChart />
+      </Example>
       <Example title="Multi-Axis: Semicircles">
         <MultiAxisSemicircles />
       </Example>

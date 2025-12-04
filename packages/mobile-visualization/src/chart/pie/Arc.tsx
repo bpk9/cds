@@ -167,6 +167,13 @@ export const Arc = memo<ArcProps>(
       arcData.padAngle,
     ]);
 
+    // Convert clipPathId (SVG path string) to Skia Path if provided
+    // This must be before the early return to maintain consistent hook ordering
+    const clipSkiaPath = useMemo(() => {
+      if (!clipPathId) return null;
+      return Skia.Path.MakeFromSVGString(clipPathId) ?? null;
+    }, [clipPathId]);
+
     // Don't render if we don't have valid dimensions
     if (arcData.outerRadius <= 0) return null;
 
@@ -176,9 +183,7 @@ export const Arc = memo<ArcProps>(
 
     const content = (
       <>
-        {isFilled && (
-          <SkiaPath color={fill} opacity={fillOpacity} path={path} style="fill" />
-        )}
+        {isFilled && <SkiaPath color={fill} opacity={fillOpacity} path={path} style="fill" />}
         {isStroked && (
           <SkiaPath
             color={stroke}
@@ -191,17 +196,13 @@ export const Arc = memo<ArcProps>(
       </>
     );
 
-    // Convert clipPathId (SVG path string) to Skia Path if provided
-    const clipSkiaPath = useMemo(() => {
-      if (!clipPathId) return null;
-      return Skia.Path.MakeFromSVGString(clipPathId) ?? null;
-    }, [clipPathId]);
-
     return (
-      <Group clip={clipSkiaPath ?? undefined} transform={[{ translateX: centerX }, { translateY: centerY }]}>
+      <Group
+        clip={clipSkiaPath ?? undefined}
+        transform={[{ translateX: centerX }, { translateY: centerY }]}
+      >
         {content}
       </Group>
     );
   },
 );
-

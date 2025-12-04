@@ -9,10 +9,33 @@ import type { Series } from './chart';
 import type { ChartScaleFunction } from './scale';
 
 /**
+ * Base context value shared by all chart types.
+ * Contains common properties needed by shared components like ChartText.
+ */
+export type ChartContextValue = {
+  /**
+   * Whether to animate the chart.
+   */
+  animate: boolean;
+  /**
+   * Width of the chart.
+   */
+  width: number;
+  /**
+   * Height of the chart.
+   */
+  height: number;
+  /**
+   * Drawing area of the chart.
+   */
+  drawingArea: Rect;
+};
+
+/**
  * Context value for Cartesian (X/Y) coordinate charts.
  * Contains axis-specific methods and properties for rectangular coordinate systems.
  */
-export type CartesianChartContextValue = {
+export type CartesianChartContextValue = ChartContextValue & {
   /**
    * The series data for the chart.
    */
@@ -28,18 +51,6 @@ export type CartesianChartContextValue = {
    * @returns data for series, if series exists
    */
   getSeriesData: (seriesId?: string) => Array<[number, number] | null> | undefined;
-  /**
-   * Whether to animate the chart.
-   */
-  animate: boolean;
-  /**
-   * Width of the chart SVG.
-   */
-  width: number;
-  /**
-   * Height of the chart SVG.
-   */
-  height: number;
   /**
    * Get x-axis configuration.
    */
@@ -58,10 +69,6 @@ export type CartesianChartContextValue = {
    * @param id - The axis ID. Defaults to defaultAxisId.
    */
   getYScale: (id?: string) => ChartScaleFunction | undefined;
-  /**
-   * Drawing area of the chart.
-   */
-  drawingArea: Rect;
   /**
    * Length of the data domain.
    * This is equal to the length of xAxis.data or the longest series data length
@@ -91,7 +98,7 @@ export type CartesianChartContextValue = {
  * Context value for polar coordinate charts (pie, donut, etc.).
  * Contains axis-specific methods and properties for circular coordinate systems.
  */
-export type PolarChartContextValue = {
+export type PolarChartContextValue = ChartContextValue & {
   /**
    * The series data for the chart.
    */
@@ -101,24 +108,6 @@ export type PolarChartContextValue = {
    * @param seriesId - A series' id
    */
   getSeries: (seriesId?: string) => PolarSeries | undefined;
-  /**
-   * Whether to animate the chart.
-   */
-  animate: boolean;
-  /**
-   * Width of the chart SVG.
-   */
-  width: number;
-  /**
-   * Height of the chart SVG.
-   */
-  height: number;
-  /**
-   * Drawing area of the chart.
-   * For polar charts, the center is at (x + width/2, y + height/2)
-   * and max radius is min(width, height) / 2.
-   */
-  drawingArea: Rect;
   /**
    * Map of angular axis configurations by ID.
    */
@@ -163,5 +152,41 @@ export const useScrubberContext = (): ScrubberContextValue => {
   if (!context) {
     throw new Error('useScrubberContext must be used within a Chart component');
   }
+  return context;
+};
+
+/**
+ * Context for Cartesian charts.
+ * @internal Use useCartesianChartContext() to access.
+ */
+export const CartesianChartContext = createContext<CartesianChartContextValue | undefined>(
+  undefined,
+);
+
+/**
+ * Context for Polar charts.
+ * @internal Use usePolarChartContext() to access.
+ */
+export const PolarChartContext = createContext<PolarChartContextValue | undefined>(undefined);
+
+/**
+ * Hook to access the base chart context.
+ * Works in both CartesianChart and PolarChart components.
+ * Use this for components that need to work in any chart type (e.g., ChartText).
+ *
+ * @example
+ * const { width, height, animate } = useChartContext();
+ */
+export const useChartContext = (): ChartContextValue => {
+  const cartesian = useContext(CartesianChartContext);
+  const polar = useContext(PolarChartContext);
+
+  const context = cartesian ?? polar;
+  if (!context) {
+    throw new Error(
+      'useChartContext must be used within a Chart component (CartesianChart or PolarChart).',
+    );
+  }
+
   return context;
 };

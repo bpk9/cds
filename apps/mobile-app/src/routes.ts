@@ -462,11 +462,6 @@ export const routes = [
         .default,
   },
   {
-    key: 'PieChart',
-    getComponent: () =>
-      require('@coinbase/cds-mobile-visualization/chart/pie/__stories__/PieChart.stories').default,
-  },
-  {
     key: 'PolarChart',
     getComponent: () =>
       require('@coinbase/cds-mobile-visualization/chart/polar/__stories__/PolarChart.stories')
