@@ -7,13 +7,13 @@ import { Menu } from '../../controls/Menu';
 import { SelectOption } from '../../controls/SelectOption';
 import { Fallback, VStack } from '../../layout';
 import type { DrawerRefBaseProps } from '../drawer/Drawer';
-import { Tray } from '../tray/Tray';
+import { Tray, type TrayProps } from '../tray/Tray';
 
 export const options: string[] = prices.slice(0, 4);
 
 const lotsOfOptions: string[] = prices.slice(0, 30);
 
-export const DefaultTray = ({ title }: { title?: React.ReactNode }) => {
+export const DefaultTray = (props: Partial<TrayProps>) => {
   const [isTrayVisible, setIsTrayVisible] = useState(true);
   const setIsTrayVisibleOff = useCallback(() => setIsTrayVisible(false), [setIsTrayVisible]);
   const setIsTrayVisibleOn = useCallback(() => setIsTrayVisible(true), [setIsTrayVisible]);
@@ -36,7 +36,7 @@ export const DefaultTray = ({ title }: { title?: React.ReactNode }) => {
           ref={trayRef}
           onCloseComplete={setIsTrayVisibleOff}
           onVisibilityChange={handleTrayVisibilityChange}
-          title={title}
+          {...props}
         >
           <Menu onChange={setValue} value={value}>
             {options.map((option: string) => (
@@ -66,13 +66,10 @@ const TrayFallbackContent = () => {
 };
 
 export const ScrollableTray = ({
-  title,
   fallbackEnabled,
-  verticalDrawerPercentageOfView,
-}: {
-  title?: React.ReactNode;
+  ...props
+}: Partial<TrayProps> & {
   fallbackEnabled?: boolean;
-  verticalDrawerPercentageOfView?: number;
 }) => {
   const [isTrayVisible, setIsTrayVisible] = useState(true);
   const setIsTrayVisibleOff = useCallback(() => setIsTrayVisible(false), [setIsTrayVisible]);
@@ -122,8 +119,7 @@ export const ScrollableTray = ({
           ref={trayRef}
           disableCapturePanGestureToDismiss
           onCloseComplete={setIsTrayVisibleOff}
-          title={title}
-          verticalDrawerPercentageOfView={verticalDrawerPercentageOfView}
+          {...props}
         >
           {isLoading ? (
             <TrayFallbackContent />
