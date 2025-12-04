@@ -10,13 +10,18 @@ import React, {
 } from 'react';
 import { useWindowDimensions } from 'react-native';
 import type { ReactNode } from 'react';
-import type { LayoutChangeEvent } from 'react-native';
+import type { LayoutChangeEvent, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { MAX_OVER_DRAG } from '@coinbase/cds-common/animation/drawer';
 import { verticalDrawerPercentageOfView as defaultVerticalDrawerPercentageOfView } from '@coinbase/cds-common/tokens/drawer';
 
 import { Box, HStack, VStack } from '../../layout';
 import { Text } from '../../typography/Text';
-import { Drawer, type DrawerBaseProps, type DrawerRefBaseProps } from '../drawer/Drawer';
+import {
+  Drawer,
+  type DrawerBaseProps,
+  type DrawerProps,
+  type DrawerRefBaseProps,
+} from '../drawer/Drawer';
 
 export type TrayRenderChildren = React.FC<{ handleClose: () => void }>;
 
@@ -32,7 +37,14 @@ export type TrayBaseProps = Omit<DrawerBaseProps, 'pin' | 'children'> & {
   title?: React.ReactNode;
 };
 
-export type TrayProps = TrayBaseProps;
+export type TrayProps = TrayBaseProps &
+  Omit<DrawerProps, 'pin' | 'children'> & {
+    styles?: DrawerProps['styles'] & {
+      content?: StyleProp<ViewStyle>;
+      titleContainer?: StyleProp<ViewStyle>;
+      title?: StyleProp<TextStyle>;
+    };
+  };
 
 export const TrayContext = createContext<{
   verticalDrawerPercentageOfView: number;
@@ -49,11 +61,22 @@ export const Tray = memo(
       title,
       onVisibilityChange,
       verticalDrawerPercentageOfView = defaultVerticalDrawerPercentageOfView,
+      styles,
       ...props
     },
     ref,
   ) {
     const [titleHeight, setTitleHeight] = useState(0);
+
+    const { contentStyle, titleContainerStyle, titleStyle, drawerStyles } = useMemo(() => {
+      const {
+        content: contentStyle,
+        titleContainer: titleContainerStyle,
+        title: titleStyle,
+        ...drawerStyles
+      } = styles ?? {};
+      return { contentStyle, titleContainerStyle, titleStyle, drawerStyles };
+    }, [styles]);
 
     const onTitleLayout = useCallback(
       (event: LayoutChangeEvent) => {
@@ -65,7 +88,7 @@ export const Tray = memo(
 
     const renderChildren: TrayRenderChildren = useCallback(
       ({ handleClose }) => (
-        <VStack paddingTop={title ? 0 : 2}>
+        <VStack paddingTop={title ? 0 : 2} style={contentStyle}>
           {title &&
             (typeof title === 'string' ? (
               <HStack
@@ -74,16 +97,21 @@ export const Tray = memo(
                 paddingBottom={2}
                 paddingTop={3}
                 paddingX={3}
+                style={titleContainerStyle}
               >
-                <Text font="title3">{title}</Text>
+                <Text font="title3" style={titleStyle}>
+                  {title}
+                </Text>
               </HStack>
             ) : (
-              <Box onLayout={onTitleLayout}>{title}</Box>
+              <Box onLayout={onTitleLayout} style={titleContainerStyle}>
+                {title}
+              </Box>
             ))}
           {typeof children === 'function' ? children({ handleClose }) : children}
         </VStack>
       ),
-      [children, onTitleLayout, title],
+      [children, onTitleLayout, contentStyle, title, titleContainerStyle, titleStyle],
     );
 
     useEffect(() => {
@@ -101,10 +129,11 @@ export const Tray = memo(
     return (
       <TrayContext.Provider value={trayContextValue}>
         <Drawer
+          ref={ref}
           pin="bottom"
+          styles={drawerStyles}
           verticalDrawerPercentageOfView={trayContextValue.verticalDrawerPercentageOfView}
           {...props}
-          ref={ref}
         >
           {renderChildren}
         </Drawer>
