@@ -63,7 +63,7 @@ export type TrayBaseProps = {
   /** Text or ReactNode for optional Tray title */
   title?: React.ReactNode;
   /**
-   * Allow user of component to define maximum percentage of screen that can be taken up by the Drawer
+   * Allow user of component to define maximum percentage of screen that can be taken up by the Drawer when pinned to the bottom or top
    * @example if you want a Drawer to take up 50% of the screen, you would pass a value of `"50%"`
    */
   verticalDrawerPercentageOfView?: string;
@@ -256,6 +256,7 @@ export const Tray = memo(
                 initial={initialAnimationValue}
                 pin={pin}
                 style={animatedContainerStyle}
+                // TO DO: Styles prop integration
                 tabIndex={0}
               >
                 <VStack
@@ -263,10 +264,10 @@ export const Tray = memo(
                   accessibilityLabel={accessibilityLabel}
                   alignItems="center"
                   aria-modal="true"
-                  borderBottomLeftRadius={pin === 'left' || pin === 'bottom' ? 0 : 400}
-                  borderBottomRightRadius={pin === 'right' || pin === 'bottom' ? 0 : 400}
-                  borderTopLeftRadius={pin === 'left' || pin === 'top' ? 0 : 400}
-                  borderTopRightRadius={pin === 'right' || pin === 'top' ? 0 : 400}
+                  borderBottomLeftRadius={pin === 'left' || pin === 'bottom' ? 0 : 600}
+                  borderBottomRightRadius={pin === 'right' || pin === 'bottom' ? 0 : 600}
+                  borderTopLeftRadius={pin === 'left' || pin === 'top' ? 0 : 600}
+                  borderTopRightRadius={pin === 'right' || pin === 'top' ? 0 : 600}
                   bordered={theme.activeColorScheme === 'dark'}
                   data-testid="tray"
                   elevation={2}
@@ -277,11 +278,13 @@ export const Tray = memo(
                   onClick={handleTrayClick}
                   role={role}
                   width={isSideTray ? 'min(400px, 100vw)' : '100%'}
+                  // TO DO: Styles prop integration
                 >
                   <VStack
                     maxWidth={isSideTray ? undefined : '70em'}
                     paddingX={isSideTray ? 2 : 6}
                     width="100%"
+                    // TO DO: Styles prop integration
                   >
                     <HStack
                       alignItems="center"
@@ -312,7 +315,13 @@ export const Tray = memo(
                         />
                       )}
                     </HStack>
-                    <VStack minHeight={0} paddingBottom={2} paddingTop={1} style={overflowStyle}>
+                    <VStack
+                      minHeight={0}
+                      paddingBottom={2}
+                      paddingTop={1}
+                      style={overflowStyle}
+                      // TO DO: Styles prop integration
+                    >
                       {typeof children === 'function' ? children({ handleClose }) : children}
                     </VStack>
                     {footer && (
