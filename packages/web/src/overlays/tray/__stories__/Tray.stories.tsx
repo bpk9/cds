@@ -13,6 +13,25 @@ export default {
   component: Tray,
 } as Meta;
 
+const longContent = (
+  <VStack gap={1}>
+    <Text font="body">
+      This example demonstrates how the tray handles a large amount of content. The tray should
+      expand appropriately and enable scrolling when needed.
+    </Text>
+    {Array(20)
+      .fill(0)
+      .map((_, i) => (
+        <Text key={i} font="body">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam
+          ultricies, nunc nisl aliquet nunc, quis aliquam nunc nisl eu nunc.
+          {i % 2 === 0 && ' Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor.'}
+          {i % 3 === 0 && ' Ut in nulla enim. Phasellus molestie magna non est bibendum.'}
+        </Text>
+      ))}
+  </VStack>
+);
+
 export const Default = () => {
   const [showBasicTray, setShowBasicTray] = useState(false);
   const [showCustomTitleTray, setShowCustomTitleTray] = useState(false);
@@ -24,6 +43,8 @@ export const Default = () => {
   const [showPinnedTopTray, setShowPinnedTopTray] = useState(false);
   const [showPinnedRightTray, setShowPinnedRightTray] = useState(false);
   const [showPinnedLeftTray, setShowPinnedLeftTray] = useState(false);
+  const [showLongContentPinnedTopTray, setShowLongContentPinnedTopTray] = useState(false);
+  const [showLongContentPinnedRightTray, setShowLongContentPinnedRightTray] = useState(false);
   // Refs for controlling trays
   const preventDismissTrayRef = useRef<TrayRefProps>(null);
 
@@ -177,23 +198,7 @@ export const Default = () => {
         <Button onClick={() => setShowLongContentTray(true)}>Open Long Content Tray</Button>
         {showLongContentTray && (
           <Tray onCloseComplete={() => setShowLongContentTray(false)} title="Long Content Example">
-            <VStack gap={1}>
-              <Text font="body">
-                This example demonstrates how the tray handles a large amount of content. The tray
-                should expand appropriately and enable scrolling when needed.
-              </Text>
-              {Array(20)
-                .fill(0)
-                .map((_, i) => (
-                  <Text key={i} font="body">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl
-                    eget aliquam ultricies, nunc nisl aliquet nunc, quis aliquam nunc nisl eu nunc.
-                    {i % 2 === 0 &&
-                      ' Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor.'}
-                    {i % 3 === 0 && ' Ut in nulla enim. Phasellus molestie magna non est bibendum.'}
-                  </Text>
-                ))}
-            </VStack>
+            {longContent}
           </Tray>
         )}
       </VStack>
@@ -263,6 +268,38 @@ export const Default = () => {
                 aliquam ultricies, nunc nisl aliquet nunc, quis aliquam nunc nisl eu nunc.
               </Text>
             </VStack>
+          </Tray>
+        )}
+      </VStack>
+
+      <VStack alignItems="flex-start" gap={2}>
+        <Text font="headline">Tray with Long Content Pinned to Top</Text>
+        <Button onClick={() => setShowLongContentPinnedTopTray(true)}>
+          Open Long Content Top Tray
+        </Button>
+        {showLongContentPinnedTopTray && (
+          <Tray
+            onCloseComplete={() => setShowLongContentPinnedTopTray(false)}
+            pin="top"
+            title="Long Content Top Example"
+          >
+            {longContent}
+          </Tray>
+        )}
+      </VStack>
+
+      <VStack alignItems="flex-start" gap={2}>
+        <Text font="headline">Tray with Long Content Pinned to Right</Text>
+        <Button onClick={() => setShowLongContentPinnedRightTray(true)}>
+          Open Long Content Right Tray
+        </Button>
+        {showLongContentPinnedRightTray && (
+          <Tray
+            onCloseComplete={() => setShowLongContentPinnedRightTray(false)}
+            pin="right"
+            title="Long Content Right Example"
+          >
+            {longContent}
           </Tray>
         )}
       </VStack>
