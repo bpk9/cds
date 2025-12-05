@@ -89,25 +89,23 @@ export const Tray = memo(
     const renderChildren: TrayRenderChildren = useCallback(
       ({ handleClose }) => (
         <VStack paddingTop={title ? 0 : 2} style={contentStyle}>
-          {title &&
-            (typeof title === 'string' ? (
-              <HStack
-                alignItems="center"
-                onLayout={onTitleLayout}
-                paddingBottom={2}
-                paddingTop={3}
-                paddingX={3}
-                style={titleContainerStyle}
-              >
-                <Text font="title3" style={titleStyle}>
+          {title && (
+            <Box justifyContent="center" onLayout={onTitleLayout} style={titleContainerStyle}>
+              {typeof title === 'string' ? (
+                <Text
+                  font="title3"
+                  paddingBottom={2}
+                  paddingTop={3}
+                  paddingX={3}
+                  style={titleStyle}
+                >
                   {title}
                 </Text>
-              </HStack>
-            ) : (
-              <Box onLayout={onTitleLayout} style={titleContainerStyle}>
-                {title}
-              </Box>
-            ))}
+              ) : (
+                title
+              )}
+            </Box>
+          )}
           {typeof children === 'function' ? children({ handleClose }) : children}
         </VStack>
       ),
