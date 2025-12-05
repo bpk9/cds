@@ -126,10 +126,6 @@ const animationConfig = {
   },
 };
 
-const overflowStyle = {
-  overflowY: 'auto' as const,
-};
-
 const overlayContentContextValue: OverlayContentContextValue = {
   isDrawer: true,
 };
@@ -253,6 +249,12 @@ export const Tray = memo(
             >
               <MotionBox
                 animate={controls}
+                borderBottomLeftRadius={pin === 'left' || pin === 'bottom' ? 0 : 600}
+                borderBottomRightRadius={pin === 'right' || pin === 'bottom' ? 0 : 600}
+                borderTopLeftRadius={pin === 'left' || pin === 'top' ? 0 : 600}
+                borderTopRightRadius={pin === 'right' || pin === 'top' ? 0 : 600}
+                bordered={theme.activeColorScheme === 'dark'}
+                elevation={2}
                 initial={initialAnimationValue}
                 pin={pin}
                 style={animatedContainerStyle}
@@ -264,13 +266,7 @@ export const Tray = memo(
                   accessibilityLabel={accessibilityLabel}
                   alignItems="center"
                   aria-modal="true"
-                  borderBottomLeftRadius={pin === 'left' || pin === 'bottom' ? 0 : 600}
-                  borderBottomRightRadius={pin === 'right' || pin === 'bottom' ? 0 : 600}
-                  borderTopLeftRadius={pin === 'left' || pin === 'top' ? 0 : 600}
-                  borderTopRightRadius={pin === 'right' || pin === 'top' ? 0 : 600}
-                  bordered={theme.activeColorScheme === 'dark'}
                   data-testid="tray"
-                  elevation={2}
                   height={isSideTray ? undefined : '100%'}
                   id={id}
                   justifyContent={isSideTray ? undefined : 'center'}
@@ -319,7 +315,6 @@ export const Tray = memo(
                       minHeight={0}
                       paddingBottom={2}
                       paddingTop={1}
-                      style={overflowStyle}
                       // TO DO: Styles prop integration
                     >
                       {typeof children === 'function' ? children({ handleClose }) : children}
