@@ -41,7 +41,7 @@ export type TrayProps = TrayBaseProps &
   Omit<DrawerProps, 'pin' | 'children'> & {
     styles?: DrawerProps['styles'] & {
       content?: StyleProp<ViewStyle>;
-      titleContainer?: StyleProp<ViewStyle>;
+      header?: StyleProp<ViewStyle>;
       title?: StyleProp<TextStyle>;
     };
   };
@@ -68,14 +68,14 @@ export const Tray = memo(
   ) {
     const [titleHeight, setTitleHeight] = useState(0);
 
-    const { contentStyle, titleContainerStyle, titleStyle, drawerStyles } = useMemo(() => {
+    const { contentStyle, headerStyle, titleStyle, drawerStyles } = useMemo(() => {
       const {
         content: contentStyle,
-        titleContainer: titleContainerStyle,
+        header: headerStyle,
         title: titleStyle,
         ...drawerStyles
       } = styles ?? {};
-      return { contentStyle, titleContainerStyle, titleStyle, drawerStyles };
+      return { contentStyle, headerStyle, titleStyle, drawerStyles };
     }, [styles]);
 
     const onTitleLayout = useCallback(
@@ -90,7 +90,7 @@ export const Tray = memo(
       ({ handleClose }) => (
         <VStack paddingTop={title ? 0 : 2} style={contentStyle}>
           {title && (
-            <Box justifyContent="center" onLayout={onTitleLayout} style={titleContainerStyle}>
+            <Box justifyContent="center" onLayout={onTitleLayout} style={headerStyle}>
               {typeof title === 'string' ? (
                 <Text
                   font="title3"
@@ -109,7 +109,7 @@ export const Tray = memo(
           {typeof children === 'function' ? children({ handleClose }) : children}
         </VStack>
       ),
-      [children, onTitleLayout, contentStyle, title, titleContainerStyle, titleStyle],
+      [children, onTitleLayout, contentStyle, title, headerStyle, titleStyle],
     );
 
     useEffect(() => {

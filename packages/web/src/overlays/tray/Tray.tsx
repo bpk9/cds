@@ -106,7 +106,7 @@ export type TrayProps = TrayBaseProps & {
     root?: React.CSSProperties;
     overlay?: React.CSSProperties;
     // content?: React.CSSProperties;
-    titleContainer?: React.CSSProperties;
+    header?: React.CSSProperties;
     title?: React.CSSProperties;
     footer?: React.CSSProperties;
   };
@@ -289,7 +289,7 @@ export const Tray = memo(
                       paddingBottom={1}
                       paddingTop={3}
                       position="sticky"
-                      style={styles?.titleContainer}
+                      style={styles?.header}
                       top={0}
                     >
                       {title &&
