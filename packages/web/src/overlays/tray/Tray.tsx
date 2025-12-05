@@ -53,6 +53,8 @@ export type TrayBaseProps = {
    * multiselect was toggled into or out of view
    */
   onVisibilityChange?: (context: 'visible' | 'hidden') => void;
+  /** Hide the header of the tray */
+  hideHeader?: boolean;
   /** Prevents a user from dismissing the tray by pressing the overlay or swiping */
   preventDismiss?: boolean;
   /**
@@ -72,7 +74,6 @@ export type TrayBaseProps = {
   /**
    * Allow any element with `tabIndex` attribute to be focusable in FocusTrap, rather than only focusing specific interactive element types like button.
    * This can be useful when having long content in a Modal.
-   * @default false
    */
   focusTabIndexElements?: boolean;
   /**
@@ -140,12 +141,13 @@ export const Tray = memo(
       onBlur,
       onClose,
       onCloseComplete,
-      preventDismiss = false,
+      hideHeader,
+      preventDismiss,
       id,
       role = 'dialog',
       footer,
       accessibilityLabel = 'Tray',
-      focusTabIndexElements = false,
+      focusTabIndexElements,
       restoreFocusOnUnmount = true,
       closeAccessibilityLabel = 'Close',
       closeAccessibilityHint,
@@ -282,35 +284,37 @@ export const Tray = memo(
                     width="100%"
                     // TO DO: Styles prop integration
                   >
-                    <HStack
-                      alignItems="center"
-                      background="bgElevation2"
-                      justifyContent={title ? 'space-between' : 'flex-end'}
-                      paddingBottom={1}
-                      paddingTop={3}
-                      position="sticky"
-                      style={styles?.header}
-                      top={0}
-                    >
-                      {title &&
-                        (typeof title === 'string' ? (
-                          <Text font="title3" style={styles?.title}>
-                            {title}
-                          </Text>
-                        ) : (
-                          title
-                        ))}
-                      {!preventDismiss && (
-                        <IconButton
-                          transparent
-                          accessibilityHint={closeAccessibilityHint}
-                          accessibilityLabel={closeAccessibilityLabel}
-                          name="close"
-                          onClick={handleClose}
-                          testID="tray-close-button"
-                        />
-                      )}
-                    </HStack>
+                    {!hideHeader && (
+                      <HStack
+                        alignItems="center"
+                        background="bgElevation2"
+                        justifyContent={title ? 'space-between' : 'flex-end'}
+                        paddingBottom={1}
+                        paddingTop={3}
+                        position="sticky"
+                        style={styles?.header}
+                        top={0}
+                      >
+                        {title &&
+                          (typeof title === 'string' ? (
+                            <Text font="title3" style={styles?.title}>
+                              {title}
+                            </Text>
+                          ) : (
+                            title
+                          ))}
+                        {!preventDismiss && (
+                          <IconButton
+                            transparent
+                            accessibilityHint={closeAccessibilityHint}
+                            accessibilityLabel={closeAccessibilityLabel}
+                            name="close"
+                            onClick={handleClose}
+                            testID="tray-close-button"
+                          />
+                        )}
+                      </HStack>
+                    )}
                     <VStack
                       minHeight={0}
                       paddingBottom={2}
