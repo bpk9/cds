@@ -21,6 +21,9 @@ export const Default = () => {
   const [showCloseWithRefTray, setShowCloseWithRefTray] = useState(false);
   const [showLongContentTray, setShowLongContentTray] = useState(false);
   const [showNoTitleTray, setShowNoTitleTray] = useState(false);
+  const [showPinnedTopTray, setShowPinnedTopTray] = useState(false);
+  const [showPinnedRightTray, setShowPinnedRightTray] = useState(false);
+  const [showPinnedLeftTray, setShowPinnedLeftTray] = useState(false);
   // Refs for controlling trays
   const preventDismissTrayRef = useRef<TrayRefProps>(null);
 
@@ -190,6 +193,75 @@ export const Default = () => {
                     {i % 3 === 0 && ' Ut in nulla enim. Phasellus molestie magna non est bibendum.'}
                   </Text>
                 ))}
+            </VStack>
+          </Tray>
+        )}
+      </VStack>
+
+      <VStack alignItems="flex-start" gap={2}>
+        <Text font="headline">Pinned to Right</Text>
+        <Button onClick={() => setShowPinnedRightTray(true)}>Open Pinned Right Tray</Button>
+        {showPinnedRightTray && (
+          <Tray
+            onCloseComplete={() => setShowPinnedRightTray(false)}
+            pin="right"
+            title="Pinned Right Tray Example"
+          >
+            <VStack gap={1}>
+              <Text font="body">
+                This is a basic tray with a simple string title. Clicking outside or pressing ESC
+                will close it.
+              </Text>
+              <Text font="body">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget
+                aliquam ultricies, nunc nisl aliquet nunc, quis aliquam nunc nisl eu nunc.
+              </Text>
+            </VStack>
+          </Tray>
+        )}
+      </VStack>
+
+      <VStack alignItems="flex-start" gap={2}>
+        <Text font="headline">Pinned to Left</Text>
+        <Button onClick={() => setShowPinnedLeftTray(true)}>Open Pinned Left Tray</Button>
+        {showPinnedLeftTray && (
+          <Tray
+            onCloseComplete={() => setShowPinnedLeftTray(false)}
+            pin="left"
+            title="Pinned Left Tray Example"
+          >
+            <VStack gap={1}>
+              <Text font="body">
+                This is a basic tray with a simple string title. Clicking outside or pressing ESC
+                will close it.
+              </Text>
+              <Text font="body">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget
+                aliquam ultricies, nunc nisl aliquet nunc, quis aliquam nunc nisl eu nunc.
+              </Text>
+            </VStack>
+          </Tray>
+        )}
+      </VStack>
+
+      <VStack alignItems="flex-start" gap={2}>
+        <Text font="headline">Pinned to Top</Text>
+        <Button onClick={() => setShowPinnedTopTray(true)}>Open Pinned Top Tray</Button>
+        {showPinnedTopTray && (
+          <Tray
+            onCloseComplete={() => setShowPinnedTopTray(false)}
+            pin="top"
+            title="Pinned Top Tray Example"
+          >
+            <VStack gap={1}>
+              <Text font="body">
+                This is a basic tray with a simple string title. Clicking outside or pressing ESC
+                will close it.
+              </Text>
+              <Text font="body">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget
+                aliquam ultricies, nunc nisl aliquet nunc, quis aliquam nunc nisl eu nunc.
+              </Text>
             </VStack>
           </Tray>
         )}
