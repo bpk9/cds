@@ -138,7 +138,7 @@ export const Drawer = memo(
     },
     ref,
   ) {
-    const { activeColorScheme } = useTheme();
+    const theme = useTheme();
     const { width, height } = useWindowDimensions();
     const isAndroid = Platform.OS === 'android';
 
@@ -201,7 +201,7 @@ export const Drawer = memo(
       verticalDrawerPercentageOfView,
     });
 
-    const isPinHorizontal = pin === 'left' || pin === 'right';
+    const isSideDrawer = pin === 'left' || pin === 'right';
     const showHandleBar = !hideHandleBar && pin === 'bottom';
     const showHandleBarOutside = showHandleBar && handleBarVariant === 'outside';
     const showHandleBarInside = showHandleBar && handleBarVariant === 'inside';
@@ -308,14 +308,14 @@ export const Drawer = memo(
             onAccessibilityEscape={handleClose}
             pin={pin}
             style={containerStyle}
-            width={isPinHorizontal ? horizontalDrawerWidth : '100%'}
+            width={isSideDrawer ? horizontalDrawerWidth : '100%'}
           >
             {showHandleBarOutside && handleBar}
             <Box
-              borderRadius={isPinHorizontal ? 0 : 600}
-              bordered={activeColorScheme === 'dark'}
+              borderRadius={isSideDrawer ? 0 : 600}
+              bordered={theme.activeColorScheme === 'dark'}
               elevation={2}
-              maxHeight={!isPinHorizontal ? verticalDrawerMaxHeight : '100%'}
+              maxHeight={!isSideDrawer ? verticalDrawerMaxHeight : '100%'}
               style={drawerStyle}
             >
               {showHandleBarInside && handleBar}
