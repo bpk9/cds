@@ -74,6 +74,7 @@ module.exports = {
     'chart/area/AreaChart',
     'chart/bar/BarChart',
     'chart/CartesianChart',
+    'chart/legend/Legend',
     'chart/line/LineChart',
     'chart/line/ReferenceLine',
     'chart/axis/XAxis',

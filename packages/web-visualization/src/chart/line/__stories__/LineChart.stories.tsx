@@ -22,6 +22,7 @@ import { m } from 'framer-motion';
 
 import {
   type AxisBounds,
+  ChartTooltip,
   DefaultScrubberBeacon,
   DefaultScrubberLabel,
   defaultTransition,
@@ -1932,6 +1933,32 @@ export const All = () => {
       </Example>
       <Example title="Custom Label Component">
         <CustomLabelComponent />
+      </Example>
+    </VStack>
+  );
+};
+
+export const CustomTooltip = () => {
+  return (
+    <VStack gap={2}>
+      <Example title="Basic">
+        <LineChart
+          enableScrubbing
+          showArea
+          showYAxis
+          height={{ base: 150, tablet: 200, desktop: 250 }}
+          series={[
+            {
+              id: 'prices',
+              data: [10, 22, 29, 45, 98, 45, 22, 52, 21, 4, 68, 20, 21, 58],
+            },
+          ]}
+          yAxis={{
+            showGrid: true,
+          }}
+        >
+          <ChartTooltip />
+        </LineChart>
       </Example>
     </VStack>
   );

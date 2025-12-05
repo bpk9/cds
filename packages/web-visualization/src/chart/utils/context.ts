@@ -92,6 +92,19 @@ export type CartesianChartContextValue = ChartContextValue & {
    * Computes the bounds of the axis based on the chart's drawing area chart/axis config, and axis position.
    */
   getAxisBounds: (id: string) => Rect | undefined;
+  /**
+   * Reference to the chart's SVG element.
+   */
+  svgRef?: React.RefObject<SVGSVGElement | null>;
+  /**
+   * References to the chart's slot containers for portaling content.
+   */
+  slotRefs?: {
+    topRef: React.RefObject<HTMLElement | null>;
+    bottomRef: React.RefObject<HTMLElement | null>;
+    leftRef: React.RefObject<HTMLElement | null>;
+    rightRef: React.RefObject<HTMLElement | null>;
+  };
 };
 
 /**

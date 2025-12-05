@@ -17,6 +17,10 @@ export type AxisBounds = {
 export const isValidBounds = (bounds: Partial<AxisBounds>): bounds is AxisBounds =>
   bounds.min !== undefined && bounds.max !== undefined;
 
+export type LegendIndicatorVariant = 'circle' | 'square' | 'squircle' | 'pill';
+
+export type LegendIndicator = LegendIndicatorVariant | React.ReactNode;
+
 export type Series = {
   /**
    * Id of the series.
@@ -57,6 +61,12 @@ export type Series = {
    * If not specified, the series will not be stacked.
    */
   stackId?: string;
+  /**
+   * Legend indicator for this series.
+   * Can be a preset shape or a custom ReactNode.
+   * @default 'circle'
+   */
+  legendIndicator?: LegendIndicator;
 };
 
 /**

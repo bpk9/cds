@@ -6,6 +6,10 @@ import type { GradientDefinition } from './gradient';
 
 export const defaultStackId = 'DEFAULT_STACK_ID';
 
+export type LegendIndicatorVariant = 'circle' | 'square' | 'squircle' | 'pill';
+
+export type LegendIndicator = LegendIndicatorVariant;
+
 export type AxisBounds = {
   min: number;
   max: number;
@@ -59,6 +63,12 @@ export type Series = {
    * If not specified, the series will not be stacked.
    */
   stackId?: string;
+  /**
+   * Legend indicator for this series.
+   * Can be a preset shape: 'circle', 'square', 'squircle', or 'pill'.
+   * @default 'circle'
+   */
+  legendIndicator?: LegendIndicator;
 };
 
 /**
