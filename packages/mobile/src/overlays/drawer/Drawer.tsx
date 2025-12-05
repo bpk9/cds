@@ -50,12 +50,12 @@ export type DrawerRefBaseProps = {
 export type DrawerBaseProps = SharedProps &
   Omit<ModalProps, 'onRequestClose' | 'children'> & {
     /** Component to render as the Modal content */
-    children: DrawerRenderChildren | React.ReactNode;
+    children?: DrawerRenderChildren | React.ReactNode;
     /**
      * Pin the modal to one side of the screen
      * @default bottom
      * */
-    pin: PinningDirection;
+    pin?: PinningDirection;
     /**
      * Prevents a user from dismissing the drawer by pressing the overlay or swiping
      */

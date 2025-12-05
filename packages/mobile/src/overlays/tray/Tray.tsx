@@ -26,7 +26,8 @@ import {
 export type TrayRenderChildren = React.FC<{ handleClose: () => void }>;
 
 export type TrayBaseProps = Omit<DrawerBaseProps, 'pin' | 'children'> & {
-  children: React.ReactNode | TrayRenderChildren;
+  children?: React.ReactNode | TrayRenderChildren;
+  pin?: DrawerProps['pin'];
   /**
    * Optional callback that, if provided, will be triggered when the Tray is toggled open/ closed
    * If used for analytics, context ('visible' | 'hidden') can be bundled with the event info to track whether the
@@ -38,7 +39,8 @@ export type TrayBaseProps = Omit<DrawerBaseProps, 'pin' | 'children'> & {
 };
 
 export type TrayProps = TrayBaseProps &
-  Omit<DrawerProps, 'children'> & {
+  Omit<DrawerProps, 'pin' | 'children'> & {
+    pin?: DrawerProps['pin'];
     styles?: DrawerProps['styles'] & {
       content?: StyleProp<ViewStyle>;
       header?: StyleProp<ViewStyle>;
