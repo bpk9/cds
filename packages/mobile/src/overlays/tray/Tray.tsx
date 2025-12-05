@@ -38,7 +38,7 @@ export type TrayBaseProps = Omit<DrawerBaseProps, 'pin' | 'children'> & {
 };
 
 export type TrayProps = TrayBaseProps &
-  Omit<DrawerProps, 'pin' | 'children'> & {
+  Omit<DrawerProps, 'children'> & {
     styles?: DrawerProps['styles'] & {
       content?: StyleProp<ViewStyle>;
       header?: StyleProp<ViewStyle>;
@@ -62,6 +62,7 @@ export const Tray = memo(
       onVisibilityChange,
       verticalDrawerPercentageOfView = defaultVerticalDrawerPercentageOfView,
       styles,
+      pin = 'bottom',
       ...props
     },
     ref,
@@ -128,7 +129,7 @@ export const Tray = memo(
       <TrayContext.Provider value={trayContextValue}>
         <Drawer
           ref={ref}
-          pin="bottom"
+          pin={pin}
           styles={drawerStyles}
           verticalDrawerPercentageOfView={trayContextValue.verticalDrawerPercentageOfView}
           {...props}

@@ -115,6 +115,8 @@ const overlayContentContextValue: OverlayContentContextValue = {
   isDrawer: true,
 };
 
+const overflowStyle = { overflow: 'hidden' as const, maxHeight: '100%' as const };
+
 export const Drawer = memo(
   forwardRef<DrawerRefBaseProps, DrawerProps>(function Drawer(
     {
@@ -316,7 +318,7 @@ export const Drawer = memo(
               style={drawerStyle}
             >
               {showHandleBarInside && handleBar}
-              {content}
+              <View style={overflowStyle}>{content}</View>
             </Box>
           </Box>
         </OverlayContentContext.Provider>
