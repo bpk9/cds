@@ -58,12 +58,10 @@ export type DrawerBaseProps = SharedProps &
     pin: PinningDirection;
     /**
      * Prevents a user from dismissing the drawer by pressing the overlay or swiping
-     * @default false
      */
     preventDismissGestures?: boolean;
     /**
      * Prevents a user from dismissing the drawer by pressing hardware back button on Android
-     * @default false
      */
     preventHardwareBackBehaviorAndroid?: boolean;
     /**
@@ -73,7 +71,6 @@ export type DrawerBaseProps = SharedProps &
     handleBarVariant?: 'inside' | 'outside';
     /**
      * The HandleBar by default only is used for a bottom pinned drawer. This removes it.
-     * @default false
      * */
     hideHandleBar?: boolean;
     /** Action that will happen when drawer is dismissed */
@@ -124,10 +121,10 @@ export const Drawer = memo(
       children,
       pin = 'bottom',
       onCloseComplete,
-      preventDismissGestures = false,
-      preventHardwareBackBehaviorAndroid = false,
+      preventDismissGestures,
+      preventHardwareBackBehaviorAndroid,
       handleBarVariant = 'outside',
-      hideHandleBar = false,
+      hideHandleBar,
       disableCapturePanGestureToDismiss = false,
       onBlur,
       verticalDrawerPercentageOfView = defaultVerticalDrawerPercentageOfView,
