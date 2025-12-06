@@ -142,7 +142,7 @@ function MultipleLine() {
         tickLabelFormatter: numberFormatter,
       }}
     >
-      <Scrubber />
+      <Scrubber accessibilityLabel={scrubberAccessibilityLabel} />
     </LineChart>
   );
 }
@@ -195,7 +195,7 @@ function DataFormat() {
         showGrid: true,
       }}
     >
-      <Scrubber hideOverlay />
+      <Scrubber hideOverlay accessibilityLabel={scrubberAccessibilityLabel} />
     </LineChart>
   );
 }
@@ -567,7 +567,7 @@ function BasicAccessible() {
         showGrid: true,
       }}
     >
-      <Scrubber />
+      <Scrubber accessibilityLabel={scrubberAccessibilityLabel} />
     </LineChart>
   );
 }
@@ -1041,6 +1041,17 @@ function AssetPriceWithDottedArea() {
       return `${dayOfWeek}, ${monthDay}, ${time}`;
     }, []);
 
+    const chartAccessibilityLabel = `Bitcoin price chart for ${timePeriod.label} period. Current price: ${formatPrice(currentPrice)}`;
+
+    const scrubberAccessibilityLabel = useCallback(
+      (index: number) => {
+        const price = formatPrice(sparklineTimePeriodDataValues[index]);
+        const date = formatDate(sparklineTimePeriodDataTimestamps[index]);
+        return `${price} ${date}`;
+      },
+      [formatPrice, sparklineTimePeriodDataValues, sparklineTimePeriodDataTimestamps, formatDate],
+    );
+
     return (
       <VStack gap={2}>
         <SectionHeader
@@ -1055,6 +1066,7 @@ function AssetPriceWithDottedArea() {
         <LineChart
           enableScrubbing
           showArea
+          accessibilityLabel={chartAccessibilityLabel}
           areaType="dotted"
           height={200}
           inset={{ top: 52 }}
@@ -1069,6 +1081,7 @@ function AssetPriceWithDottedArea() {
           <Scrubber
             idlePulse
             labelElevated
+            accessibilityLabel={scrubberAccessibilityLabel}
             label={(d: number) => {
               const date = formatDate(sparklineTimePeriodDataTimestamps[d]);
               const price = formatPrice(sparklineTimePeriodDataValues[d]);

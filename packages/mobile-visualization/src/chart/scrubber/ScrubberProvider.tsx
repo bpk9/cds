@@ -1,11 +1,17 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
+import { useScreenReaderStatus } from '@coinbase/cds-mobile/hooks/useScreenReaderStatus';
 import { Haptics } from '@coinbase/cds-mobile/utils/haptics';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { invertSerializableScale, ScrubberContext, type ScrubberContextValue } from '../utils';
+import {
+  invertSerializableScale,
+  type ScrubberAccessibilityConfig,
+  ScrubberContext,
+  type ScrubberContextValue,
+} from '../utils';
 import { getPointOnSerializableScale } from '../utils/point';
 
 export type ScrubberProviderProps = Partial<Pick<ScrubberContextValue, 'enableScrubbing'>> & {
@@ -32,6 +38,10 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
   allowOverflowGestures,
 }) => {
   const chartContext = useCartesianChartContext();
+  const isScreenReaderEnabled = useScreenReaderStatus();
+  const [accessibilityConfig, setAccessibilityConfig] = useState<
+    ScrubberAccessibilityConfig | undefined
+  >(undefined);
 
   if (!chartContext) {
     throw new Error('ScrubberProvider must be used within a ChartContext');
@@ -39,6 +49,10 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
 
   const { getXSerializableScale, getXAxis } = chartContext;
   const scrubberPosition = useSharedValue<number | undefined>(undefined);
+
+  const registerAccessibility = useCallback((config: ScrubberAccessibilityConfig | undefined) => {
+    setAccessibilityConfig(config);
+  }, []);
 
   const xAxis = useMemo(() => getXAxis(), [getXAxis]);
   const xScale = useMemo(() => getXSerializableScale(), [getXSerializableScale]);
@@ -161,8 +175,17 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
     () => ({
       enableScrubbing: !!enableScrubbing,
       scrubberPosition,
+      registerAccessibility,
+      // Pass accessibility config and screen reader status for rendering in CartesianChart
+      accessibilityConfig: isScreenReaderEnabled ? accessibilityConfig : undefined,
     }),
-    [enableScrubbing, scrubberPosition],
+    [
+      enableScrubbing,
+      scrubberPosition,
+      registerAccessibility,
+      isScreenReaderEnabled,
+      accessibilityConfig,
+    ],
   );
 
   const content = (

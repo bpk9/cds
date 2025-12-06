@@ -36,6 +36,7 @@ import type { Transition } from '../utils/transition';
 
 import { DefaultScrubberBeacon } from './DefaultScrubberBeacon';
 import { DefaultScrubberLabel } from './DefaultScrubberLabel';
+import { type ScrubberAccessibilityViewBaseProps } from './ScrubberAccessibilityView';
 import {
   ScrubberBeaconGroup,
   type ScrubberBeaconGroupBaseProps,
@@ -140,7 +141,8 @@ export type ScrubberLabelComponent = React.FC<ScrubberLabelProps>;
 export type ScrubberBaseProps = Pick<ScrubberBeaconGroupBaseProps, 'idlePulse'> &
   Pick<ReferenceLineBaseProps, 'LineComponent' | 'LabelComponent' | 'labelElevated'> &
   Pick<ScrubberBeaconGroupProps, 'BeaconComponent'> &
-  Pick<ScrubberBeaconLabelGroupProps, 'BeaconLabelComponent'> & {
+  Pick<ScrubberBeaconLabelGroupProps, 'BeaconLabelComponent'> &
+  Pick<ScrubberAccessibilityViewBaseProps, 'screenReaderMaxRegions'> & {
     /**
      * Array of series IDs to highlight when scrubbing with scrubber beacons.
      * By default, all series will be highlighted.
@@ -171,6 +173,12 @@ export type ScrubberBaseProps = Pick<ScrubberBeaconGroupBaseProps, 'idlePulse'> 
      * Measured in pixels.
      */
     beaconLabelHorizontalOffset?: ScrubberBeaconLabelGroupBaseProps['labelHorizontalOffset'];
+    /**
+     * Accessibility label for screen readers.
+     * Can be a static string or a function that receives the current dataIndex.
+     * When provided, enables screen reader navigation regions over the chart.
+     */
+    accessibilityLabel?: string | ((dataIndex: number) => string);
     /**
      * Label text displayed above the scrubber line.
      * Can be a static string or a function that receives the current dataIndex.
@@ -212,6 +220,8 @@ export const Scrubber = memo(
       {
         seriesIds,
         hideLine,
+        accessibilityLabel,
+        screenReaderMaxRegions,
         label,
         lineStroke,
         BeaconComponent = DefaultScrubberBeacon,
@@ -234,7 +244,7 @@ export const Scrubber = memo(
       const theme = useTheme();
       const beaconGroupRef = React.useRef<ScrubberBeaconGroupRef>(null);
 
-      const { scrubberPosition } = useScrubberContext();
+      const { scrubberPosition, registerAccessibility } = useScrubberContext();
       const { getXSerializableScale, getXAxis, series, drawingArea, animate, dataLength } =
         useCartesianChartContext();
 
@@ -345,6 +355,51 @@ export const Scrubber = memo(
             })) ?? [],
         [series, filteredSeriesIds],
       );
+
+      // Resolve accessibilityLabel for screen reader regions
+      const resolvedAccessibilityLabel = useCallback(
+        (dataIndex: number): string => {
+          if (typeof accessibilityLabel === 'function') {
+            return accessibilityLabel(dataIndex);
+          }
+          if (typeof accessibilityLabel === 'string') {
+            return accessibilityLabel;
+          }
+          // Fall back to label if it resolves to a string
+          if (typeof label === 'function') {
+            const result = label(dataIndex);
+            return typeof result === 'string' ? result : '';
+          }
+          if (typeof label === 'string') {
+            return label;
+          }
+          return '';
+        },
+        [accessibilityLabel, label],
+      );
+
+      // Determine if we should register accessibility config
+      const hasAccessibilityLabel = accessibilityLabel !== undefined || typeof label === 'function';
+
+      // Register accessibility config with provider for screen reader support
+      useEffect(() => {
+        if (hasAccessibilityLabel && registerAccessibility) {
+          registerAccessibility({
+            accessibilityLabel: resolvedAccessibilityLabel,
+            screenReaderMaxRegions,
+          });
+        }
+
+        return () => {
+          // Unregister on unmount
+          registerAccessibility?.(undefined);
+        };
+      }, [
+        hasAccessibilityLabel,
+        registerAccessibility,
+        resolvedAccessibilityLabel,
+        screenReaderMaxRegions,
+      ]);
 
       if (!xScale) return;
 

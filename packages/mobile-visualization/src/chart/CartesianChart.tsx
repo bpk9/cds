@@ -6,6 +6,7 @@ import type { BoxBaseProps, BoxProps } from '@coinbase/cds-mobile/layout';
 import { Box } from '@coinbase/cds-mobile/layout';
 import { Canvas, Skia, type SkTypefaceFontProvider } from '@shopify/react-native-skia';
 
+import { ScrubberAccessibilityView } from './scrubber/ScrubberAccessibilityView';
 import { ScrubberProvider, type ScrubberProviderProps } from './scrubber/ScrubberProvider';
 import { convertToSerializableScale, type SerializableScale } from './utils/scale';
 import { useChartContextBridge } from './ChartContextBridge';
@@ -25,6 +26,7 @@ import {
   getChartInset,
   getStackedSeriesData as calculateStackedSeriesData,
   type Series,
+  useScrubberContext,
   useTotalAxisPadding,
 } from './utils';
 
@@ -39,6 +41,24 @@ const ChartCanvas = memo(
     );
   },
 );
+
+/**
+ * Renders the accessibility overlay for screen readers.
+ * This component reads from ScrubberContext and renders inside the Box
+ * so that absolute positioning works correctly relative to the chart container.
+ */
+const ScrubberAccessibilityOverlay = memo(() => {
+  const { accessibilityConfig } = useScrubberContext();
+
+  if (!accessibilityConfig) return null;
+
+  return (
+    <ScrubberAccessibilityView
+      accessibilityLabel={accessibilityConfig.accessibilityLabel}
+      screenReaderMaxRegions={accessibilityConfig.screenReaderMaxRegions}
+    />
+  );
+});
 
 export type CartesianChartBaseProps = Omit<BoxBaseProps, 'fontFamily'> &
   Pick<ScrubberProviderProps, 'enableScrubbing' | 'onScrubberPositionChange'> & {
@@ -448,6 +468,7 @@ export const CartesianChart = memo(
               {...props}
             >
               <ChartCanvas style={styles?.chart}>{children}</ChartCanvas>
+              <ScrubberAccessibilityOverlay />
             </Box>
           </ScrubberProvider>
         </CartesianChartProvider>

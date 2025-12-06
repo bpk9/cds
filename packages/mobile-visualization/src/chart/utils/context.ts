@@ -104,6 +104,18 @@ export type CartesianChartContextValue = {
   getAxisBounds: (id: string) => Rect | undefined;
 };
 
+export type ScrubberAccessibilityConfig = {
+  /**
+   * Function to generate an accessibility label for each data index.
+   */
+  accessibilityLabel: (dataIndex: number) => string;
+  /**
+   * Maximum number of regions to divide the chart into for screen reader navigation.
+   * @default 10
+   */
+  screenReaderMaxRegions?: number;
+};
+
 export type ScrubberContextValue = {
   /**
    * Enables scrubbing interactions.
@@ -114,6 +126,16 @@ export type ScrubberContextValue = {
    * The current position of the scrubber.
    */
   scrubberPosition: SharedValue<number | undefined>;
+  /**
+   * Registers accessibility configuration for screen reader support.
+   * Called by the Scrubber component to enable accessibility regions.
+   */
+  registerAccessibility?: (config: ScrubberAccessibilityConfig | undefined) => void;
+  /**
+   * Current accessibility configuration when screen reader is active.
+   * Used by CartesianChart to render the accessibility overlay.
+   */
+  accessibilityConfig?: ScrubberAccessibilityConfig;
 };
 
 export const ScrubberContext = createContext<ScrubberContextValue | undefined>(undefined);
