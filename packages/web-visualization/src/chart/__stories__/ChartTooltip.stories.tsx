@@ -157,6 +157,7 @@ const FilteredSeries = () => {
       </Text>
       <LineChart
         enableScrubbing
+        legend
         showXAxis
         showYAxis
         height={{ base: 200, tablet: 250, desktop: 300 }}
@@ -174,7 +175,6 @@ const FilteredSeries = () => {
         yAxis={{ domain: { min: 0 }, showGrid: true }}
       >
         <Scrubber />
-        <Legend position="bottom" />
         <ChartTooltip seriesIds={['primary', 'secondary']} />
       </LineChart>
     </Example>
@@ -227,6 +227,7 @@ const StackedAreaTooltip = () => {
       </Text>
       <AreaChart
         enableScrubbing
+        legend
         showXAxis
         showYAxis
         stacked
@@ -240,7 +241,6 @@ const StackedAreaTooltip = () => {
         yAxis={{ domain: { min: 0 }, showGrid: true, tickLabelFormatter: numberFormatter }}
       >
         <Scrubber hideBeaconLabels />
-        <Legend position="bottom" />
         <ChartTooltip valueFormatter={numberFormatter} />
       </AreaChart>
     </Example>

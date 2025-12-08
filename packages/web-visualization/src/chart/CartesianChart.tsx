@@ -5,6 +5,7 @@ import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
 import { Box, type BoxBaseProps, type BoxProps } from '@coinbase/cds-web/layout';
 import { css } from '@linaria/core';
 
+import { Legend } from './legend/Legend';
 import { ScrubberProvider, type ScrubberProviderProps } from './scrubber/ScrubberProvider';
 import { CartesianChartProvider } from './ChartProvider';
 import {
@@ -27,7 +28,6 @@ import {
 
 const rootCss = css`
   display: flex;
-  flex-direction: column;
   overflow: hidden;
 `;
 const focusCss = css`
@@ -39,11 +39,19 @@ const focusCss = css`
     outline-offset: 2px;
   }
 `;
-const middleRowCss = css`
-  display: flex;
+const verticalCss = css`
+  flex-direction: column;
+`;
+const horizontalCss = css`
+  flex-direction: row;
+`;
+const chartContainerCss = css`
   flex: 1;
   min-height: 0;
+  min-width: 0;
 `;
+
+export type LegendPosition = 'top' | 'bottom' | 'left' | 'right';
 
 export type CartesianChartBaseProps = BoxBaseProps &
   Pick<ScrubberProviderProps, 'enableScrubbing' | 'onScrubberPositionChange'> & {
@@ -71,6 +79,17 @@ export type CartesianChartBaseProps = BoxBaseProps &
      * Inset around the entire chart (outside the axes).
      */
     inset?: number | Partial<ChartInset>;
+    /**
+     * Whether to show a legend, or a custom legend element.
+     * When `true`, renders the default Legend component.
+     * When a ReactNode, renders the provided element.
+     */
+    legend?: boolean | React.ReactNode;
+    /**
+     * Position of the legend relative to the chart.
+     * @default 'bottom'
+     */
+    legendPosition?: LegendPosition;
   };
 
 export type CartesianChartProps = Omit<BoxProps<'div'>, 'title'> &
@@ -91,6 +110,11 @@ export type CartesianChartProps = Omit<BoxProps<'div'>, 'title'> &
        * Custom class name for the chart SVG element.
        */
       chart?: string;
+      /**
+       * Custom class name for the legend element.
+       * @note not used when legend is a ReactNode.
+       */
+      legend?: string;
     };
     /**
      * Custom styles for the root element.
@@ -108,6 +132,11 @@ export type CartesianChartProps = Omit<BoxProps<'div'>, 'title'> &
        * Custom styles for the chart SVG element.
        */
       chart?: React.CSSProperties;
+      /**
+       * Custom styles for the legend element.
+       * @note not used when legend is a ReactNode.
+       */
+      legend?: React.CSSProperties;
     };
   };
 
@@ -123,6 +152,8 @@ export const CartesianChart = memo(
         inset,
         enableScrubbing,
         onScrubberPositionChange,
+        legend,
+        legendPosition = 'bottom',
         width = '100%',
         height = '100%',
         className,
@@ -134,21 +165,7 @@ export const CartesianChart = memo(
       ref,
     ) => {
       const { observe, width: chartWidth, height: chartHeight } = useDimensions();
-      const svgRef = useRef<SVGSVGElement | null>(null);
-      const topSlotRef = useRef<HTMLDivElement | null>(null);
-      const bottomSlotRef = useRef<HTMLDivElement | null>(null);
-      const leftSlotRef = useRef<HTMLDivElement | null>(null);
-      const rightSlotRef = useRef<HTMLDivElement | null>(null);
-
-      const slotRefs = useMemo(
-        () => ({
-          topRef: topSlotRef,
-          bottomRef: bottomSlotRef,
-          leftRef: leftSlotRef,
-          rightRef: rightSlotRef,
-        }),
-        [],
-      );
+      const chartRef = useRef<SVGSVGElement | null>(null);
 
       const calculatedInset = useMemo(() => getChartInset(inset, defaultChartInset), [inset]);
 
@@ -392,8 +409,7 @@ export const CartesianChart = memo(
           registerAxis,
           unregisterAxis,
           getAxisBounds,
-          svgRef,
-          slotRefs,
+          ref: chartRef,
         }),
         [
           series,
@@ -411,14 +427,35 @@ export const CartesianChart = memo(
           registerAxis,
           unregisterAxis,
           getAxisBounds,
-          svgRef,
-          slotRefs,
+          chartRef,
         ],
       );
 
+      const isVerticalLegend = useMemo(
+        () => legendPosition === 'top' || legendPosition === 'bottom',
+        [legendPosition],
+      );
+      const isLegendBefore = useMemo(
+        () => legendPosition === 'top' || legendPosition === 'left',
+        [legendPosition],
+      );
+
+      const legendElement = useMemo(() => {
+        if (!legend) return;
+        if (typeof legend !== 'boolean') return legend;
+        return (
+          <Legend
+            className={classNames?.legend}
+            flexDirection={isVerticalLegend ? 'row' : 'column'}
+            style={styles?.legend}
+          />
+        );
+      }, [legend, isVerticalLegend, classNames?.legend, styles?.legend]);
+
       const rootClassNames = useMemo(
-        () => cx(rootCss, className, classNames?.root),
-        [className, classNames],
+        () =>
+          cx(rootCss, isVerticalLegend ? verticalCss : horizontalCss, className, classNames?.root),
+        [className, classNames, isVerticalLegend],
       );
       const rootStyles = useMemo(() => ({ ...style, ...styles?.root }), [style, styles?.root]);
 
@@ -427,7 +464,6 @@ export const CartesianChart = memo(
           <ScrubberProvider
             enableScrubbing={!!enableScrubbing}
             onScrubberPositionChange={onScrubberPositionChange}
-            svgRef={svgRef}
           >
             <Box
               className={rootClassNames}
@@ -436,37 +472,33 @@ export const CartesianChart = memo(
               width={width}
               {...props}
             >
-              <Box ref={topSlotRef} width="100%" />
-              <Box className={middleRowCss}>
-                <Box ref={leftSlotRef} />
-                <Box
-                  ref={(node) => {
-                    const svgElement = node as unknown as SVGSVGElement;
-                    svgRef.current = svgElement;
-                    observe(node as unknown as HTMLElement);
+              {isLegendBefore && legendElement}
+              <Box
+                ref={(node) => {
+                  const svgElement = node as unknown as SVGSVGElement;
+                  chartRef.current = svgElement;
+                  observe(node as unknown as HTMLElement);
 
-                    // Forward the ref to the user
-                    if (ref) {
-                      if (typeof ref === 'function') {
-                        ref(svgElement);
-                      } else {
-                        (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
-                      }
+                  // Forward the ref to the user
+                  if (ref) {
+                    if (typeof ref === 'function') {
+                      ref(svgElement);
+                    } else {
+                      (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
                     }
-                  }}
-                  aria-live="polite"
-                  as="svg"
-                  className={cx(enableScrubbing && focusCss, classNames?.chart)}
-                  height="100%"
-                  style={styles?.chart}
-                  tabIndex={enableScrubbing ? 0 : undefined}
-                  width="100%"
-                >
-                  {children}
-                </Box>
-                <Box ref={rightSlotRef} />
+                  }
+                }}
+                aria-live="polite"
+                as="svg"
+                className={cx(chartContainerCss, enableScrubbing && focusCss, classNames?.chart)}
+                height="100%"
+                style={styles?.chart}
+                tabIndex={enableScrubbing ? 0 : undefined}
+                width="100%"
+              >
+                {children}
               </Box>
-              <Box ref={bottomSlotRef} />
+              {!isLegendBefore && legendElement}
             </Box>
           </ScrubberProvider>
         </CartesianChartProvider>

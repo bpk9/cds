@@ -35,18 +35,9 @@ export type ChartContextValue = {
    */
   dataLength: number;
   /**
-   * Reference to the chart's SVG element.
+   * Reference to the chart's root element (SVG on web, Canvas on mobile).
    */
-  svgRef?: React.RefObject<SVGSVGElement | null>;
-  /**
-   * References to the chart's slot containers for slot content.
-   */
-  slotRefs?: {
-    topRef: React.RefObject<HTMLElement | null>;
-    bottomRef: React.RefObject<HTMLElement | null>;
-    leftRef: React.RefObject<HTMLElement | null>;
-    rightRef: React.RefObject<HTMLElement | null>;
-  };
+  ref?: React.RefObject<SVGSVGElement | null>;
 };
 
 /**

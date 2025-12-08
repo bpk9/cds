@@ -47,7 +47,7 @@ export const ChartTooltip = ({
   minWidth = 320,
   ...props
 }: ChartTooltipProps) => {
-  const { svgRef, series, getSeriesData, getXAxis } = useCartesianChartContext();
+  const { ref, series, getSeriesData, getXAxis } = useCartesianChartContext();
   const { scrubberPosition, enableScrubbing } = useScrubberContext();
   const [legendMediaWidth, setLegendMediaWidth] = useState<number>(0);
   const legendMediaRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
@@ -72,7 +72,7 @@ export const ChartTooltip = ({
   });
 
   useEffect(() => {
-    const element = svgRef?.current;
+    const element = ref?.current;
     if (!element || !enableScrubbing) return;
 
     const handleMouseMove = (event: Event) => {
@@ -97,7 +97,7 @@ export const ChartTooltip = ({
     element.addEventListener('mousemove', handleMouseMove);
 
     return () => element.removeEventListener('mousemove', handleMouseMove);
-  }, [enableScrubbing, refs, svgRef]);
+  }, [enableScrubbing, refs, ref]);
 
   const { resolvedLabel, seriesItems } = useMemo(() => {
     if (scrubberPosition === undefined) {

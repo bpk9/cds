@@ -85,10 +85,12 @@ const Basic = () => {
     <Example title="Basic Legend">
       <LineChart
         enableScrubbing
+        legend
         showArea
         showXAxis
         showYAxis
         height={{ base: 200, tablet: 225, desktop: 250 }}
+        legendPosition="right"
         series={[
           {
             id: 'pageViews',
@@ -113,7 +115,6 @@ const Basic = () => {
         }}
       >
         <Scrubber hideBeaconLabels />
-        <Legend position="right" />
       </LineChart>
     </Example>
   );
@@ -200,10 +201,12 @@ const AutoScale = () => {
         </Text>
         <LineChart
           enableScrubbing
+          legend
           showArea
           showXAxis
           showYAxis
           height={{ base: 300, tablet: 400, desktop: 500 }}
+          legendPosition="bottom"
           series={precipitationData}
           xAxis={{ data: xAxisData, label: 'Month', showLine: true, showTickMarks: true }}
           yAxis={{
@@ -214,7 +217,6 @@ const AutoScale = () => {
           }}
         >
           <Scrubber hideBeaconLabels hideOverlay />
-          <Legend position="bottom" />
           <ChartTooltip valueFormatter={(value) => `${value} in`} />
         </LineChart>
       </VStack>
@@ -228,6 +230,8 @@ const Position = () => {
       <CartesianChart
         height={{ base: 150, tablet: 200, desktop: 250 }}
         inset={{ bottom: 8, left: 0, right: 0, top: 8 }}
+        legend={<Legend justifyContent="flex-end" width="100%" />}
+        legendPosition="bottom"
         series={[
           {
             id: 'revenue',
@@ -281,7 +285,6 @@ const Position = () => {
           tickLabelFormatter={(value) => `${value}%`}
         />
         <BarPlot />
-        <Legend justifyContent="flex-end" position="bottom" width="100%" />
       </CartesianChart>
     </Example>
   );
@@ -297,6 +300,8 @@ const ShapeVariants = () => {
         showXAxis
         showYAxis
         height={{ base: 200, tablet: 250, desktop: 300 }}
+        legend={<Legend flexDirection="column" />}
+        legendPosition="left"
         series={[
           {
             id: 'pill',
@@ -329,9 +334,7 @@ const ShapeVariants = () => {
         ]}
         xAxis={{ data: months }}
         yAxis={{ domain: { min: 0 }, showGrid: true }}
-      >
-        <Legend position="left" />
-      </LineChart>
+      />
     </Example>
   );
 };
@@ -416,6 +419,10 @@ const DynamicData = () => {
           showXAxis
           showYAxis
           height={{ base: 200, tablet: 250, desktop: 300 }}
+          legend={
+            <Legend ItemComponent={ValueLegendItem} justifyContent="flex-start" paddingX={2} />
+          }
+          legendPosition="top"
           series={series}
           xAxis={{
             data: timeLabels,
@@ -427,7 +434,6 @@ const DynamicData = () => {
           }}
         >
           <Scrubber hideBeaconLabels />
-          <Legend ItemComponent={ValueLegendItem} justifyContent="flex-start" paddingX={2} />
         </LineChart>
       </VStack>
     </Example>
@@ -542,6 +548,8 @@ const Interactive = () => {
           showXAxis
           showYAxis
           height={{ base: 300, tablet: 350, desktop: 400 }}
+          legend={<Legend ItemComponent={ChipLegendItem} gap={1} paddingTop={1} />}
+          legendPosition="top"
           series={series}
           xAxis={{
             data: months,
@@ -551,9 +559,7 @@ const Interactive = () => {
             showGrid: true,
             tickLabelFormatter: (value) => `$${value}k`,
           }}
-        >
-          <Legend ItemComponent={ChipLegendItem} gap={1} paddingTop={1} />
-        </LineChart>
+        />
       </VStack>
     </Example>
   );
@@ -604,9 +610,12 @@ const PieChartLegend = () => {
         <Text font="headline" textAlign="center">
           Portfolio Allocation
         </Text>
-        <PieChart height={{ base: 250, tablet: 300, desktop: 350 }} series={series}>
-          <Legend position="right" />
-        </PieChart>
+        <PieChart
+          height={{ base: 250, tablet: 300, desktop: 350 }}
+          legend={<Legend flexDirection="column" />}
+          legendPosition="right"
+          series={series}
+        />
       </VStack>
     </Example>
   );
@@ -718,8 +727,10 @@ const LegendShapes = () => {
           Annual Revenue
         </Text>
         <CartesianChart
+          legend
           height={{ base: 200, tablet: 250, desktop: 300 }}
           inset={0}
+          legendPosition="top"
           series={
             [
               {
@@ -760,7 +771,6 @@ const LegendShapes = () => {
             width={60}
           />
           <BarPlot />
-          <Legend />
         </CartesianChart>
       </VStack>
     </Example>
@@ -798,9 +808,12 @@ const DonutChartLegend = () => {
         <Text font="headline" textAlign="center">
           Task Status
         </Text>
-        <DonutChart height={{ base: 250, tablet: 300, desktop: 350 }} series={series}>
-          <Legend position="bottom" />
-        </DonutChart>
+        <DonutChart
+          legend
+          height={{ base: 250, tablet: 300, desktop: 350 }}
+          legendPosition="bottom"
+          series={series}
+        />
       </VStack>
     </Example>
   );
