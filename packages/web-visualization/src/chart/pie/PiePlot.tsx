@@ -84,7 +84,7 @@ export const PiePlot = memo<PiePlotProps>(
     ArcComponent = Arc,
     animate: animateProp,
     fillOpacity,
-    stroke = '#ffffff',
+    stroke,
     strokeWidth = 1,
     cornerRadius,
     clipPathId,
@@ -240,7 +240,7 @@ export const PiePlot = memo<PiePlotProps>(
               outerRadius={arc.outerRadius}
               paddingAngle={arc.paddingAngle}
               startAngle={arc.startAngle}
-              stroke={stroke}
+              stroke={stroke ?? theme.color.bg}
               strokeWidth={strokeWidth}
             />
           );
