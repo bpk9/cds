@@ -49,7 +49,7 @@ const Basic = () => {
         xAxis={{ data: months }}
         yAxis={{ domain: { min: 0 }, showGrid: true }}
       >
-        <Scrubber />
+        <Scrubber hideBeaconLabels />
         <ChartTooltip />
       </LineChart>
     </Example>
@@ -86,9 +86,9 @@ const WithValueFormatter = () => {
           { id: 'profit', label: 'Profit', data: profit, color: 'rgb(var(--purple40))' },
         ]}
         xAxis={{ data: months }}
-        yAxis={{ domain: { min: 0 }, showGrid: true }}
+        yAxis={{ domain: { min: 0 }, showGrid: true, tickLabelFormatter: currencyFormatter }}
       >
-        <Scrubber />
+        <Scrubber hideBeaconLabels />
         <ChartTooltip valueFormatter={currencyFormatter} />
       </AreaChart>
     </Example>
@@ -131,7 +131,7 @@ const CustomLabel = () => {
         xAxis={{ data: dates }}
         yAxis={{ domain: { min: 0 }, showGrid: true }}
       >
-        <Scrubber />
+        <Scrubber hideBeaconLabels />
         <ChartTooltip
           label={(dataIndex) => (
             <HStack alignItems="center" gap={1}>
@@ -165,7 +165,7 @@ const FilteredSeries = () => {
           { id: 'secondary', label: 'Secondary', data: secondary, color: 'rgb(var(--green40))' },
           {
             id: 'tertiary',
-            label: 'Tertiary (hidden)',
+            label: 'Tertiary',
             data: tertiary,
             color: 'rgb(var(--gray40))',
           },
@@ -206,7 +206,6 @@ const WithBarChart = () => {
         <XAxis showLine showTickMarks />
         <YAxis showGrid tickLabelFormatter={numberFormatter} />
         <BarPlot />
-        <Scrubber />
         <ChartTooltip valueFormatter={numberFormatter} />
       </CartesianChart>
     </Example>
@@ -218,6 +217,8 @@ const StackedAreaTooltip = () => {
   const desktop = [4000, 4200, 3800, 4500, 4800, 5200, 5000, 5500];
   const mobile = [2400, 2800, 3000, 3200, 3500, 3800, 4000, 4200];
   const tablet = [1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900];
+
+  const numberFormatter = useCallback((value: number) => value.toLocaleString(), []);
 
   return (
     <Example title="Stacked Area Tooltip">
@@ -236,11 +237,11 @@ const StackedAreaTooltip = () => {
           { id: 'tablet', label: 'Tablet', data: tablet, color: 'rgb(var(--orange40))' },
         ]}
         xAxis={{ data: months }}
-        yAxis={{ domain: { min: 0 }, showGrid: true }}
+        yAxis={{ domain: { min: 0 }, showGrid: true, tickLabelFormatter: numberFormatter }}
       >
-        <Scrubber />
+        <Scrubber hideBeaconLabels />
         <Legend position="bottom" />
-        <ChartTooltip valueFormatter={(value) => value.toLocaleString()} />
+        <ChartTooltip valueFormatter={numberFormatter} />
       </AreaChart>
     </Example>
   );
@@ -280,7 +281,7 @@ const CustomValueDisplay = () => {
         xAxis={{ data: days }}
         yAxis={{ domain: { min: 0, max: 20000 }, showGrid: true }}
       >
-        <Scrubber />
+        <Scrubber hideBeaconLabels />
         <ChartTooltip label="Daily Activity" valueFormatter={stepsFormatter} />
       </AreaChart>
     </Example>
@@ -337,7 +338,6 @@ const MultiAxisTooltip = () => {
           tickLabelFormatter={(value) => `${value}%`}
         />
         <BarPlot />
-        <Scrubber />
         <ChartTooltip
           valueFormatter={(value) => {
             // Simple formatter - in real usage you'd differentiate by series
