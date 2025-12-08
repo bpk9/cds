@@ -32,7 +32,7 @@ export type LegendItemBaseProps = Omit<HStackBaseProps, 'children'> &
     /**
      * Id of the series.
      */
-    seriesId: Series['id'];
+    seriesId: string;
     /**
      * Display label for the legend item.
      * Can be a string or a custom ReactNode.
