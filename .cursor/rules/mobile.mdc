@@ -119,3 +119,11 @@ useAnimatedReaction(
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 ```
+
+## Mobile App Routes
+
+When you add, remove, or rename story files in `packages/mobile` or `packages/mobile-visualization`, regenerate routes by running from the workspace root:
+
+```bash
+PROJECT_CWD=$(pwd) npx tsx libs/codegen/src/playground/prepareRoutes.ts
+```
