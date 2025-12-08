@@ -4,6 +4,8 @@ export * from './axis/index';
 export * from './bar/index';
 export * from './CartesianChart';
 export * from './ChartProvider';
+export * from './ChartSlot';
+export * from './ChartTooltip';
 export * from './DonutChart';
 export * from './gradient/index';
 export * from './line/index';

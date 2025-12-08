@@ -25,7 +25,12 @@ import {
   useTotalAxisPadding,
 } from './utils';
 
-const focusStylesCss = css`
+const rootCss = css`
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+const focusCss = css`
   &:focus {
     outline: none;
   }
@@ -33,6 +38,11 @@ const focusStylesCss = css`
     outline: 2px solid var(--color-bgPrimary);
     outline-offset: 2px;
   }
+`;
+const middleRowCss = css`
+  display: flex;
+  flex: 1;
+  min-height: 0;
 `;
 
 export type CartesianChartBaseProps = BoxBaseProps &
@@ -125,6 +135,20 @@ export const CartesianChart = memo(
     ) => {
       const { observe, width: chartWidth, height: chartHeight } = useDimensions();
       const svgRef = useRef<SVGSVGElement | null>(null);
+      const topSlotRef = useRef<HTMLDivElement | null>(null);
+      const bottomSlotRef = useRef<HTMLDivElement | null>(null);
+      const leftSlotRef = useRef<HTMLDivElement | null>(null);
+      const rightSlotRef = useRef<HTMLDivElement | null>(null);
+
+      const slotRefs = useMemo(
+        () => ({
+          topRef: topSlotRef,
+          bottomRef: bottomSlotRef,
+          leftRef: leftSlotRef,
+          rightRef: rightSlotRef,
+        }),
+        [],
+      );
 
       const calculatedInset = useMemo(() => getChartInset(inset, defaultChartInset), [inset]);
 
@@ -368,6 +392,8 @@ export const CartesianChart = memo(
           registerAxis,
           unregisterAxis,
           getAxisBounds,
+          svgRef,
+          slotRefs,
         }),
         [
           series,
@@ -385,11 +411,13 @@ export const CartesianChart = memo(
           registerAxis,
           unregisterAxis,
           getAxisBounds,
+          svgRef,
+          slotRefs,
         ],
       );
 
       const rootClassNames = useMemo(
-        () => cx(className, classNames?.root),
+        () => cx(rootCss, className, classNames?.root),
         [className, classNames],
       );
       const rootStyles = useMemo(() => ({ ...style, ...styles?.root }), [style, styles?.root]);
@@ -402,38 +430,43 @@ export const CartesianChart = memo(
             svgRef={svgRef}
           >
             <Box
-              ref={(node) => {
-                observe(node as unknown as HTMLElement);
-              }}
               className={rootClassNames}
               height={height}
               style={rootStyles}
               width={width}
               {...props}
             >
-              <Box
-                ref={(node) => {
-                  const svgElement = node as unknown as SVGSVGElement;
-                  svgRef.current = svgElement;
-                  // Forward the ref to the user
-                  if (ref) {
-                    if (typeof ref === 'function') {
-                      ref(svgElement);
-                    } else {
-                      (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
+              <Box ref={topSlotRef} width="100%" />
+              <Box className={middleRowCss}>
+                <Box ref={leftSlotRef} />
+                <Box
+                  ref={(node) => {
+                    const svgElement = node as unknown as SVGSVGElement;
+                    svgRef.current = svgElement;
+                    observe(node as unknown as HTMLElement);
+
+                    // Forward the ref to the user
+                    if (ref) {
+                      if (typeof ref === 'function') {
+                        ref(svgElement);
+                      } else {
+                        (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
+                      }
                     }
-                  }
-                }}
-                aria-live="polite"
-                as="svg"
-                className={cx(enableScrubbing && focusStylesCss, classNames?.chart)}
-                height="100%"
-                style={styles?.chart}
-                tabIndex={enableScrubbing ? 0 : undefined}
-                width="100%"
-              >
-                {children}
+                  }}
+                  aria-live="polite"
+                  as="svg"
+                  className={cx(enableScrubbing && focusCss, classNames?.chart)}
+                  height="100%"
+                  style={styles?.chart}
+                  tabIndex={enableScrubbing ? 0 : undefined}
+                  width="100%"
+                >
+                  {children}
+                </Box>
+                <Box ref={rightSlotRef} />
               </Box>
+              <Box ref={bottomSlotRef} />
             </Box>
           </ScrubberProvider>
         </CartesianChartProvider>

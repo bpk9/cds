@@ -1,8 +1,9 @@
-import React, { forwardRef, memo, useCallback, useMemo } from 'react';
+import { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
 import { cx } from '@coinbase/cds-web';
 import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
 import { Box, type BoxBaseProps, type BoxProps } from '@coinbase/cds-web/layout';
+import { css } from '@linaria/core';
 
 import { PolarChartProvider } from './ChartProvider';
 import {
@@ -23,6 +24,18 @@ import {
   type RadialAxisConfig,
   type RadialAxisConfigProps,
 } from './utils';
+
+const rootCss = css`
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+const middleRowCss = css`
+  display: flex;
+  flex: 1;
+  min-height: 0;
+`;
 
 export type PolarChartBaseProps = BoxBaseProps & {
   /**
@@ -162,6 +175,20 @@ export const PolarChart = memo(
       ref,
     ) => {
       const { observe, width: chartWidth, height: chartHeight } = useDimensions();
+      const topSlotRef = useRef<HTMLDivElement | null>(null);
+      const bottomSlotRef = useRef<HTMLDivElement | null>(null);
+      const leftSlotRef = useRef<HTMLDivElement | null>(null);
+      const rightSlotRef = useRef<HTMLDivElement | null>(null);
+
+      const slotRefs = useMemo(
+        () => ({
+          topRef: topSlotRef,
+          bottomRef: bottomSlotRef,
+          leftRef: leftSlotRef,
+          rightRef: rightSlotRef,
+        }),
+        [],
+      );
 
       const inset = useMemo(() => {
         return getChartInset(insetInput, defaultChartInset);
@@ -332,6 +359,7 @@ export const PolarChart = memo(
           getAngularScale,
           getRadialScale,
           dataLength,
+          slotRefs,
         }),
         [
           series,
@@ -347,11 +375,12 @@ export const PolarChart = memo(
           getAngularScale,
           getRadialScale,
           dataLength,
+          slotRefs,
         ],
       );
 
       const rootClassNames = useMemo(
-        () => cx(className, classNames?.root),
+        () => cx(rootCss, className, classNames?.root),
         [className, classNames],
       );
       const rootStyles = useMemo(() => ({ ...style, ...styles?.root }), [style, styles?.root]);
@@ -359,30 +388,43 @@ export const PolarChart = memo(
       return (
         <PolarChartProvider value={contextValue}>
           <Box
-            ref={(node) => {
-              observe(node as unknown as HTMLElement);
-            }}
             className={rootClassNames}
             height={height}
             style={rootStyles}
             width={width}
             {...props}
           >
-            <Box
-              ref={ref}
-              aria-live="polite"
-              as="svg"
-              className={classNames?.chart}
-              height="100%"
-              style={styles?.chart}
-              width="100%"
-            >
-              {children}
+            <Box ref={topSlotRef} width="100%" />
+            <Box className={middleRowCss}>
+              <Box ref={leftSlotRef} />
+              <Box
+                ref={(node) => {
+                  const svgElement = node as unknown as SVGSVGElement;
+                  observe(node as unknown as HTMLElement);
+                  // Forward the ref to the user
+                  if (ref) {
+                    if (typeof ref === 'function') {
+                      ref(svgElement);
+                    } else {
+                      (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
+                    }
+                  }
+                }}
+                aria-live="polite"
+                as="svg"
+                className={classNames?.chart}
+                height="100%"
+                style={styles?.chart}
+                width="100%"
+              >
+                {children}
+              </Box>
+              <Box ref={rightSlotRef} />
             </Box>
+            <Box ref={bottomSlotRef} />
           </Box>
         </PolarChartProvider>
       );
     },
   ),
 );
-
