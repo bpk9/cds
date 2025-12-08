@@ -97,41 +97,24 @@ type AxisConfigProps = {
   range?: Partial<AxisBounds> | ((bounds: AxisBounds) => AxisBounds);
 };
 
-/**
- * Cartesian axis configuration props (for x/y axes)
- */
-export type CartesianAxisConfigProps = AxisConfigProps & {
-  /**
-   * The type of scale to use.
-   * @default 'linear'
-   */
-  scaleType?: ChartAxisScaleType;
-  /**
-   * Domain limit type for numeric scales.
-   * - 'nice': Rounds the domain to human-friendly values
-   * - 'strict': Uses the exact min/max values from the data
-   */
-  domainLimit?: 'nice' | 'strict';
-  /**
-   * Padding between categories for band scales (0-1, where 0.1 = 10% spacing)
-   * @default 0.1
-   */
-  categoryPadding?: number;
-  /**
-   * Data for categorical axes.
-   */
-  data?: string[] | number[];
-};
+export type CartesianAxisConfigProps = Omit<CartesianAxisConfig, 'domain' | 'range'> &
+  AxisConfigProps;
 
 /**
- * Angular axis configuration props (for polar charts)
+ * Base polar axis configuration props (shared by angular and radial axes)
  */
-export type AngularAxisConfigProps = AxisConfigProps & {
+type PolarAxisConfigProps = AxisConfigProps & {
   /**
    * The type of scale to use.
    * @default 'linear'
    */
   scaleType?: Exclude<ChartAxisScaleType, 'band'>;
+};
+
+/**
+ * Angular axis configuration props (for polar charts)
+ */
+export type AngularAxisConfigProps = PolarAxisConfigProps & {
   /**
    * Padding angle between slices in degrees.
    * @default 0
@@ -142,13 +125,7 @@ export type AngularAxisConfigProps = AxisConfigProps & {
 /**
  * Radial axis configuration props (for polar charts)
  */
-export type RadialAxisConfigProps = AxisConfigProps & {
-  /**
-   * The type of scale to use.
-   * @default 'linear'
-   */
-  scaleType?: Exclude<ChartAxisScaleType, 'band'>;
-};
+export type RadialAxisConfigProps = PolarAxisConfigProps;
 
 /**
  * Gets a D3 scale for a polar axis.
@@ -434,50 +411,29 @@ export const getCartesianAxisDomain = (
  * @returns The calculated axis bounds
  */
 export const getPolarAxisDomain = (
-  axisParam: CartesianAxisConfigProps,
+  axisParam: PolarAxisConfigProps,
   series: PolarSeries[],
   axisType: 'angular' | 'radial',
 ): AxisBounds => {
-  let dataDomain: AxisBounds | null = null;
-
-  if (axisParam.data && Array.isArray(axisParam.data) && axisParam.data.length > 0) {
-    const firstItem = axisParam.data[0];
-
-    if (typeof firstItem === 'number') {
-      const numericData = axisParam.data as number[];
-      dataDomain = {
-        min: Math.min(...numericData),
-        max: Math.max(...numericData),
-      };
-    } else if (typeof firstItem === 'string') {
-      dataDomain = {
-        min: 0,
-        max: axisParam.data.length - 1,
-      };
-    }
-  }
-
   // Calculate domain from series data
   const seriesDomain =
     axisType === 'angular' ? getPolarAngularDomain(series) : getPolarRadialRange(series);
-
-  const preferredDataDomain = dataDomain ?? seriesDomain;
 
   const bounds = axisParam.domain;
   let finalDomain: Partial<AxisBounds>;
 
   if (typeof bounds === 'function') {
     finalDomain = bounds({
-      min: preferredDataDomain.min ?? 0,
-      max: preferredDataDomain.max ?? 0,
+      min: seriesDomain.min ?? 0,
+      max: seriesDomain.max ?? 0,
     });
   } else if (bounds && typeof bounds === 'object') {
     finalDomain = {
-      min: bounds.min ?? preferredDataDomain.min,
-      max: bounds.max ?? preferredDataDomain.max,
+      min: bounds.min ?? seriesDomain.min,
+      max: bounds.max ?? seriesDomain.max,
     };
   } else {
-    finalDomain = preferredDataDomain;
+    finalDomain = seriesDomain;
   }
 
   return {

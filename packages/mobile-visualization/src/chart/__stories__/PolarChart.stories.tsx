@@ -17,6 +17,8 @@ import { getArcPath } from '../utils';
 const DonutCenterLabel = memo<Omit<ChartTextProps, 'x' | 'y'>>(({ children, ...props }) => {
   const { drawingArea } = usePolarChartContext();
 
+  if (drawingArea.width <= 0 || drawingArea.height <= 0) return;
+
   const centerX = drawingArea.x + drawingArea.width / 2;
   const centerY = drawingArea.y + drawingArea.height / 2;
 
@@ -713,6 +715,62 @@ const CoinbaseOneRewardsChart = () => {
   );
 };
 
+const AnimatedDataChange = () => {
+  const theme = useTheme();
+  const [dataSet, setDataSet] = useState(0);
+
+  const dataSets = useMemo(
+    () => [
+      [
+        { id: 'a', data: 30, label: 'A', color: `rgb(${theme.spectrum.blue40})` },
+        { id: 'b', data: 40, label: 'B', color: `rgb(${theme.spectrum.green40})` },
+        { id: 'c', data: 30, label: 'C', color: `rgb(${theme.spectrum.orange40})` },
+      ],
+      [
+        { id: 'a', data: 60, label: 'A', color: `rgb(${theme.spectrum.blue40})` },
+        { id: 'b', data: 20, label: 'B', color: `rgb(${theme.spectrum.green40})` },
+        { id: 'c', data: 20, label: 'C', color: `rgb(${theme.spectrum.orange40})` },
+      ],
+      [
+        { id: 'a', data: 15, label: 'A', color: `rgb(${theme.spectrum.blue40})` },
+        { id: 'b', data: 55, label: 'B', color: `rgb(${theme.spectrum.green40})` },
+        { id: 'c', data: 30, label: 'C', color: `rgb(${theme.spectrum.orange40})` },
+      ],
+    ],
+    [theme],
+  );
+
+  return (
+    <VStack alignItems="center" gap={4}>
+      <DonutChart
+        animate
+        height={200}
+        innerRadiusRatio={0.5}
+        inset={0}
+        series={dataSets[dataSet]}
+        width={200}
+      />
+      <HStack alignItems="center" gap={2}>
+        <IconButton
+          accessibilityHint="Switch to previous data set"
+          accessibilityLabel="Previous"
+          name="arrowLeft"
+          onPress={() => setDataSet((prev) => (prev - 1 + dataSets.length) % dataSets.length)}
+          variant="secondary"
+        />
+        <Text font="label1">Data Set {dataSet + 1}</Text>
+        <IconButton
+          accessibilityHint="Switch to next data set"
+          accessibilityLabel="Next"
+          name="arrowRight"
+          onPress={() => setDataSet((prev) => (prev + 1) % dataSets.length)}
+          variant="secondary"
+        />
+      </HStack>
+    </VStack>
+  );
+};
+
 const WalletBreakdownDonut = () => {
   const theme = useTheme();
 
@@ -748,6 +806,7 @@ function ExampleNavigator() {
       { title: 'Basic Pie Chart', component: <BasicPieChart /> },
       { title: 'Basic Donut Chart', component: <BasicDonutChart /> },
       { title: 'Donut with Center Label', component: <DonutWithCenterLabel /> },
+      { title: 'Animated Data Change', component: <AnimatedDataChange /> },
       { title: 'Wallet Breakdown', component: <WalletBreakdownDonut /> },
       { title: 'Semicircle', component: <SemicircleChart /> },
       { title: 'Variable Radius', component: <VariableRadiusPieChart /> },

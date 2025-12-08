@@ -256,7 +256,11 @@ describe('getCartesianAxisDomain', () => {
       { id: 'series2', data: [10, 20, 30] },
     ];
 
-    const result = getCartesianAxisDomain({ id: 'x' }, series, 'x');
+    const result = getCartesianAxisDomain(
+      { id: 'x', scaleType: 'linear', domainLimit: 'strict' },
+      series,
+      'x',
+    );
 
     expect(result.min).toBe(0);
     expect(result.max).toBe(4); // Longest series has 5 items (indices 0-4)
@@ -268,7 +272,11 @@ describe('getCartesianAxisDomain', () => {
       { id: 'series2', data: [2, 8, 4] },
     ];
 
-    const result = getCartesianAxisDomain({ id: 'y' }, series, 'y');
+    const result = getCartesianAxisDomain(
+      { id: 'y', scaleType: 'linear', domainLimit: 'nice' },
+      series,
+      'y',
+    );
 
     expect(result.min).toBe(1);
     expect(result.max).toBe(8);
@@ -277,7 +285,11 @@ describe('getCartesianAxisDomain', () => {
   it('should use explicit domain bounds when provided', () => {
     const series: CartesianSeries[] = [{ id: 'series1', data: [1, 2, 3] }];
 
-    const result = getCartesianAxisDomain({ id: 'y', domain: { min: 0, max: 100 } }, series, 'y');
+    const result = getCartesianAxisDomain(
+      { id: 'y', scaleType: 'linear', domainLimit: 'nice', domain: { min: 0, max: 100 } },
+      series,
+      'y',
+    );
 
     expect(result.min).toBe(0);
     expect(result.max).toBe(100);
@@ -287,7 +299,12 @@ describe('getCartesianAxisDomain', () => {
     const series: CartesianSeries[] = [{ id: 'series1', data: [10, 20, 30] }];
 
     const result = getCartesianAxisDomain(
-      { id: 'y', domain: (bounds) => ({ min: bounds.min - 5, max: bounds.max + 5 }) },
+      {
+        id: 'y',
+        scaleType: 'linear',
+        domainLimit: 'nice',
+        domain: (bounds) => ({ min: bounds.min - 5, max: bounds.max + 5 }),
+      },
       series,
       'y',
     );
@@ -300,7 +317,7 @@ describe('getCartesianAxisDomain', () => {
     const series: CartesianSeries[] = [{ id: 'series1', data: [1, 2, 3] }];
 
     const result = getCartesianAxisDomain(
-      { id: 'x', data: ['Jan', 'Feb', 'Mar', 'Apr'] },
+      { id: 'x', scaleType: 'band', domainLimit: 'strict', data: ['Jan', 'Feb', 'Mar', 'Apr'] },
       series,
       'x',
     );

@@ -178,12 +178,12 @@ export const CartesianChart = memo(
         const range = getAxisRange(xAxisConfig, chartRect, 'x');
 
         const axisConfig: CartesianAxisConfig = {
-          scaleType: xAxisConfig.scaleType ?? 'linear',
+          scaleType: xAxisConfig.scaleType,
           domain,
           range,
           data: xAxisConfig.data,
           categoryPadding: xAxisConfig.categoryPadding,
-          domainLimit: xAxisConfig.domainLimit ?? 'strict',
+          domainLimit: xAxisConfig.domainLimit,
         };
 
         // Create the scale
@@ -234,12 +234,12 @@ export const CartesianChart = memo(
           const range = getAxisRange(axisParam, chartRect, 'y');
 
           const axisConfig: CartesianAxisConfig = {
-            scaleType: axisParam.scaleType ?? 'linear',
+            scaleType: axisParam.scaleType,
             domain: dataDomain,
             range,
             data: axisParam.data,
             categoryPadding: axisParam.categoryPadding,
-            domainLimit: axisParam.domainLimit ?? 'nice',
+            domainLimit: axisParam.domainLimit,
           };
 
           // Create the scale

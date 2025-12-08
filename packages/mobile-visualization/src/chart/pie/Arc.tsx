@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { runOnJS, useAnimatedReaction, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Group, Path as SkiaPath, Skia } from '@shopify/react-native-skia';
 
@@ -91,11 +91,13 @@ export const Arc = memo<ArcProps>(
     const { animate: contextAnimate, drawingArea, getAngularAxis } = usePolarChartContext();
     const animate = animateProp !== undefined ? animateProp : contextAnimate;
 
+    // Get the angular axis to determine the baseline angle
+    const angularAxis = getAngularAxis(angularAxisId ?? defaultAxisId);
+
     const baselineAngle = useMemo(() => {
-      const angularAxis = getAngularAxis(angularAxisId ?? defaultAxisId);
       const startDegrees = angularAxis?.range?.min ?? 0;
       return degreesToRadians(startDegrees);
-    }, [getAngularAxis, angularAxisId]);
+    }, [angularAxis?.range?.min]);
 
     const { centerX, centerY } = useMemo(
       () => ({
@@ -104,6 +106,9 @@ export const Arc = memo<ArcProps>(
       }),
       [drawingArea.x, drawingArea.y, drawingArea.width, drawingArea.height],
     );
+
+    // Track if this arc has completed its initial animation from baseline
+    const hasInitialAnimationStartedRef = useRef(false);
 
     const animatedStartAngle = useSharedValue(baselineAngle);
     const animatedEndAngle = useSharedValue(baselineAngle);
@@ -152,20 +157,44 @@ export const Arc = memo<ArcProps>(
 
     // Trigger animation when the component mounts or data changes
     useEffect(() => {
+      // Don't start animation until axis is ready (has valid baseline)
+      if (!angularAxis) return;
+
       if (animate) {
-        animatedStartAngle.value = baselineAngle;
-        animatedEndAngle.value = baselineAngle;
+        // Determine the starting point for animation:
+        // - Initial mount: start from baseline angle (e.g., -90° for semicircle)
+        // - Data change: start from current animated position (smooth transition)
+        const isInitialAnimation = !hasInitialAnimationStartedRef.current;
+
+        if (isInitialAnimation) {
+          // Initial animation: reset to baseline first, then animate to target
+          animatedStartAngle.value = baselineAngle;
+          animatedEndAngle.value = baselineAngle;
+        }
+        // For data changes, withTiming automatically starts from current value
+
         animatedStartAngle.value = withTiming(startAngle, {
-          duration: 1000,
+          duration: isInitialAnimation ? 1000 : 500, // Slower for initial, faster for data updates
         });
         animatedEndAngle.value = withTiming(endAngle, {
-          duration: 1000,
+          duration: isInitialAnimation ? 1000 : 500,
         });
+
+        // Mark that initial animation has started
+        hasInitialAnimationStartedRef.current = true;
       } else {
         animatedStartAngle.value = startAngle;
         animatedEndAngle.value = endAngle;
       }
-    }, [startAngle, endAngle, animate, animatedStartAngle, animatedEndAngle, baselineAngle]);
+    }, [
+      startAngle,
+      endAngle,
+      animate,
+      animatedStartAngle,
+      animatedEndAngle,
+      baselineAngle,
+      angularAxis,
+    ]);
 
     // Static path for non-animated rendering
     const staticPath = useMemo(() => {
@@ -186,7 +215,8 @@ export const Arc = memo<ArcProps>(
       return Skia.Path.MakeFromSVGString(clipPathId) ?? null;
     }, [clipPathId]);
 
-    if (outerRadius <= 0) return;
+    // Don't render until axis is ready and we have valid radius
+    if (!angularAxis || outerRadius <= 0) return;
 
     const path = animate ? animatedPath : staticPath;
     const isFilled = fill !== undefined && fill !== 'none';
