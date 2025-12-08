@@ -4,7 +4,7 @@ import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
 
 import { XAxis, YAxis } from '../../axis';
-import { type BarComponentProps, BarPlot, DefaultBar } from '../../bar';
+import { type BarComponentProps, BarPlot, type BarSeries, DefaultBar } from '../../bar';
 import { CartesianChart } from '../../CartesianChart';
 import { useCartesianChartContext } from '../../ChartProvider';
 import { ChartTooltip } from '../../ChartTooltip';
@@ -12,7 +12,7 @@ import { DonutChart } from '../../DonutChart';
 import { LineChart } from '../../line';
 import { PieChart } from '../../pie';
 import { Scrubber } from '../../scrubber';
-import type { LegendShapeVariant } from '../../utils/chart';
+import type { CartesianSeries, LegendShapeVariant } from '../../utils/chart';
 import { useScrubberContext } from '../../utils/context';
 import { type LegendItemProps } from '../DefaultLegendItem';
 import { DefaultLegendShape } from '../DefaultLegendShape';
@@ -112,6 +112,7 @@ const Basic = () => {
           tickLabelFormatter: numberFormatter,
         }}
       >
+        <Scrubber hideBeaconLabels />
         <Legend position="right" />
       </LineChart>
     </Example>
@@ -212,7 +213,7 @@ const AutoScale = () => {
             showTickMarks: true,
           }}
         >
-          <Scrubber hideOverlay />
+          <Scrubber hideBeaconLabels hideOverlay />
           <Legend position="bottom" />
           <ChartTooltip valueFormatter={(value) => `${value} in`} />
         </LineChart>
@@ -351,27 +352,27 @@ const DynamicData = () => {
     'Dec',
   ];
 
-  const series = [
+  const series: CartesianSeries[] = [
     {
       id: 'candidate-a',
       label: 'Candidate A',
       data: [48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 38],
       color: 'rgb(var(--blue40))',
-      legendIndicator: 'circle' as const,
+      legendShape: 'circle',
     },
     {
       id: 'candidate-b',
       label: 'Candidate B',
       data: [null, null, null, 6, 10, 14, 18, 22, 26, 29, 32, 35],
       color: 'rgb(var(--orange40))',
-      legendIndicator: 'circle' as const,
+      legendShape: 'circle',
     },
     {
       id: 'candidate-c',
       label: 'Candidate C',
       data: [52, 53, 54, 49, 46, 43, 40, 37, 34, 32, 30, 27],
       color: 'rgb(var(--gray40))',
-      legendIndicator: 'circle' as const,
+      legendShape: 'circle',
     },
   ];
 
@@ -425,7 +426,7 @@ const DynamicData = () => {
             tickLabelFormatter: (value) => `${value}%`,
           }}
         >
-          <Scrubber />
+          <Scrubber hideBeaconLabels />
           <Legend ItemComponent={ValueLegendItem} justifyContent="flex-start" paddingX={2} />
         </LineChart>
       </VStack>
@@ -611,6 +612,161 @@ const PieChartLegend = () => {
   );
 };
 
+const LegendShapes = () => {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  // Actual revenue (first 9 months)
+  const actualRevenue = [320, 380, 420, 390, 450, 480, 520, 490, 540, null, null, null];
+
+  // Forecasted revenue (last 3 months)
+  const forecastRevenue = [null, null, null, null, null, null, null, null, null, 580, 620, 680];
+
+  const numberFormatter = useCallback(
+    (value: number) =>
+      `$${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)}k`,
+    [],
+  );
+
+  // Pattern settings for dotted fill
+  const patternSize = 4;
+  const dotSize = 1;
+  const patternId = useId();
+  const maskId = useId();
+  const legendPatternId = useId();
+
+  // Custom legend indicator that matches the dotted bar pattern
+  const DottedLegendIndicator = (
+    <svg height={10} viewBox="0 0 10 10" width={10}>
+      <defs>
+        <pattern
+          height={patternSize / 2}
+          id={legendPatternId}
+          patternUnits="userSpaceOnUse"
+          width={patternSize / 2}
+        >
+          <circle cx={patternSize / 4} cy={patternSize / 4} fill="white" r={dotSize / 2} />
+        </pattern>
+        <mask id={`${legendPatternId}-mask`}>
+          <rect fill={`url(#${legendPatternId})`} height={8} rx={2} width={8} x={1} y={1} />
+        </mask>
+      </defs>
+      <g mask={`url(#${legendPatternId}-mask)`}>
+        <rect fill="var(--color-fgPositive)" height={8} rx={2} width={8} x={1} y={1} />
+      </g>
+      <rect
+        fill="transparent"
+        height={8}
+        rx={2}
+        stroke="var(--color-fgPositive)"
+        strokeWidth={2}
+        width={8}
+        x={1}
+        y={1}
+      />
+    </svg>
+  );
+
+  // Custom bar component that renders bars with dotted pattern fill
+  const DottedBarComponent = memo<BarComponentProps>(function DottedBarComponent(props) {
+    const { dataX, x, y } = props;
+    // Create unique IDs per bar so patterns are scoped to each bar
+    const uniqueMaskId = `${maskId}-${dataX}`;
+    const uniquePatternId = `${patternId}-${dataX}`;
+    return (
+      <>
+        <defs>
+          {/* Pattern positioned relative to this bar's origin */}
+          <pattern
+            height={patternSize}
+            id={uniquePatternId}
+            patternUnits="userSpaceOnUse"
+            width={patternSize}
+            x={x}
+            y={y}
+          >
+            <circle cx={patternSize / 2} cy={patternSize / 2} fill="white" r={dotSize} />
+          </pattern>
+          <mask id={uniqueMaskId}>
+            <DefaultBar {...props} fill={`url(#${uniquePatternId})`} />
+          </mask>
+        </defs>
+        <g mask={`url(#${uniqueMaskId})`}>
+          <DefaultBar {...props} />
+        </g>
+        <DefaultBar {...props} fill="transparent" stroke={props.fill} strokeWidth={4} />
+      </>
+    );
+  });
+
+  return (
+    <Example title="Legend Indicators">
+      <VStack gap={2}>
+        <Text font="headline" textAlign="center">
+          Annual Revenue
+        </Text>
+        <CartesianChart
+          height={{ base: 200, tablet: 250, desktop: 300 }}
+          inset={0}
+          series={
+            [
+              {
+                id: 'actual',
+                label: 'Historical',
+                data: actualRevenue,
+                color: 'var(--color-fgPositive)',
+                legendShape: 'squircle',
+                stackId: 'revenue',
+              },
+              {
+                id: 'forecast',
+                label: 'Forecasted',
+                data: forecastRevenue,
+                color: 'var(--color-fgPositive)',
+                legendShape: DottedLegendIndicator,
+                stackId: 'revenue',
+                BarComponent: DottedBarComponent,
+              },
+            ] as BarSeries[]
+          }
+          xAxis={{
+            data: months,
+            scaleType: 'band',
+          }}
+          yAxis={{
+            domain: { min: 0 },
+          }}
+        >
+          <XAxis showLine showTickMarks />
+          <YAxis
+            showGrid
+            showLine
+            showTickMarks
+            position="left"
+            requestedTickCount={5}
+            tickLabelFormatter={numberFormatter}
+            width={60}
+          />
+          <BarPlot />
+          <Legend />
+        </CartesianChart>
+      </VStack>
+    </Example>
+  );
+};
+
 const DonutChartLegend = () => {
   const series = [
     {
@@ -662,6 +818,7 @@ export const All = () => {
       <Interactive />
       <PieChartLegend />
       <DonutChartLegend />
+      <LegendShapes />
     </VStack>
   );
 };
