@@ -36,13 +36,13 @@ type ChartCanvasProps = {
 };
 
 const ChartCanvas = memo(({ children, style, onLayout }: ChartCanvasProps) => {
-  const ContextBridge = useChartContextBridge();
+    const ContextBridge = useChartContextBridge();
 
-  return (
+    return (
     <Canvas onLayout={onLayout} style={[{ flex: 1, width: '100%' }, style]}>
-      <ContextBridge>{children}</ContextBridge>
-    </Canvas>
-  );
+        <ContextBridge>{children}</ContextBridge>
+      </Canvas>
+    );
 });
 
 export type LegendPosition = 'top' | 'bottom' | 'left' | 'right';
