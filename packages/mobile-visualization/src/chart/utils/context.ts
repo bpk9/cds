@@ -9,9 +9,18 @@ import type { CartesianSeries, PolarSeries, Series } from './chart';
 import type { ChartScaleFunction, SerializableScale } from './scale';
 
 /**
+ * Chart context type discriminator.
+ */
+export type ChartType = 'cartesian' | 'polar';
+
+/**
  * Base context value for all chart types.
  */
 export type ChartContextValue = {
+  /**
+   * The type of chart.
+   */
+  type: ChartType;
   /**
    * The series data for the chart.
    * Contains common series properties (id, label, color, legendShape).
@@ -56,7 +65,11 @@ export type ChartContextValue = {
  * Context value for Cartesian (X/Y) coordinate charts.
  * Contains axis-specific methods and properties for rectangular coordinate systems.
  */
-export type CartesianChartContextValue = Omit<ChartContextValue, 'series'> & {
+export type CartesianChartContextValue = Omit<ChartContextValue, 'series' | 'type'> & {
+  /**
+   * The type of chart.
+   */
+  type: 'cartesian';
   /**
    * The series data for the chart.
    */
@@ -122,7 +135,11 @@ export type CartesianChartContextValue = Omit<ChartContextValue, 'series'> & {
  * Context value for Polar (Angular/Radial) coordinate charts.
  * Contains axis-specific methods and properties for polar coordinate systems.
  */
-export type PolarChartContextValue = Omit<ChartContextValue, 'series'> & {
+export type PolarChartContextValue = Omit<ChartContextValue, 'series' | 'type'> & {
+  /**
+   * The type of chart.
+   */
+  type: 'polar';
   /**
    * The series data for the chart.
    */

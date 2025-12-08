@@ -361,6 +361,7 @@ export const PolarChart = memo(
 
       const contextValue: PolarChartContextValue = useMemo(
         () => ({
+          type: 'polar',
           series: series ?? [],
           getSeries,
           getSeriesData,

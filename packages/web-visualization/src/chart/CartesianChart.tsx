@@ -394,6 +394,7 @@ export const CartesianChart = memo(
 
       const contextValue: CartesianChartContextValue = useMemo(
         () => ({
+          type: 'cartesian',
           series: series ?? [],
           getSeries,
           getSeriesData: getStackedSeriesData,
