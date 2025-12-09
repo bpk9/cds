@@ -145,9 +145,7 @@ export const PiePlot = memo<PiePlotProps>(
       paddingAngleDegrees,
     ]);
 
-    if (!arcs.length) {
-      return null;
-    }
+    if (!arcs.length) return;
 
     return arcs.map((arc) => {
       const data = seriesData[arc.index];

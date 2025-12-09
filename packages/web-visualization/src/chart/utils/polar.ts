@@ -53,7 +53,7 @@ export const getRadialAxisPixels = (
 /**
  * Calculates arc geometry for pie/donut chart slices using D3's pie generator.
  *
- * All angle inputs are in degrees for user convenience; outputs are in radians for rendering.
+ * All angle inputs are in degrees; outputs are in radians for rendering.
  *
  * @param values - Array of numeric values for each slice
  * @param innerRadius - Inner radius in pixels
