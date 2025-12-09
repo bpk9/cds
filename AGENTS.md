@@ -15,6 +15,7 @@ Runtime: NodeJS (see .nvmrc for version)
   3. run the formatter
 - For complex tasks, ask clarifying questions to the user before executing
 - ALWAYS look for relevant skills and rules you can apply before beginning your work
+- Always create Linear issues from this project in the "Design Systems" (UIS) team
 
 ## Core Commands
 
