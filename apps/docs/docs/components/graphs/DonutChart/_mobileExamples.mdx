@@ -11,7 +11,7 @@ The only prop required is `series`, which takes an array of series objects. Each
 ```jsx
 function BasicDonutChart() {
   const theme = useTheme();
-  
+
   return (
     <DonutChart
       height={200}
@@ -34,7 +34,7 @@ You can control the size of the center hole using `innerRadiusRatio` (0-1). The 
 ```jsx
 function InnerRadiusExamples() {
   const theme = useTheme();
-  
+
   return (
     <HStack gap={4} justifyContent="center">
       <VStack alignItems="center" gap={2}>
@@ -47,7 +47,9 @@ function InnerRadiusExamples() {
             { id: 'b', data: 40, color: `rgb(${theme.spectrum.green40})` },
           ]}
         />
-        <Text font="label2" color="fgMuted">0.3</Text>
+        <Text font="label2" color="fgMuted">
+          0.3
+        </Text>
       </VStack>
       <VStack alignItems="center" gap={2}>
         <DonutChart
@@ -59,7 +61,9 @@ function InnerRadiusExamples() {
             { id: 'b', data: 40, color: `rgb(${theme.spectrum.green40})` },
           ]}
         />
-        <Text font="label2" color="fgMuted">0.5</Text>
+        <Text font="label2" color="fgMuted">
+          0.5
+        </Text>
       </VStack>
       <VStack alignItems="center" gap={2}>
         <DonutChart
@@ -71,7 +75,9 @@ function InnerRadiusExamples() {
             { id: 'b', data: 40, color: `rgb(${theme.spectrum.green40})` },
           ]}
         />
-        <Text font="label2" color="fgMuted">0.75</Text>
+        <Text font="label2" color="fgMuted">
+          0.75
+        </Text>
       </VStack>
     </HStack>
   );
@@ -87,7 +93,7 @@ Use `cornerRadius` to round the corners of each slice.
 ```jsx
 function CornerRadiusExample() {
   const theme = useTheme();
-  
+
   return (
     <HStack gap={4} justifyContent="center">
       <DonutChart
@@ -122,7 +128,7 @@ Use `stroke` and `strokeWidth` to add borders between slices.
 ```jsx
 function StrokeExample() {
   const theme = useTheme();
-  
+
   return (
     <DonutChart
       height={200}
@@ -148,7 +154,7 @@ Use `angularAxis` with `paddingAngle` to add gaps between slices.
 ```jsx
 function PaddingExample() {
   const theme = useTheme();
-  
+
   return (
     <DonutChart
       height={200}
@@ -174,15 +180,15 @@ You can add a label in the center of the donut by using [PolarChart](/components
 ```jsx
 function DonutWithCenterLabel() {
   const theme = useTheme();
-  
+
   const DonutCenterLabel = memo(({ children, ...props }) => {
     const { drawingArea } = usePolarChartContext();
-    
+
     if (drawingArea.width <= 0 || drawingArea.height <= 0) return null;
-    
+
     const centerX = drawingArea.x + drawingArea.width / 2;
     const centerY = drawingArea.y + drawingArea.height / 2;
-    
+
     return (
       <ChartText {...props} x={centerX} y={centerY}>
         {children}
@@ -225,23 +231,26 @@ function AnimatedDonutChart() {
   const theme = useTheme();
   const [dataSet, setDataSet] = useState(0);
 
-  const dataSets = useMemo(() => [
-    [
-      { id: 'a', data: 30, label: 'A', color: `rgb(${theme.spectrum.blue40})` },
-      { id: 'b', data: 40, label: 'B', color: `rgb(${theme.spectrum.green40})` },
-      { id: 'c', data: 30, label: 'C', color: `rgb(${theme.spectrum.orange40})` },
+  const dataSets = useMemo(
+    () => [
+      [
+        { id: 'a', data: 30, label: 'A', color: `rgb(${theme.spectrum.blue40})` },
+        { id: 'b', data: 40, label: 'B', color: `rgb(${theme.spectrum.green40})` },
+        { id: 'c', data: 30, label: 'C', color: `rgb(${theme.spectrum.orange40})` },
+      ],
+      [
+        { id: 'a', data: 60, label: 'A', color: `rgb(${theme.spectrum.blue40})` },
+        { id: 'b', data: 20, label: 'B', color: `rgb(${theme.spectrum.green40})` },
+        { id: 'c', data: 20, label: 'C', color: `rgb(${theme.spectrum.orange40})` },
+      ],
+      [
+        { id: 'a', data: 15, label: 'A', color: `rgb(${theme.spectrum.blue40})` },
+        { id: 'b', data: 55, label: 'B', color: `rgb(${theme.spectrum.green40})` },
+        { id: 'c', data: 30, label: 'C', color: `rgb(${theme.spectrum.orange40})` },
+      ],
     ],
-    [
-      { id: 'a', data: 60, label: 'A', color: `rgb(${theme.spectrum.blue40})` },
-      { id: 'b', data: 20, label: 'B', color: `rgb(${theme.spectrum.green40})` },
-      { id: 'c', data: 20, label: 'C', color: `rgb(${theme.spectrum.orange40})` },
-    ],
-    [
-      { id: 'a', data: 15, label: 'A', color: `rgb(${theme.spectrum.blue40})` },
-      { id: 'b', data: 55, label: 'B', color: `rgb(${theme.spectrum.green40})` },
-      { id: 'c', data: 30, label: 'C', color: `rgb(${theme.spectrum.orange40})` },
-    ],
-  ], [theme]);
+    [theme],
+  );
 
   return (
     <VStack alignItems="center" gap={4}>
@@ -283,13 +292,16 @@ A common use case for donut charts is showing portfolio or wallet breakdowns.
 ```jsx
 function PortfolioBreakdown() {
   const theme = useTheme();
-  
-  const series = useMemo(() => [
-    { id: 'crypto', data: 45000, label: 'Crypto', color: `rgb(${theme.spectrum.blue40})` },
-    { id: 'cash', data: 30000, label: 'Cash', color: `rgb(${theme.spectrum.green40})` },
-    { id: 'rewards', data: 15000, label: 'Rewards', color: `rgb(${theme.spectrum.purple40})` },
-    { id: 'nft', data: 10000, label: 'NFTs', color: `rgb(${theme.spectrum.orange40})` },
-  ], [theme]);
+
+  const series = useMemo(
+    () => [
+      { id: 'crypto', data: 45000, label: 'Crypto', color: `rgb(${theme.spectrum.blue40})` },
+      { id: 'cash', data: 30000, label: 'Cash', color: `rgb(${theme.spectrum.green40})` },
+      { id: 'rewards', data: 15000, label: 'Rewards', color: `rgb(${theme.spectrum.purple40})` },
+      { id: 'nft', data: 10000, label: 'NFTs', color: `rgb(${theme.spectrum.orange40})` },
+    ],
+    [theme],
+  );
 
   const total = series.reduce((sum, s) => sum + s.data, 0);
 
@@ -343,7 +355,7 @@ For smaller spaces, you can create a compact donut chart.
 ```jsx
 function CompactDonut() {
   const theme = useTheme();
-  
+
   return (
     <HStack gap={4}>
       <HStack gap={2} alignItems="center">
@@ -358,7 +370,9 @@ function CompactDonut() {
         />
         <VStack gap={0}>
           <Text font="label1">75%</Text>
-          <Text font="label2" color="fgMuted">Complete</Text>
+          <Text font="label2" color="fgMuted">
+            Complete
+          </Text>
         </VStack>
       </HStack>
       <HStack gap={2} alignItems="center">
@@ -373,7 +387,9 @@ function CompactDonut() {
         />
         <VStack gap={0}>
           <Text font="label1">30%</Text>
-          <Text font="label2" color="fgMuted">In Progress</Text>
+          <Text font="label2" color="fgMuted">
+            In Progress
+          </Text>
         </VStack>
       </HStack>
     </HStack>
@@ -388,7 +404,7 @@ A stylized wallet breakdown with rounded slices and padding.
 ```jsx
 function WalletBreakdown() {
   const theme = useTheme();
-  
+
   return (
     <DonutChart
       animate

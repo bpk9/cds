@@ -7,7 +7,12 @@ import {
   type CartesianChartBaseProps,
   type CartesianChartProps,
 } from '../CartesianChart';
-import { type CartesianAxisConfigProps, defaultChartInset, defaultStackId, getChartInset } from '../utils';
+import {
+  type CartesianAxisConfigProps,
+  defaultChartInset,
+  defaultStackId,
+  getChartInset,
+} from '../utils';
 
 import { BarPlot, type BarPlotProps } from './BarPlot';
 import type { BarSeries } from './BarStack';

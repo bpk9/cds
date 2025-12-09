@@ -85,15 +85,15 @@ The Scrubber component **only reads** from HighlightContext. It doesn't track mo
 export const Scrubber = () => {
   const { highlightedItem, enableHighlighting } = useHighlightContext();
   const { getXScale, drawingArea } = useCartesianChartContext();
-  
+
   // Only render if highlighting is enabled and we have a dataIndex
   if (!enableHighlighting || highlightedItem?.dataIndex === undefined) {
     return null;
   }
-  
+
   const xScale = getXScale();
   const x = xScale(highlightedItem.dataIndex);
-  
+
   return (
     <line
       x1={x}
@@ -119,23 +119,23 @@ Mouse tracking happens via an interaction layer (transparent rect over chart are
 export const ChartInteractionLayer = () => {
   const { setHighlightedItem, enableHighlighting } = useHighlightContext();
   const { getXScale, drawingArea, ref } = useCartesianChartContext();
-  
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!enableHighlighting) return;
-    
+
     const xScale = getXScale();
     const dataIndex = getDataIndexFromPointer(e, xScale, drawingArea);
-    
+
     setHighlightedItem((prev) => ({
       ...prev,        // Preserve seriesId if element is hovered
       dataIndex,      // Update position
     }));
   }, [enableHighlighting, getXScale, drawingArea, setHighlightedItem]);
-  
+
   const handleMouseLeave = useCallback(() => {
     setHighlightedItem(undefined);  // Clear everything on leave
   }, [setHighlightedItem]);
-  
+
   return (
     <rect
       x={drawingArea.x}
@@ -157,23 +157,23 @@ Individual elements (bars, lines, areas) add `seriesId` while preserving `dataIn
 ```typescript
 const Bar = ({ seriesId, dataIndex, ...props }) => {
   const { setHighlightedItem, highlightedItem } = useHighlightContext();
-  
+
   const handleMouseEnter = () => {
     setHighlightedItem((prev) => ({
       ...prev,        // Keep dataIndex from interaction layer
       seriesId,       // Add this series
     }));
   };
-  
+
   const handleMouseLeave = () => {
     setHighlightedItem((prev) => ({
       dataIndex: prev?.dataIndex,  // Keep position
       // seriesId removed
     }));
   };
-  
+
   return (
-    <rect 
+    <rect
       {...props}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -239,7 +239,7 @@ For polar charts, there's no scrubbing - elements directly set both values:
 ```typescript
 const Arc = ({ seriesId, dataIndex, ...props }) => {
   const { setHighlightedItem } = useHighlightContext();
-  
+
   return (
     <path
       {...props}
@@ -252,14 +252,14 @@ const Arc = ({ seriesId, dataIndex, ...props }) => {
 
 ## Component Responsibilities
 
-| Component | Reads | Writes | Purpose |
-|-----------|-------|--------|---------|
-| `ChartInteractionLayer` | - | `{ dataIndex }` | Track pointer x-position |
-| `Bar`, `Line`, `Area` | - | `{ seriesId }` (adds to existing) | Element hover |
-| `Arc` (polar) | - | `{ seriesId, dataIndex }` | Slice hover |
-| `Scrubber` | `dataIndex` | - | Render vertical line |
-| `ChartTooltip` | `highlightedItem` | - | Show data |
-| `SeriesPath` | `seriesId` | - | Visual emphasis |
+| Component               | Reads             | Writes                            | Purpose                  |
+| ----------------------- | ----------------- | --------------------------------- | ------------------------ |
+| `ChartInteractionLayer` | -                 | `{ dataIndex }`                   | Track pointer x-position |
+| `Bar`, `Line`, `Area`   | -                 | `{ seriesId }` (adds to existing) | Element hover            |
+| `Arc` (polar)           | -                 | `{ seriesId, dataIndex }`         | Slice hover              |
+| `Scrubber`              | `dataIndex`       | -                                 | Render vertical line     |
+| `ChartTooltip`          | `highlightedItem` | -                                 | Show data                |
+| `SeriesPath`            | `seriesId`        | -                                 | Visual emphasis          |
 
 ## Props
 
