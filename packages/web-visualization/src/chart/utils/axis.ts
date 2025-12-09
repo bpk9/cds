@@ -44,8 +44,8 @@ export type CartesianAxisConfig = AxisConfig & {
   scaleType: ChartAxisScaleType;
   /**
    * Domain limit type for numeric scales
-   * - 'nice': Rounds the domain to human-friendly values
-   * - 'strict': Uses the exact min/max values from the data
+   * - 'nice' (default for y axes): Rounds the domain to human-friendly values (e.g., 0-100 instead of 1.2-97.8)
+   * - 'strict' (default for x axes): Uses the exact min/max values from the data
    */
   domainLimit: 'nice' | 'strict';
   /**
@@ -951,7 +951,7 @@ export type RegisteredAxis = {
 
 /**
  * Calculates the total amount of padding needed to render a set of axes on the main drawing area of the chart.
- * Returns the registed axes, an API for adding/removing axes as well as the total calculated padding that must be reserved in the drawing area.
+ * Returns the registered axes, an API for adding/removing axes as well as the total calculated padding that must be reserved in the drawing area.
  */
 export const useTotalAxisPadding = () => {
   const [renderedAxes, setRenderedAxes] = useState<Map<string, RegisteredAxis>>(new Map());

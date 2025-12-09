@@ -208,7 +208,7 @@ export const Arc = memo<ArcProps>(
     ]);
 
     // Don't render until axis is ready and we have valid radius
-    if (!angularAxis || outerRadius <= 0) return null;
+    if (!angularAxis || outerRadius <= 0) return;
 
     return (
       <g
