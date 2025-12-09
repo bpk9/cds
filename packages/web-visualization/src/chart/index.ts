@@ -7,6 +7,7 @@ export * from './ChartProvider';
 export * from './ChartTooltip';
 export * from './DonutChart';
 export * from './gradient/index';
+export * from './legend/index';
 export * from './line/index';
 export * from './Path';
 export * from './PeriodSelector';

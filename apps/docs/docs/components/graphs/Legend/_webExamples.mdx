@@ -140,7 +140,7 @@ function ShapeVariants() {
       showXAxis
       showYAxis
       height={{ base: 200, tablet: 250, desktop: 300 }}
-      legend={<Legend direction="column" />}
+      legend
       legendPosition="left"
       series={[
         {
@@ -230,7 +230,7 @@ function LayoutDirection() {
       </Text>
       <PieChart
         height={{ base: 250, tablet: 300, desktop: 350 }}
-        legend={<Legend direction="column" />}
+        legend
         legendPosition="right"
         series={series}
       />
@@ -319,7 +319,7 @@ function CustomLegendItem() {
         showYAxis
         height={{ base: 200, tablet: 250, desktop: 300 }}
         legend={<Legend ItemComponent={ValueLegendItem} justifyContent="flex-start" paddingX={2} />}
-        legendPosition="bottom"
+        legendPosition="top"
         series={series}
         xAxis={{
           data: timeLabels,
@@ -441,7 +441,7 @@ function InteractiveLegend() {
         showYAxis
         height={{ base: 300, tablet: 350, desktop: 400 }}
         legend={<Legend ItemComponent={ChipLegendItem} gap={1} paddingTop={1} />}
-        legendPosition="bottom"
+        legendPosition="top"
         series={series}
         xAxis={{
           data: months,
@@ -508,7 +508,7 @@ function DonutChartLegend() {
 You can pass a custom ReactNode as `legendShape` for fully custom indicators.
 
 ```jsx live
-function CustomLegendShapes() {
+function CustomLegendShapes () {
   const months = [
     'Jan',
     'Feb',
@@ -531,13 +531,16 @@ function CustomLegendShapes() {
   const forecastRevenue = [null, null, null, null, null, null, null, null, null, 580, 620, 680];
 
   const numberFormatter = useCallback(
-    (value) => `$${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)}k`,
+    (value: number) =>
+      `$${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)}k`,
     [],
   );
 
   // Pattern settings for dotted fill
   const patternSize = 4;
   const dotSize = 1;
+  const patternId = useId();
+  const maskId = useId();
   const legendPatternId = useId();
 
   // Custom legend indicator that matches the dotted bar pattern
@@ -572,55 +575,81 @@ function CustomLegendShapes() {
     </svg>
   );
 
+  // Custom bar component that renders bars with dotted pattern fill
+  const DottedBarComponent = memo<BarComponentProps>((props) => {
+    const { dataX, x, y } = props;
+    // Create unique IDs per bar so patterns are scoped to each bar
+    const uniqueMaskId = `${maskId}-${dataX}`;
+    const uniquePatternId = `${patternId}-${dataX}`;
+    return (
+      <>
+        <defs>
+          {/* Pattern positioned relative to this bar's origin */}
+          <pattern
+            height={patternSize}
+            id={uniquePatternId}
+            patternUnits="userSpaceOnUse"
+            width={patternSize}
+            x={x}
+            y={y}
+          >
+            <circle cx={patternSize / 2} cy={patternSize / 2} fill="white" r={dotSize} />
+          </pattern>
+          <mask id={uniqueMaskId}>
+            <DefaultBar {...props} fill={`url(#${uniquePatternId})`} />
+          </mask>
+        </defs>
+        <g mask={`url(#${uniqueMaskId})`}>
+          <DefaultBar {...props} />
+        </g>
+        <DefaultBar {...props} fill="transparent" stroke={props.fill} strokeWidth={4} />
+      </>
+    );
+  });
+
   return (
-    <VStack gap={2}>
-      <Text font="headline" textAlign="center">
-        Annual Revenue
-      </Text>
-      <CartesianChart
-        legend
-        height={{ base: 200, tablet: 250, desktop: 300 }}
-        inset={0}
-        legendPosition="bottom"
-        series={[
-          {
-            id: 'actual',
-            label: 'Historical',
-            data: actualRevenue,
-            color: 'var(--color-fgPositive)',
-            legendShape: 'squircle',
-            stackId: 'revenue',
-          },
-          {
-            id: 'forecast',
-            label: 'Forecasted',
-            data: forecastRevenue,
-            color: 'var(--color-fgPositive)',
-            legendShape: DottedLegendIndicator,
-            stackId: 'revenue',
-          },
-        ]}
-        xAxis={{
-          data: months,
-          scaleType: 'band',
-        }}
-        yAxis={{
-          domain: { min: 0 },
-        }}
-      >
-        <XAxis showLine showTickMarks />
-        <YAxis
-          showGrid
-          showLine
-          showTickMarks
-          position="left"
-          requestedTickCount={5}
-          tickLabelFormatter={numberFormatter}
-          width={60}
-        />
-        <BarPlot />
-      </CartesianChart>
-    </VStack>
+    <BarChart
+      legend
+      showXAxis
+      showYAxis
+      height={{ base: 200, tablet: 250, desktop: 300 }}
+      inset={0}
+      legendPosition="top"
+      series={[
+        {
+          id: 'actual',
+          label: 'Historical',
+          data: actualRevenue,
+          color: 'var(--color-fgPositive)',
+          legendShape: 'squircle',
+          stackId: 'revenue',
+        },
+        {
+          id: 'forecast',
+          label: 'Forecasted',
+          data: forecastRevenue,
+          color: 'var(--color-fgPositive)',
+          legendShape: DottedLegendIndicator,
+          stackId: 'revenue',
+          BarComponent: DottedBarComponent,
+        },
+      ]}
+      xAxis={{
+        data: months,
+        scaleType: 'band',
+        showLine: true,
+        showTickMarks: true,
+      }}
+      yAxis={{
+        domain: { min: 0 },
+        showGrid: true,
+        showLine: true,
+        showTickMarks: true,
+        position: 'left',
+        tickLabelFormatter: numberFormatter,
+        width: 60,
+      }}
+    />
   );
-}
+};
 ```
