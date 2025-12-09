@@ -4,7 +4,7 @@ import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
 
 import { XAxis, YAxis } from '../../axis';
-import { type BarComponentProps, BarPlot, type BarSeries, DefaultBar } from '../../bar';
+import { BarChart, type BarComponentProps, BarPlot, type BarSeries, DefaultBar } from '../../bar';
 import { CartesianChart } from '../../CartesianChart';
 import { useCartesianChartContext } from '../../ChartProvider';
 import { ChartTooltip } from '../../ChartTooltip';
@@ -692,7 +692,7 @@ const LegendShapes = () => {
   );
 
   // Custom bar component that renders bars with dotted pattern fill
-  const DottedBarComponent = memo<BarComponentProps>(function DottedBarComponent(props) {
+  const DottedBarComponent = memo<BarComponentProps>((props) => {
     const { dataX, x, y } = props;
     // Create unique IDs per bar so patterns are scoped to each bar
     const uniqueMaskId = `${maskId}-${dataX}`;
@@ -724,58 +724,49 @@ const LegendShapes = () => {
   });
 
   return (
-    <Example title="Legend Indicators">
-      <VStack gap={2}>
-        <Text font="headline" textAlign="center">
-          Annual Revenue
-        </Text>
-        <CartesianChart
-          legend
-          height={{ base: 200, tablet: 250, desktop: 300 }}
-          inset={0}
-          legendPosition="top"
-          series={
-            [
-              {
-                id: 'actual',
-                label: 'Historical',
-                data: actualRevenue,
-                color: 'var(--color-fgPositive)',
-                legendShape: 'squircle',
-                stackId: 'revenue',
-              },
-              {
-                id: 'forecast',
-                label: 'Forecasted',
-                data: forecastRevenue,
-                color: 'var(--color-fgPositive)',
-                legendShape: DottedLegendIndicator,
-                stackId: 'revenue',
-                BarComponent: DottedBarComponent,
-              },
-            ] as BarSeries[]
-          }
-          xAxis={{
-            data: months,
-            scaleType: 'band',
-          }}
-          yAxis={{
-            domain: { min: 0 },
-          }}
-        >
-          <XAxis showLine showTickMarks />
-          <YAxis
-            showGrid
-            showLine
-            showTickMarks
-            position="left"
-            requestedTickCount={5}
-            tickLabelFormatter={numberFormatter}
-            width={60}
-          />
-          <BarPlot />
-        </CartesianChart>
-      </VStack>
+    <Example title="Legend Shapes">
+      <BarChart
+        legend
+        showXAxis
+        showYAxis
+        height={{ base: 200, tablet: 250, desktop: 300 }}
+        inset={0}
+        legendPosition="top"
+        series={[
+          {
+            id: 'actual',
+            label: 'Historical',
+            data: actualRevenue,
+            color: 'var(--color-fgPositive)',
+            legendShape: 'squircle',
+            stackId: 'revenue',
+          },
+          {
+            id: 'forecast',
+            label: 'Forecasted',
+            data: forecastRevenue,
+            color: 'var(--color-fgPositive)',
+            legendShape: DottedLegendIndicator,
+            stackId: 'revenue',
+            BarComponent: DottedBarComponent,
+          },
+        ]}
+        xAxis={{
+          data: months,
+          scaleType: 'band',
+          showLine: true,
+          showTickMarks: true,
+        }}
+        yAxis={{
+          domain: { min: 0 },
+          showGrid: true,
+          showLine: true,
+          showTickMarks: true,
+          position: 'left',
+          tickLabelFormatter: numberFormatter,
+          width: 60,
+        }}
+      />
     </Example>
   );
 };
