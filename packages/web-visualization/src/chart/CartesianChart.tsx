@@ -8,6 +8,7 @@ import { css } from '@linaria/core';
 import { Legend } from './legend/Legend';
 import { ScrubberProvider, type ScrubberProviderProps } from './scrubber/ScrubberProvider';
 import { CartesianChartProvider } from './ChartProvider';
+import { HighlightProvider, type HighlightProviderBaseProps } from './HighlightProvider';
 import {
   type CartesianAxisConfig,
   type CartesianAxisConfigProps,
@@ -54,7 +55,7 @@ const chartContainerCss = css`
 export type LegendPosition = 'top' | 'bottom' | 'left' | 'right';
 
 export type CartesianChartBaseProps = BoxBaseProps &
-  Pick<ScrubberProviderProps, 'enableScrubbing' | 'onScrubberPositionChange'> & {
+  HighlightProviderBaseProps & {
     /**
      * Configuration objects that define how to visualize the data.
      * Each series contains its own data array.
@@ -65,6 +66,17 @@ export type CartesianChartBaseProps = BoxBaseProps &
      * @default true
      */
     animate?: boolean;
+    /**
+     * Whether scrubbing interaction is enabled.
+     * @deprecated Use `enableHighlighting` instead.
+     * @default false
+     */
+    enableScrubbing?: ScrubberProviderProps['enableScrubbing'];
+    /**
+     * Callback fired when the scrubber position changes.
+     * @deprecated Use `onHighlightChange` instead. Access `highlightedItem.dataIndex` for the same value.
+     */
+    onScrubberPositionChange?: ScrubberProviderProps['onScrubberPositionChange'];
     /**
      * Configuration for x-axis.
      */
@@ -152,6 +164,9 @@ export const CartesianChart = memo(
         inset,
         enableScrubbing,
         onScrubberPositionChange,
+        enableHighlighting: enableHighlightingProp,
+        highlightedItem,
+        onHighlightChange,
         legend,
         legendPosition = 'bottom',
         width = '100%',
@@ -460,48 +475,61 @@ export const CartesianChart = memo(
       );
       const rootStyles = useMemo(() => ({ ...style, ...styles?.root }), [style, styles?.root]);
 
+      // Enable highlighting by default when scrubbing is enabled
+      const enableHighlighting = enableHighlightingProp ?? enableScrubbing ?? false;
+
       return (
         <CartesianChartProvider value={contextValue}>
-          <ScrubberProvider
-            enableScrubbing={!!enableScrubbing}
-            onScrubberPositionChange={onScrubberPositionChange}
+          <HighlightProvider
+            enableHighlighting={enableHighlighting}
+            highlightedItem={highlightedItem}
+            onHighlightChange={onHighlightChange}
           >
-            <Box
-              className={rootClassNames}
-              height={height}
-              style={rootStyles}
-              width={width}
-              {...props}
+            <ScrubberProvider
+              enableScrubbing={!!enableScrubbing}
+              onScrubberPositionChange={onScrubberPositionChange}
             >
-              {isLegendBefore && legendElement}
               <Box
-                ref={(node) => {
-                  const svgElement = node as unknown as SVGSVGElement;
-                  chartRef.current = svgElement;
-                  observe(node as unknown as HTMLElement);
-
-                  // Forward the ref to the user
-                  if (ref) {
-                    if (typeof ref === 'function') {
-                      ref(svgElement);
-                    } else {
-                      (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
-                    }
-                  }
-                }}
-                aria-live="polite"
-                as="svg"
-                className={cx(chartContainerCss, enableScrubbing && focusCss, classNames?.chart)}
-                height="100%"
-                style={styles?.chart}
-                tabIndex={enableScrubbing ? 0 : undefined}
-                width="100%"
+                className={rootClassNames}
+                height={height}
+                style={rootStyles}
+                width={width}
+                {...props}
               >
-                {children}
+                {isLegendBefore && legendElement}
+                <Box
+                  ref={(node) => {
+                    const svgElement = node as unknown as SVGSVGElement;
+                    chartRef.current = svgElement;
+                    observe(node as unknown as HTMLElement);
+
+                    // Forward the ref to the user
+                    if (ref) {
+                      if (typeof ref === 'function') {
+                        ref(svgElement);
+                      } else {
+                        (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
+                      }
+                    }
+                  }}
+                  aria-live="polite"
+                  as="svg"
+                  className={cx(
+                    chartContainerCss,
+                    enableHighlighting && focusCss,
+                    classNames?.chart,
+                  )}
+                  height="100%"
+                  style={styles?.chart}
+                  tabIndex={enableHighlighting ? 0 : undefined}
+                  width="100%"
+                >
+                  {children}
+                </Box>
+                {!isLegendBefore && legendElement}
               </Box>
-              {!isLegendBefore && legendElement}
-            </Box>
-          </ScrubberProvider>
+            </ScrubberProvider>
+          </HighlightProvider>
         </CartesianChartProvider>
       );
     },

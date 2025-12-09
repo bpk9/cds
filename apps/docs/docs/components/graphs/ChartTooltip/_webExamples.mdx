@@ -331,6 +331,99 @@ function MultiAxisTooltip() {
 }
 ```
 
+## Pie Chart Tooltip
+
+ChartTooltip works with polar charts. For pie and donut charts, hover over slices to see the tooltip. When no `label` prop is provided, only the series information is shown.
+
+```jsx live
+function PieChartTooltip() {
+  const series = useMemo(
+    () => [
+      { id: 'stocks', data: 45, label: 'Stocks', color: 'rgb(var(--blue40))' },
+      { id: 'bonds', data: 25, label: 'Bonds', color: 'rgb(var(--green40))' },
+      { id: 'crypto', data: 20, label: 'Crypto', color: 'rgb(var(--orange40))' },
+      { id: 'cash', data: 10, label: 'Cash', color: 'rgb(var(--gray40))' },
+    ],
+    [],
+  );
+
+  return (
+    <Box height={300} width={300}>
+      <PieChart enableHighlighting series={series}>
+        <ChartTooltip />
+      </PieChart>
+    </Box>
+  );
+}
+```
+
+## Donut Chart with Value Formatter
+
+Use `valueFormatter` to customize how values are displayed in polar chart tooltips.
+
+```jsx live
+function DonutChartTooltip() {
+  const series = useMemo(
+    () => [
+      { id: 'completed', data: 68, label: 'Completed', color: 'rgb(var(--green40))' },
+      { id: 'inProgress', data: 22, label: 'In Progress', color: 'rgb(var(--blue40))' },
+      { id: 'pending', data: 10, label: 'Pending', color: 'rgb(var(--gray40))' },
+    ],
+    [],
+  );
+
+  const percentFormatter = useCallback((value) => {
+    const total = 68 + 22 + 10;
+    const percent = Math.round((value / total) * 100);
+    return `${value} tasks (${percent}%)`;
+  }, []);
+
+  return (
+    <Box height={300} width={300}>
+      <DonutChart enableHighlighting innerRadiusRatio={0.6} series={series}>
+        <ChartTooltip valueFormatter={percentFormatter} />
+      </DonutChart>
+    </Box>
+  );
+}
+```
+
+## Donut Chart with Custom Label
+
+Provide a `label` prop to add a header to the tooltip. When provided, a divider separates the label from the series value.
+
+```jsx live
+function DonutChartCustomLabel() {
+  const series = useMemo(
+    () => [
+      { id: 'btc', data: 42000, label: 'Bitcoin', color: 'rgb(var(--orange40))' },
+      { id: 'eth', data: 28000, label: 'Ethereum', color: 'rgb(var(--blue40))' },
+      { id: 'sol', data: 15000, label: 'Solana', color: 'rgb(var(--purple40))' },
+      { id: 'other', data: 15000, label: 'Other', color: 'rgb(var(--gray40))' },
+    ],
+    [],
+  );
+
+  const currencyFormatter = useCallback(
+    (value) =>
+      new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }).format(value),
+    [],
+  );
+
+  return (
+    <Box height={300} width={300}>
+      <DonutChart enableHighlighting innerRadiusRatio={0.5} series={series}>
+        <ChartTooltip label="Portfolio Holdings" valueFormatter={currencyFormatter} />
+      </DonutChart>
+    </Box>
+  );
+}
+```
+
 ## With Legend
 
 ChartTooltip can be combined with Legend to provide both persistent series identification and on-hover details.

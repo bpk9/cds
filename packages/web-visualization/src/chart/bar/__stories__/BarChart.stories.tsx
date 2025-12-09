@@ -9,7 +9,7 @@ import { useCartesianChartContext } from '../../ChartProvider';
 import { type LineComponentProps, ReferenceLine, SolidLine, type SolidLineProps } from '../../line';
 import { PeriodSelector } from '../../PeriodSelector';
 import { Scrubber } from '../../scrubber';
-import { isCategoricalScale, ScrubberContext, useScrubberContext } from '../../utils';
+import { HighlightContext, isCategoricalScale, useHighlightContext } from '../../utils';
 import { BarChart } from '../BarChart';
 import { BarPlot } from '../BarPlot';
 import { type BarStackComponentProps } from '../BarStack';
@@ -181,7 +181,8 @@ const tabs: TimePeriodTab[] = [
 
 const ScrubberRect = memo(() => {
   const { getXScale, getYScale } = useCartesianChartContext();
-  const { scrubberPosition } = React.useContext(ScrubberContext) ?? {};
+  const highlightContext = React.useContext(HighlightContext);
+  const scrubberPosition = highlightContext?.highlightedItem?.dataIndex;
   const xScale = getXScale();
   const yScale = getYScale();
 
@@ -216,7 +217,8 @@ const Candlesticks = () => {
   // Custom line component that renders a rect to highlight the entire bandwidth
   const BandwidthHighlight = memo<LineComponentProps>(({ stroke }) => {
     const { getXScale, drawingArea } = useCartesianChartContext();
-    const { scrubberPosition } = useScrubberContext();
+    const highlightContext = useHighlightContext();
+    const scrubberPosition = highlightContext?.highlightedItem?.dataIndex;
     const xScale = getXScale();
 
     if (!xScale || scrubberPosition === undefined) return null;
@@ -305,9 +307,10 @@ const Candlesticks = () => {
 
   // Memoize the update function to avoid recreation on each render
   const updateInfoText = React.useCallback(
-    (index: number | undefined) => {
+    (item: { seriesId?: string; dataIndex?: number } | null) => {
       if (!infoTextRef.current) return;
 
+      const index = item?.dataIndex;
       const text =
         index !== undefined
           ? `Open: ${formatPrice(parseFloat(stockData[index].open))}, Close: ${formatPrice(
@@ -327,7 +330,9 @@ const Candlesticks = () => {
 
   // Update text when stockData changes (on timePeriod change)
   React.useEffect(() => {
-    updateInfoText(selectedIndexRef.current);
+    updateInfoText(
+      selectedIndexRef.current !== undefined ? { dataIndex: selectedIndexRef.current } : null,
+    );
   }, [stockData, updateInfoText]);
 
   const infoTextId = useId();
@@ -347,7 +352,7 @@ const Candlesticks = () => {
         aria-labelledby={infoTextId}
         borderRadius={0}
         height={400}
-        onScrubberPositionChange={updateInfoText}
+        onHighlightChange={updateInfoText}
         series={[
           {
             id: 'stock-prices',

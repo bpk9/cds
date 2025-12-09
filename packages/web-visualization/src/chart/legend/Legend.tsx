@@ -40,7 +40,8 @@ export const Legend = memo(
         justifyContent = 'center',
         alignItems = flexDirection === 'row' ? 'center' : 'flex-start',
         flexWrap = 'wrap',
-        gap = 1,
+        columnGap = 2,
+        rowGap = 0.75,
         seriesIds,
         ItemComponent = DefaultLegendItem,
         ShapeComponent,
@@ -61,10 +62,11 @@ export const Legend = memo(
         <Box
           ref={ref}
           alignItems={alignItems}
+          columnGap={columnGap}
           flexDirection={flexDirection}
           flexWrap={flexWrap}
-          gap={gap}
           justifyContent={justifyContent}
+          rowGap={rowGap}
           {...props}
         >
           {filteredSeries.map((s) => (

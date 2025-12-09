@@ -13,7 +13,7 @@ import { LineChart } from '../../line';
 import { PieChart } from '../../pie';
 import { Scrubber } from '../../scrubber';
 import type { CartesianSeries, LegendShapeVariant } from '../../utils/chart';
-import { useScrubberContext } from '../../utils/context';
+import { useHighlightContext } from '../../utils/context';
 import { type LegendItemProps } from '../DefaultLegendItem';
 import { DefaultLegendShape } from '../DefaultLegendShape';
 import { Legend } from '../Legend';
@@ -296,11 +296,11 @@ const ShapeVariants = () => {
   return (
     <Example title="Shape Variants">
       <LineChart
+        legend
         showArea
         showXAxis
         showYAxis
         height={{ base: 200, tablet: 250, desktop: 300 }}
-        legend={<Legend flexDirection="column" />}
         legendPosition="left"
         series={[
           {
@@ -385,10 +385,10 @@ const DynamicData = () => {
     color,
     shape,
   }: LegendItemProps) {
-    const { scrubberPosition } = useScrubberContext();
+    const highlightContext = useHighlightContext();
     const { series, dataLength } = useCartesianChartContext();
 
-    const dataIndex = scrubberPosition ?? dataLength - 1;
+    const dataIndex = highlightContext?.highlightedItem?.dataIndex ?? dataLength - 1;
 
     const seriesData = series.find((s) => s.id === seriesId);
     const rawValue = seriesData?.data?.[dataIndex];
@@ -611,11 +611,14 @@ const PieChartLegend = () => {
           Portfolio Allocation
         </Text>
         <PieChart
+          enableHighlighting
+          legend
           height={{ base: 250, tablet: 300, desktop: 350 }}
-          legend={<Legend flexDirection="column" />}
           legendPosition="right"
           series={series}
-        />
+        >
+          <ChartTooltip valueFormatter={(value) => `${value}%`} />
+        </PieChart>
       </VStack>
     </Example>
   );
@@ -802,6 +805,12 @@ const DonutChartLegend = () => {
     },
   ];
 
+  const total = 68 + 22 + 10;
+  const percentFormatter = useCallback(
+    (value: number) => `${value} tasks (${Math.round((value / total) * 100)}%)`,
+    [total],
+  );
+
   return (
     <Example title="Donut Chart Legend">
       <VStack gap={2}>
@@ -809,11 +818,14 @@ const DonutChartLegend = () => {
           Task Status
         </Text>
         <DonutChart
+          enableHighlighting
           legend
           height={{ base: 250, tablet: 300, desktop: 350 }}
           legendPosition="bottom"
           series={series}
-        />
+        >
+          <ChartTooltip valueFormatter={percentFormatter} />
+        </DonutChart>
       </VStack>
     </Example>
   );

@@ -158,7 +158,8 @@ const PredictionMarket = () => {
 
   const [scrubberLabel, setScrubberLabel] = useState<string | null>(null);
   const updateScrubberLabel = useCallback(
-    (scrubberPosition: number | undefined) => {
+    (item: { seriesId?: string; dataIndex?: number } | null) => {
+      const scrubberPosition = item?.dataIndex;
       if (
         scrubberPosition === null ||
         scrubberPosition === undefined ||
@@ -193,7 +194,7 @@ const PredictionMarket = () => {
         enableScrubbing
         height={300}
         inset={{ top: 40, right: 0, bottom: 32, left: 0 }}
-        onScrubberPositionChange={updateScrubberLabel}
+        onHighlightChange={updateScrubberLabel}
         paddingEnd={2}
         series={seriesConfig}
         xAxis={{
@@ -374,6 +375,12 @@ const EarningsHistory = () => {
 
 const PriceWithVolume = () => {
   const [scrubIndex, setScrubIndex] = useState<number | undefined>(undefined);
+  const handleHighlightChange = useCallback(
+    (item: { seriesId?: string; dataIndex?: number } | null) => {
+      setScrubIndex(item?.dataIndex);
+    },
+    [],
+  );
   const btcData = btcCandles.slice(0, 180).reverse();
 
   const btcPrices = btcData.map((candle) => parseFloat(candle.close));
@@ -444,7 +451,7 @@ const PriceWithVolume = () => {
         accessibilityLabel={accessibilityLabel}
         aria-labelledby={headerId}
         height={250}
-        onScrubberPositionChange={setScrubIndex}
+        onHighlightChange={handleHighlightChange}
         series={[
           {
             id: 'prices',

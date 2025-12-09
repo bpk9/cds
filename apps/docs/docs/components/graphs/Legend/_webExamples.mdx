@@ -66,7 +66,7 @@ function LegendPosition() {
     <CartesianChart
       height={{ base: 150, tablet: 200, desktop: 250 }}
       inset={{ bottom: 8, left: 0, right: 0, top: 8 }}
-      legend={<Legend justifyContent="flex-end" width="100%" />}
+      legend
       legendPosition="bottom"
       series={[
         {
@@ -136,11 +136,11 @@ function ShapeVariants() {
 
   return (
     <LineChart
+      legend
       showArea
       showXAxis
       showYAxis
       height={{ base: 200, tablet: 250, desktop: 300 }}
-      legend={<Legend direction="column" />}
       legendPosition="left"
       series={[
         {
@@ -181,7 +181,7 @@ function ShapeVariants() {
 
 ## Layout Direction
 
-Use the `direction` prop to arrange legend items in a row or column.
+Use the `flexDirection` prop to arrange legend items in a row or column. Note that when using `legend` as a boolean with `legendPosition`, the direction is automatically set based on position.
 
 ```jsx live
 function LayoutDirection() {
@@ -229,8 +229,8 @@ function LayoutDirection() {
         Portfolio Allocation
       </Text>
       <PieChart
+        legend
         height={{ base: 250, tablet: 300, desktop: 350 }}
-        legend={<Legend direction="column" />}
         legendPosition="right"
         series={series}
       />
@@ -246,8 +246,18 @@ Use `ItemComponent` to render custom legend items with additional information or
 ```jsx live
 function CustomLegendItem() {
   const timeLabels = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   const series = [
@@ -274,16 +284,11 @@ function CustomLegendItem() {
     },
   ];
 
-  const ValueLegendItem = memo(function ValueLegendItem({
-    seriesId,
-    label,
-    color,
-    shape,
-  }) {
-    const { scrubberPosition } = useScrubberContext();
+  const ValueLegendItem = memo(function ValueLegendItem({ seriesId, label, color, shape }) {
+    const highlightContext = useHighlightContext();
     const { series, dataLength } = useCartesianChartContext();
 
-    const dataIndex = scrubberPosition ?? dataLength - 1;
+    const dataIndex = highlightContext?.highlightedItem?.dataIndex ?? dataLength - 1;
 
     const seriesData = series.find((s) => s.id === seriesId);
     const rawValue = seriesData?.data?.[dataIndex];
@@ -313,10 +318,8 @@ function CustomLegendItem() {
         showXAxis
         showYAxis
         height={{ base: 200, tablet: 250, desktop: 300 }}
-        legend={
-          <Legend ItemComponent={ValueLegendItem} justifyContent="flex-start" paddingX={2} />
-        }
-        legendPosition="bottom"
+        legend={<Legend ItemComponent={ValueLegendItem} justifyContent="flex-start" paddingX={2} />}
+        legendPosition="top"
         series={series}
         xAxis={{
           data: timeLabels,
@@ -343,8 +346,18 @@ function InteractiveLegend() {
   const [emphasizedId, setEmphasizedId] = useState(null);
 
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   const seriesConfig = useMemo(
@@ -428,7 +441,7 @@ function InteractiveLegend() {
         showYAxis
         height={{ base: 300, tablet: 350, desktop: 400 }}
         legend={<Legend ItemComponent={ChipLegendItem} gap={1} paddingTop={1} />}
-        legendPosition="bottom"
+        legendPosition="top"
         series={series}
         xAxis={{
           data: months,
@@ -497,8 +510,18 @@ You can pass a custom ReactNode as `legendShape` for fully custom indicators.
 ```jsx live
 function CustomLegendShapes() {
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   // Actual revenue (first 9 months)
@@ -508,8 +531,7 @@ function CustomLegendShapes() {
   const forecastRevenue = [null, null, null, null, null, null, null, null, null, 580, 620, 680];
 
   const numberFormatter = useCallback(
-    (value) =>
-      `$${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)}k`,
+    (value) => `$${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)}k`,
     [],
   );
 

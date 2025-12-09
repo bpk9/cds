@@ -1,31 +1,59 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useCartesianChartContext } from '../ChartProvider';
-import { isCategoricalScale, ScrubberContext, type ScrubberContextValue } from '../utils';
+import {
+  isCategoricalScale,
+  ScrubberContext,
+  type ScrubberContextValue,
+  useHighlightContext,
+} from '../utils';
 
-export type ScrubberProviderProps = Partial<
-  Pick<ScrubberContextValue, 'enableScrubbing' | 'onScrubberPositionChange'>
-> & {
+export type ScrubberProviderProps = {
   children: React.ReactNode;
+  /**
+   * Whether scrubbing interaction is enabled.
+   * @deprecated Use `enableHighlighting` on the chart component instead.
+   * @default false
+   */
+  enableScrubbing?: boolean;
+  /**
+   * Callback fired when the scrubber position changes.
+   * Receives the dataIndex of the scrubber or undefined when not scrubbing.
+   * @deprecated Use `onHighlightChange` on the chart component instead.
+   */
+  onScrubberPositionChange?: (index: number | undefined) => void;
 };
 
 /**
- * A component which encapsulates the ScrubberContext.
- * It depends on a ChartContext in order to provide accurate mouse tracking.
+ * A component which handles scrubbing interactions for Cartesian charts.
+ * Tracks pointer position and updates the HighlightContext with the current dataIndex.
+ *
+ * The Scrubber component reads from HighlightContext to render the visual indicator.
  */
 export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
   children,
-  enableScrubbing,
+  enableScrubbing = false,
   onScrubberPositionChange,
 }) => {
   const chartContext = useCartesianChartContext();
+  const highlightContext = useHighlightContext();
 
   if (!chartContext) {
-    throw new Error('ScrubberProvider must be used within a ChartContext');
+    throw new Error('ScrubberProvider must be used within a CartesianChart');
   }
 
   const { getXScale, getXAxis, series, ref } = chartContext;
-  const [scrubberPosition, setScrubberPosition] = useState<number | undefined>(undefined);
+
+  // Track the last dataIndex to avoid unnecessary updates
+  const lastDataIndexRef = useRef<number | undefined>(undefined);
+
+  // Call the deprecated callback when dataIndex changes
+  const notifyScrubberPosition = useCallback(
+    (dataIndex: number | undefined) => {
+      onScrubberPositionChange?.(dataIndex);
+    },
+    [onScrubberPositionChange],
+  );
 
   const getDataIndexFromX = useCallback(
     (mouseX: number): number => {
@@ -84,19 +112,25 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
 
   const handlePointerMove = useCallback(
     (clientX: number, target: SVGSVGElement) => {
-      if (!enableScrubbing || !series || series.length === 0) return;
+      if (!enableScrubbing || !series || series.length === 0 || !highlightContext) return;
 
       const rect = target.getBoundingClientRect();
       const x = clientX - rect.left;
 
       const dataIndex = getDataIndexFromX(x);
 
-      if (dataIndex !== scrubberPosition) {
-        setScrubberPosition(dataIndex);
-        onScrubberPositionChange?.(dataIndex);
+      // Only update if dataIndex changed
+      if (dataIndex !== lastDataIndexRef.current) {
+        lastDataIndexRef.current = dataIndex;
+        // Set highlight with dataIndex, preserving any existing seriesId from element hover
+        highlightContext.setHighlightedItem((prev) => ({
+          ...prev,
+          dataIndex,
+        }));
+        notifyScrubberPosition(dataIndex);
       }
     },
-    [enableScrubbing, series, getDataIndexFromX, scrubberPosition, onScrubberPositionChange],
+    [enableScrubbing, series, getDataIndexFromX, highlightContext, notifyScrubberPosition],
   );
 
   const handleMouseMove = useCallback(
@@ -131,17 +165,18 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
   );
 
   const handlePointerLeave = useCallback(() => {
-    if (!enableScrubbing) return;
-    setScrubberPosition(undefined);
-    onScrubberPositionChange?.(undefined);
-  }, [enableScrubbing, onScrubberPositionChange]);
+    if (!enableScrubbing || !highlightContext) return;
+    lastDataIndexRef.current = undefined;
+    highlightContext.setHighlightedItem(undefined);
+    notifyScrubberPosition(undefined);
+  }, [enableScrubbing, highlightContext, notifyScrubberPosition]);
 
   const handleMouseLeave = handlePointerLeave;
   const handleTouchEnd = handlePointerLeave;
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (!enableScrubbing) return;
+      if (!enableScrubbing || !highlightContext) return;
 
       const xScale = getXScale();
       const xAxis = getXAxis();
@@ -153,14 +188,12 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
       // Determine the actual data indices we can navigate to
       let minIndex: number;
       let maxIndex: number;
-      let dataPoints: number | undefined;
 
       if (isBand) {
         // For categorical scales, use the categories
         const categories = xScale.domain?.() ?? xAxis.data ?? [];
         minIndex = 0;
         maxIndex = Math.max(0, categories.length - 1);
-        dataPoints = categories.length;
       } else {
         // For numeric scales, check if we have specific data points
         const axisData = xAxis.data;
@@ -168,17 +201,15 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
           // We have specific data points - use their indices
           minIndex = 0;
           maxIndex = Math.max(0, axisData.length - 1);
-          dataPoints = axisData.length;
         } else {
           // Fall back to domain-based navigation for continuous scales without specific data
           const domain = xAxis.domain;
           minIndex = domain.min ?? 0;
           maxIndex = domain.max ?? 0;
-          dataPoints = maxIndex - minIndex + 1;
         }
       }
 
-      const currentIndex = scrubberPosition ?? minIndex;
+      const currentIndex = highlightContext.highlightedItem?.dataIndex ?? minIndex;
       const dataRange = maxIndex - minIndex;
 
       // Multi-step jump when shift is held (10% of data range, minimum 1, maximum 10)
@@ -212,19 +243,29 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
           return; // Don't handle other keys
       }
 
-      if (newIndex !== scrubberPosition) {
-        setScrubberPosition(newIndex);
-        onScrubberPositionChange?.(newIndex);
+      if (newIndex !== lastDataIndexRef.current) {
+        lastDataIndexRef.current = newIndex;
+        if (newIndex === undefined) {
+          highlightContext.setHighlightedItem(undefined);
+        } else {
+          highlightContext.setHighlightedItem((prev) => ({
+            ...prev,
+            dataIndex: newIndex,
+          }));
+        }
+        notifyScrubberPosition(newIndex);
       }
     },
-    [enableScrubbing, getXScale, getXAxis, scrubberPosition, onScrubberPositionChange],
+    [enableScrubbing, getXScale, getXAxis, highlightContext, notifyScrubberPosition],
   );
 
   const handleBlur = useCallback(() => {
-    if (!enableScrubbing || scrubberPosition === undefined) return;
-    setScrubberPosition(undefined);
-    onScrubberPositionChange?.(undefined);
-  }, [enableScrubbing, onScrubberPositionChange, scrubberPosition]);
+    if (!enableScrubbing || !highlightContext) return;
+    if (highlightContext.highlightedItem?.dataIndex === undefined) return;
+    lastDataIndexRef.current = undefined;
+    highlightContext.setHighlightedItem(undefined);
+    notifyScrubberPosition(undefined);
+  }, [enableScrubbing, highlightContext, notifyScrubberPosition]);
 
   // Attach event listeners to SVG element
   useEffect(() => {
@@ -264,11 +305,13 @@ export const ScrubberProvider: React.FC<ScrubberProviderProps> = ({
     handleBlur,
   ]);
 
+  // Expose scrubberPosition for backwards compatibility (deprecated)
+  const scrubberPosition = highlightContext?.highlightedItem?.dataIndex;
+
   const contextValue: ScrubberContextValue = useMemo(
     () => ({
-      enableScrubbing: !!enableScrubbing,
+      enableScrubbing,
       scrubberPosition,
-      onScrubberPositionChange: setScrubberPosition,
     }),
     [enableScrubbing, scrubberPosition],
   );

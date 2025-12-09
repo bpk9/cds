@@ -2,7 +2,7 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { useTheme } from '@coinbase/cds-web';
 
 import { usePolarChartContext } from '../ChartProvider';
-import { defaultAxisId } from '../utils';
+import { defaultAxisId, useHighlightContext } from '../utils';
 import { calculateArcData } from '../utils/polar';
 
 import { Arc, type ArcBaseProps, type ArcProps } from './Arc';
@@ -101,6 +101,7 @@ export const PiePlot = memo<PiePlotProps>(
       getAngularAxis,
       getRadialAxis,
     } = usePolarChartContext();
+    const highlightContext = useHighlightContext();
 
     const animate = animateProp ?? contextAnimate;
 
@@ -197,15 +198,17 @@ export const PiePlot = memo<PiePlotProps>(
     const handleSliceMouseEnter = useCallback(
       (sliceData: { id: string; label?: string; value: number }, index: number) => {
         onSliceMouseEnter?.({ ...sliceData, index });
+        highlightContext?.setHighlightedItem({ seriesId: sliceData.id, dataIndex: index });
       },
-      [onSliceMouseEnter],
+      [onSliceMouseEnter, highlightContext],
     );
 
     const handleSliceMouseLeave = useCallback(
       (sliceData: { id: string; label?: string; value: number }, index: number) => {
         onSliceMouseLeave?.({ ...sliceData, index });
+        highlightContext?.setHighlightedItem(undefined);
       },
-      [onSliceMouseLeave],
+      [onSliceMouseLeave, highlightContext],
     );
 
     if (!arcs.length) {
@@ -231,12 +234,8 @@ export const PiePlot = memo<PiePlotProps>(
               fillOpacity={fillOpacity}
               innerRadius={arc.innerRadius}
               onClick={onSliceClick ? () => handleSliceClick(data, arc.index) : undefined}
-              onMouseEnter={
-                onSliceMouseEnter ? () => handleSliceMouseEnter(data, arc.index) : undefined
-              }
-              onMouseLeave={
-                onSliceMouseLeave ? () => handleSliceMouseLeave(data, arc.index) : undefined
-              }
+              onMouseEnter={() => handleSliceMouseEnter(data, arc.index)}
+              onMouseLeave={() => handleSliceMouseLeave(data, arc.index)}
               outerRadius={arc.outerRadius}
               paddingAngle={arc.paddingAngle}
               startAngle={arc.startAngle}

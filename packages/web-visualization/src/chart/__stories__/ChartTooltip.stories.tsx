@@ -7,8 +7,10 @@ import { XAxis, YAxis } from '../axis';
 import { BarPlot } from '../bar';
 import { CartesianChart } from '../CartesianChart';
 import { ChartTooltip } from '../ChartTooltip';
+import { DonutChart } from '../DonutChart';
 import { Legend } from '../legend';
 import { LineChart } from '../line';
+import { PieChart } from '../pie';
 import { Scrubber } from '../scrubber';
 
 export default {
@@ -174,7 +176,7 @@ const FilteredSeries = () => {
         xAxis={{ data: months }}
         yAxis={{ domain: { min: 0 }, showGrid: true }}
       >
-        <Scrubber />
+        <Scrubber hideBeaconLabels />
         <ChartTooltip seriesIds={['primary', 'secondary']} />
       </LineChart>
     </Example>
@@ -349,6 +351,97 @@ const MultiAxisTooltip = () => {
   );
 };
 
+const PieChartTooltip = () => {
+  const series = useMemo(
+    () => [
+      { id: 'stocks', data: 45, label: 'Stocks', color: 'rgb(var(--blue40))' },
+      { id: 'bonds', data: 25, label: 'Bonds', color: 'rgb(var(--green40))' },
+      { id: 'crypto', data: 20, label: 'Crypto', color: 'rgb(var(--orange40))' },
+      { id: 'cash', data: 10, label: 'Cash', color: 'rgb(var(--gray40))' },
+    ],
+    [],
+  );
+
+  return (
+    <Example title="Pie Chart Tooltip">
+      <Text color="fgMuted" font="body">
+        Hover over slices to see the tooltip. For polar charts, the tooltip shows the highlighted
+        slice.
+      </Text>
+      <Box height={300} width={300}>
+        <PieChart enableHighlighting series={series}>
+          <ChartTooltip />
+        </PieChart>
+      </Box>
+    </Example>
+  );
+};
+
+const DonutChartTooltip = () => {
+  const series = useMemo(
+    () => [
+      { id: 'completed', data: 68, label: 'Completed', color: 'rgb(var(--green40))' },
+      { id: 'inProgress', data: 22, label: 'In Progress', color: 'rgb(var(--blue40))' },
+      { id: 'pending', data: 10, label: 'Pending', color: 'rgb(var(--gray40))' },
+    ],
+    [],
+  );
+
+  const percentFormatter = useCallback((value: number) => {
+    const total = 68 + 22 + 10;
+    const percent = Math.round((value / total) * 100);
+    return `${value} tasks (${percent}%)`;
+  }, []);
+
+  return (
+    <Example title="Donut Chart Tooltip">
+      <Text color="fgMuted" font="body">
+        Donut chart with a custom value formatter showing percentage.
+      </Text>
+      <Box height={300} width={300}>
+        <DonutChart enableHighlighting innerRadiusRatio={0.6} series={series}>
+          <ChartTooltip valueFormatter={percentFormatter} />
+        </DonutChart>
+      </Box>
+    </Example>
+  );
+};
+
+const DonutChartCustomLabel = () => {
+  const series = useMemo(
+    () => [
+      { id: 'btc', data: 42000, label: 'Bitcoin', color: 'rgb(var(--orange40))' },
+      { id: 'eth', data: 28000, label: 'Ethereum', color: 'rgb(var(--blue40))' },
+      { id: 'sol', data: 15000, label: 'Solana', color: 'rgb(var(--purple40))' },
+      { id: 'other', data: 15000, label: 'Other', color: 'rgb(var(--gray40))' },
+    ],
+    [],
+  );
+
+  const currencyFormatter = useCallback(
+    (value: number) =>
+      new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }).format(value),
+    [],
+  );
+
+  return (
+    <Example title="Donut Chart with Custom Label">
+      <Text color="fgMuted" font="body">
+        Polar chart tooltip with static custom label and currency formatting.
+      </Text>
+      <Box height={300} width={300}>
+        <DonutChart enableHighlighting innerRadiusRatio={0.5} series={series}>
+          <ChartTooltip label="Portfolio Holdings" valueFormatter={currencyFormatter} />
+        </DonutChart>
+      </Box>
+    </Example>
+  );
+};
+
 export const All = () => {
   return (
     <VStack gap={4}>
@@ -360,6 +453,9 @@ export const All = () => {
       <StackedAreaTooltip />
       <CustomValueDisplay />
       <MultiAxisTooltip />
+      <PieChartTooltip />
+      <DonutChartTooltip />
+      <DonutChartCustomLabel />
     </VStack>
   );
 };

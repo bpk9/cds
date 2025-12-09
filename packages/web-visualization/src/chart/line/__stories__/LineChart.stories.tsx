@@ -34,7 +34,7 @@ import {
   type ScrubberLabelProps,
   type ScrubberRef,
   useCartesianChartContext,
-  useScrubberContext,
+  useHighlightContext,
 } from '../..';
 import { Area, DottedArea, type DottedAreaProps, GradientArea } from '../../area';
 import { DefaultAxisTickLabel, XAxis, YAxis } from '../../axis';
@@ -311,6 +311,13 @@ function MissingData() {
 function Interaction() {
   const [scrubberPosition, setScrubberPosition] = useState<number | undefined>();
 
+  const handleHighlightChange = useCallback(
+    (item: { seriesId?: string; dataIndex?: number } | null) => {
+      setScrubberPosition(item?.dataIndex);
+    },
+    [],
+  );
+
   return (
     <VStack gap={2}>
       <Text font="label1">
@@ -322,7 +329,7 @@ function Interaction() {
         enableScrubbing
         showArea
         height={{ base: 200, tablet: 225, desktop: 250 }}
-        onScrubberPositionChange={setScrubberPosition}
+        onHighlightChange={handleHighlightChange}
         series={[
           {
             id: 'prices',
@@ -1511,7 +1518,8 @@ function ForecastAssetPrice() {
   });
 
   const CustomScrubber = memo(() => {
-    const { scrubberPosition } = useScrubberContext();
+    const highlightContext = useHighlightContext();
+    const scrubberPosition = highlightContext?.highlightedItem?.dataIndex;
     const isScrubbing = scrubberPosition !== undefined;
     // We need a fade in animation for the Scrubber
     return (

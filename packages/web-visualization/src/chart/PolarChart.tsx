@@ -5,6 +5,7 @@ import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
 import { Box, type BoxBaseProps, type BoxProps } from '@coinbase/cds-web/layout';
 import { css } from '@linaria/core';
 
+import { HighlightProvider, type HighlightProviderProps } from './HighlightProvider';
 import { Legend } from './legend/Legend';
 import type { LegendPosition } from './CartesianChart';
 import { PolarChartProvider } from './ChartProvider';
@@ -43,91 +44,97 @@ const chartContainerCss = css`
   min-width: 0;
 `;
 
-export type PolarChartBaseProps = BoxBaseProps & {
-  /**
-   * Configuration object that defines the data to visualize.
-   */
-  series?: PolarSeries[];
-  /**
-   * Whether to animate the chart.
-   * @default true
-   */
-  animate?: boolean;
-  /**
-   * Configuration for angular axis/axes (controls start/end angles).
-   * Can be a single axis config or an array of axis configs for multiple angular ranges.
-   * Default range: { min: 0, max: 360 } (full circle)
-   *
-   * @example
-   * Single axis (default):
-   * ```tsx
-   * // Semicircle
-   * <PolarChart angularAxis={{ range: { min: 0, max: 180 } }} />
-   *
-   * // Add padding between slices
-   * <PolarChart angularAxis={{ paddingAngle: 2 }} />
-   * ```
-   *
-   * @example
-   * Multiple axes:
-   * ```tsx
-   * <PolarChart
-   *   angularAxis={[
-   *     { id: 'top', range: { min: 0, max: 180 } },
-   *     { id: 'bottom', range: { min: 180, max: 360 } },
-   *   ]}
-   *   series={[
-   *     { id: 'topData', data: [...], angularAxisId: 'top' },
-   *     { id: 'bottomData', data: [...], angularAxisId: 'bottom' },
-   *   ]}
-   * />
-   * ```
-   */
-  angularAxis?: Partial<AngularAxisConfigProps> | Partial<AngularAxisConfigProps>[];
-  /**
-   * Configuration for radial axis/axes (controls inner/outer radii).
-   * Can be a single axis config or an array of axis configs for multiple radial ranges.
-   * Default range: { min: 0, max: [radius in pixels] } (pie chart using full radius)
-   *
-   * @example
-   * Single axis (default):
-   * ```tsx
-   * // Donut chart with 50% inner radius
-   * <PolarChart radialAxis={{ range: ({ max }) => ({ min: max * 0.5, max }) }} />
-   * ```
-   *
-   * @example
-   * Multiple axes (nested rings):
-   * ```tsx
-   * <PolarChart
-   *   radialAxis={[
-   *     { id: 'inner', range: ({ max }) => ({ min: 0, max: max * 0.4 }) },
-   *     { id: 'outer', range: ({ max }) => ({ min: max * 0.6, max }) },
-   *   ]}
-   *   series={[
-   *     { id: 'innerData', data: [...], radialAxisId: 'inner' },
-   *     { id: 'outerData', data: [...], radialAxisId: 'outer' },
-   *   ]}
-   * />
-   * ```
-   */
-  radialAxis?: Partial<RadialAxisConfigProps> | Partial<RadialAxisConfigProps>[];
-  /**
-   * Inset around the entire chart (outside the drawing area).
-   */
-  inset?: number | Partial<ChartInset>;
-  /**
-   * Whether to show a legend, or a custom legend element.
-   * When `true`, renders the default Legend component.
-   * When a ReactNode, renders the provided element.
-   */
-  legend?: boolean | React.ReactNode;
-  /**
-   * Position of the legend relative to the chart.
-   * @default 'bottom'
-   */
-  legendPosition?: LegendPosition;
-};
+export type PolarChartBaseProps = BoxBaseProps &
+  Pick<HighlightProviderProps, 'highlightedItem' | 'onHighlightChange'> & {
+    /**
+     * Configuration object that defines the data to visualize.
+     */
+    series?: PolarSeries[];
+    /**
+     * Whether to enable slice highlighting (for tooltips).
+     * @default false
+     */
+    enableHighlighting?: boolean;
+    /**
+     * Whether to animate the chart.
+     * @default true
+     */
+    animate?: boolean;
+    /**
+     * Configuration for angular axis/axes (controls start/end angles).
+     * Can be a single axis config or an array of axis configs for multiple angular ranges.
+     * Default range: { min: 0, max: 360 } (full circle)
+     *
+     * @example
+     * Single axis (default):
+     * ```tsx
+     * // Semicircle
+     * <PolarChart angularAxis={{ range: { min: 0, max: 180 } }} />
+     *
+     * // Add padding between slices
+     * <PolarChart angularAxis={{ paddingAngle: 2 }} />
+     * ```
+     *
+     * @example
+     * Multiple axes:
+     * ```tsx
+     * <PolarChart
+     *   angularAxis={[
+     *     { id: 'top', range: { min: 0, max: 180 } },
+     *     { id: 'bottom', range: { min: 180, max: 360 } },
+     *   ]}
+     *   series={[
+     *     { id: 'topData', data: [...], angularAxisId: 'top' },
+     *     { id: 'bottomData', data: [...], angularAxisId: 'bottom' },
+     *   ]}
+     * />
+     * ```
+     */
+    angularAxis?: Partial<AngularAxisConfigProps> | Partial<AngularAxisConfigProps>[];
+    /**
+     * Configuration for radial axis/axes (controls inner/outer radii).
+     * Can be a single axis config or an array of axis configs for multiple radial ranges.
+     * Default range: { min: 0, max: [radius in pixels] } (pie chart using full radius)
+     *
+     * @example
+     * Single axis (default):
+     * ```tsx
+     * // Donut chart with 50% inner radius
+     * <PolarChart radialAxis={{ range: ({ max }) => ({ min: max * 0.5, max }) }} />
+     * ```
+     *
+     * @example
+     * Multiple axes (nested rings):
+     * ```tsx
+     * <PolarChart
+     *   radialAxis={[
+     *     { id: 'inner', range: ({ max }) => ({ min: 0, max: max * 0.4 }) },
+     *     { id: 'outer', range: ({ max }) => ({ min: max * 0.6, max }) },
+     *   ]}
+     *   series={[
+     *     { id: 'innerData', data: [...], radialAxisId: 'inner' },
+     *     { id: 'outerData', data: [...], radialAxisId: 'outer' },
+     *   ]}
+     * />
+     * ```
+     */
+    radialAxis?: Partial<RadialAxisConfigProps> | Partial<RadialAxisConfigProps>[];
+    /**
+     * Inset around the entire chart (outside the drawing area).
+     */
+    inset?: number | Partial<ChartInset>;
+    /**
+     * Whether to show a legend, or a custom legend element.
+     * When `true`, renders the default Legend component.
+     * When a ReactNode, renders the provided element.
+     */
+    legend?: boolean | React.ReactNode;
+    /**
+     * Position of the legend relative to the chart.
+     * @default 'bottom'
+     */
+    legendPosition?: LegendPosition;
+  };
 
 export type PolarChartProps = Omit<BoxProps<'div'>, 'title'> &
   PolarChartBaseProps & {
@@ -191,6 +198,9 @@ export const PolarChart = memo(
         angularAxis,
         radialAxis,
         inset: insetInput,
+        enableHighlighting,
+        highlightedItem,
+        onHighlightChange,
         legend,
         legendPosition = 'bottom',
         width = '100%',
@@ -204,6 +214,7 @@ export const PolarChart = memo(
       ref,
     ) => {
       const { observe, width: chartWidth, height: chartHeight } = useDimensions();
+      const chartRef = useRef<SVGSVGElement | null>(null);
 
       const inset = useMemo(() => {
         return getChartInset(insetInput, defaultChartInset);
@@ -375,6 +386,7 @@ export const PolarChart = memo(
           getAngularScale,
           getRadialScale,
           dataLength,
+          ref: chartRef,
         }),
         [
           series,
@@ -423,38 +435,45 @@ export const PolarChart = memo(
 
       return (
         <PolarChartProvider value={contextValue}>
-          <Box
-            className={rootClassNames}
-            height={height}
-            style={rootStyles}
-            width={width}
-            {...props}
+          <HighlightProvider
+            enableHighlighting={enableHighlighting}
+            highlightedItem={highlightedItem}
+            onHighlightChange={onHighlightChange}
           >
-            {isLegendBefore && legendElement}
             <Box
-              ref={(node) => {
-                const svgElement = node as unknown as SVGSVGElement;
-                observe(node as unknown as HTMLElement);
-                // Forward the ref to the user
-                if (ref) {
-                  if (typeof ref === 'function') {
-                    ref(svgElement);
-                  } else {
-                    (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
-                  }
-                }
-              }}
-              aria-live="polite"
-              as="svg"
-              className={cx(chartContainerCss, classNames?.chart)}
-              height="100%"
-              style={styles?.chart}
-              width="100%"
+              className={rootClassNames}
+              height={height}
+              style={rootStyles}
+              width={width}
+              {...props}
             >
-              {children}
+              {isLegendBefore && legendElement}
+              <Box
+                ref={(node) => {
+                  const svgElement = node as unknown as SVGSVGElement;
+                  chartRef.current = svgElement;
+                  observe(node as unknown as HTMLElement);
+                  // Forward the ref to the user
+                  if (ref) {
+                    if (typeof ref === 'function') {
+                      ref(svgElement);
+                    } else {
+                      (ref as React.MutableRefObject<SVGSVGElement | null>).current = svgElement;
+                    }
+                  }
+                }}
+                aria-live="polite"
+                as="svg"
+                className={cx(chartContainerCss, classNames?.chart)}
+                height="100%"
+                style={styles?.chart}
+                width="100%"
+              >
+                {children}
+              </Box>
+              {!isLegendBefore && legendElement}
             </Box>
-            {!isLegendBefore && legendElement}
-          </Box>
+          </HighlightProvider>
         </PolarChartProvider>
       );
     },
