@@ -37,30 +37,26 @@ export const HighlightProvider: React.FC<HighlightProviderProps> = ({
   highlightedItem: highlightedItemProp,
   onHighlightChange,
 }) => {
-  const isControlled = highlightedItemProp !== undefined;
   const [internalHighlightedItem, setInternalHighlightedItem] = useState<
     HighlightedItemData | undefined
   >();
 
-  // Use controlled value if provided, otherwise use internal state
-  const highlightedItem = isControlled
-    ? (highlightedItemProp ?? undefined)
-    : internalHighlightedItem;
+  // Prop takes precedence over internal state when defined
+  // This allows parent components to override/control the highlight
+  const highlightedItem = highlightedItemProp ?? internalHighlightedItem;
 
   const setHighlightedItem: HighlightContextValue['setHighlightedItem'] = useCallback(
     (itemOrUpdater) => {
       const newItem =
         typeof itemOrUpdater === 'function' ? itemOrUpdater(highlightedItem) : itemOrUpdater;
 
-      // Update internal state if uncontrolled
-      if (!isControlled) {
-        setInternalHighlightedItem(newItem);
-      }
+      // Always update internal state - this ensures clearing works
+      setInternalHighlightedItem(newItem);
 
       // Always call the callback
       onHighlightChange?.(newItem ?? null);
     },
-    [isControlled, highlightedItem, onHighlightChange],
+    [highlightedItem, onHighlightChange],
   );
 
   const contextValue: HighlightContextValue = useMemo(

@@ -1,4 +1,4 @@
-import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
+import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
 import { cx } from '@coinbase/cds-web';
 import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
@@ -24,6 +24,9 @@ import {
   getCartesianAxisScale,
   getCartesianStackedSeriesData as calculateStackedSeriesData,
   getChartInset,
+  type HighlightAnchor,
+  type HighlightedItemData,
+  isCategoricalScale,
   useTotalAxisPadding,
 } from './utils';
 
@@ -36,8 +39,8 @@ const focusCss = css`
     outline: none;
   }
   &:focus-visible {
-    outline: 2px solid var(--color-bgPrimary);
-    outline-offset: 2px;
+    outline: 2px solid var(--color-fgPrimary);
+    outline-offset: -2px;
   }
 `;
 const verticalCss = css`
@@ -447,6 +450,297 @@ export const CartesianChart = memo(
         ],
       );
 
+      // Enable highlighting by default when scrubbing is enabled
+      const enableHighlighting = enableHighlightingProp ?? enableScrubbing ?? false;
+
+      // Track the last dataIndex to avoid unnecessary updates
+      const lastDataIndexRef = useRef<number | undefined>(undefined);
+      // Track internal highlight state for uncontrolled mode
+      const [internalHighlightedItem, setInternalHighlightedItem] = React.useState<
+        HighlightedItemData | undefined
+      >();
+      const isControlled = highlightedItem !== undefined;
+
+      // Determine the current highlighted item
+      const currentHighlightedItem = isControlled
+        ? (highlightedItem ?? undefined)
+        : internalHighlightedItem;
+
+      // Unified setter that handles both controlled and uncontrolled modes
+      const setHighlightedItemInternal = useCallback(
+        (
+          itemOrUpdater:
+            | HighlightedItemData
+            | undefined
+            | ((prev: HighlightedItemData | undefined) => HighlightedItemData | undefined),
+        ) => {
+          const newItem =
+            typeof itemOrUpdater === 'function'
+              ? itemOrUpdater(currentHighlightedItem)
+              : itemOrUpdater;
+
+          if (!isControlled) {
+            setInternalHighlightedItem(newItem);
+          }
+
+          // Call callbacks
+          onHighlightChange?.(newItem ?? null);
+          onScrubberPositionChange?.(newItem?.dataIndex);
+        },
+        [isControlled, currentHighlightedItem, onHighlightChange, onScrubberPositionChange],
+      );
+
+      // Convert mouse X position to data index
+      const getDataIndexFromX = useCallback(
+        (mouseX: number): number => {
+          if (!xScale || !xAxis) return 0;
+
+          if (isCategoricalScale(xScale)) {
+            const categories = xScale.domain?.() ?? xAxis.data ?? [];
+            const bandwidth = xScale.bandwidth?.() ?? 0;
+            let closestIndex = 0;
+            let closestDistance = Infinity;
+            for (let i = 0; i < categories.length; i++) {
+              const xPos = xScale(i);
+              if (xPos !== undefined) {
+                const distance = Math.abs(mouseX - (xPos + bandwidth / 2));
+                if (distance < closestDistance) {
+                  closestDistance = distance;
+                  closestIndex = i;
+                }
+              }
+            }
+            return closestIndex;
+          } else {
+            // For numeric scales with axis data, find the nearest data point
+            const axisData = xAxis.data;
+            if (axisData && Array.isArray(axisData) && typeof axisData[0] === 'number') {
+              const numericData = axisData as number[];
+              let closestIndex = 0;
+              let closestDistance = Infinity;
+
+              for (let i = 0; i < numericData.length; i++) {
+                const xValue = numericData[i];
+                const xPos = xScale(xValue);
+                if (xPos !== undefined) {
+                  const distance = Math.abs(mouseX - xPos);
+                  if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestIndex = i;
+                  }
+                }
+              }
+              return closestIndex;
+            } else {
+              const xValue = xScale.invert(mouseX);
+              const dataIndexVal = Math.round(xValue);
+              const domain = xAxis.domain;
+              return Math.max(domain.min ?? 0, Math.min(dataIndexVal, domain.max ?? 0));
+            }
+          }
+        },
+        [xScale, xAxis],
+      );
+
+      // Get stable anchor coordinates for a data index (for keyboard navigation only)
+      // X: calculated from scale, Y: fixed at top of chart area
+      const getAnchorForDataIndex = useCallback(
+        (dataIndexVal: number): HighlightAnchor | undefined => {
+          if (!xScale || !chartRect || chartRect.width <= 0) return undefined;
+
+          let xPos: number;
+          if (isCategoricalScale(xScale)) {
+            const bandwidth = xScale.bandwidth?.() ?? 0;
+            xPos = (xScale(dataIndexVal) ?? 0) + bandwidth / 2;
+          } else {
+            // For numeric scales with axis data
+            const axisData = xAxis?.data;
+            if (axisData && Array.isArray(axisData) && typeof axisData[0] === 'number') {
+              const numericData = axisData as number[];
+              const xValue = numericData[dataIndexVal] ?? dataIndexVal;
+              xPos = xScale(xValue) ?? 0;
+            } else {
+              xPos = xScale(dataIndexVal) ?? 0;
+            }
+          }
+
+          // Fixed Y position at top of chart area (tooltip will appear above)
+          const yPos = chartRect.y;
+
+          return { x: xPos, y: yPos };
+        },
+        [xScale, xAxis, chartRect],
+      );
+
+      // Handle pointer move (mouse or touch)
+      const handlePointerMove = useCallback(
+        (clientX: number, target: SVGSVGElement) => {
+          if (!enableHighlighting || !series || series.length === 0) return;
+
+          const rect = target.getBoundingClientRect();
+          const x = clientX - rect.left;
+          const dataIndexVal = getDataIndexFromX(x);
+
+          // Only update if dataIndex changed
+          if (dataIndexVal !== lastDataIndexRef.current) {
+            lastDataIndexRef.current = dataIndexVal;
+            // No anchor for mouse - tooltip follows cursor
+            setHighlightedItemInternal((prev) => ({
+              ...prev,
+              dataIndex: dataIndexVal,
+              anchor: undefined,
+            }));
+          }
+        },
+        [enableHighlighting, series, getDataIndexFromX, setHighlightedItemInternal],
+      );
+
+      // Handle pointer leave
+      const handlePointerLeave = useCallback(() => {
+        if (!enableHighlighting) return;
+        lastDataIndexRef.current = undefined;
+        setHighlightedItemInternal(undefined);
+      }, [enableHighlighting, setHighlightedItemInternal]);
+
+      // Handle keyboard navigation
+      const handleKeyDown = useCallback(
+        (event: KeyboardEvent) => {
+          if (!enableHighlighting) return;
+          if (!xScale || !xAxis) return;
+
+          const isBand = isCategoricalScale(xScale);
+
+          // Determine navigation bounds
+          let minIndex: number;
+          let maxIndex: number;
+
+          if (isBand) {
+            const categories = xScale.domain?.() ?? xAxis.data ?? [];
+            minIndex = 0;
+            maxIndex = Math.max(0, categories.length - 1);
+          } else {
+            const axisData = xAxis.data;
+            if (axisData && Array.isArray(axisData)) {
+              minIndex = 0;
+              maxIndex = Math.max(0, axisData.length - 1);
+            } else {
+              const domain = xAxis.domain;
+              minIndex = domain.min ?? 0;
+              maxIndex = domain.max ?? 0;
+            }
+          }
+
+          const currentIndex = currentHighlightedItem?.dataIndex ?? minIndex;
+          const dataRange = maxIndex - minIndex;
+
+          // Multi-step jump when shift is held (10% of data range, minimum 1, maximum 10)
+          const multiSkip = event.shiftKey;
+          const stepSize = multiSkip ? Math.min(10, Math.max(1, Math.floor(dataRange * 0.1))) : 1;
+
+          let newIndex: number | undefined;
+
+          switch (event.key) {
+            case 'ArrowLeft':
+              event.preventDefault();
+              newIndex = Math.max(minIndex, currentIndex - stepSize);
+              break;
+            case 'ArrowRight':
+              event.preventDefault();
+              newIndex = Math.min(maxIndex, currentIndex + stepSize);
+              break;
+            case 'Home':
+              event.preventDefault();
+              newIndex = minIndex;
+              break;
+            case 'End':
+              event.preventDefault();
+              newIndex = maxIndex;
+              break;
+            case 'Escape':
+              event.preventDefault();
+              newIndex = undefined;
+              break;
+            default:
+              return;
+          }
+
+          if (newIndex !== lastDataIndexRef.current) {
+            lastDataIndexRef.current = newIndex;
+            if (newIndex === undefined) {
+              setHighlightedItemInternal(undefined);
+            } else {
+              // For keyboard navigation, include anchor for stable tooltip positioning
+              const anchor = getAnchorForDataIndex(newIndex);
+              setHighlightedItemInternal((prev) => ({
+                ...prev,
+                dataIndex: newIndex,
+                anchor,
+              }));
+            }
+          }
+        },
+        [
+          enableHighlighting,
+          xScale,
+          xAxis,
+          currentHighlightedItem,
+          setHighlightedItemInternal,
+          getAnchorForDataIndex,
+        ],
+      );
+
+      // Handle blur - clear highlighting when focus leaves
+      const handleBlur = useCallback(() => {
+        if (!enableHighlighting) return;
+        if (currentHighlightedItem?.dataIndex === undefined) return;
+        lastDataIndexRef.current = undefined;
+        setHighlightedItemInternal(undefined);
+      }, [enableHighlighting, currentHighlightedItem, setHighlightedItemInternal]);
+
+      // Attach event listeners to SVG element
+      useEffect(() => {
+        if (!chartRef.current || !enableHighlighting) return;
+
+        const svg = chartRef.current;
+
+        const handleMouseMove = (event: MouseEvent) => {
+          handlePointerMove(event.clientX, svg);
+        };
+
+        const handleTouchStart = (event: TouchEvent) => {
+          if (!event.touches.length) return;
+          const touch = event.touches[0];
+          handlePointerMove(touch.clientX, svg);
+        };
+
+        const handleTouchMove = (event: TouchEvent) => {
+          if (!event.touches.length) return;
+          event.preventDefault();
+          const touch = event.touches[0];
+          handlePointerMove(touch.clientX, svg);
+        };
+
+        svg.addEventListener('mousemove', handleMouseMove);
+        svg.addEventListener('mouseleave', handlePointerLeave);
+        svg.addEventListener('touchstart', handleTouchStart, { passive: false });
+        svg.addEventListener('touchmove', handleTouchMove, { passive: false });
+        svg.addEventListener('touchend', handlePointerLeave);
+        svg.addEventListener('touchcancel', handlePointerLeave);
+        svg.addEventListener('keydown', handleKeyDown);
+        svg.addEventListener('blur', handleBlur);
+
+        return () => {
+          svg.removeEventListener('mousemove', handleMouseMove);
+          svg.removeEventListener('mouseleave', handlePointerLeave);
+          svg.removeEventListener('touchstart', handleTouchStart);
+          svg.removeEventListener('touchmove', handleTouchMove);
+          svg.removeEventListener('touchend', handlePointerLeave);
+          svg.removeEventListener('touchcancel', handlePointerLeave);
+          svg.removeEventListener('keydown', handleKeyDown);
+          svg.removeEventListener('blur', handleBlur);
+        };
+      }, [enableHighlighting, handlePointerMove, handlePointerLeave, handleKeyDown, handleBlur]);
+
       const isVerticalLegend = useMemo(
         () => legendPosition === 'top' || legendPosition === 'bottom',
         [legendPosition],
@@ -475,15 +769,18 @@ export const CartesianChart = memo(
       );
       const rootStyles = useMemo(() => ({ ...style, ...styles?.root }), [style, styles?.root]);
 
-      // Enable highlighting by default when scrubbing is enabled
-      const enableHighlighting = enableHighlightingProp ?? enableScrubbing ?? false;
-
       return (
         <CartesianChartProvider value={contextValue}>
           <HighlightProvider
             enableHighlighting={enableHighlighting}
-            highlightedItem={highlightedItem}
-            onHighlightChange={onHighlightChange}
+            highlightedItem={currentHighlightedItem}
+            onHighlightChange={(item) => {
+              // This allows child components (like bars) to also set highlights
+              if (!isControlled) {
+                setInternalHighlightedItem(item ?? undefined);
+              }
+              onHighlightChange?.(item);
+            }}
           >
             <ScrubberProvider
               enableScrubbing={!!enableScrubbing}

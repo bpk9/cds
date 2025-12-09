@@ -107,3 +107,62 @@ export const calculateArcData = (
     value: d.data,
   }));
 };
+
+/**
+ * Calculates the centroid (center point) of an arc.
+ * Useful for positioning labels.
+ *
+ * @param startAngle - Start angle in radians
+ * @param endAngle - End angle in radians
+ * @param innerRadius - Inner radius in pixels
+ * @param outerRadius - Outer radius in pixels
+ * @returns The x, y coordinates of the centroid relative to the center
+ */
+export const getArcCentroid = (
+  startAngle: number,
+  endAngle: number,
+  innerRadius: number,
+  outerRadius: number,
+): { x: number; y: number } => {
+  // Midpoint angle
+  const midAngle = (startAngle + endAngle) / 2;
+  // Midpoint radius
+  const midRadius = (innerRadius + outerRadius) / 2;
+
+  // Convert polar to cartesian
+  // Note: In SVG, angles start from 12 o'clock and go clockwise
+  // but d3-shape uses standard math angles (3 o'clock, counterclockwise)
+  // The arc paths are already adjusted for SVG, so we use sin/cos directly
+  const x = Math.cos(midAngle - Math.PI / 2) * midRadius;
+  const y = Math.sin(midAngle - Math.PI / 2) * midRadius;
+
+  return { x, y };
+};
+
+/**
+ * Calculates a point at the outer edge of an arc (for tooltip positioning).
+ * Returns a point slightly outside the arc at the midpoint angle.
+ *
+ * @param startAngle - Start angle in radians
+ * @param endAngle - End angle in radians
+ * @param outerRadius - Outer radius in pixels
+ * @param offset - Additional offset beyond the outer radius (default: 8px)
+ * @returns The x, y coordinates relative to the center
+ */
+export const getArcOuterPoint = (
+  startAngle: number,
+  endAngle: number,
+  outerRadius: number,
+  offset = 8,
+): { x: number; y: number } => {
+  // Midpoint angle
+  const midAngle = (startAngle + endAngle) / 2;
+  // Position at outer edge plus offset
+  const radius = outerRadius + offset;
+
+  // Convert polar to cartesian (adjusted for SVG coordinate system)
+  const x = Math.cos(midAngle - Math.PI / 2) * radius;
+  const y = Math.sin(midAngle - Math.PI / 2) * radius;
+
+  return { x, y };
+};

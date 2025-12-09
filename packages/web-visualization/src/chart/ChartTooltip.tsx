@@ -101,33 +101,67 @@ const CartesianChartTooltip = ({
     ],
   });
 
+  // Track mouse position for tooltip positioning (when no anchor is provided)
   useEffect(() => {
     const element = ref?.current;
     if (!element || !enableHighlighting) return;
 
     const handleMouseMove = (event: Event) => {
       const { clientX, clientY } = event as MouseEvent;
-      const virtualEl: VirtualElement = {
-        getBoundingClientRect() {
-          return {
-            width: 0,
-            height: 0,
-            x: clientX,
-            y: clientY,
-            left: clientX,
-            right: clientX,
-            top: clientY,
-            bottom: clientY,
-          } as DOMRect;
-        },
-      };
-      refs.setReference(virtualEl);
+
+      // Only update floating reference if there's no anchor (mouse-based interaction)
+      if (!highlightedItem?.anchor) {
+        const virtualEl: VirtualElement = {
+          getBoundingClientRect() {
+            return {
+              width: 0,
+              height: 0,
+              x: clientX,
+              y: clientY,
+              left: clientX,
+              right: clientX,
+              top: clientY,
+              bottom: clientY,
+            } as DOMRect;
+          },
+        };
+        refs.setReference(virtualEl);
+      }
     };
 
     element.addEventListener('mousemove', handleMouseMove);
 
     return () => element.removeEventListener('mousemove', handleMouseMove);
-  }, [enableHighlighting, refs, ref]);
+  }, [enableHighlighting, refs, ref, highlightedItem?.anchor]);
+
+  // Update tooltip position when anchor changes (keyboard navigation)
+  useEffect(() => {
+    const element = ref?.current;
+    if (!element || !enableHighlighting || !highlightedItem?.anchor) return;
+
+    const svgRect = element.getBoundingClientRect();
+    const { x: anchorX, y: anchorY } = highlightedItem.anchor;
+
+    // Convert SVG-relative anchor to screen coordinates
+    const screenX = svgRect.left + anchorX;
+    const screenY = svgRect.top + anchorY;
+
+    const virtualEl: VirtualElement = {
+      getBoundingClientRect() {
+        return {
+          width: 0,
+          height: 0,
+          x: screenX,
+          y: screenY,
+          left: screenX,
+          right: screenX,
+          top: screenY,
+          bottom: screenY,
+        } as DOMRect;
+      },
+    };
+    refs.setReference(virtualEl);
+  }, [enableHighlighting, refs, ref, highlightedItem?.anchor]);
 
   const { resolvedLabel, seriesItems } = useMemo(() => {
     if (dataIndex === undefined) {
@@ -185,7 +219,11 @@ const CartesianChartTooltip = ({
       }
 
       if (typeof formattedValue === 'string' || typeof formattedValue === 'number') {
-        formattedValue = <Text font="label2">{formattedValue}</Text>;
+        formattedValue = (
+          <Text color="fgMuted" font="label2">
+            {formattedValue}
+          </Text>
+        );
       }
 
       seriesItems.push({
@@ -420,7 +458,11 @@ const PolarChartTooltip = ({
     }
 
     if (typeof formattedValue === 'string' || typeof formattedValue === 'number') {
-      formattedValue = <Text font="label2">{formattedValue}</Text>;
+      formattedValue = (
+        <Text color="fgMuted" font="label2">
+          {formattedValue}
+        </Text>
+      );
     }
 
     const seriesItem: TooltipSeriesItem = {

@@ -1,14 +1,14 @@
-import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
+import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Rect } from '@coinbase/cds-common/types';
 import { cx } from '@coinbase/cds-web';
 import { useDimensions } from '@coinbase/cds-web/hooks/useDimensions';
 import { Box, type BoxBaseProps, type BoxProps } from '@coinbase/cds-web/layout';
 import { css } from '@linaria/core';
 
-import { HighlightProvider, type HighlightProviderProps } from './HighlightProvider';
 import { Legend } from './legend/Legend';
 import type { LegendPosition } from './CartesianChart';
 import { PolarChartProvider } from './ChartProvider';
+import { HighlightProvider, type HighlightProviderProps } from './HighlightProvider';
 import {
   type AngularAxisConfig,
   type AngularAxisConfigProps,
@@ -22,6 +22,8 @@ import {
   getPolarAxisRange,
   getPolarAxisScale,
   getRadialAxisConfig,
+  type HighlightAnchor,
+  type HighlightedItemData,
   type PolarChartContextValue,
   type PolarSeries,
   type RadialAxisConfig,
@@ -31,6 +33,15 @@ import {
 const rootCss = css`
   display: flex;
   overflow: hidden;
+`;
+const focusCss = css`
+  &:focus {
+    outline: none;
+  }
+  &:focus-visible {
+    outline: 2px solid var(--color-fgPrimary);
+    outline-offset: -2px;
+  }
 `;
 const verticalCss = css`
   flex-direction: column;
@@ -405,6 +416,134 @@ export const PolarChart = memo(
         ],
       );
 
+      // Track internal highlight state for uncontrolled mode
+      const [internalHighlightedItem, setInternalHighlightedItem] = useState<
+        HighlightedItemData | undefined
+      >();
+      const isControlled = highlightedItem !== undefined;
+
+      // Determine the current highlighted item
+      const currentHighlightedItem = isControlled
+        ? (highlightedItem ?? undefined)
+        : internalHighlightedItem;
+
+      // Unified setter that handles both controlled and uncontrolled modes
+      const setHighlightedItemInternal = useCallback(
+        (
+          itemOrUpdater:
+            | HighlightedItemData
+            | undefined
+            | ((prev: HighlightedItemData | undefined) => HighlightedItemData | undefined),
+        ) => {
+          const newItem =
+            typeof itemOrUpdater === 'function'
+              ? itemOrUpdater(currentHighlightedItem)
+              : itemOrUpdater;
+
+          if (!isControlled) {
+            setInternalHighlightedItem(newItem);
+          }
+
+          onHighlightChange?.(newItem ?? null);
+        },
+        [isControlled, currentHighlightedItem, onHighlightChange],
+      );
+
+      // Get a fixed anchor position for keyboard navigation
+      // We use center-bottom of the chart since we don't have arc geometry here
+      // (PiePlot calculates the actual arc positions and sets precise anchors on hover)
+      const getKeyboardAnchor = useCallback((): HighlightAnchor | undefined => {
+        if (!drawingArea || drawingArea.width <= 0) return undefined;
+
+        // Position at center-bottom of the chart (below the pie)
+        return {
+          x: drawingArea.x + drawingArea.width / 2,
+          y: drawingArea.y + drawingArea.height + 8, // 8px below the chart
+        };
+      }, [drawingArea]);
+
+      // Handle keyboard navigation for polar charts (cycles through series)
+      const handleKeyDown = useCallback(
+        (event: KeyboardEvent) => {
+          if (!enableHighlighting || !series || series.length === 0) return;
+
+          const seriesCount = series.length;
+          const currentIndex = currentHighlightedItem?.dataIndex ?? -1;
+
+          let newIndex: number | undefined;
+
+          switch (event.key) {
+            case 'ArrowLeft':
+            case 'ArrowUp':
+              event.preventDefault();
+              // Move to previous slice, wrap around
+              newIndex = currentIndex <= 0 ? seriesCount - 1 : currentIndex - 1;
+              break;
+            case 'ArrowRight':
+            case 'ArrowDown':
+              event.preventDefault();
+              // Move to next slice, wrap around
+              newIndex = currentIndex >= seriesCount - 1 ? 0 : currentIndex + 1;
+              break;
+            case 'Home':
+              event.preventDefault();
+              newIndex = 0;
+              break;
+            case 'End':
+              event.preventDefault();
+              newIndex = seriesCount - 1;
+              break;
+            case 'Escape':
+              event.preventDefault();
+              newIndex = undefined;
+              break;
+            default:
+              return;
+          }
+
+          if (newIndex === undefined) {
+            setHighlightedItemInternal(undefined);
+          } else {
+            const targetSeriesItem = series[newIndex];
+            const anchor = getKeyboardAnchor();
+            setHighlightedItemInternal({
+              seriesId: targetSeriesItem?.id,
+              dataIndex: newIndex,
+              anchor,
+            });
+          }
+        },
+        [
+          enableHighlighting,
+          series,
+          currentHighlightedItem,
+          setHighlightedItemInternal,
+          getKeyboardAnchor,
+        ],
+      );
+
+      // Handle blur - clear highlighting when focus leaves
+      const handleBlur = useCallback(() => {
+        if (!enableHighlighting) return;
+        if (currentHighlightedItem === undefined) return;
+        setHighlightedItemInternal(undefined);
+      }, [enableHighlighting, currentHighlightedItem, setHighlightedItemInternal]);
+
+      // Attach keyboard event listeners to SVG element
+      useEffect(() => {
+        if (!chartRef.current || !enableHighlighting) return;
+
+        const svg = chartRef.current;
+
+        svg.addEventListener('keydown', handleKeyDown);
+        svg.addEventListener('blur', handleBlur);
+
+        return () => {
+          svg.removeEventListener('keydown', handleKeyDown);
+          svg.removeEventListener('blur', handleBlur);
+        };
+      }, [enableHighlighting, handleKeyDown, handleBlur]);
+
       const isVerticalLegend = useMemo(
         () => legendPosition === 'top' || legendPosition === 'bottom',
         [legendPosition],
@@ -437,8 +576,14 @@ export const PolarChart = memo(
         <PolarChartProvider value={contextValue}>
           <HighlightProvider
             enableHighlighting={enableHighlighting}
-            highlightedItem={highlightedItem}
-            onHighlightChange={onHighlightChange}
+            highlightedItem={currentHighlightedItem}
+            onHighlightChange={(item) => {
+              // This allows child components (like arcs) to also set highlights
+              if (!isControlled) {
+                setInternalHighlightedItem(item ?? undefined);
+              }
+              onHighlightChange?.(item);
+            }}
           >
             <Box
               className={rootClassNames}
@@ -464,9 +609,10 @@ export const PolarChart = memo(
                 }}
                 aria-live="polite"
                 as="svg"
-                className={cx(chartContainerCss, classNames?.chart)}
+                className={cx(chartContainerCss, enableHighlighting && focusCss, classNames?.chart)}
                 height="100%"
                 style={styles?.chart}
+                tabIndex={enableHighlighting ? 0 : undefined}
                 width="100%"
               >
                 {children}
