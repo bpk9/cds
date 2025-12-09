@@ -24,7 +24,9 @@ function BasicExample() {
             { id: 'c', data: 30, color: `rgb(${theme.spectrum.purple40})` },
           ]}
         />
-        <Text font="label2" color="fgMuted">PieChart</Text>
+        <Text font="label2" color="fgMuted">
+          PieChart
+        </Text>
       </VStack>
       <VStack alignItems="center" gap={2}>
         <DonutChart
@@ -37,7 +39,9 @@ function BasicExample() {
             { id: 'c', data: 30, color: `rgb(${theme.spectrum.purple40})` },
           ]}
         />
-        <Text font="label2" color="fgMuted">DonutChart</Text>
+        <Text font="label2" color="fgMuted">
+          DonutChart
+        </Text>
       </VStack>
     </HStack>
   );
@@ -95,7 +99,9 @@ function CustomRangeExample() {
         >
           <PiePlot cornerRadius={8} />
         </PolarChart>
-        <Text font="label2" color="fgMuted">Semicircle (top)</Text>
+        <Text font="label2" color="fgMuted">
+          Semicircle (top)
+        </Text>
       </VStack>
       <VStack alignItems="center" gap={2}>
         <PolarChart
@@ -109,7 +115,9 @@ function CustomRangeExample() {
         >
           <PiePlot cornerRadius={8} />
         </PolarChart>
-        <Text font="label2" color="fgMuted">Semicircle (bottom)</Text>
+        <Text font="label2" color="fgMuted">
+          Semicircle (bottom)
+        </Text>
       </VStack>
     </HStack>
   );
@@ -161,9 +169,24 @@ function MultipleAngularAxesExample() {
         { id: 'revenue', data: 30, color: `rgb(${theme.spectrum.blue40})`, angularAxisId: 'top' },
         { id: 'profit', data: 50, color: `rgb(${theme.spectrum.green40})`, angularAxisId: 'top' },
         { id: 'costs', data: 20, color: `rgb(${theme.spectrum.orange40})`, angularAxisId: 'top' },
-        { id: 'users', data: 40, color: `rgb(${theme.spectrum.purple40})`, angularAxisId: 'bottom' },
-        { id: 'sessions', data: 35, color: `rgb(${theme.spectrum.yellow40})`, angularAxisId: 'bottom' },
-        { id: 'conversions', data: 25, color: `rgb(${theme.spectrum.teal40})`, angularAxisId: 'bottom' },
+        {
+          id: 'users',
+          data: 40,
+          color: `rgb(${theme.spectrum.purple40})`,
+          angularAxisId: 'bottom',
+        },
+        {
+          id: 'sessions',
+          data: 35,
+          color: `rgb(${theme.spectrum.yellow40})`,
+          angularAxisId: 'bottom',
+        },
+        {
+          id: 'conversions',
+          data: 25,
+          color: `rgb(${theme.spectrum.teal40})`,
+          angularAxisId: 'bottom',
+        },
       ]}
     >
       <PiePlot angularAxisId="top" cornerRadius={4} />
