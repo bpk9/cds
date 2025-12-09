@@ -1,24 +1,22 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Box, Divider, HStack, VStack, type VStackProps } from '@coinbase/cds-web/layout';
+import React, { useEffect, useMemo } from 'react';
+import {
+  Divider,
+  VStack,
+  type VStackBaseProps,
+  type VStackDefaultElement,
+  type VStackProps,
+} from '@coinbase/cds-web/layout';
 import { Portal } from '@coinbase/cds-web/overlays/Portal';
 import { tooltipContainerId } from '@coinbase/cds-web/overlays/PortalProvider';
 import { Text } from '@coinbase/cds-web/typography';
 import { flip, offset, shift, useFloating, type VirtualElement } from '@floating-ui/react-dom';
-import { css } from '@linaria/core';
 
-import { DefaultLegendShape } from './legend/DefaultLegendShape';
-
-const legendMediaWrapperCss = css`
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-import type { LegendShape } from './utils/chart';
+import type { LegendShapeComponent } from './legend/DefaultLegendShape';
 import { useCartesianChartContext } from './ChartProvider';
+import { type ChartTooltipItemComponent, DefaultChartTooltipItem } from './DefaultChartTooltipItem';
 import { useScrubberContext } from './utils';
 
-export type ChartTooltipProps = VStackProps<'div'> & {
+export type ChartTooltipBaseProps = VStackBaseProps & {
   /**
    * Label text displayed at the top of the tooltip.
    * Can be a static string, a custom ReactNode, or a function that receives the current dataIndex.
@@ -37,20 +35,38 @@ export type ChartTooltipProps = VStackProps<'div'> & {
    * String results will automatically be wrapped in Text with font="label2".
    */
   valueFormatter?: (value: number) => React.ReactNode;
+  /**
+   * Custom component to render each tooltip item.
+   * @default DefaultChartTooltipItem
+   */
+  ItemComponent?: ChartTooltipItemComponent;
+  /**
+   * Custom component to render the legend shape within each item.
+   * Only used when ItemComponent is DefaultChartTooltipItem.
+   * @default DefaultLegendShape
+   */
+  ShapeComponent?: LegendShapeComponent;
 };
+
+export type ChartTooltipProps = VStackProps<VStackDefaultElement> & ChartTooltipBaseProps;
 
 export const ChartTooltip = ({
   label,
   seriesIds,
   valueFormatter,
+  ItemComponent = DefaultChartTooltipItem,
+  ShapeComponent,
+  background = 'bgElevation2',
+  borderRadius = 400,
+  elevation = 2,
   gap = 1,
   minWidth = 320,
+  paddingX = 2,
+  paddingY = 1.5,
   ...props
 }: ChartTooltipProps) => {
-  const { ref, series, getSeriesData, getXAxis } = useCartesianChartContext();
+  const { ref, series, getXAxis } = useCartesianChartContext();
   const { scrubberPosition, enableScrubbing } = useScrubberContext();
-  const [legendMediaWidth, setLegendMediaWidth] = useState<number>(0);
-  const legendMediaRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
   const isTooltipVisible = enableScrubbing && scrubberPosition !== undefined;
 
@@ -99,163 +115,63 @@ export const ChartTooltip = ({
     return () => element.removeEventListener('mousemove', handleMouseMove);
   }, [enableScrubbing, refs, ref]);
 
-  const { resolvedLabel, seriesItems } = useMemo(() => {
-    if (scrubberPosition === undefined) {
-      return { resolvedLabel: null, seriesItems: [] as TooltipSeriesItem[] };
-    }
+  const filteredSeries = useMemo(() => {
+    if (seriesIds === undefined) return series;
+    return series.filter((s) => seriesIds.includes(s.id));
+  }, [series, seriesIds]);
 
-    // Resolve label
-    let resolvedLabel: React.ReactNode;
+  const resolvedLabel = useMemo(() => {
+    if (scrubberPosition === undefined) return;
+
+    let resolved: React.ReactNode;
     if (label !== undefined) {
-      resolvedLabel = typeof label === 'function' ? label(scrubberPosition) : label;
+      resolved = typeof label === 'function' ? label(scrubberPosition) : label;
     } else {
       // Default to x-axis data value
       const xAxis = getXAxis();
       if (xAxis?.data && xAxis.data[scrubberPosition] !== undefined) {
-        resolvedLabel = xAxis.data[scrubberPosition];
+        resolved = xAxis.data[scrubberPosition];
       } else {
-        resolvedLabel = scrubberPosition;
+        resolved = scrubberPosition;
       }
     }
+    return resolved;
+  }, [scrubberPosition, label, getXAxis]);
 
-    // Wrap string label in Text
-    if (typeof resolvedLabel === 'string' || typeof resolvedLabel === 'number') {
-      resolvedLabel = <Text font="label1">{resolvedLabel}</Text>;
-    }
-
-    // Filter series
-    const filteredSeries = seriesIds ? series.filter((s) => seriesIds.includes(s.id)) : series;
-
-    // Resolve series data
-    const seriesItems: TooltipSeriesItem[] = [];
-    filteredSeries.forEach((s) => {
-      const data = getSeriesData(s.id);
-      const dataPoint = data?.[scrubberPosition];
-      let value: number | undefined;
-
-      if (dataPoint && dataPoint !== null) {
-        const [start, end] = dataPoint;
-        value = end - start;
-      } else if (s.data) {
-        const rawPoint = s.data[scrubberPosition];
-        if (rawPoint !== undefined && rawPoint !== null) {
-          value = Array.isArray(rawPoint) ? (rawPoint[1] ?? undefined) : (rawPoint as number);
-        }
-      }
-
-      if (value === undefined || value === null || Number.isNaN(value)) return;
-
-      let formattedValue: React.ReactNode = value;
-      if (valueFormatter) {
-        formattedValue = valueFormatter(value);
-      }
-
-      if (formattedValue === null || formattedValue === undefined) {
-        return;
-      }
-
-      if (typeof formattedValue === 'string' || typeof formattedValue === 'number') {
-        formattedValue = <Text font="label2">{formattedValue}</Text>;
-      }
-
-      seriesItems.push({
-        id: s.id,
-        label: s.label,
-        color: s.color,
-        shape: s.legendShape,
-        value: formattedValue,
-      });
-    });
-
-    return {
-      resolvedLabel: resolvedLabel ?? null,
-      seriesItems,
-    };
-  }, [scrubberPosition, label, seriesIds, series, getSeriesData, getXAxis, valueFormatter]);
-
-  // Measure legend media widths and find the maximum
-  useLayoutEffect(() => {
-    if (seriesItems.length === 0) {
-      setLegendMediaWidth(0);
-      return;
-    }
-
-    let maxWidth = 0;
-    legendMediaRefs.current.forEach((el) => {
-      if (el) {
-        const width = el.scrollWidth;
-        if (width > maxWidth) {
-          maxWidth = width;
-        }
-      }
-    });
-
-    if (maxWidth !== legendMediaWidth) {
-      setLegendMediaWidth(maxWidth);
-    }
-  }, [seriesItems, legendMediaWidth]);
-
-  // Create a ref callback for each legend media item
-  const setLegendMediaRef = useCallback(
-    (id: string) => (el: HTMLDivElement | null) => {
-      if (el) {
-        legendMediaRefs.current.set(id, el);
-      } else {
-        legendMediaRefs.current.delete(id);
-      }
-    },
-    [],
-  );
-
-  if (!isTooltipVisible || (!resolvedLabel && seriesItems.length === 0)) {
-    return null;
-  }
+  if (!isTooltipVisible) return;
 
   return (
     <Portal containerId={tooltipContainerId}>
       <VStack
         ref={refs.setFloating}
-        background="bg"
-        borderRadius={400}
-        color="fg"
-        elevation={2}
+        background={background}
+        borderRadius={borderRadius}
+        elevation={elevation}
         gap={gap}
         minWidth={minWidth}
-        paddingX={2}
-        paddingY={1.5}
+        paddingX={paddingX}
+        paddingY={paddingY}
         style={floatingStyles}
         {...props}
       >
-        {resolvedLabel}
-        <Divider />
-        {seriesItems.length > 0 && (
-          <VStack gap={1}>
-            {seriesItems.map((item) => (
-              <HStack key={item.id} alignItems="center" justifyContent="space-between">
-                <HStack alignItems="center" gap={1}>
-                  <Box
-                    ref={setLegendMediaRef(item.id)}
-                    className={legendMediaWrapperCss}
-                    style={legendMediaWidth > 0 ? { width: legendMediaWidth } : undefined}
-                  >
-                    <DefaultLegendShape color={item.color} shape={item.shape} />
-                  </Box>
-                  <Text font="label1">{item.label ?? item.id}</Text>
-                </HStack>
-                {item.value}
-              </HStack>
-            ))}
-          </VStack>
-        )}
+        {resolvedLabel &&
+          (typeof resolvedLabel === 'string' || typeof resolvedLabel === 'number' ? (
+            <Text font="label1">{resolvedLabel}</Text>
+          ) : (
+            resolvedLabel
+          ))}
+        {resolvedLabel && filteredSeries.length > 0 && <Divider />}
+        {filteredSeries.length > 0 &&
+          filteredSeries.map((s) => (
+            <ItemComponent
+              key={s.id}
+              ShapeComponent={ShapeComponent}
+              scrubberPosition={scrubberPosition!}
+              series={s}
+              valueFormatter={valueFormatter}
+            />
+          ))}
       </VStack>
     </Portal>
   );
-};
-
-type TooltipSeriesItem = {
-  id: string;
-  label?: string;
-  color?: string;
-  shape?: LegendShape;
-  value: React.ReactNode;
 };

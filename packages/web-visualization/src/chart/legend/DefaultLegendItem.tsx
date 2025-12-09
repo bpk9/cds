@@ -135,7 +135,7 @@ export const DefaultLegendItem = memo(
           />
         </Box>
         {isStringLabel ? (
-          <Text className={classNames?.text} font="label2" style={styles?.text}>
+          <Text className={classNames?.text} font="label1" style={styles?.text}>
             {label}
           </Text>
         ) : (
