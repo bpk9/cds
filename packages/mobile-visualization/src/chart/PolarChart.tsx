@@ -6,12 +6,12 @@ import type { BoxBaseProps, BoxProps } from '@coinbase/cds-mobile/layout';
 import { Box } from '@coinbase/cds-mobile/layout';
 import { Canvas, Skia, type SkTypefaceFontProvider } from '@shopify/react-native-skia';
 
-import { HighlightProvider, type HighlightProviderBaseProps } from './HighlightProvider';
 import { Legend } from './legend/Legend';
 import { convertToSerializableScale, type SerializableScale } from './utils/scale';
 import type { LegendPosition } from './CartesianChart';
 import { useChartContextBridge } from './ChartContextBridge';
 import { PolarChartProvider } from './ChartProvider';
+import { HighlightProvider, type HighlightProviderBaseProps } from './HighlightProvider';
 import {
   type AngularAxisConfig,
   type AngularAxisConfigProps,

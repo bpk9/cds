@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
 import { Haptics } from '@coinbase/cds-mobile/utils/haptics';
 
+import { getPointOnSerializableScale } from './utils/point';
 import { useCartesianChartContext } from './ChartProvider';
 import {
   HighlightContext,
@@ -11,7 +12,6 @@ import {
   type HighlightedItemData,
   invertSerializableScale,
 } from './utils';
-import { getPointOnSerializableScale } from './utils/point';
 
 export type HighlightProviderBaseProps = {
   /**
