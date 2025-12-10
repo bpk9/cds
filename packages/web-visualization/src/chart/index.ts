@@ -5,6 +5,7 @@ export * from './bar/index';
 export * from './CartesianChart';
 export * from './ChartProvider';
 export * from './ChartTooltip';
+export * from './DefaultChartTooltipItem';
 export * from './DonutChart';
 export * from './gradient/index';
 export * from './HighlightProvider';

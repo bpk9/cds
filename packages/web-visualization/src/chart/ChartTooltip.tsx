@@ -1,29 +1,26 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Box, Divider, HStack, VStack, type VStackProps } from '@coinbase/cds-web/layout';
+import React, { useEffect, useMemo } from 'react';
+import {
+  Divider,
+  VStack,
+  type VStackBaseProps,
+  type VStackDefaultElement,
+  type VStackProps,
+} from '@coinbase/cds-web/layout';
 import { Portal } from '@coinbase/cds-web/overlays/Portal';
 import { tooltipContainerId } from '@coinbase/cds-web/overlays/PortalProvider';
 import { Text } from '@coinbase/cds-web/typography';
 import { flip, offset, shift, useFloating, type VirtualElement } from '@floating-ui/react-dom';
-import { css } from '@linaria/core';
 
-import { DefaultLegendShape } from './legend/DefaultLegendShape';
+import type { LegendShapeComponent } from './legend/DefaultLegendShape';
+import { useCartesianChartContext } from './ChartProvider';
+import { type ChartTooltipItemComponent, DefaultChartTooltipItem } from './DefaultChartTooltipItem';
+import { useScrubberContext } from './utils';
 
-const legendMediaWrapperCss = css`
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-import type { LegendShape } from './utils/chart';
-import { useCartesianChartContext, useChartContext, usePolarChartContext } from './ChartProvider';
-import { useHighlightContext } from './utils';
-
-export type ChartTooltipProps = VStackProps<'div'> & {
+export type ChartTooltipBaseProps = VStackBaseProps & {
   /**
    * Label text displayed at the top of the tooltip.
-   * For cartesian charts: can be a static string, a custom ReactNode, or a function that receives the current dataIndex.
-   * For polar charts: can be a static string or a custom ReactNode.
-   * If not provided, defaults to the x-axis data value (cartesian) or series label (polar).
+   * Can be a static string, a custom ReactNode, or a function that receives the current dataIndex.
+   * If not provided, defaults to the x-axis data value at the current index.
    * If null is returned, the label is omitted.
    */
   label?: React.ReactNode | ((dataIndex: number) => React.ReactNode);
@@ -38,51 +35,132 @@ export type ChartTooltipProps = VStackProps<'div'> & {
    * String results will automatically be wrapped in Text with font="label2".
    */
   valueFormatter?: (value: number) => React.ReactNode;
+  /**
+   * Custom component to render each tooltip item.
+   * @default DefaultChartTooltipItem
+   */
+  ItemComponent?: ChartTooltipItemComponent;
+  /**
+   * Custom component to render the legend shape within each item.
+   * Only used when ItemComponent is DefaultChartTooltipItem.
+   * @default DefaultLegendShape
+   */
+  ShapeComponent?: LegendShapeComponent;
 };
 
-type TooltipSeriesItem = {
-  id: string;
-  label?: string;
-  color?: string;
-  shape?: LegendShape;
-  value: React.ReactNode;
-};
+export type ChartTooltipProps = VStackProps<VStackDefaultElement> &
+  ChartTooltipBaseProps & {
+    /**
+     * Custom class names for the component parts.
+     */
+    classNames?: {
+      /**
+       * Custom class name for the root element.
+       */
+      root?: string;
+      /**
+       * Custom class name for the label element.
+       * @note not applied when label is a ReactNode.
+       */
+      label?: string;
+      /**
+       * Custom class name for the divider element.
+       */
+      divider?: string;
+      /**
+       * Custom class name for each item element.
+       */
+      item?: string;
+      /**
+       * Custom class name for the legend item element within each item.
+       */
+      itemLegendItem?: string;
+      /**
+       * Custom class name for the value element within each item.
+       */
+      itemValue?: string;
+      /**
+       * Custom class name for the shape wrapper element within each item.
+       */
+      itemShapeWrapper?: string;
+      /**
+       * Custom class name for the shape element within each item.
+       */
+      itemShape?: string;
+      /**
+       * Custom class name for the label element within each item.
+       * @note not applied when label is a ReactNode.
+       */
+      itemLabel?: string;
+    };
+    /**
+     * Custom styles for the component parts.
+     */
+    styles?: {
+      /**
+       * Custom styles for the root element.
+       */
+      root?: React.CSSProperties;
+      /**
+       * Custom styles for the label element.
+       * @note not applied when label is a ReactNode.
+       */
+      label?: React.CSSProperties;
+      /**
+       * Custom styles for the divider element.
+       */
+      divider?: React.CSSProperties;
+      /**
+       * Custom styles for each item element.
+       */
+      item?: React.CSSProperties;
+      /**
+       * Custom styles for the legend item element within each item.
+       */
+      itemLegendItem?: React.CSSProperties;
+      /**
+       * Custom styles for the value element within each item.
+       */
+      itemValue?: React.CSSProperties;
+      /**
+       * Custom styles for the shape wrapper element within each item.
+       */
+      itemShapeWrapper?: React.CSSProperties;
+      /**
+       * Custom styles for the shape element within each item.
+       */
+      itemShape?: React.CSSProperties;
+      /**
+       * Custom styles for the label element within each item.
+       * @note not applied when label is a ReactNode.
+       */
+      itemLabel?: React.CSSProperties;
+    };
+  };
 
-/**
- * ChartTooltip - displays contextual data on hover/scrub.
- * Works with both CartesianChart (via scrubbing) and PolarChart (via highlighting).
- */
-export const ChartTooltip = (props: ChartTooltipProps) => {
-  const chartContext = useChartContext();
-
-  if (chartContext.type === 'cartesian') {
-    return <CartesianChartTooltip {...props} />;
-  }
-
-  return <PolarChartTooltip {...props} />;
-};
-
-/**
- * Tooltip for Cartesian charts - uses highlight context for positioning.
- */
-const CartesianChartTooltip = ({
+export const ChartTooltip = ({
   label,
   seriesIds,
   valueFormatter,
+  ItemComponent = DefaultChartTooltipItem,
+  ShapeComponent,
+  background = 'bgElevation2',
+  borderRadius = 400,
+  elevation = 2,
   gap = 1,
-  minWidth = 200,
+  minWidth = 320,
+  paddingX = 2,
+  paddingY = 1.5,
+  className,
+  classNames,
+  style,
+  styles,
   ...props
 }: ChartTooltipProps) => {
-  const { ref, series, getSeriesData, getXAxis } = useCartesianChartContext();
-  const highlightContext = useHighlightContext();
-  const [legendMediaWidth, setLegendMediaWidth] = useState<number>(0);
-  const legendMediaRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  const { ref, series, getXAxis } = useCartesianChartContext();
+  const { scrubberPosition, enableScrubbing } = useScrubberContext();
 
-  const enableHighlighting = highlightContext?.enableHighlighting ?? false;
-  const highlightedItem = highlightContext?.highlightedItem;
-  const dataIndex = highlightedItem?.dataIndex;
-
-  const isTooltipVisible = enableHighlighting && dataIndex !== undefined;
+  const isTooltipVisible = enableScrubbing && scrubberPosition !== undefined;
 
   const { refs, floatingStyles } = useFloating({
     open: isTooltipVisible,
@@ -101,267 +179,9 @@ const CartesianChartTooltip = ({
     ],
   });
 
-  // Track mouse position for tooltip positioning (when no anchor is provided)
   useEffect(() => {
     const element = ref?.current;
-    if (!element || !enableHighlighting) return;
-
-    const handleMouseMove = (event: Event) => {
-      const { clientX, clientY } = event as MouseEvent;
-
-      // Only update floating reference if there's no anchor (mouse-based interaction)
-      if (!highlightedItem?.anchor) {
-        const virtualEl: VirtualElement = {
-          getBoundingClientRect() {
-            return {
-              width: 0,
-              height: 0,
-              x: clientX,
-              y: clientY,
-              left: clientX,
-              right: clientX,
-              top: clientY,
-              bottom: clientY,
-            } as DOMRect;
-          },
-        };
-        refs.setReference(virtualEl);
-      }
-    };
-
-    element.addEventListener('mousemove', handleMouseMove);
-
-    return () => element.removeEventListener('mousemove', handleMouseMove);
-  }, [enableHighlighting, refs, ref, highlightedItem?.anchor]);
-
-  // Update tooltip position when anchor changes (keyboard navigation)
-  useEffect(() => {
-    const element = ref?.current;
-    if (!element || !enableHighlighting || !highlightedItem?.anchor) return;
-
-    const svgRect = element.getBoundingClientRect();
-    const { x: anchorX, y: anchorY } = highlightedItem.anchor;
-
-    // Convert SVG-relative anchor to screen coordinates
-    const screenX = svgRect.left + anchorX;
-    const screenY = svgRect.top + anchorY;
-
-    const virtualEl: VirtualElement = {
-      getBoundingClientRect() {
-        return {
-          width: 0,
-          height: 0,
-          x: screenX,
-          y: screenY,
-          left: screenX,
-          right: screenX,
-          top: screenY,
-          bottom: screenY,
-        } as DOMRect;
-      },
-    };
-    refs.setReference(virtualEl);
-  }, [enableHighlighting, refs, ref, highlightedItem?.anchor]);
-
-  const { resolvedLabel, seriesItems } = useMemo(() => {
-    if (dataIndex === undefined) {
-      return { resolvedLabel: null, seriesItems: [] as TooltipSeriesItem[] };
-    }
-
-    // Resolve label
-    let resolvedLabel: React.ReactNode;
-    if (label !== undefined) {
-      resolvedLabel = typeof label === 'function' ? label(dataIndex) : label;
-    } else {
-      // Default to x-axis data value
-      const xAxis = getXAxis();
-      if (xAxis?.data && xAxis.data[dataIndex] !== undefined) {
-        resolvedLabel = xAxis.data[dataIndex];
-      } else {
-        resolvedLabel = dataIndex;
-      }
-    }
-
-    // Wrap string label in Text
-    if (typeof resolvedLabel === 'string' || typeof resolvedLabel === 'number') {
-      resolvedLabel = <Text font="label1">{resolvedLabel}</Text>;
-    }
-
-    // Filter series - if highlightedItem has seriesId, optionally emphasize it
-    const filteredSeries = seriesIds ? series.filter((s) => seriesIds.includes(s.id)) : series;
-
-    // Resolve series data
-    const seriesItems: TooltipSeriesItem[] = [];
-    filteredSeries.forEach((s) => {
-      const data = getSeriesData(s.id);
-      const dataPoint = data?.[dataIndex];
-      let value: number | undefined;
-
-      if (dataPoint && dataPoint !== null) {
-        const [start, end] = dataPoint;
-        value = end - start;
-      } else if (s.data) {
-        const rawPoint = s.data[dataIndex];
-        if (rawPoint !== undefined && rawPoint !== null) {
-          value = Array.isArray(rawPoint) ? (rawPoint[1] ?? undefined) : (rawPoint as number);
-        }
-      }
-
-      if (value === undefined || value === null || Number.isNaN(value)) return;
-
-      let formattedValue: React.ReactNode = value;
-      if (valueFormatter) {
-        formattedValue = valueFormatter(value);
-      }
-
-      if (formattedValue === null || formattedValue === undefined) {
-        return;
-      }
-
-      if (typeof formattedValue === 'string' || typeof formattedValue === 'number') {
-        formattedValue = (
-          <Text color="fgMuted" font="label2">
-            {formattedValue}
-          </Text>
-        );
-      }
-
-      seriesItems.push({
-        id: s.id,
-        label: s.label,
-        color: s.color,
-        shape: s.legendShape,
-        value: formattedValue,
-      });
-    });
-
-    return {
-      resolvedLabel: resolvedLabel ?? null,
-      seriesItems,
-    };
-  }, [dataIndex, label, seriesIds, series, getSeriesData, getXAxis, valueFormatter]);
-
-  // Measure legend media widths and find the maximum
-  useLayoutEffect(() => {
-    if (seriesItems.length === 0) {
-      setLegendMediaWidth(0);
-      return;
-    }
-
-    let maxWidth = 0;
-    legendMediaRefs.current.forEach((el) => {
-      if (el) {
-        const width = el.scrollWidth;
-        if (width > maxWidth) {
-          maxWidth = width;
-        }
-      }
-    });
-
-    if (maxWidth !== legendMediaWidth) {
-      setLegendMediaWidth(maxWidth);
-    }
-  }, [seriesItems, legendMediaWidth]);
-
-  // Create a ref callback for each legend media item
-  const setLegendMediaRef = useCallback(
-    (id: string) => (el: HTMLDivElement | null) => {
-      if (el) {
-        legendMediaRefs.current.set(id, el);
-      } else {
-        legendMediaRefs.current.delete(id);
-      }
-    },
-    [],
-  );
-
-  if (!isTooltipVisible || (!resolvedLabel && seriesItems.length === 0)) {
-    return null;
-  }
-
-  return (
-    <Portal containerId={tooltipContainerId}>
-      <VStack
-        ref={refs.setFloating}
-        background="bg"
-        borderRadius={400}
-        color="fg"
-        elevation={2}
-        gap={gap}
-        minWidth={minWidth}
-        paddingX={2}
-        paddingY={1.5}
-        style={floatingStyles}
-        {...props}
-      >
-        {resolvedLabel}
-        <Divider />
-        {seriesItems.length > 0 && (
-          <VStack gap={1}>
-            {seriesItems.map((item) => (
-              <HStack key={item.id} alignItems="center" gap={1} justifyContent="space-between">
-                <HStack alignItems="center" gap={1}>
-                  <Box
-                    ref={setLegendMediaRef(item.id)}
-                    className={legendMediaWrapperCss}
-                    style={legendMediaWidth > 0 ? { width: legendMediaWidth } : undefined}
-                  >
-                    <DefaultLegendShape color={item.color} shape={item.shape} />
-                  </Box>
-                  <Text font="label1">{item.label ?? item.id}</Text>
-                </HStack>
-                {item.value}
-              </HStack>
-            ))}
-          </VStack>
-        )}
-      </VStack>
-    </Portal>
-  );
-};
-
-/**
- * Tooltip for Polar charts - uses highlight context.
- */
-const PolarChartTooltip = ({
-  label,
-  seriesIds,
-  valueFormatter,
-  gap = 1,
-  minWidth = 200,
-  ...props
-}: ChartTooltipProps) => {
-  const { ref, series, getSeriesData } = usePolarChartContext();
-  const highlightContext = useHighlightContext();
-  const [legendMediaWidth, setLegendMediaWidth] = useState<number>(0);
-  const legendMediaRef = useRef<HTMLDivElement | null>(null);
-
-  const enableHighlighting = highlightContext?.enableHighlighting ?? false;
-  const highlightedItem = highlightContext?.highlightedItem;
-
-  const isTooltipVisible = enableHighlighting && highlightedItem !== undefined;
-
-  const { refs, floatingStyles } = useFloating({
-    open: isTooltipVisible,
-    placement: 'bottom-start',
-    middleware: [
-      offset(({ placement }) => {
-        const mainAxis = placement.includes('bottom') ? 16 : 8;
-        const crossAxis = placement.includes('start') ? 16 : -8;
-
-        return { mainAxis, crossAxis };
-      }),
-      flip({
-        fallbackPlacements: ['top-start', 'bottom-end', 'top-end'],
-      }),
-      shift({ padding: 8 }),
-    ],
-  });
-
-  // Track mouse move for tooltip positioning
-  useEffect(() => {
-    const element = ref?.current;
-    if (!element || !enableHighlighting) return;
+    if (!element || !enableScrubbing) return;
 
     const handleMouseMove = (event: Event) => {
       const { clientX, clientY } = event as MouseEvent;
@@ -385,147 +205,85 @@ const PolarChartTooltip = ({
     element.addEventListener('mousemove', handleMouseMove);
 
     return () => element.removeEventListener('mousemove', handleMouseMove);
-  }, [enableHighlighting, refs, ref]);
+  }, [enableScrubbing, refs, ref]);
 
-  const { resolvedLabel, seriesItem } = useMemo(() => {
-    if (!highlightedItem) {
-      return { resolvedLabel: null, seriesItem: null };
-    }
+  const filteredSeries = useMemo(() => {
+    if (seriesIds === undefined) return series;
+    return series.filter((s) => seriesIds.includes(s.id));
+  }, [series, seriesIds]);
 
-    const { seriesId, dataIndex } = highlightedItem;
+  const resolvedLabel = useMemo(() => {
+    if (scrubberPosition === undefined) return;
 
-    // For polar charts, we expect both seriesId and dataIndex
-    if (seriesId === undefined || dataIndex === undefined) {
-      return { resolvedLabel: null, seriesItem: null };
-    }
-
-    // Find the highlighted series
-    const highlightedSeries = series.find((s) => s.id === seriesId);
-    if (!highlightedSeries) {
-      return { resolvedLabel: null, seriesItem: null };
-    }
-
-    // Check if this series should be shown (based on seriesIds filter)
-    if (seriesIds && !seriesIds.includes(seriesId)) {
-      return { resolvedLabel: null, seriesItem: null };
-    }
-
-    // Resolve label - for polar charts, only show if explicitly provided
-    // (otherwise we'd duplicate the series label which is already shown below)
-    let resolvedLabel: React.ReactNode = null;
+    let resolved: React.ReactNode;
     if (label !== undefined) {
-      // For polar charts, the label function receives the data index (if function)
-      resolvedLabel = typeof label === 'function' ? label(dataIndex) : label;
-
-      // Wrap string label in Text
-      if (typeof resolvedLabel === 'string' || typeof resolvedLabel === 'number') {
-        resolvedLabel = <Text font="label1">{resolvedLabel}</Text>;
+      resolved = typeof label === 'function' ? label(scrubberPosition) : label;
+    } else {
+      // Default to x-axis data value
+      const xAxis = getXAxis();
+      if (xAxis?.data && xAxis.data[scrubberPosition] !== undefined) {
+        resolved = xAxis.data[scrubberPosition];
+      } else {
+        resolved = scrubberPosition;
       }
     }
+    return resolved;
+  }, [scrubberPosition, label, getXAxis]);
 
-    // Get series value at the highlighted index
-    const data = getSeriesData(seriesId);
-    let value: number | undefined;
+  if (!isTooltipVisible) return;
 
-    // For polar charts, data can be a single number or an array
-    if (typeof highlightedSeries.data === 'number') {
-      value = highlightedSeries.data;
-    } else if (typeof data === 'number') {
-      value = data;
-    } else if (Array.isArray(data) && data.length > dataIndex) {
-      const point = data[dataIndex];
-      if (point !== null) {
-        value = point;
-      }
-    } else if (Array.isArray(highlightedSeries.data) && highlightedSeries.data.length > dataIndex) {
-      const rawValue = highlightedSeries.data[dataIndex];
-      if (typeof rawValue === 'number') {
-        value = rawValue;
-      }
-    }
-
-    if (value === undefined || value === null || Number.isNaN(value)) {
-      return { resolvedLabel, seriesItem: null };
-    }
-
-    let formattedValue: React.ReactNode = value;
-    if (valueFormatter) {
-      formattedValue = valueFormatter(value);
-    }
-
-    if (formattedValue === null || formattedValue === undefined) {
-      return { resolvedLabel, seriesItem: null };
-    }
-
-    if (typeof formattedValue === 'string' || typeof formattedValue === 'number') {
-      formattedValue = (
-        <Text color="fgMuted" font="label2">
-          {formattedValue}
-        </Text>
-      );
-    }
-
-    const seriesItem: TooltipSeriesItem = {
-      id: highlightedSeries.id,
-      label: highlightedSeries.label,
-      color: highlightedSeries.color,
-      shape: highlightedSeries.legendShape,
-      value: formattedValue,
-    };
-
-    return { resolvedLabel: resolvedLabel ?? null, seriesItem };
-  }, [highlightedItem, series, seriesIds, label, getSeriesData, valueFormatter]);
-
-  // Measure legend media width
-  useLayoutEffect(() => {
-    if (!seriesItem || !legendMediaRef.current) {
-      setLegendMediaWidth(0);
-      return;
-    }
-
-    const width = legendMediaRef.current.scrollWidth;
-    if (width !== legendMediaWidth) {
-      setLegendMediaWidth(width);
-    }
-  }, [seriesItem, legendMediaWidth]);
-
-  if (!isTooltipVisible || (!resolvedLabel && !seriesItem)) {
-    return null;
-  }
   return (
     <Portal containerId={tooltipContainerId}>
       <VStack
         ref={refs.setFloating}
-        background="bg"
-        borderRadius={400}
-        color="fg"
-        elevation={2}
+        background={background}
+        borderRadius={borderRadius}
+        className={classNames?.root ?? className}
+        elevation={elevation}
         gap={gap}
         minWidth={minWidth}
-        paddingX={2}
-        paddingY={1.5}
-        style={floatingStyles}
+        paddingX={paddingX}
+        paddingY={paddingY}
+        style={{ ...floatingStyles, ...style, ...styles?.root }}
         {...props}
       >
-        {resolvedLabel}
-        {seriesItem && (
-          <>
-            {resolvedLabel && <Divider />}
-            <HStack alignItems="center" gap={1} justifyContent="space-between">
-              <HStack alignItems="center" gap={1}>
-                <Box
-                  ref={legendMediaRef}
-                  className={legendMediaWrapperCss}
-                  style={legendMediaWidth > 0 ? { width: legendMediaWidth } : undefined}
-                >
-                  <DefaultLegendShape color={seriesItem.color} shape={seriesItem.shape} />
-                </Box>
-                <Text font="label1">{seriesItem.label ?? seriesItem.id}</Text>
-              </HStack>
-              {seriesItem.value}
-            </HStack>
-          </>
+        {resolvedLabel &&
+          (typeof resolvedLabel === 'string' || typeof resolvedLabel === 'number' ? (
+            <Text className={classNames?.label} font="label1" style={styles?.label}>
+              {resolvedLabel}
+            </Text>
+          ) : (
+            resolvedLabel
+          ))}
+        {resolvedLabel && filteredSeries.length > 0 && (
+          <Divider className={classNames?.divider} style={styles?.divider} />
         )}
+        {filteredSeries.length > 0 &&
+          filteredSeries.map((s) => (
+            <ItemComponent
+              key={s.id}
+              ShapeComponent={ShapeComponent}
+              classNames={{
+                root: classNames?.item,
+                legendItem: classNames?.itemLegendItem,
+                value: classNames?.itemValue,
+                shapeWrapper: classNames?.itemShapeWrapper,
+                shape: classNames?.itemShape,
+                label: classNames?.itemLabel,
+              }}
+              scrubberPosition={scrubberPosition!}
+              series={s}
+              styles={{
+                root: styles?.item,
+                legendItem: styles?.itemLegendItem,
+                value: styles?.itemValue,
+                shapeWrapper: styles?.itemShapeWrapper,
+                shape: styles?.itemShape,
+                label: styles?.itemLabel,
+              }}
+              valueFormatter={valueFormatter}
+            />
+          ))}
       </VStack>
     </Portal>
   );

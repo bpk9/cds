@@ -1,5 +1,5 @@
 import { forwardRef, memo, useMemo } from 'react';
-import type { View } from 'react-native';
+import type { StyleProp, View, ViewStyle } from 'react-native';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import { Box, type BoxProps } from '@coinbase/cds-mobile/layout';
 
@@ -27,7 +27,35 @@ export type LegendBaseProps = SharedProps & {
   ShapeComponent?: LegendShapeComponent;
 };
 
-export type LegendProps = BoxProps & LegendBaseProps;
+export type LegendProps = BoxProps &
+  LegendBaseProps & {
+    /**
+     * Custom styles for the component parts.
+     */
+    styles?: {
+      /**
+       * Custom styles for the root element.
+       */
+      root?: StyleProp<ViewStyle>;
+      /**
+       * Custom styles for each item element.
+       */
+      item?: StyleProp<ViewStyle>;
+      /**
+       * Custom styles for the shape wrapper element within each item.
+       */
+      itemShapeWrapper?: StyleProp<ViewStyle>;
+      /**
+       * Custom styles for the shape element within each item.
+       */
+      itemShape?: StyleProp<ViewStyle>;
+      /**
+       * Custom styles for the label element within each item.
+       * @note not applied when label is a ReactNode.
+       */
+      itemLabel?: StyleProp<ViewStyle>;
+    };
+  };
 
 export const Legend = memo(
   forwardRef<View, LegendProps>(function Legend(
@@ -40,6 +68,8 @@ export const Legend = memo(
       seriesIds,
       ItemComponent = DefaultLegendItem,
       ShapeComponent,
+      style,
+      styles,
       ...props
     },
     ref,
@@ -61,6 +91,7 @@ export const Legend = memo(
         flexWrap={flexWrap}
         gap={gap}
         justifyContent={justifyContent}
+        style={[style, styles?.root]}
         {...props}
       >
         {filteredSeries.map((s) => (
@@ -71,6 +102,12 @@ export const Legend = memo(
             label={s.label ?? s.id}
             seriesId={s.id}
             shape={s.legendShape}
+            styles={{
+              root: styles?.item,
+              shapeWrapper: styles?.itemShapeWrapper,
+              shape: styles?.itemShape,
+              label: styles?.itemLabel,
+            }}
           />
         ))}
       </Box>

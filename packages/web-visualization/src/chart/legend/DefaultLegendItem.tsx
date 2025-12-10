@@ -73,9 +73,10 @@ export type LegendItemProps = Omit<HStackProps<HStackDefaultElement>, 'children'
        */
       shape?: string;
       /**
-       * Custom class name for the text element.
+       * Custom class name for the label element.
+       * @note not applied when label is a ReactNode.
        */
-      text?: string;
+      label?: string;
     };
     /**
      * Custom styles for the component parts.
@@ -94,9 +95,10 @@ export type LegendItemProps = Omit<HStackProps<HStackDefaultElement>, 'children'
        */
       shape?: React.CSSProperties;
       /**
-       * Custom styles for the text element.
+       * Custom styles for the label element.
+       * @note not applied when label is a ReactNode.
        */
-      text?: React.CSSProperties;
+      label?: React.CSSProperties;
     };
   };
 
@@ -116,8 +118,6 @@ export const DefaultLegendItem = memo(
     testID,
     ...props
   }: LegendItemProps) => {
-    const isStringLabel = typeof label === 'string';
-
     return (
       <HStack
         className={cx(legendItemCss, className, classNames?.root)}
@@ -134,8 +134,8 @@ export const DefaultLegendItem = memo(
             style={styles?.shape}
           />
         </Box>
-        {isStringLabel ? (
-          <Text className={classNames?.text} font="label2" style={styles?.text}>
+        {typeof label === 'string' ? (
+          <Text className={classNames?.label} font="label1" style={styles?.label}>
             {label}
           </Text>
         ) : (
