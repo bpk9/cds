@@ -230,7 +230,7 @@ const Position = () => {
       <CartesianChart
         height={{ base: 150, tablet: 200, desktop: 250 }}
         inset={{ bottom: 8, left: 0, right: 0, top: 8 }}
-        legend={<Legend justifyContent="flex-end" width="100%" />}
+        legend={<Legend justifyContent="flex-end" />}
         legendPosition="bottom"
         series={[
           {

@@ -3,7 +3,6 @@ import { Box, HStack, VStack } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
 
 import { ChartTooltip } from '../../ChartTooltip';
-
 import { PieChart } from '../PieChart';
 
 export default {
