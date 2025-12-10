@@ -1382,17 +1382,21 @@ const CandlesticksChart = memo(
 
     const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
 
-    // Custom line component that renders a rect to highlight the entire bandwidth
+    // Custom line component that renders a rect to highlight the entire bandwidth including gaps
     const BandwidthHighlight = memo(({ stroke }: LineComponentProps) => {
       const { getXSerializableScale, drawingArea } = useCartesianChartContext();
       const { scrubberPosition } = useScrubberContext();
       const xScale = useMemo(() => getXSerializableScale(), [getXSerializableScale]);
 
-      const rectWidth = useMemo(() => {
+      const { rectWidth, gap } = useMemo(() => {
         if (xScale !== undefined && xScale.type === 'band') {
-          return xScale.bandwidth;
+          const bandwidth = xScale.bandwidth;
+          const step = xScale.step ?? bandwidth;
+          const gap = step - bandwidth;
+          // Expand the highlight to include half the gap on each side
+          return { rectWidth: bandwidth + gap, gap };
         }
-        return 0;
+        return { rectWidth: 0, gap: 0 };
       }, [xScale]);
 
       const xPos = useDerivedValue(() => {
@@ -1401,8 +1405,9 @@ const CandlesticksChart = memo(
           position !== undefined && xScale
             ? getPointOnSerializableScale(position, xScale)
             : undefined;
-        return xPos !== undefined ? xPos - rectWidth / 2 : 0;
-      }, [scrubberPosition, xScale]);
+        // Shift left by half the gap to center the expanded highlight
+        return xPos !== undefined ? xPos - gap / 2 : 0;
+      }, [scrubberPosition, xScale, gap]);
 
       const opacity = useDerivedValue(() => (xPos.value !== undefined ? 1 : 0), [xPos]);
 

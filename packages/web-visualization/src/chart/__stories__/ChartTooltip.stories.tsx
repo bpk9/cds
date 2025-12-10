@@ -209,7 +209,7 @@ const WithBarChart = () => {
     );
   });
 
-  // Custom line component that renders a rect to highlight the entire bandwidth
+  // Custom line component that renders a rect to highlight the entire bandwidth including gaps
   const BandwidthHighlight = memo<LineComponentProps>(({ stroke }) => {
     const { getXScale, drawingArea } = useCartesianChartContext();
     const highlightContext = useHighlightContext();
@@ -222,15 +222,20 @@ const WithBarChart = () => {
 
     if (xPos === undefined) return null;
 
-    // Type guard to check if scale has bandwidth (band scale)
     const bandwidth = 'bandwidth' in xScale ? xScale.bandwidth() : 0;
+    const step = 'step' in xScale ? xScale.step() : bandwidth;
+    const gap = step - bandwidth;
+
+    // Expand the highlight to include half the gap on each side
+    const highlightWidth = bandwidth + gap;
+    const highlightX = xPos - gap / 2;
 
     return (
       <rect
         fill={stroke}
         height={drawingArea.height}
-        width={bandwidth}
-        x={xPos}
+        width={highlightWidth}
+        x={highlightX}
         y={drawingArea.y}
       />
     );
@@ -277,7 +282,7 @@ const StackedAreaTooltip = () => {
   return (
     <Example title="Stacked Area Tooltip">
       <Text color="fgMuted" font="body">
-        Tooltip shows cumulative stacked values for each series.
+        Tooltip shows individual series values (not cumulative totals).
       </Text>
       <AreaChart
         enableScrubbing
@@ -363,7 +368,7 @@ const MultiAxisTooltip = () => {
     );
   });
 
-  // Custom line component that renders a rect to highlight the entire bandwidth
+  // Custom line component that renders a rect to highlight the entire bandwidth including gaps
   const BandwidthHighlight = memo<LineComponentProps>(({ stroke }) => {
     const { getXScale, drawingArea } = useCartesianChartContext();
     const highlightContext = useHighlightContext();
@@ -377,13 +382,19 @@ const MultiAxisTooltip = () => {
     if (xPos === undefined) return null;
 
     const bandwidth = 'bandwidth' in xScale ? xScale.bandwidth() : 0;
+    const step = 'step' in xScale ? xScale.step() : bandwidth;
+    const gap = step - bandwidth;
+
+    // Expand the highlight to include half the gap on each side
+    const highlightWidth = bandwidth + gap;
+    const highlightX = xPos - gap / 2;
 
     return (
       <rect
         fill={stroke}
         height={drawingArea.height}
-        width={bandwidth}
-        x={xPos}
+        width={highlightWidth}
+        x={highlightX}
         y={drawingArea.y}
       />
     );

@@ -68,7 +68,7 @@ const PositiveAndNegativeCashFlow = () => {
     );
   });
 
-  // Custom line component that renders a rect to highlight the entire bandwidth
+  // Custom line component that renders a rect to highlight the entire bandwidth including gaps
   const BandwidthHighlight = memo<LineComponentProps>(({ stroke }) => {
     const { getXScale, drawingArea } = useCartesianChartContext();
     const highlightContext = useHighlightContext();
@@ -81,15 +81,20 @@ const PositiveAndNegativeCashFlow = () => {
 
     if (xPos === undefined) return null;
 
-    // Type guard to check if scale has bandwidth (band scale)
     const bandwidth = 'bandwidth' in xScale ? xScale.bandwidth() : 0;
+    const step = 'step' in xScale ? xScale.step() : bandwidth;
+    const gap = step - bandwidth;
+
+    // Expand the highlight to include half the gap on each side
+    const highlightWidth = bandwidth + gap;
+    const highlightX = xPos - gap / 2;
 
     return (
       <rect
         fill={stroke}
         height={drawingArea.height}
-        width={bandwidth}
-        x={xPos}
+        width={highlightWidth}
+        x={highlightX}
         y={drawingArea.y}
       />
     );
@@ -264,7 +269,7 @@ const Candlesticks = () => {
     .reverse();
   const min = Math.min(...stockData.map((data) => parseFloat(data.low)));
 
-  // Custom line component that renders a rect to highlight the entire bandwidth
+  // Custom line component that renders a rect to highlight the entire bandwidth including gaps
   const BandwidthHighlight = memo<LineComponentProps>(({ stroke }) => {
     const { getXScale, drawingArea } = useCartesianChartContext();
     const highlightContext = useHighlightContext();
@@ -277,15 +282,20 @@ const Candlesticks = () => {
 
     if (xPos === undefined) return null;
 
-    // Type guard to check if scale has bandwidth (band scale)
     const bandwidth = 'bandwidth' in xScale ? xScale.bandwidth() : 0;
+    const step = 'step' in xScale ? xScale.step() : bandwidth;
+    const gap = step - bandwidth;
+
+    // Expand the highlight to include half the gap on each side
+    const highlightWidth = bandwidth + gap;
+    const highlightX = xPos - gap / 2;
 
     return (
       <rect
         fill={stroke}
         height={drawingArea.height}
-        width={bandwidth}
-        x={xPos}
+        width={highlightWidth}
+        x={highlightX}
         y={drawingArea.y}
       />
     );
