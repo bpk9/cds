@@ -48,7 +48,95 @@ export type ChartTooltipBaseProps = VStackBaseProps & {
   ShapeComponent?: LegendShapeComponent;
 };
 
-export type ChartTooltipProps = VStackProps<VStackDefaultElement> & ChartTooltipBaseProps;
+export type ChartTooltipProps = VStackProps<VStackDefaultElement> &
+  ChartTooltipBaseProps & {
+    /**
+     * Custom class names for the component parts.
+     */
+    classNames?: {
+      /**
+       * Custom class name for the root element.
+       */
+      root?: string;
+      /**
+       * Custom class name for the label element.
+       * @note not applied when label is a ReactNode.
+       */
+      label?: string;
+      /**
+       * Custom class name for the divider element.
+       */
+      divider?: string;
+      /**
+       * Custom class name for each item element.
+       */
+      item?: string;
+      /**
+       * Custom class name for the legend item element within each item.
+       */
+      itemLegendItem?: string;
+      /**
+       * Custom class name for the value element within each item.
+       */
+      itemValue?: string;
+      /**
+       * Custom class name for the shape wrapper element within each item.
+       */
+      itemShapeWrapper?: string;
+      /**
+       * Custom class name for the shape element within each item.
+       */
+      itemShape?: string;
+      /**
+       * Custom class name for the label element within each item.
+       * @note not applied when label is a ReactNode.
+       */
+      itemLabel?: string;
+    };
+    /**
+     * Custom styles for the component parts.
+     */
+    styles?: {
+      /**
+       * Custom styles for the root element.
+       */
+      root?: React.CSSProperties;
+      /**
+       * Custom styles for the label element.
+       * @note not applied when label is a ReactNode.
+       */
+      label?: React.CSSProperties;
+      /**
+       * Custom styles for the divider element.
+       */
+      divider?: React.CSSProperties;
+      /**
+       * Custom styles for each item element.
+       */
+      item?: React.CSSProperties;
+      /**
+       * Custom styles for the legend item element within each item.
+       */
+      itemLegendItem?: React.CSSProperties;
+      /**
+       * Custom styles for the value element within each item.
+       */
+      itemValue?: React.CSSProperties;
+      /**
+       * Custom styles for the shape wrapper element within each item.
+       */
+      itemShapeWrapper?: React.CSSProperties;
+      /**
+       * Custom styles for the shape element within each item.
+       */
+      itemShape?: React.CSSProperties;
+      /**
+       * Custom styles for the label element within each item.
+       * @note not applied when label is a ReactNode.
+       */
+      itemLabel?: React.CSSProperties;
+    };
+  };
 
 export const ChartTooltip = ({
   label,
@@ -63,6 +151,10 @@ export const ChartTooltip = ({
   minWidth = 320,
   paddingX = 2,
   paddingY = 1.5,
+  className,
+  classNames,
+  style,
+  styles,
   ...props
 }: ChartTooltipProps) => {
   const { ref, series, getXAxis } = useCartesianChartContext();
@@ -146,28 +238,49 @@ export const ChartTooltip = ({
         ref={refs.setFloating}
         background={background}
         borderRadius={borderRadius}
+        className={classNames?.root ?? className}
         elevation={elevation}
         gap={gap}
         minWidth={minWidth}
         paddingX={paddingX}
         paddingY={paddingY}
-        style={floatingStyles}
+        style={{ ...floatingStyles, ...style, ...styles?.root }}
         {...props}
       >
         {resolvedLabel &&
           (typeof resolvedLabel === 'string' || typeof resolvedLabel === 'number' ? (
-            <Text font="label1">{resolvedLabel}</Text>
+            <Text className={classNames?.label} font="label1" style={styles?.label}>
+              {resolvedLabel}
+            </Text>
           ) : (
             resolvedLabel
           ))}
-        {resolvedLabel && filteredSeries.length > 0 && <Divider />}
+        {resolvedLabel && filteredSeries.length > 0 && (
+          <Divider className={classNames?.divider} style={styles?.divider} />
+        )}
         {filteredSeries.length > 0 &&
           filteredSeries.map((s) => (
             <ItemComponent
               key={s.id}
               ShapeComponent={ShapeComponent}
+              classNames={{
+                root: classNames?.item,
+                legendItem: classNames?.itemLegendItem,
+                value: classNames?.itemValue,
+                shapeWrapper: classNames?.itemShapeWrapper,
+                shape: classNames?.itemShape,
+                label: classNames?.itemLabel,
+              }}
               scrubberPosition={scrubberPosition!}
               series={s}
+              styles={{
+                root: styles?.item,
+                legendItem: styles?.itemLegendItem,
+                value: styles?.itemValue,
+                shapeWrapper: styles?.itemShapeWrapper,
+                shape: styles?.itemShape,
+                label: styles?.itemLabel,
+              }}
               valueFormatter={valueFormatter}
             />
           ))}

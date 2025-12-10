@@ -66,9 +66,10 @@ export type LegendItemProps = LegendItemBaseProps & {
      */
     shape?: StyleProp<ViewStyle>;
     /**
-     * Custom styles for the text element.
+     * Custom styles for the label element.
+     * @note not applied when label is a ReactNode.
      */
-    text?: StyleProp<ViewStyle>;
+    label?: StyleProp<ViewStyle>;
   };
 };
 
@@ -96,7 +97,7 @@ export const DefaultLegendItem = memo<LegendItemProps>(function DefaultLegendIte
         <ShapeComponent color={color} shape={shape} style={stylesProp?.shape} />
       </Box>
       {typeof label === 'string' ? (
-        <TextLabel2 style={stylesProp?.text}>{label}</TextLabel2>
+        <TextLabel2 style={stylesProp?.label}>{label}</TextLabel2>
       ) : (
         label
       )}
