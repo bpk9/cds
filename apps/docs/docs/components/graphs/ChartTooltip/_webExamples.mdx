@@ -189,7 +189,7 @@ function BarChartTooltip() {
     );
   });
 
-  // Custom line component that renders a rect to highlight the entire bandwidth
+  // Custom line component that renders a rect to highlight the entire bandwidth including gaps
   const BandwidthHighlight = memo(({ stroke }) => {
     const { getXScale, drawingArea } = useCartesianChartContext();
     const highlightContext = useHighlightContext();
@@ -203,13 +203,19 @@ function BarChartTooltip() {
     if (xPos === undefined) return null;
 
     const bandwidth = 'bandwidth' in xScale ? xScale.bandwidth() : 0;
+    const step = 'step' in xScale ? xScale.step() : bandwidth;
+    const gap = step - bandwidth;
+
+    // Expand the highlight to include half the gap on each side
+    const highlightWidth = bandwidth + gap;
+    const highlightX = xPos - gap / 2;
 
     return (
       <rect
         fill={stroke}
         height={drawingArea.height}
-        width={bandwidth}
-        x={xPos}
+        width={highlightWidth}
+        x={highlightX}
         y={drawingArea.y}
       />
     );
@@ -346,7 +352,7 @@ function MultiAxisTooltip() {
     );
   });
 
-  // Custom line component that renders a rect to highlight the entire bandwidth
+  // Custom line component that renders a rect to highlight the entire bandwidth including gaps
   const BandwidthHighlight = memo(({ stroke }) => {
     const { getXScale, drawingArea } = useCartesianChartContext();
     const highlightContext = useHighlightContext();
@@ -360,13 +366,19 @@ function MultiAxisTooltip() {
     if (xPos === undefined) return null;
 
     const bandwidth = 'bandwidth' in xScale ? xScale.bandwidth() : 0;
+    const step = 'step' in xScale ? xScale.step() : bandwidth;
+    const gap = step - bandwidth;
+
+    // Expand the highlight to include half the gap on each side
+    const highlightWidth = bandwidth + gap;
+    const highlightX = xPos - gap / 2;
 
     return (
       <rect
         fill={stroke}
         height={drawingArea.height}
-        width={bandwidth}
-        x={xPos}
+        width={highlightWidth}
+        x={highlightX}
         y={drawingArea.y}
       />
     );
