@@ -3,7 +3,7 @@ import { candles as btcCandles } from '@coinbase/cds-common/internal/data/candle
 import { VStack } from '@coinbase/cds-web/layout';
 import { Text } from '@coinbase/cds-web/typography';
 
-import { CartesianChart } from '../..';
+import { CartesianChart, ChartTooltip } from '../..';
 import { XAxis, YAxis } from '../../axis';
 import { useCartesianChartContext } from '../../ChartProvider';
 import { type LineComponentProps, ReferenceLine, SolidLine, type SolidLineProps } from '../../line';
@@ -14,7 +14,7 @@ import { BarChart } from '../BarChart';
 import { BarPlot } from '../BarPlot';
 import { type BarStackComponentProps } from '../BarStack';
 import { DefaultBarStack } from '../DefaultBarStack';
-import { Bar, type BarComponentProps } from '..';
+import { Bar, type BarComponentProps, DefaultBar } from '..';
 
 export default {
   title: 'Components/Chart/BarChart',
@@ -53,8 +53,51 @@ const PositiveAndNegativeCashFlow = () => {
     { id: 'losses', data: losses, color: 'var(--color-fgNegative)', stackId: 'bars' },
   ];
 
+  const DimmingBarComponent = memo<BarComponentProps>(({ seriesId, dataX, ...props }) => {
+    const highlightContext = useHighlightContext();
+    const highlightedItem = highlightContext?.highlightedItem;
+    return (
+      <DefaultBar
+        {...props}
+        dataX={dataX}
+        fillOpacity={
+          highlightedItem?.dataIndex === undefined || highlightedItem.dataIndex === dataX ? 1 : 0.5
+        }
+        seriesId={seriesId}
+      />
+    );
+  });
+
+  // Custom line component that renders a rect to highlight the entire bandwidth
+  const BandwidthHighlight = memo<LineComponentProps>(({ stroke }) => {
+    const { getXScale, drawingArea } = useCartesianChartContext();
+    const highlightContext = useHighlightContext();
+    const scrubberPosition = highlightContext?.highlightedItem?.dataIndex;
+    const xScale = getXScale();
+
+    if (!xScale || scrubberPosition === undefined) return null;
+
+    const xPos = xScale(scrubberPosition);
+
+    if (xPos === undefined) return null;
+
+    // Type guard to check if scale has bandwidth (band scale)
+    const bandwidth = 'bandwidth' in xScale ? xScale.bandwidth() : 0;
+
+    return (
+      <rect
+        fill={stroke}
+        height={drawingArea.height}
+        width={bandwidth}
+        x={xPos}
+        y={drawingArea.y}
+      />
+    );
+  });
+
   return (
     <CartesianChart
+      enableHighlighting
       height={420}
       inset={32}
       series={series}
@@ -66,8 +109,15 @@ const PositiveAndNegativeCashFlow = () => {
         GridLineComponent={ThinSolidLine}
         tickLabelFormatter={(value) => `$${value}M`}
       />
-      <BarPlot />
+      <BarPlot BarComponent={DimmingBarComponent} />
       <ReferenceLine LineComponent={SolidLine} dataY={0} />
+      <Scrubber
+        hideOverlay
+        LineComponent={BandwidthHighlight}
+        lineStroke="var(--color-bgLine)"
+        seriesIds={[]}
+      />
+      <ChartTooltip />
     </CartesianChart>
   );
 };
@@ -249,6 +299,8 @@ const Candlesticks = () => {
   const CandlestickBarComponent = memo<BarComponentProps>(
     ({ x, y, width, height, originY, dataX, ...props }) => {
       const { getYScale } = useCartesianChartContext();
+      const highlightContext = useHighlightContext();
+      const highlightedItem = highlightContext?.highlightedItem;
       const yScale = getYScale();
 
       const wickX = x + width / 2;
@@ -266,8 +318,11 @@ const Candlesticks = () => {
       const bodyHeight = Math.abs(openY - closeY);
       const bodyY = openY < closeY ? openY : closeY;
 
+      const fillOpacity =
+        highlightedItem?.dataIndex === undefined || highlightedItem.dataIndex === dataX ? 1 : 0.5;
+
       return (
-        <g>
+        <g opacity={fillOpacity}>
           <line stroke={color} strokeWidth={1} x1={wickX} x2={wickX} y1={y} y2={y + height} />
           <rect fill={color} height={bodyHeight} width={width} x={x} y={bodyY} />
         </g>
@@ -373,7 +428,7 @@ const Candlesticks = () => {
         <Scrubber
           hideOverlay
           LineComponent={BandwidthHighlight}
-          lineStroke="var(--color-fgMuted)"
+          lineStroke="var(--color-bgLine)"
           seriesIds={[]}
         />
       </BarChart>
