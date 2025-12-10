@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 8.29.0 (12/11/2025 PST)
+
+#### 🚀 Updates
+
+- Add open/close visibility delays to Tooltip. [[#234](https://github.com/coinbase/cds/pull/234)] [DX-5010]
+
 ## 8.28.1 (12/10/2025 PST)
 
 #### 🐞 Fixes

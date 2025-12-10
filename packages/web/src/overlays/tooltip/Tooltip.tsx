@@ -29,9 +29,11 @@ export const Tooltip = ({
   focusTabIndexElements,
   respectNegativeTabIndex,
   autoFocusDelay = 20,
+  openDelay = 0,
+  closeDelay = 0,
 }: TooltipProps) => {
   const { isOpen, handleOnMouseEnter, handleOnMouseLeave, handleOnFocus, handleOnBlur, tooltipId } =
-    useTooltipState(tooltipIdDefault);
+    useTooltipState(tooltipIdDefault, openDelay, closeDelay);
   const tooltipContentRef = useRef<HTMLDivElement | null>(null);
 
   const handleMouseEnter = useCallback(

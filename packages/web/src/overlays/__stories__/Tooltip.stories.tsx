@@ -25,38 +25,63 @@ export default {
 
 type BasicTooltipProps = {
   content: TooltipProps['content'];
+  openDelay?: TooltipProps['openDelay'];
+  closeDelay?: TooltipProps['closeDelay'];
 };
 
-const BasicTooltip = ({ content }: BasicTooltipProps) => {
+const BasicTooltip = ({ content, openDelay, closeDelay }: BasicTooltipProps) => {
   return (
     <PortalProvider>
       <HStack gap={5} paddingX={8} paddingY={2}>
         <VStack gap={2} paddingX={2}>
-          <Tooltip content={content}>
+          <Tooltip closeDelay={closeDelay} content={content} openDelay={openDelay}>
             <Button>Default</Button>
           </Tooltip>
-          <Tooltip content={content} placement="top">
+          <Tooltip closeDelay={closeDelay} content={content} openDelay={openDelay} placement="top">
             <Button>Top</Button>
           </Tooltip>
-          <Tooltip content={content} placement="left">
+          <Tooltip closeDelay={closeDelay} content={content} openDelay={openDelay} placement="left">
             <Button>Left</Button>
           </Tooltip>
-          <Tooltip content={content} placement="right">
+          <Tooltip
+            closeDelay={closeDelay}
+            content={content}
+            openDelay={openDelay}
+            placement="right"
+          >
             <Button>Right</Button>
           </Tooltip>
-          <Tooltip content={content} placement="bottom">
+          <Tooltip
+            closeDelay={closeDelay}
+            content={content}
+            openDelay={openDelay}
+            placement="bottom"
+          >
             <Button>Bottom</Button>
           </Tooltip>
-          <Tooltip content={content} placement="bottom" visible={false}>
+          <Tooltip
+            closeDelay={closeDelay}
+            content={content}
+            openDelay={openDelay}
+            placement="bottom"
+            visible={false}
+          >
             <Button disabled>Disabled</Button>
           </Tooltip>
-          <Tooltip content={content} elevation={2} invertColorScheme={false}>
+          <Tooltip
+            closeDelay={closeDelay}
+            content={content}
+            elevation={2}
+            invertColorScheme={false}
+            openDelay={openDelay}
+          >
             <Button>Custom</Button>
           </Tooltip>
         </VStack>
 
         <VStack gap={3} paddingX={2}>
           <Tooltip
+            closeDelay={closeDelay}
             content={
               <VStack gap={2}>
                 <Button>Btn 1</Button>
@@ -64,6 +89,7 @@ const BasicTooltip = ({ content }: BasicTooltipProps) => {
                 <Button>Btn 3</Button>
               </VStack>
             }
+            openDelay={openDelay}
           >
             <VStack padding={2}>
               <DotSymbol pin="bottom-start" size="m" source={assets.eth.imageUrl}>
@@ -76,7 +102,7 @@ const BasicTooltip = ({ content }: BasicTooltipProps) => {
               </DotSymbol>
             </VStack>
           </Tooltip>
-          <Tooltip content={content} placement="left">
+          <Tooltip closeDelay={closeDelay} content={content} openDelay={openDelay} placement="left">
             <DotSymbol pin="top-end" size="s" source={assets.ada.imageUrl}>
               <VStack padding={2}>
                 <IconButton
@@ -88,7 +114,12 @@ const BasicTooltip = ({ content }: BasicTooltipProps) => {
               </VStack>
             </DotSymbol>
           </Tooltip>
-          <Tooltip content={content} placement="right">
+          <Tooltip
+            closeDelay={closeDelay}
+            content={content}
+            openDelay={openDelay}
+            placement="right"
+          >
             <VStack padding={2}>
               <IconButton
                 active
@@ -98,7 +129,12 @@ const BasicTooltip = ({ content }: BasicTooltipProps) => {
               />
             </VStack>
           </Tooltip>
-          <Tooltip content={content} placement="bottom">
+          <Tooltip
+            closeDelay={closeDelay}
+            content={content}
+            openDelay={openDelay}
+            placement="bottom"
+          >
             <VStack padding={2}>
               <IconButton
                 active
@@ -111,12 +147,12 @@ const BasicTooltip = ({ content }: BasicTooltipProps) => {
         </VStack>
 
         <VStack gap={4} padding={2}>
-          <Tooltip content={content}>
+          <Tooltip closeDelay={closeDelay} content={content} openDelay={openDelay}>
             <Text as="p" display="block" font="label1">
               Default
             </Text>
           </Tooltip>
-          <Tooltip content={content} placement="left">
+          <Tooltip closeDelay={closeDelay} content={content} openDelay={openDelay} placement="left">
             <VStack padding={2}>
               <DotSymbol pin="top-end" size="s" source={assets.ada.imageUrl}>
                 <VStack padding={2}>
@@ -127,14 +163,24 @@ const BasicTooltip = ({ content }: BasicTooltipProps) => {
               </DotSymbol>
             </VStack>
           </Tooltip>
-          <Tooltip content={content} placement="right">
+          <Tooltip
+            closeDelay={closeDelay}
+            content={content}
+            openDelay={openDelay}
+            placement="right"
+          >
             <VStack padding={2}>
               <Text as="p" display="block" font="label1">
                 right
               </Text>
             </VStack>
           </Tooltip>
-          <Tooltip content={content} placement="bottom">
+          <Tooltip
+            closeDelay={closeDelay}
+            content={content}
+            openDelay={openDelay}
+            placement="bottom"
+          >
             <VStack padding={2}>
               <Text as="p" display="block" font="label1">
                 bottom
@@ -164,4 +210,11 @@ const longContent =
 
 TooltipLongContent.args = {
   content: longContent,
+};
+
+export const DelayedVisibility = Template.bind({});
+DelayedVisibility.args = {
+  content: 'Opens after 400ms, closes after 150ms',
+  openDelay: 400,
+  closeDelay: 150,
 };

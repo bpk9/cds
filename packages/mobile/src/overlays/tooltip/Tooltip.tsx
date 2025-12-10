@@ -1,4 +1,4 @@
-import React, { Fragment, memo, useCallback, useMemo, useRef, useState } from 'react';
+import React, { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal as RNModal, TouchableOpacity, View } from 'react-native';
 
 import { InvertedThemeProvider } from '../../system/ThemeProvider';
@@ -24,24 +24,55 @@ export const Tooltip = memo(
     visible,
     invertColorScheme = true,
     elevation,
+    openDelay = 0,
+    closeDelay = 0,
   }: TooltipProps) => {
     const subjectRef = useRef<View | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     const isVisible = visible !== false && isOpen;
     const [subjectLayout, setSubjectLayout] = useState<SubjectLayout>();
+    const openTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const WrapperComponent = invertColorScheme ? InvertedThemeProvider : Fragment;
 
     const { opacity, translateY, animateIn, animateOut } = useTooltipAnimation(placement);
 
+    const clearOpenTimeout = useCallback(() => {
+      if (openTimeoutRef.current) {
+        clearTimeout(openTimeoutRef.current);
+        openTimeoutRef.current = null;
+      }
+    }, []);
+
+    const clearCloseTimeout = useCallback(() => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+    }, []);
+
     const handleRequestClose = useCallback(() => {
-      animateOut.start(() => {
-        setIsOpen(false);
-        onCloseTooltip?.();
-      });
-    }, [animateOut, onCloseTooltip]);
+      clearOpenTimeout();
+      clearCloseTimeout();
+
+      const closeTooltip = () => {
+        animateOut.start(() => {
+          setIsOpen(false);
+          onCloseTooltip?.();
+        });
+      };
+
+      if (closeDelay > 0) {
+        closeTimeoutRef.current = setTimeout(closeTooltip, closeDelay);
+        return;
+      }
+
+      closeTooltip();
+    }, [animateOut, clearCloseTimeout, clearOpenTimeout, closeDelay, onCloseTooltip]);
 
     const handlePressSubject = useCallback(() => {
+      clearCloseTimeout();
       subjectRef.current?.measure((x, y, width, height, pageOffsetX, pageOffsetY) => {
         setSubjectLayout({
           width,
@@ -50,9 +81,19 @@ export const Tooltip = memo(
           pageOffsetY,
         });
       });
-      setIsOpen(true);
-      onOpenTooltip?.();
-    }, [onOpenTooltip]);
+      const openTooltip = () => {
+        setIsOpen(true);
+        onOpenTooltip?.();
+      };
+
+      clearOpenTimeout();
+      if (openDelay > 0) {
+        openTimeoutRef.current = setTimeout(openTooltip, openDelay);
+        return;
+      }
+
+      openTooltip();
+    }, [clearCloseTimeout, clearOpenTimeout, onOpenTooltip, openDelay]);
 
     // The accessibility props for the trigger component. Trigger component
     // equals the component where when you click on it, it will show the tooltip
@@ -85,6 +126,13 @@ export const Tooltip = memo(
       }),
       [content, accessibilityLabelForContent, accessibilityHintForContent, handleRequestClose],
     );
+
+    useEffect(() => {
+      return () => {
+        clearOpenTimeout();
+        clearCloseTimeout();
+      };
+    }, [clearCloseTimeout, clearOpenTimeout]);
 
     return (
       <View ref={subjectRef} collapsable={false}>
