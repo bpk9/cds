@@ -83,6 +83,7 @@ export type CartesianChartBaseProps = Omit<BoxBaseProps, 'fontFamily'> &
     yAxis?: Partial<CartesianAxisConfigProps> | Partial<CartesianAxisConfigProps>[];
     /**
      * Inset around the entire chart (outside the axes).
+     * @default { top: 32, left: 16, bottom: 16, right: 16 }
      */
     inset?: number | Partial<ChartInset>;
     /**

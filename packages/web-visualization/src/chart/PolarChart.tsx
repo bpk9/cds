@@ -15,7 +15,6 @@ import {
   type ChartInset,
   type ChartScaleFunction,
   defaultAxisId,
-  defaultChartInset,
   getAngularAxisConfig,
   getChartInset,
   getPolarAxisDomain,
@@ -227,7 +226,7 @@ export const PolarChart = memo(
       const chartRef = useRef<SVGSVGElement | null>(null);
 
       const inset = useMemo(() => {
-        return getChartInset(insetInput, defaultChartInset);
+        return getChartInset(insetInput);
       }, [insetInput]);
 
       // Normalize axis configs (same pattern as CartesianChart)
