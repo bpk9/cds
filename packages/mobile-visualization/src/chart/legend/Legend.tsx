@@ -81,7 +81,7 @@ export const Legend = memo(
       return series.filter((s) => seriesIds.includes(s.id));
     }, [series, seriesIds]);
 
-    if (filteredSeries.length === 0) return null;
+    if (filteredSeries.length === 0) return;
 
     return (
       <Box

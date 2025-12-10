@@ -43,10 +43,16 @@ export const HighlightProvider: React.FC<HighlightProviderProps> = ({
 
   // Prop takes precedence over internal state when defined
   // This allows parent components to override/control the highlight
-  const highlightedItem = highlightedItemProp ?? internalHighlightedItem;
+  // Only expose highlightedItem when highlighting is enabled
+  const highlightedItem = enableHighlighting
+    ? (highlightedItemProp ?? internalHighlightedItem)
+    : undefined;
 
   const setHighlightedItem: HighlightContextValue['setHighlightedItem'] = useCallback(
     (itemOrUpdater) => {
+      // Don't allow setting highlighted item when highlighting is disabled
+      if (!enableHighlighting) return;
+
       const newItem =
         typeof itemOrUpdater === 'function' ? itemOrUpdater(highlightedItem) : itemOrUpdater;
 
@@ -56,7 +62,7 @@ export const HighlightProvider: React.FC<HighlightProviderProps> = ({
       // Always call the callback
       onHighlightChange?.(newItem ?? null);
     },
-    [highlightedItem, onHighlightChange],
+    [enableHighlighting, highlightedItem, onHighlightChange],
   );
 
   const contextValue: HighlightContextValue = useMemo(

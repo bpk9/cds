@@ -11,9 +11,9 @@ PolarChart is a customizable, SVG based component that can be used to display a 
       height={150}
       width={150}
       series={[
-        { id: 'a', data: 30, color: 'var(--color-accentBoldBlue)' },
-        { id: 'b', data: 40, color: 'var(--color-accentBoldGreen)' },
-        { id: 'c', data: 30, color: 'var(--color-accentBoldPurple)' },
+        { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
+        { id: 'b', data: 40, color: 'rgb(var(--green40))' },
+        { id: 'c', data: 30, color: 'rgb(var(--purple40))' },
       ]}
     />
     <Text font="label2" color="fgMuted">
@@ -26,9 +26,9 @@ PolarChart is a customizable, SVG based component that can be used to display a 
       width={150}
       innerRadiusRatio={0.6}
       series={[
-        { id: 'a', data: 30, color: 'var(--color-accentBoldBlue)' },
-        { id: 'b', data: 40, color: 'var(--color-accentBoldGreen)' },
-        { id: 'c', data: 30, color: 'var(--color-accentBoldPurple)' },
+        { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
+        { id: 'b', data: 40, color: 'rgb(var(--green40))' },
+        { id: 'c', data: 30, color: 'rgb(var(--purple40))' },
       ]}
     />
     <Text font="label2" color="fgMuted">
@@ -45,12 +45,11 @@ Series are the data that will be displayed on the chart. Each series must have a
 ```jsx live
 <PolarChart
   height={200}
-  width={200}
   series={[
-    { id: 'btc', data: 40, label: 'Bitcoin', color: 'var(--color-accentBoldPurple)' },
-    { id: 'eth', data: 30, label: 'Ethereum', color: 'var(--color-accentBoldBlue)' },
-    { id: 'sol', data: 20, label: 'Solana', color: 'var(--color-accentBoldPurple)' },
-    { id: 'other', data: 10, label: 'Other', color: 'rgb(var(--gray30))' },
+    { id: 'btc', data: 40, label: 'Bitcoin', color: 'rgb(var(--orange40))' },
+    { id: 'eth', data: 30, label: 'Ethereum', color: 'rgb(var(--blue40))' },
+    { id: 'sol', data: 20, label: 'Solana', color: 'rgb(var(--purple40))' },
+    { id: 'other', data: 10, label: 'Other', color: 'rgb(var(--gray40))' },
   ]}
 >
   <PiePlot />
@@ -73,8 +72,8 @@ Use `angularAxis` with `range` to create partial charts.
       width={200}
       angularAxis={{ range: { min: -90, max: 90 } }}
       series={[
-        { id: 'a', data: 35, color: 'var(--color-fgPositive)' },
-        { id: 'b', data: 65, color: 'rgb(var(--gray30))' },
+        { id: 'a', data: 35, color: 'rgb(var(--green40))' },
+        { id: 'b', data: 65, color: 'rgb(var(--gray20))' },
       ]}
     >
       <PiePlot cornerRadius={8} />
@@ -89,8 +88,8 @@ Use `angularAxis` with `range` to create partial charts.
       width={200}
       angularAxis={{ range: { min: 90, max: 270 } }}
       series={[
-        { id: 'a', data: 35, color: 'var(--color-fgPositive)' },
-        { id: 'b', data: 65, color: 'rgb(var(--gray30))' },
+        { id: 'a', data: 35, color: 'rgb(var(--green40))' },
+        { id: 'b', data: 65, color: 'rgb(var(--gray20))' },
       ]}
     >
       <PiePlot cornerRadius={8} />
@@ -109,12 +108,11 @@ Use `paddingAngle` to add gaps between slices.
 ```jsx live
 <PolarChart
   height={200}
-  width={200}
   angularAxis={{ paddingAngle: 5 }}
   series={[
-    { id: 'a', data: 30, color: 'var(--color-accentBoldBlue)' },
-    { id: 'b', data: 40, color: 'var(--color-accentBoldGreen)' },
-    { id: 'c', data: 30, color: 'var(--color-accentBoldPurple)' },
+    { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
+    { id: 'b', data: 40, color: 'rgb(var(--green40))' },
+    { id: 'c', data: 30, color: 'rgb(var(--purple40))' },
   ]}
 >
   <PiePlot />
@@ -128,18 +126,17 @@ You can define multiple angular axes for different sections of the chart.
 ```jsx live
 <PolarChart
   height={200}
-  width={200}
   angularAxis={[
     { id: 'top', range: { min: -90, max: 90 } },
     { id: 'bottom', range: { min: 90, max: 270 } },
   ]}
   series={[
-    { id: 'revenue', data: 30, color: 'var(--color-accentBoldBlue)', angularAxisId: 'top' },
-    { id: 'profit', data: 50, color: 'var(--color-accentBoldGreen)', angularAxisId: 'top' },
-    { id: 'costs', data: 20, color: 'var(--color-accentBoldPurple)', angularAxisId: 'top' },
-    { id: 'users', data: 40, color: 'var(--color-accentBoldPurple)', angularAxisId: 'bottom' },
-    { id: 'sessions', data: 35, color: 'var(--color-accentBoldYellow)', angularAxisId: 'bottom' },
-    { id: 'conversions', data: 25, color: 'var(--color-accentBoldTeal)', angularAxisId: 'bottom' },
+    { id: 'revenue', data: 30, color: 'rgb(var(--blue40))', angularAxisId: 'top' },
+    { id: 'profit', data: 50, color: 'rgb(var(--green40))', angularAxisId: 'top' },
+    { id: 'costs', data: 20, color: 'rgb(var(--orange40))', angularAxisId: 'top' },
+    { id: 'users', data: 40, color: 'rgb(var(--purple40))', angularAxisId: 'bottom' },
+    { id: 'sessions', data: 35, color: 'rgb(var(--yellow40))', angularAxisId: 'bottom' },
+    { id: 'conversions', data: 25, color: 'rgb(var(--teal40))', angularAxisId: 'bottom' },
   ]}
 >
   <PiePlot angularAxisId="top" cornerRadius={4} />
@@ -158,12 +155,11 @@ Use `radialAxis` with `range` to create a donut chart with a hollow center.
 ```jsx live
 <PolarChart
   height={200}
-  width={200}
   radialAxis={{ range: ({ max }) => ({ min: max * 0.6, max }) }}
   series={[
-    { id: 'a', data: 30, color: 'var(--color-accentBoldBlue)' },
-    { id: 'b', data: 40, color: 'var(--color-accentBoldGreen)' },
-    { id: 'c', data: 30, color: 'var(--color-accentBoldPurple)' },
+    { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
+    { id: 'b', data: 40, color: 'rgb(var(--green40))' },
+    { id: 'c', data: 30, color: 'rgb(var(--purple40))' },
   ]}
 >
   <PiePlot cornerRadius={4} />
@@ -200,7 +196,7 @@ Use multiple radial axes to create nested rings.
 
 ### Center Label
 
-You can add custom SVG elements as children, such as a center label.
+Add custom content to the center of donut-style charts using SVG text elements positioned via `usePolarChartContext`.
 
 ```jsx live
 function DonutWithCenterLabel() {
@@ -273,53 +269,50 @@ function InteractiveChart() {
   }, []);
 
   return (
-    <VStack alignItems="center" gap={4}>
-      <Box height={200} position="relative" width={200}>
-        <PolarChart
-          animate
-          height={200}
-          width={200}
-          radialAxis={{ range: ({ max }) => ({ min: max * 0.65, max }) }}
-          series={series.map((s) => ({
-            ...s,
-            color: selectedSlice && selectedSlice !== s.id ? `${s.color}80` : s.color,
-          }))}
-        >
-          <PiePlot cursor="pointer" onSliceClick={handleSliceClick} />
-        </PolarChart>
-        <Box
-          alignItems="center"
-          bottom={0}
-          display="flex"
-          flexDirection="column"
-          justifyContent="center"
-          left={0}
-          position="absolute"
-          right={0}
-          style={{ pointerEvents: 'none' }}
-          top={0}
-        >
-          <Text color="fgMuted" font="label1">
-            {selectedData ? selectedData.label : 'Total'}
-          </Text>
-          <Text font="headline">
-            {selectedData ? `${Math.round((selectedData.data / total) * 100)}%` : '$12,345'}
-          </Text>
-        </Box>
+    <Box height={200} position="relative" width={200}>
+      <PolarChart
+        animate
+        height={200}
+        width={200}
+        radialAxis={{ range: ({ max }) => ({ min: max * 0.65, max }) }}
+        series={series.map((s) => ({
+          ...s,
+          color: selectedSlice && selectedSlice !== s.id ? `${s.color}80` : s.color,
+        }))}
+      >
+        <PiePlot cursor="pointer" onSliceClick={handleSliceClick} />
+      </PolarChart>
+      <Box
+        alignItems="center"
+        bottom={0}
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        left={0}
+        position="absolute"
+        right={0}
+        style={{ pointerEvents: 'none' }}
+        top={0}
+      >
+        <Text color="fgMuted" font="label1">
+          {selectedData ? selectedData.label : 'Total'}
+        </Text>
+        <Text font="headline">
+          {selectedData ? `${Math.round((selectedData.data / total) * 100)}%` : '$12,345'}
+        </Text>
       </Box>
-    </VStack>
+    </Box>
   );
 }
 ```
 
 ### Custom Arc Component
 
-You can provide a custom `ArcComponent` to `PiePlot` for complete control over arc rendering.
+Provide a custom `ArcComponent` to `PiePlot` for complete control over arc rendering.
 
 ```jsx live
 function CustomArcExample() {
   const CustomArc = memo(({ startAngle, endAngle, innerRadius, outerRadius, fill, ...props }) => {
-    // Add a glow effect to each arc
     return (
       <Arc
         {...props}
@@ -338,9 +331,9 @@ function CustomArcExample() {
       height={200}
       width={200}
       series={[
-        { id: 'a', data: 30, color: 'var(--color-accentBoldBlue)' },
-        { id: 'b', data: 40, color: 'var(--color-accentBoldGreen)' },
-        { id: 'c', data: 30, color: 'var(--color-accentBoldPurple)' },
+        { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
+        { id: 'b', data: 40, color: 'rgb(var(--green40))' },
+        { id: 'c', data: 30, color: 'rgb(var(--purple40))' },
       ]}
     >
       <PiePlot ArcComponent={CustomArc} cornerRadius={8} />
@@ -358,7 +351,6 @@ A chart divided into four quadrants, each with its own data.
 ```jsx live
 <PolarChart
   height={200}
-  width={200}
   angularAxis={[
     { id: 'q1', range: { min: 0, max: 90 }, paddingAngle: 3 },
     { id: 'q2', range: { min: 90, max: 180 }, paddingAngle: 3 },

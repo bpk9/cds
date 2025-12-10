@@ -1,4 +1,4 @@
-DonutChart is built on [PolarChart](/components/graphs/PolarChart) for visualizing proportional data with a hollow center.
+DonutChart is a wrapper for [PolarChart](/components/graphs/PolarChart) that makes it easy to create donut charts, supporting a single angular/radial axis pair. Charts are built using SVGs.
 
 ## Basics
 
@@ -7,12 +7,14 @@ The only prop required is `series`, which takes an array of series objects. Each
 ```jsx live
 <DonutChart
   height={200}
-  width={200}
+  innerRadiusRatio={0.8}
   series={[
-    { id: 'btc', data: 40, label: 'Bitcoin', color: 'rgb(var(--orange40))' },
-    { id: 'eth', data: 30, label: 'Ethereum', color: 'rgb(var(--blue40))' },
-    { id: 'sol', data: 20, label: 'Solana', color: 'rgb(var(--purple40))' },
-    { id: 'other', data: 10, label: 'Other', color: 'rgb(var(--gray40))' },
+    { id: 'a', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
+    { id: 'b', data: 20, label: 'Category B', color: 'rgb(var(--purple40))' },
+    { id: 'c', data: 15, label: 'Category C', color: 'rgb(var(--pink50))' },
+    { id: 'd', data: 10, label: 'Category D', color: 'rgb(var(--orange40))' },
+    { id: 'e', data: 15, label: 'Category E', color: 'rgb(var(--yellow40))' },
+    { id: 'f', data: 10, label: 'Category F', color: 'rgb(var(--green40))' },
   ]}
 />
 ```
@@ -116,7 +118,6 @@ Use `stroke` and `strokeWidth` to add borders between slices.
 ```jsx live
 <DonutChart
   height={200}
-  width={200}
   stroke="var(--color-bg)"
   strokeWidth={3}
   cornerRadius={4}
@@ -136,7 +137,6 @@ Use `angularAxis` with `paddingAngle` to add gaps between slices.
 ```jsx live
 <DonutChart
   height={200}
-  width={200}
   angularAxis={{ paddingAngle: 4 }}
   cornerRadius={100}
   innerRadiusRatio={0.7}
@@ -228,13 +228,7 @@ function AnimatedDonutChart() {
 
   return (
     <VStack alignItems="center" gap={4}>
-      <DonutChart
-        animate
-        height={200}
-        width={200}
-        innerRadiusRatio={0.5}
-        series={dataSets[dataSet]}
-      />
+      <DonutChart animate height={200} innerRadiusRatio={0.5} series={dataSets[dataSet]} />
       <HStack gap={2}>
         <IconButton
           accessibilityLabel="Previous data set"
@@ -281,41 +275,121 @@ function InteractiveDonutChart() {
   }, []);
 
   return (
-    <VStack alignItems="center" gap={4}>
-      <Box height={200} position="relative" width={200}>
-        <PolarChart
-          animate
-          height={200}
-          width={200}
-          radialAxis={{ range: ({ max }) => ({ min: max * 0.65, max }) }}
-          series={series.map((s) => ({
-            ...s,
-            color: selectedSlice && selectedSlice !== s.id ? `${s.color}80` : s.color,
-          }))}
-        >
-          <PiePlot cursor="pointer" onSliceClick={handleSliceClick} />
-        </PolarChart>
-        <Box
-          alignItems="center"
-          bottom={0}
-          display="flex"
-          flexDirection="column"
-          justifyContent="center"
-          left={0}
-          position="absolute"
-          right={0}
-          style={{ pointerEvents: 'none' }}
-          top={0}
-        >
-          <Text color="fgMuted" font="label1">
-            {selectedData ? selectedData.label : 'Total'}
-          </Text>
-          <Text font="headline">
-            {selectedData ? `${Math.round((selectedData.data / total) * 100)}%` : '$12,345'}
-          </Text>
-        </Box>
+    <Box height={200} position="relative" width={200}>
+      <PolarChart
+        animate
+        height={200}
+        width={200}
+        radialAxis={{ range: ({ max }) => ({ min: max * 0.65, max }) }}
+        series={series.map((s) => ({
+          ...s,
+          color: selectedSlice && selectedSlice !== s.id ? `${s.color}80` : s.color,
+        }))}
+      >
+        <PiePlot cursor="pointer" onSliceClick={handleSliceClick} />
+      </PolarChart>
+      <Box
+        alignItems="center"
+        bottom={0}
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        left={0}
+        position="absolute"
+        right={0}
+        style={{ pointerEvents: 'none' }}
+        top={0}
+      >
+        <Text color="fgMuted" font="label1">
+          {selectedData ? selectedData.label : 'Total'}
+        </Text>
+        <Text font="headline">
+          {selectedData ? `${Math.round((selectedData.data / total) * 100)}%` : '$12,345'}
+        </Text>
       </Box>
-    </VStack>
+    </Box>
+  );
+}
+```
+
+## Tooltip
+
+Use `enableHighlighting` with `ChartTooltip` to show values on hover. The `valueFormatter` prop customizes how values are displayed.
+
+```jsx live
+function DonutWithTooltip() {
+  const series = useMemo(
+    () => [
+      { id: 'btc', data: 42000, label: 'Bitcoin', color: 'rgb(var(--orange40))' },
+      { id: 'eth', data: 28000, label: 'Ethereum', color: 'rgb(var(--blue40))' },
+      { id: 'sol', data: 15000, label: 'Solana', color: 'rgb(var(--purple40))' },
+      { id: 'other', data: 15000, label: 'Other', color: 'rgb(var(--gray40))' },
+    ],
+    [],
+  );
+
+  const currencyFormatter = useCallback(
+    (value) =>
+      new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }).format(value),
+    [],
+  );
+
+  return (
+    <DonutChart
+      enableHighlighting
+      height={200}
+      innerRadiusRatio={0.6}
+      cornerRadius={4}
+      series={series}
+      legend
+      legendPosition="right"
+    >
+      <ChartTooltip label="Portfolio Holdings" valueFormatter={currencyFormatter} />
+    </DonutChart>
+  );
+}
+```
+
+### Percentage Formatter
+
+Show percentages alongside values using a custom formatter.
+
+```jsx live
+function DonutWithPercentage() {
+  const series = useMemo(
+    () => [
+      { id: 'completed', data: 68, label: 'Completed', color: 'rgb(var(--green40))' },
+      { id: 'inProgress', data: 22, label: 'In Progress', color: 'rgb(var(--blue40))' },
+      { id: 'pending', data: 10, label: 'Pending', color: 'rgb(var(--gray40))' },
+    ],
+    [],
+  );
+
+  const total = useMemo(() => series.reduce((sum, s) => sum + s.data, 0), [series]);
+
+  const percentFormatter = useCallback(
+    (value) => {
+      const percent = Math.round((value / total) * 100);
+      return `${value} tasks (${percent}%)`;
+    },
+    [total],
+  );
+
+  return (
+    <DonutChart
+      enableHighlighting
+      height={200}
+      innerRadiusRatio={0.65}
+      series={series}
+      legend
+      legendPosition="right"
+    >
+      <ChartTooltip valueFormatter={percentFormatter} />
+    </DonutChart>
   );
 }
 ```
@@ -338,67 +412,17 @@ function PortfolioBreakdown() {
     [],
   );
 
-  const total = series.reduce((sum, s) => sum + s.data, 0);
-
-  const formatCurrency = useCallback((value) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  }, []);
-
   return (
-    <HStack gap={4} alignItems="center">
-      <Box position="relative" width={200} height={200}>
-        <DonutChart
-          height={200}
-          width={200}
-          innerRadiusRatio={0.7}
-          cornerRadius={4}
-          stroke="var(--color-bg)"
-          strokeWidth={2}
-          series={series}
-        />
-        <Box
-          position="absolute"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          style={{ pointerEvents: 'none' }}
-        >
-          <VStack alignItems="center" gap={0.5}>
-            <Text font="label2" color="fgMuted">
-              Portfolio Value
-            </Text>
-            <Text font="title2">{formatCurrency(total)}</Text>
-          </VStack>
-        </Box>
-      </Box>
-      <VStack gap={2}>
-        {series.map((item) => (
-          <HStack key={item.id} gap={2} alignItems="center">
-            <Box
-              width={12}
-              height={12}
-              borderRadius={1000}
-              style={{ backgroundColor: item.color }}
-            />
-            <VStack gap={0}>
-              <Text font="label1">{item.label}</Text>
-              <Text font="label2" color="fgMuted">
-                {formatCurrency(item.data)} ({Math.round((item.data / total) * 100)}%)
-              </Text>
-            </VStack>
-          </HStack>
-        ))}
-      </VStack>
-    </HStack>
+    <DonutChart
+      height={200}
+      innerRadiusRatio={0.7}
+      cornerRadius={4}
+      stroke="var(--color-bg)"
+      strokeWidth={2}
+      series={series}
+      legend
+      legendPosition="right"
+    />
   );
 }
 ```

@@ -59,7 +59,6 @@ function SeriesExample() {
   return (
     <PolarChart
       height={200}
-      width={200}
       series={[
         { id: 'btc', data: 40, label: 'Bitcoin', color: `rgb(${theme.spectrum.orange40})` },
         { id: 'eth', data: 30, label: 'Ethereum', color: `rgb(${theme.spectrum.blue40})` },
@@ -93,8 +92,8 @@ function CustomRangeExample() {
           width={200}
           angularAxis={{ range: { min: -90, max: 90 } }}
           series={[
-            { id: 'a', data: 35, color: theme.color.fgPositive },
-            { id: 'b', data: 65, color: `rgb(${theme.spectrum.gray30})` },
+            { id: 'a', data: 35, color: `rgb(${theme.spectrum.green40})` },
+            { id: 'b', data: 65, color: `rgb(${theme.spectrum.gray20})` },
           ]}
         >
           <PiePlot cornerRadius={8} />
@@ -109,8 +108,8 @@ function CustomRangeExample() {
           width={200}
           angularAxis={{ range: { min: 90, max: 270 } }}
           series={[
-            { id: 'a', data: 35, color: theme.color.fgPositive },
-            { id: 'b', data: 65, color: `rgb(${theme.spectrum.gray30})` },
+            { id: 'a', data: 35, color: `rgb(${theme.spectrum.green40})` },
+            { id: 'b', data: 65, color: `rgb(${theme.spectrum.gray20})` },
           ]}
         >
           <PiePlot cornerRadius={8} />
@@ -135,7 +134,6 @@ function PaddingAngleExample() {
   return (
     <PolarChart
       height={200}
-      width={200}
       angularAxis={{ paddingAngle: 5 }}
       series={[
         { id: 'a', data: 30, color: `rgb(${theme.spectrum.blue40})` },
@@ -160,7 +158,6 @@ function MultipleAngularAxesExample() {
   return (
     <PolarChart
       height={200}
-      width={200}
       angularAxis={[
         { id: 'top', range: { min: -90, max: 90 } },
         { id: 'bottom', range: { min: 90, max: 270 } },
@@ -211,7 +208,6 @@ function DonutEffectExample() {
   return (
     <PolarChart
       height={200}
-      width={200}
       radialAxis={{ range: ({ max }) => ({ min: max * 0.6, max }) }}
       series={[
         { id: 'a', data: 30, color: `rgb(${theme.spectrum.blue40})` },
@@ -261,7 +257,7 @@ function NestedRingsExample() {
 
 ### Center Label
 
-You can add custom content in the center of donut charts using `DonutCenterLabel`.
+Add custom content to the center of donut-style charts using `DonutCenterLabel`.
 
 ```jsx
 function CenterLabelExample() {
@@ -306,7 +302,6 @@ function QuadrantChartExample() {
   return (
     <PolarChart
       height={200}
-      width={200}
       angularAxis={[
         { id: 'q1', range: { min: 0, max: 90 }, paddingAngle: 3 },
         { id: 'q2', range: { min: 90, max: 180 }, paddingAngle: 3 },
@@ -457,7 +452,6 @@ function SegmentedProgressRing() {
       inset={0}
       radialAxis={{ range: ({ max }) => ({ min: innerRadiusRatio * max, max }) }}
       series={[{ id: 'progress', data: 100, label: 'Progress', color: theme.color.fg }]}
-      width={200}
     >
       <BackgroundArcs />
       <ClippedProgress />

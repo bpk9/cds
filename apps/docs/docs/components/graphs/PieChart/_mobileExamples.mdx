@@ -1,4 +1,4 @@
-PieChart is built on [PolarChart](/components/graphs/PolarChart) for visualizing proportional data. Charts are built using `@shopify/react-native-skia`.
+PieChart is a wrapper for [PolarChart](/components/graphs/PolarChart) that makes it easy to create pie charts, supporting a single angular/radial axis pair. Charts are built using `@shopify/react-native-skia`.
 
 ## Setup
 
@@ -9,21 +9,17 @@ Before using PieChart, you need to wrap your app with `ChartBridgeProvider`. Thi
 The only prop required is `series`, which takes an array of series objects. Each series object needs an `id` and a `data` number representing the slice value.
 
 ```jsx
-function BasicPieChart() {
-  const theme = useTheme();
-
-  return (
-    <PieChart
-      height={200}
-      width={200}
-      series={[
-        { id: 'a', data: 30, label: 'Category A', color: `rgb(${theme.spectrum.blue40})` },
-        { id: 'b', data: 40, label: 'Category B', color: `rgb(${theme.spectrum.green40})` },
-        { id: 'c', data: 30, label: 'Category C', color: `rgb(${theme.spectrum.orange40})` },
-      ]}
-    />
-  );
-}
+<PieChart
+  height={200}
+  series={[
+    { id: 'a', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
+    { id: 'b', data: 20, label: 'Category B', color: 'rgb(var(--purple40))' },
+    { id: 'c', data: 15, label: 'Category C', color: 'rgb(var(--pink50))' },
+    { id: 'd', data: 10, label: 'Category D', color: 'rgb(var(--orange40))' },
+    { id: 'e', data: 15, label: 'Category E', color: 'rgb(var(--yellow40))' },
+    { id: 'f', data: 10, label: 'Category F', color: 'rgb(var(--green40))' },
+  ]}
+/>
 ```
 
 ## Styling
@@ -74,7 +70,6 @@ function StrokeExample() {
   return (
     <PieChart
       height={200}
-      width={200}
       stroke={theme.color.bg}
       strokeWidth={3}
       cornerRadius={8}
@@ -100,7 +95,6 @@ function PaddingExample() {
   return (
     <PieChart
       height={200}
-      width={200}
       angularAxis={{ paddingAngle: 4 }}
       series={[
         { id: 'a', data: 30, color: `rgb(${theme.spectrum.blue40})` },
@@ -125,13 +119,14 @@ function SemicircleChart() {
   return (
     <PieChart
       height={120}
-      width={200}
       angularAxis={{ range: { min: -90, max: 90 } }}
       series={[
         { id: 'low', data: 25, label: 'Low', color: `rgb(${theme.spectrum.green40})` },
         { id: 'medium', data: 50, label: 'Medium', color: `rgb(${theme.spectrum.yellow40})` },
         { id: 'high', data: 25, label: 'High', color: `rgb(${theme.spectrum.red40})` },
       ]}
+      legend
+      legendPosition="bottom"
     />
   );
 }
@@ -191,7 +186,7 @@ function AnimatedPieChart() {
 
   return (
     <VStack alignItems="center" gap={4}>
-      <PieChart animate height={200} width={200} series={dataSets[dataSet]} />
+      <PieChart animate height={200} series={dataSets[dataSet]} />
       <HStack alignItems="center" gap={2}>
         <IconButton
           accessibilityHint="Switch to previous data set"
@@ -210,6 +205,49 @@ function AnimatedPieChart() {
         />
       </HStack>
     </VStack>
+  );
+}
+```
+
+## Tooltip
+
+Use `enableHighlighting` with `ChartTooltip` to show values on hover. The `valueFormatter` prop customizes how values are displayed.
+
+```jsx
+function PieWithTooltip() {
+  const theme = useTheme();
+
+  const series = useMemo(
+    () => [
+      { id: 'stocks', data: 45, label: 'Stocks', color: `rgb(${theme.spectrum.blue40})` },
+      { id: 'bonds', data: 25, label: 'Bonds', color: `rgb(${theme.spectrum.green40})` },
+      { id: 'crypto', data: 20, label: 'Crypto', color: `rgb(${theme.spectrum.orange40})` },
+      { id: 'cash', data: 10, label: 'Cash', color: `rgb(${theme.spectrum.gray40})` },
+    ],
+    [theme],
+  );
+
+  const total = useMemo(() => series.reduce((sum, s) => sum + s.data, 0), [series]);
+
+  const percentFormatter = useCallback(
+    (value) => {
+      const percent = Math.round((value / total) * 100);
+      return `${percent}% of portfolio`;
+    },
+    [total],
+  );
+
+  return (
+    <PieChart
+      enableHighlighting
+      height={200}
+      cornerRadius={4}
+      series={series}
+      legend
+      legendPosition="right"
+    >
+      <ChartTooltip label="Asset Allocation" valueFormatter={percentFormatter} />
+    </PieChart>
   );
 }
 ```
@@ -233,37 +271,16 @@ function CategoryDistribution() {
     [theme],
   );
 
-  const total = series.reduce((sum, s) => sum + s.data, 0);
-
   return (
-    <VStack gap={4} alignItems="center">
-      <PieChart
-        height={200}
-        width={200}
-        cornerRadius={4}
-        stroke={theme.color.bg}
-        strokeWidth={2}
-        series={series}
-      />
-      <VStack gap={2}>
-        {series.map((item) => (
-          <HStack key={item.id} gap={2} alignItems="center">
-            <Box
-              width={12}
-              height={12}
-              borderRadius={1000}
-              style={{ backgroundColor: item.color }}
-            />
-            <Text font="label1" style={{ minWidth: 80 }}>
-              {item.label}
-            </Text>
-            <Text font="label2" color="fgMuted">
-              {Math.round((item.data / total) * 100)}%
-            </Text>
-          </HStack>
-        ))}
-      </VStack>
-    </VStack>
+    <PieChart
+      height={200}
+      cornerRadius={4}
+      stroke={theme.color.bg}
+      strokeWidth={2}
+      series={series}
+      legend
+      legendPosition="right"
+    />
   );
 }
 ```
@@ -279,24 +296,17 @@ function GaugeChart() {
   const max = 100;
 
   return (
-    <VStack alignItems="center" gap={2}>
-      <PieChart
-        height={120}
-        width={200}
-        angularAxis={{ range: { min: -90, max: 90 } }}
-        cornerRadius={100}
-        series={[
-          { id: 'value', data: value, color: `rgb(${theme.spectrum.green40})` },
-          { id: 'remaining', data: max - value, color: `rgb(${theme.spectrum.gray20})` },
-        ]}
-      />
-      <VStack alignItems="center">
-        <Text font="title1">{value}%</Text>
-        <Text font="label2" color="fgMuted">
-          Goal Progress
-        </Text>
-      </VStack>
-    </VStack>
+    <PieChart
+      height={120}
+      angularAxis={{ range: { min: -90, max: 90 } }}
+      cornerRadius={100}
+      series={[
+        { id: 'value', data: value, label: `${value}%`, color: `rgb(${theme.spectrum.green40})` },
+        { id: 'remaining', data: max - value, color: `rgb(${theme.spectrum.gray20})` },
+      ]}
+      legend
+      legendPosition="bottom"
+    />
   );
 }
 ```
