@@ -130,27 +130,30 @@ export const DefaultChartTooltipItem = memo<ChartTooltipItemProps>(
 
     const chartType = useMemo(() => chartContext.type, [chartContext.type]);
 
-    const seriesData = useMemo(() => {
+    // Use raw series data for tooltip display (not stacked/transformed data)
+    const rawSeriesData = useMemo(() => {
       if (chartType === 'cartesian') {
-        return (chartContext as CartesianChartContextValue).getSeriesData(series.id);
+        return (chartContext as CartesianChartContextValue).getSeries(series.id)?.data;
       } else {
-        return (chartContext as PolarChartContextValue).getSeriesData(series.id);
+        return (chartContext as PolarChartContextValue).getSeries(series.id)?.data;
       }
     }, [chartContext, chartType, series.id]);
 
     const formattedValue: React.ReactNode = useMemo(() => {
-      if (seriesData === undefined) return;
+      if (rawSeriesData === undefined) return;
 
-      const data = typeof seriesData === 'number' ? seriesData : seriesData?.[dataIndex];
+      const data = typeof rawSeriesData === 'number' ? rawSeriesData : rawSeriesData?.[dataIndex];
 
       if (data === null) return;
 
-      const value = Array.isArray(data) ? data.at(-1) : data;
+      // For tuple data [baseline, value], show the value (second element)
+      // For numeric data, show as-is
+      const value = Array.isArray(data) ? data[1] : data;
 
       if (value === undefined || value === null || Number.isNaN(value)) return;
 
       return valueFormatter ? valueFormatter(value) : value;
-    }, [seriesData, dataIndex, valueFormatter]);
+    }, [rawSeriesData, dataIndex, valueFormatter]);
 
     if (formattedValue === undefined) return;
 
