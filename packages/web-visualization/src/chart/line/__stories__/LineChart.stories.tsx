@@ -1741,6 +1741,75 @@ function CustomLabelComponent() {
   );
 }
 
+function HighlightLineSegments() {
+  const prices = useMemo(
+    () => [...btcCandles].reverse().map((candle) => parseFloat(candle.close)),
+    [],
+  );
+
+  const [scrubberPosition, setScrubberPosition] = useState<number | undefined>(undefined);
+
+  const handleHighlightChange = useCallback(
+    (item: { seriesId?: string; dataIndex?: number } | null) => {
+      setScrubberPosition(item?.dataIndex);
+    },
+    [],
+  );
+
+  // Calculate which month (~30-day segment) the scrubber is in
+  const dataPointsPerMonth = 30;
+  const currentMonth =
+    scrubberPosition !== undefined ? Math.floor(scrubberPosition / dataPointsPerMonth) : undefined;
+
+  const monthStart = currentMonth !== undefined ? currentMonth * dataPointsPerMonth : undefined;
+  const monthEnd =
+    currentMonth !== undefined
+      ? Math.min((currentMonth + 1) * dataPointsPerMonth - 1, prices.length - 1)
+      : undefined;
+
+  // Create gradient to highlight the current month
+  const gradient = useMemo(() => {
+    const color = assets.btc.color;
+
+    if (monthStart === undefined || monthEnd === undefined) {
+      return {
+        axis: 'x' as const,
+        stops: [
+          { offset: 0, color, opacity: 1 },
+          { offset: prices.length - 1, color, opacity: 1 },
+        ],
+      };
+    }
+
+    const stops = [];
+    if (monthStart > 0) {
+      stops.push({ offset: 0, color, opacity: 0.25 });
+      stops.push({ offset: monthStart, color, opacity: 0.25 });
+    }
+    stops.push({ offset: monthStart, color, opacity: 1 });
+    stops.push({ offset: monthEnd, color, opacity: 1 });
+    if (monthEnd < prices.length - 1) {
+      stops.push({ offset: monthEnd, color, opacity: 0.25 });
+      stops.push({ offset: prices.length - 1, color, opacity: 0.25 });
+    }
+
+    return { axis: 'x' as const, stops };
+  }, [monthStart, monthEnd, prices.length]);
+
+  return (
+    <LineChart
+      enableScrubbing
+      animate={false}
+      height={{ base: 200, tablet: 225, desktop: 250 }}
+      onHighlightChange={handleHighlightChange}
+      series={[{ id: 'btc', data: prices, gradient }]}
+      style={{ outlineColor: assets.btc.color }}
+    >
+      <Scrubber hideOverlay />
+    </LineChart>
+  );
+}
+
 function AdaptiveDetail() {
   const BTCTab: TabComponent = memo(
     forwardRef(
@@ -2235,6 +2304,12 @@ export const All = () => {
       </Example>
       <Example title="Custom Label Component">
         <CustomLabelComponent />
+      </Example>
+      <Example
+        description="Highlight data segments using x-axis gradients. Groups data by month and highlights the current segment while scrubbing."
+        title="Highlight Line Segments"
+      >
+        <HighlightLineSegments />
       </Example>
       <Example
         description="Display a smooth, simplified line when idle that reveals full granular detail when the user starts scrubbing."

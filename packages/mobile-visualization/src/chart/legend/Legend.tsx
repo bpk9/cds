@@ -77,8 +77,8 @@ export const Legend = memo(
     const { series } = useChartContext();
 
     const filteredSeries = useMemo(() => {
-      if (seriesIds === undefined) return series;
-      return series.filter((s) => seriesIds.includes(s.id));
+      if (seriesIds === undefined) return series.filter((s) => s.label !== undefined);
+      return series.filter((s) => seriesIds.includes(s.id) && s.label !== undefined);
     }, [series, seriesIds]);
 
     if (filteredSeries.length === 0) return;
@@ -99,7 +99,7 @@ export const Legend = memo(
             key={s.id}
             ShapeComponent={ShapeComponent}
             color={s.color}
-            label={s.label ?? s.id}
+            label={s.label}
             seriesId={s.id}
             shape={s.legendShape}
             styles={{
