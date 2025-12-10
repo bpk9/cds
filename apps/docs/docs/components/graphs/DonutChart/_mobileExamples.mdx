@@ -9,18 +9,24 @@ Before using DonutChart, you need to wrap your app with `ChartBridgeProvider`. T
 The only prop required is `series`, which takes an array of series objects. Each series object needs an `id` and a `data` number representing the slice value.
 
 ```jsx
-<DonutChart
-  height={200}
-  innerRadiusRatio={0.8}
-  series={[
-    { id: 'a', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
-    { id: 'b', data: 20, label: 'Category B', color: 'rgb(var(--purple40))' },
-    { id: 'c', data: 15, label: 'Category C', color: 'rgb(var(--pink50))' },
-    { id: 'd', data: 10, label: 'Category D', color: 'rgb(var(--orange40))' },
-    { id: 'e', data: 15, label: 'Category E', color: 'rgb(var(--yellow40))' },
-    { id: 'f', data: 10, label: 'Category F', color: 'rgb(var(--green40))' },
-  ]}
-/>
+function BasicDonutChart() {
+  const theme = useTheme();
+
+  return (
+    <DonutChart
+      height={200}
+      innerRadiusRatio={0.8}
+      series={[
+        { id: 'a', data: 30, label: 'Category A', color: `rgb(${theme.spectrum.blue40})` },
+        { id: 'b', data: 20, label: 'Category B', color: `rgb(${theme.spectrum.purple40})` },
+        { id: 'c', data: 15, label: 'Category C', color: `rgb(${theme.spectrum.pink50})` },
+        { id: 'd', data: 10, label: 'Category D', color: `rgb(${theme.spectrum.orange40})` },
+        { id: 'e', data: 15, label: 'Category E', color: `rgb(${theme.spectrum.yellow40})` },
+        { id: 'f', data: 10, label: 'Category F', color: `rgb(${theme.spectrum.green40})` },
+      ]}
+    />
+  );
+}
 ```
 
 ### Inner Radius
