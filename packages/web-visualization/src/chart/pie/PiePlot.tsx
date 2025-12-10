@@ -3,7 +3,7 @@ import { useTheme } from '@coinbase/cds-web';
 
 import { usePolarChartContext } from '../ChartProvider';
 import { defaultAxisId, useHighlightContext } from '../utils';
-import { calculateArcData, getArcOuterPoint } from '../utils/polar';
+import { calculateArcData } from '../utils/polar';
 
 import { Arc, type ArcBaseProps, type ArcProps } from './Arc';
 
@@ -196,27 +196,15 @@ export const PiePlot = memo<PiePlotProps>(
     );
 
     const handleSliceMouseEnter = useCallback(
-      (
-        sliceData: { id: string; label?: string; value: number },
-        index: number,
-        arc: { startAngle: number; endAngle: number; innerRadius: number; outerRadius: number },
-      ) => {
+      (sliceData: { id: string; label?: string; value: number }, index: number) => {
         onSliceMouseEnter?.({ ...sliceData, index });
-
-        // Calculate anchor at outer edge of arc (better for tooltip positioning)
-        const outerPoint = getArcOuterPoint(arc.startAngle, arc.endAngle, arc.outerRadius);
-
-        // Convert to SVG coordinates
-        const centerX = drawingArea.x + drawingArea.width / 2;
-        const centerY = drawingArea.y + drawingArea.height / 2;
 
         highlightContext?.setHighlightedItem({
           seriesId: sliceData.id,
           dataIndex: index,
-          anchor: { x: centerX + outerPoint.x, y: centerY + outerPoint.y },
         });
       },
-      [onSliceMouseEnter, highlightContext, drawingArea],
+      [onSliceMouseEnter, highlightContext],
     );
 
     const handleSliceMouseLeave = useCallback(
@@ -245,15 +233,17 @@ export const PiePlot = memo<PiePlotProps>(
               clipPathId={clipPathId}
               cornerRadius={cornerRadius}
               cursor={cursor}
+              dataIndex={arc.index}
               endAngle={arc.endAngle}
               fill={fill}
               fillOpacity={fillOpacity}
               innerRadius={arc.innerRadius}
               onClick={onSliceClick ? () => handleSliceClick(data, arc.index) : undefined}
-              onMouseEnter={() => handleSliceMouseEnter(data, arc.index, arc)}
+              onMouseEnter={() => handleSliceMouseEnter(data, arc.index)}
               onMouseLeave={() => handleSliceMouseLeave(data, arc.index)}
               outerRadius={arc.outerRadius}
               paddingAngle={arc.paddingAngle}
+              seriesId={data.id}
               startAngle={arc.startAngle}
               stroke={stroke ?? theme.color.bg}
               strokeWidth={strokeWidth}

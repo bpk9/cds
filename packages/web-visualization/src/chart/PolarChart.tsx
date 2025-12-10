@@ -22,7 +22,6 @@ import {
   getPolarAxisRange,
   getPolarAxisScale,
   getRadialAxisConfig,
-  type HighlightAnchor,
   type HighlightedItemData,
   type PolarChartContextValue,
   type PolarSeries,
@@ -449,19 +448,6 @@ export const PolarChart = memo(
         [isControlled, currentHighlightedItem, onHighlightChange],
       );
 
-      // Get a fixed anchor position for keyboard navigation
-      // We use center-bottom of the chart since we don't have arc geometry here
-      // (PiePlot calculates the actual arc positions and sets precise anchors on hover)
-      const getKeyboardAnchor = useCallback((): HighlightAnchor | undefined => {
-        if (!drawingArea || drawingArea.width <= 0) return undefined;
-
-        // Position at center-bottom of the chart (below the pie)
-        return {
-          x: drawingArea.x + drawingArea.width / 2,
-          y: drawingArea.y + drawingArea.height + 8, // 8px below the chart
-        };
-      }, [drawingArea]);
-
       // Handle keyboard navigation for polar charts (cycles through series)
       const handleKeyDown = useCallback(
         (event: KeyboardEvent) => {
@@ -474,13 +460,11 @@ export const PolarChart = memo(
 
           switch (event.key) {
             case 'ArrowLeft':
-            case 'ArrowUp':
               event.preventDefault();
               // Move to previous slice, wrap around
               newIndex = currentIndex <= 0 ? seriesCount - 1 : currentIndex - 1;
               break;
             case 'ArrowRight':
-            case 'ArrowDown':
               event.preventDefault();
               // Move to next slice, wrap around
               newIndex = currentIndex >= seriesCount - 1 ? 0 : currentIndex + 1;
@@ -505,21 +489,13 @@ export const PolarChart = memo(
             setHighlightedItemInternal(undefined);
           } else {
             const targetSeriesItem = series[newIndex];
-            const anchor = getKeyboardAnchor();
             setHighlightedItemInternal({
               seriesId: targetSeriesItem?.id,
               dataIndex: newIndex,
-              anchor,
             });
           }
         },
-        [
-          enableHighlighting,
-          series,
-          currentHighlightedItem,
-          setHighlightedItemInternal,
-          getKeyboardAnchor,
-        ],
+        [enableHighlighting, series, currentHighlightedItem, setHighlightedItemInternal],
       );
 
       // Handle blur - clear highlighting when focus leaves

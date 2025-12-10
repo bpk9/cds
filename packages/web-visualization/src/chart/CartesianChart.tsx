@@ -24,7 +24,6 @@ import {
   getCartesianAxisScale,
   getCartesianStackedSeriesData as calculateStackedSeriesData,
   getChartInset,
-  type HighlightAnchor,
   type HighlightedItemData,
   isCategoricalScale,
   useTotalAxisPadding,
@@ -542,36 +541,6 @@ export const CartesianChart = memo(
         [xScale, xAxis],
       );
 
-      // Get stable anchor coordinates for a data index (for keyboard navigation only)
-      // X: calculated from scale, Y: fixed at top of chart area
-      const getAnchorForDataIndex = useCallback(
-        (dataIndexVal: number): HighlightAnchor | undefined => {
-          if (!xScale || !chartRect || chartRect.width <= 0) return undefined;
-
-          let xPos: number;
-          if (isCategoricalScale(xScale)) {
-            const bandwidth = xScale.bandwidth?.() ?? 0;
-            xPos = (xScale(dataIndexVal) ?? 0) + bandwidth / 2;
-          } else {
-            // For numeric scales with axis data
-            const axisData = xAxis?.data;
-            if (axisData && Array.isArray(axisData) && typeof axisData[0] === 'number') {
-              const numericData = axisData as number[];
-              const xValue = numericData[dataIndexVal] ?? dataIndexVal;
-              xPos = xScale(xValue) ?? 0;
-            } else {
-              xPos = xScale(dataIndexVal) ?? 0;
-            }
-          }
-
-          // Fixed Y position at top of chart area (tooltip will appear above)
-          const yPos = chartRect.y;
-
-          return { x: xPos, y: yPos };
-        },
-        [xScale, xAxis, chartRect],
-      );
-
       // Handle pointer move (mouse or touch)
       const handlePointerMove = useCallback(
         (clientX: number, target: SVGSVGElement) => {
@@ -584,11 +553,9 @@ export const CartesianChart = memo(
           // Only update if dataIndex changed
           if (dataIndexVal !== lastDataIndexRef.current) {
             lastDataIndexRef.current = dataIndexVal;
-            // No anchor for mouse - tooltip follows cursor
             setHighlightedItemInternal((prev) => ({
               ...prev,
               dataIndex: dataIndexVal,
-              anchor: undefined,
             }));
           }
         },
@@ -669,24 +636,14 @@ export const CartesianChart = memo(
             if (newIndex === undefined) {
               setHighlightedItemInternal(undefined);
             } else {
-              // For keyboard navigation, include anchor for stable tooltip positioning
-              const anchor = getAnchorForDataIndex(newIndex);
               setHighlightedItemInternal((prev) => ({
                 ...prev,
                 dataIndex: newIndex,
-                anchor,
               }));
             }
           }
         },
-        [
-          enableHighlighting,
-          xScale,
-          xAxis,
-          currentHighlightedItem,
-          setHighlightedItemInternal,
-          getAnchorForDataIndex,
-        ],
+        [enableHighlighting, xScale, xAxis, currentHighlightedItem, setHighlightedItemInternal],
       );
 
       // Handle blur - clear highlighting when focus leaves

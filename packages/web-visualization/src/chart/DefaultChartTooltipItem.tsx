@@ -10,8 +10,8 @@ import { Text } from '@coinbase/cds-web/typography';
 
 import { DefaultLegendItem, type LegendItemComponent } from './legend/DefaultLegendItem';
 import type { LegendShapeComponent } from './legend/DefaultLegendShape';
-import { useCartesianChartContext } from './ChartProvider';
-import type { CartesianSeries } from './utils';
+import { useChartContext } from './ChartProvider';
+import type { CartesianChartContextValue, CartesianSeries, PolarChartContextValue } from './utils';
 
 export type ChartTooltipItemBaseProps = Omit<HStackBaseProps, 'children'> &
   SharedProps & {
@@ -20,9 +20,9 @@ export type ChartTooltipItemBaseProps = Omit<HStackBaseProps, 'children'> &
      */
     series: CartesianSeries;
     /**
-     * The current scrubber position (data index).
+     * The current data index being highlighted.
      */
-    scrubberPosition: number;
+    dataIndex: number;
     /**
      * Formatter function for series values.
      * Receives the numeric series value and should return a ReactNode.
@@ -115,7 +115,7 @@ export const DefaultChartTooltipItem = memo<ChartTooltipItemProps>(
     alignItems = 'center',
     justifyContent = 'space-between',
     series,
-    scrubberPosition,
+    dataIndex,
     valueFormatter,
     LegendItemComponent = DefaultLegendItem,
     ShapeComponent,
@@ -126,27 +126,31 @@ export const DefaultChartTooltipItem = memo<ChartTooltipItemProps>(
     testID,
     ...props
   }) => {
-    const { getSeriesData } = useCartesianChartContext();
+    const chartContext = useChartContext();
+
+    const chartType = useMemo(() => chartContext.type, [chartContext.type]);
+
+    const seriesData = useMemo(() => {
+      if (chartType === 'cartesian') {
+        return (chartContext as CartesianChartContextValue).getSeriesData(series.id);
+      } else {
+        return (chartContext as PolarChartContextValue).getSeriesData(series.id);
+      }
+    }, [chartContext, chartType, series.id]);
 
     const formattedValue: React.ReactNode = useMemo(() => {
-      const data = getSeriesData(series.id);
-      const dataPoint = data?.[scrubberPosition];
-      let value: number | undefined;
+      if (seriesData === undefined) return;
 
-      if (dataPoint && dataPoint !== null) {
-        const [start, end] = dataPoint;
-        value = end - start;
-      } else if (series.data) {
-        const rawPoint = series.data[scrubberPosition];
-        if (rawPoint !== undefined && rawPoint !== null) {
-          value = Array.isArray(rawPoint) ? rawPoint.at(-1) : rawPoint;
-        }
-      }
+      const data = typeof seriesData === 'number' ? seriesData : seriesData?.[dataIndex];
+
+      if (data === null) return;
+
+      const value = Array.isArray(data) ? data.at(-1) : data;
 
       if (value === undefined || value === null || Number.isNaN(value)) return;
 
       return valueFormatter ? valueFormatter(value) : value;
-    }, [series.id, series.data, scrubberPosition, getSeriesData, valueFormatter]);
+    }, [seriesData, dataIndex, valueFormatter]);
 
     if (formattedValue === undefined) return;
 

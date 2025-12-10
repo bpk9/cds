@@ -165,21 +165,6 @@ export type PolarChartContextValue = Omit<ChartContextValue, 'series' | 'type'> 
 };
 
 /**
- * Stable anchor point for tooltip positioning.
- * Coordinates are relative to the SVG element.
- */
-export type HighlightAnchor = {
-  /**
-   * X coordinate relative to SVG element.
-   */
-  x: number;
-  /**
-   * Y coordinate relative to SVG element.
-   */
-  y: number;
-};
-
-/**
  * Data identifying a highlighted item.
  * Both fields are optional to support different interaction patterns:
  * - { dataIndex } only: highlight all series at this index (scrubbing)
@@ -197,12 +182,6 @@ export type HighlightedItemData = {
    * When undefined, the highlight applies to the entire series.
    */
   dataIndex?: number;
-  /**
-   * Stable anchor point for tooltip positioning.
-   * Used primarily for keyboard navigation where there's no mouse position.
-   * Coordinates are relative to the SVG element.
-   */
-  anchor?: HighlightAnchor;
 };
 
 export type HighlightContextValue = {
