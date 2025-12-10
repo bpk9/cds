@@ -1,6 +1,6 @@
 PolarChart is a customizable, SVG based component that can be used to display a variety of data in a polar coordinate space. The underlying logic is handled by D3.
 
-## Basic Example
+## Basics
 
 [PieChart](/components/graphs/PieChart/) and [DonutChart](/components/graphs/DonutChart/) are built on top of PolarChart and have default functionality for your chart.
 
@@ -38,7 +38,7 @@ PolarChart is a customizable, SVG based component that can be used to display a 
 </HStack>
 ```
 
-## Series
+### Series
 
 Series are the data that will be displayed on the chart. Each series must have a defined `id` and `data` (a single number representing the value).
 
@@ -76,7 +76,7 @@ Use `angularAxis` with `range` to create partial charts.
         { id: 'b', data: 65, color: 'rgb(var(--gray20))' },
       ]}
     >
-      <PiePlot cornerRadius={8} />
+      <PiePlot cornerRadius={2} />
     </PolarChart>
     <Text font="label2" color="fgMuted">
       Semicircle (top)
@@ -92,7 +92,7 @@ Use `angularAxis` with `range` to create partial charts.
         { id: 'b', data: 65, color: 'rgb(var(--gray20))' },
       ]}
     >
-      <PiePlot cornerRadius={8} />
+      <PiePlot cornerRadius={2} />
     </PolarChart>
     <Text font="label2" color="fgMuted">
       Semicircle (bottom)
@@ -108,6 +108,9 @@ Use `paddingAngle` to add gaps between slices.
 ```jsx live
 <PolarChart
   height={200}
+  radialAxis={{
+    range: ({ max }) => ({ min: max - 16, max }),
+  }}
   angularAxis={{ paddingAngle: 5 }}
   series={[
     { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
@@ -115,7 +118,7 @@ Use `paddingAngle` to add gaps between slices.
     { id: 'c', data: 30, color: 'rgb(var(--purple40))' },
   ]}
 >
-  <PiePlot />
+  <PiePlot cornerRadius={8} />
 </PolarChart>
 ```
 
@@ -127,9 +130,12 @@ You can define multiple angular axes for different sections of the chart.
 <PolarChart
   height={200}
   angularAxis={[
-    { id: 'top', range: { min: -90, max: 90 } },
-    { id: 'bottom', range: { min: 90, max: 270 } },
+    { id: 'top', range: { min: -45, max: 45 } },
+    { id: 'bottom', range: { min: 135, max: 225 } },
   ]}
+  radialAxis={{
+    range: ({ max }) => ({ min: max - 16, max }),
+  }}
   series={[
     { id: 'revenue', data: 30, color: 'rgb(var(--blue40))', angularAxisId: 'top' },
     { id: 'profit', data: 50, color: 'rgb(var(--green40))', angularAxisId: 'top' },
@@ -148,7 +154,7 @@ You can define multiple angular axes for different sections of the chart.
 
 The radial axis controls the inner and outer radii of the chart. By default, it starts from 0 (center) to the full radius.
 
-### Donut Effect
+### Donut
 
 Use `radialAxis` with `range` to create a donut chart with a hollow center.
 
@@ -173,26 +179,114 @@ Use multiple radial axes to create nested rings.
 ```jsx live
 <PolarChart
   height={250}
-  width={250}
   radialAxis={[
-    { id: 'inner', range: ({ max }) => ({ min: 0, max: max * 0.35 }) },
-    { id: 'outer', range: ({ max }) => ({ min: max * 0.45, max }) },
+    { id: 'inner', range: ({ max }) => ({ min: 0, max: max * 0.8 }) },
+    { id: 'outer', range: ({ max }) => ({ min: max * 0.85, max }) },
   ]}
   series={[
-    { id: 'inner-a', data: 60, radialAxisId: 'inner', color: 'rgb(var(--blue40))' },
-    { id: 'inner-b', data: 40, radialAxisId: 'inner', color: 'rgb(var(--blue60))' },
-    { id: 'outer-a', data: 30, radialAxisId: 'outer', color: 'rgb(var(--green40))' },
-    { id: 'outer-b', data: 25, radialAxisId: 'outer', color: 'rgb(var(--green50))' },
-    { id: 'outer-c', data: 20, radialAxisId: 'outer', color: 'rgb(var(--green60))' },
-    { id: 'outer-d', data: 25, radialAxisId: 'outer', color: 'rgb(var(--green70))' },
+    { id: 'a', radialAxisId: 'inner', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
+    {
+      id: 'b',
+      radialAxisId: 'inner',
+      data: 20,
+      label: 'Category B',
+      color: 'rgb(var(--purple40))',
+    },
+    { id: 'c', radialAxisId: 'inner', data: 15, label: 'Category C', color: 'rgb(var(--pink50))' },
+    {
+      id: 'd',
+      radialAxisId: 'inner',
+      data: 10,
+      label: 'Category D',
+      color: 'rgb(var(--orange40))',
+    },
+    {
+      id: 'e',
+      radialAxisId: 'inner',
+      data: 15,
+      label: 'Category E',
+      color: 'rgb(var(--yellow40))',
+    },
+    { id: 'f', radialAxisId: 'inner', data: 10, label: 'Category F', color: 'rgb(var(--green40))' },
+    {
+      id: 'aa',
+      radialAxisId: 'outer',
+      data: 20,
+      label: 'Category AA',
+      color: 'rgb(var(--blue30))',
+    },
+    {
+      id: 'ab',
+      radialAxisId: 'outer',
+      data: 10,
+      label: 'Category AB',
+      color: 'rgb(var(--blue50))',
+    },
+    {
+      id: 'ba',
+      radialAxisId: 'outer',
+      data: 15,
+      label: 'Category BA',
+      color: 'rgb(var(--purple30))',
+    },
+    {
+      id: 'bb',
+      radialAxisId: 'outer',
+      data: 5,
+      label: 'Category BA',
+      color: 'rgb(var(--purple50))',
+    },
+    {
+      id: 'ca',
+      radialAxisId: 'outer',
+      data: 12,
+      label: 'Category CA',
+      color: 'rgb(var(--pink40))',
+    },
+    { id: 'cb', radialAxisId: 'outer', data: 3, label: 'Category CB', color: 'rgb(var(--pink60))' },
+    {
+      id: 'da',
+      radialAxisId: 'outer',
+      data: 4,
+      label: 'Category DA',
+      color: 'rgb(var(--orange30))',
+    },
+    {
+      id: 'db',
+      radialAxisId: 'outer',
+      data: 6,
+      label: 'Category DB',
+      color: 'rgb(var(--orange50))',
+    },
+    {
+      id: 'ea',
+      radialAxisId: 'outer',
+      data: 15,
+      label: 'Category E',
+      color: 'rgb(var(--yellow40))',
+    },
+    {
+      id: 'fa',
+      radialAxisId: 'outer',
+      data: 3,
+      label: 'Category FA',
+      color: 'rgb(var(--green30))',
+    },
+    {
+      id: 'fb',
+      radialAxisId: 'outer',
+      data: 7,
+      label: 'Category FB',
+      color: 'rgb(var(--green50))',
+    },
   ]}
 >
-  <PiePlot cornerRadius={4} radialAxisId="inner" strokeWidth={0} />
-  <PiePlot cornerRadius={4} radialAxisId="outer" strokeWidth={0} />
+  <PiePlot radialAxisId="inner" strokeWidth={0} />
+  <PiePlot radialAxisId="outer" strokeWidth={0} />
 </PolarChart>
 ```
 
-## Customization
+## Composed Examples
 
 ### Center Label
 
@@ -200,183 +294,276 @@ Add custom content to the center of donut-style charts using SVG text elements p
 
 ```jsx live
 function DonutWithCenterLabel() {
-  const CenterLabel = memo(({ children }) => {
-    const { drawingArea } = usePolarChartContext();
+  const series = [
+    { id: 'a', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
+    { id: 'b', data: 20, label: 'Category B', color: 'rgb(var(--purple40))' },
+    { id: 'c', data: 15, label: 'Category C', color: 'rgb(var(--pink50))' },
+    { id: 'd', data: 10, label: 'Category D', color: 'rgb(var(--orange40))' },
+    { id: 'e', data: 15, label: 'Category E', color: 'rgb(var(--yellow40))' },
+    { id: 'f', data: 10, label: 'Category F', color: 'rgb(var(--green40))' },
+  ];
 
-    if (!drawingArea.width || !drawingArea.height) return null;
+  const total = series.reduce((sum, s) => sum + s.data, 0);
+
+  const Label = () => {
+    const { drawingArea } = useChartContext();
+
+    if (!drawingArea.width) return;
 
     const centerX = drawingArea.x + drawingArea.width / 2;
     const centerY = drawingArea.y + drawingArea.height / 2;
 
     return (
-      <text
-        dominantBaseline="middle"
-        fill="var(--color-fgPrimary)"
-        fontSize={24}
-        fontWeight="bold"
-        textAnchor="middle"
-        x={centerX}
-        y={centerY}
-      >
-        {children}
-      </text>
+      <>
+        <ChartText x={centerX} y={centerY} font="label2" verticalAlignment="bottom">
+          Total
+        </ChartText>
+        <ChartText
+          x={centerX}
+          y={centerY}
+          font="headline"
+          verticalAlignment="top"
+          color="var(--color-fg)"
+        >
+          ${(total * 100).toLocaleString()}
+        </ChartText>
+      </>
     );
-  });
+  };
 
   return (
-    <PolarChart
+    <DonutChart
       height={200}
-      width={200}
-      radialAxis={{ range: ({ max }) => ({ min: max * 0.7, max }) }}
-      series={[
-        { id: 'teal', data: 10, color: 'rgb(var(--teal40))' },
-        { id: 'blue', data: 25, color: 'rgb(var(--blue40))' },
-        { id: 'purple', data: 20, color: 'rgb(var(--purple40))' },
-        { id: 'pink', data: 15, color: 'rgb(var(--pink40))' },
-        { id: 'orange', data: 30, color: 'rgb(var(--orange40))' },
-      ]}
+      innerRadiusRatio={0.65}
+      stroke="var(--color-bg)"
+      strokeWidth={2}
+      series={series}
     >
-      <PiePlot cornerRadius={4} stroke="none" />
-      <CenterLabel>$1,234</CenterLabel>
-    </PolarChart>
+      <Label />
+    </DonutChart>
   );
 }
 ```
 
-### Interactive Slices
+### Interactive Nested Chart
 
-Use `onSliceClick` on `PiePlot` to handle slice interactions.
+You can create a nested polar chart where interaction at one level highlights related segments at another level.
+In this example, hovering an inner segment (e.g., "A") highlights it and all its outer children ("AA", "AB").
+Hovering an outer segment (e.g., "AA") highlights it and its parent ("A"), but not siblings ("AB").
 
-```jsx live
-function InteractiveChart() {
-  const [selectedSlice, setSelectedSlice] = useState(null);
-
-  const series = useMemo(
-    () => [
-      { id: 'btc', data: 40, label: 'Bitcoin', color: 'rgb(var(--orange40))' },
-      { id: 'eth', data: 30, label: 'Ethereum', color: 'rgb(var(--blue40))' },
-      { id: 'sol', data: 15, label: 'Solana', color: 'rgb(var(--purple40))' },
-      { id: 'other', data: 15, label: 'Other', color: 'rgb(var(--gray30))' },
-    ],
-    [],
-  );
-
-  const total = series.reduce((sum, s) => sum + s.data, 0);
-  const selectedData = selectedSlice ? series.find((s) => s.id === selectedSlice) : null;
-
-  const handleSliceClick = useCallback((data) => {
-    setSelectedSlice((prev) => (prev === data.id ? null : data.id));
-  }, []);
-
-  return (
-    <Box height={200} position="relative" width={200}>
-      <PolarChart
-        animate
-        height={200}
-        width={200}
-        radialAxis={{ range: ({ max }) => ({ min: max * 0.65, max }) }}
-        series={series.map((s) => ({
-          ...s,
-          color: selectedSlice && selectedSlice !== s.id ? `${s.color}80` : s.color,
-        }))}
-      >
-        <PiePlot cursor="pointer" onSliceClick={handleSliceClick} />
-      </PolarChart>
-      <Box
-        alignItems="center"
-        bottom={0}
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        left={0}
-        position="absolute"
-        right={0}
-        style={{ pointerEvents: 'none' }}
-        top={0}
-      >
-        <Text color="fgMuted" font="label1">
-          {selectedData ? selectedData.label : 'Total'}
-        </Text>
-        <Text font="headline">
-          {selectedData ? `${Math.round((selectedData.data / total) * 100)}%` : '$12,345'}
-        </Text>
-      </Box>
-    </Box>
-  );
-}
-```
-
-### Custom Arc Component
-
-Provide a custom `ArcComponent` to `PiePlot` for complete control over arc rendering.
+This is achieved by creating custom Arc components that override the default highlighting behavior.
 
 ```jsx live
-function CustomArcExample() {
-  const CustomArc = memo(({ startAngle, endAngle, innerRadius, outerRadius, fill, ...props }) => {
+function InteractiveNestedChart() {
+  // Get parent for an outer series (e.g., 'aa' -> 'a')
+  const getParent = (seriesId) => seriesId?.[0];
+
+  // Custom Arc that renders path directly to bypass Arc's internal dimming logic
+  // The Arc component has built-in highlighting that overrides fillOpacity,
+  // so we render the SVG path directly for full control
+  const CustomArc = memo(({ isRelated, ...props }) => {
+    const highlightContext = useHighlightContext();
+    const highlightedId = highlightContext?.highlightedItem?.seriesId;
+    const { drawingArea } = usePolarChartContext();
+
+    const centerX = drawingArea.x + drawingArea.width / 2;
+    const centerY = drawingArea.y + drawingArea.height / 2;
+
+    const path = getArcPath({
+      startAngle: props.startAngle,
+      endAngle: props.endAngle,
+      innerRadius: props.innerRadius,
+      outerRadius: props.outerRadius,
+      paddingAngle: props.paddingAngle,
+    });
+
+    // Determine if this arc should be dimmed
+    const shouldDim = highlightedId && !isRelated;
+
     return (
-      <Arc
-        {...props}
-        endAngle={endAngle}
-        fill={fill}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius}
-        startAngle={startAngle}
-        style={{ filter: 'drop-shadow(0 0 8px currentColor)' }}
-      />
+      <g transform={`translate(${centerX}, ${centerY})`}>
+        <path
+          d={path}
+          fill={props.fill}
+          fillOpacity={shouldDim ? 0.3 : 1}
+          onMouseEnter={props.onMouseEnter}
+          onMouseLeave={props.onMouseLeave}
+          style={{ transition: 'fill-opacity 0.2s ease-out' }}
+        />
+      </g>
     );
   });
 
+  // Custom Arc for inner ring - highlighted when:
+  // - This segment is hovered, OR
+  // - Any of its children (outer segments) is hovered
+  const InnerArc = (props) => {
+    const highlightContext = useHighlightContext();
+    const highlightedId = highlightContext?.highlightedItem?.seriesId;
+
+    // Check if this inner arc should be highlighted
+    const isExactMatch = props.seriesId === highlightedId;
+    const isParentOfHighlighted = getParent(highlightedId) === props.seriesId;
+    const isRelated = isExactMatch || isParentOfHighlighted;
+
+    return <CustomArc {...props} isRelated={isRelated} />;
+  };
+
+  // Custom Arc for outer ring - highlighted when:
+  // - This segment is hovered, OR
+  // - Its parent (inner segment) is hovered
+  // NOT highlighted when a sibling is hovered
+  const OuterArc = (props) => {
+    const highlightContext = useHighlightContext();
+    const highlightedId = highlightContext?.highlightedItem?.seriesId;
+
+    // Check if this outer arc should be highlighted
+    const isExactMatch = props.seriesId === highlightedId;
+    const myParent = getParent(props.seriesId);
+    const isHighlightedMyParent = myParent === highlightedId;
+    const isRelated = isExactMatch || isHighlightedMyParent;
+
+    return <CustomArc {...props} isRelated={isRelated} />;
+  };
+
   return (
     <PolarChart
-      height={200}
-      width={200}
+      enableHighlighting
+      height={250}
+      radialAxis={[
+        { id: 'inner', range: ({ max }) => ({ min: 0, max: max * 0.8 }) },
+        { id: 'outer', range: ({ max }) => ({ min: max * 0.85, max }) },
+      ]}
+      legend={<Legend seriesIds={['a', 'b', 'c', 'd', 'e', 'f']} />}
+      legendPosition="bottom"
       series={[
-        { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
-        { id: 'b', data: 40, color: 'rgb(var(--green40))' },
-        { id: 'c', data: 30, color: 'rgb(var(--purple40))' },
+        {
+          id: 'a',
+          radialAxisId: 'inner',
+          data: 30,
+          label: 'Category A',
+          color: 'rgb(var(--blue40))',
+        },
+        {
+          id: 'b',
+          radialAxisId: 'inner',
+          data: 20,
+          label: 'Category B',
+          color: 'rgb(var(--purple40))',
+        },
+        {
+          id: 'c',
+          radialAxisId: 'inner',
+          data: 15,
+          label: 'Category C',
+          color: 'rgb(var(--pink50))',
+        },
+        {
+          id: 'd',
+          radialAxisId: 'inner',
+          data: 10,
+          label: 'Category D',
+          color: 'rgb(var(--orange40))',
+        },
+        {
+          id: 'e',
+          radialAxisId: 'inner',
+          data: 15,
+          label: 'Category E',
+          color: 'rgb(var(--yellow40))',
+        },
+        {
+          id: 'f',
+          radialAxisId: 'inner',
+          data: 10,
+          label: 'Category F',
+          color: 'rgb(var(--green40))',
+        },
+        {
+          id: 'aa',
+          radialAxisId: 'outer',
+          data: 20,
+          label: 'Category AA',
+          color: 'rgb(var(--blue30))',
+        },
+        {
+          id: 'ab',
+          radialAxisId: 'outer',
+          data: 10,
+          label: 'Category AB',
+          color: 'rgb(var(--blue50))',
+        },
+        {
+          id: 'ba',
+          radialAxisId: 'outer',
+          data: 15,
+          label: 'Category BA',
+          color: 'rgb(var(--purple30))',
+        },
+        {
+          id: 'bb',
+          radialAxisId: 'outer',
+          data: 5,
+          label: 'Category BB',
+          color: 'rgb(var(--purple50))',
+        },
+        {
+          id: 'ca',
+          radialAxisId: 'outer',
+          data: 12,
+          label: 'Category CA',
+          color: 'rgb(var(--pink40))',
+        },
+        {
+          id: 'cb',
+          radialAxisId: 'outer',
+          data: 3,
+          label: 'Category CB',
+          color: 'rgb(var(--pink60))',
+        },
+        {
+          id: 'da',
+          radialAxisId: 'outer',
+          data: 4,
+          label: 'Category DA',
+          color: 'rgb(var(--orange30))',
+        },
+        {
+          id: 'db',
+          radialAxisId: 'outer',
+          data: 6,
+          label: 'Category DB',
+          color: 'rgb(var(--orange50))',
+        },
+        {
+          id: 'ea',
+          radialAxisId: 'outer',
+          data: 15,
+          label: 'Category EA',
+          color: 'rgb(var(--yellow40))',
+        },
+        {
+          id: 'fa',
+          radialAxisId: 'outer',
+          data: 3,
+          label: 'Category FA',
+          color: 'rgb(var(--green30))',
+        },
+        {
+          id: 'fb',
+          radialAxisId: 'outer',
+          data: 7,
+          label: 'Category FB',
+          color: 'rgb(var(--green50))',
+        },
       ]}
     >
-      <PiePlot ArcComponent={CustomArc} cornerRadius={8} />
+      <PiePlot radialAxisId="inner" strokeWidth={0} ArcComponent={InnerArc} />
+      <PiePlot radialAxisId="outer" strokeWidth={0} ArcComponent={OuterArc} />
+      <ChartTooltip />
     </PolarChart>
   );
 }
-```
-
-## Composed Examples
-
-### Quadrant Chart
-
-A chart divided into four quadrants, each with its own data.
-
-```jsx live
-<PolarChart
-  height={200}
-  angularAxis={[
-    { id: 'q1', range: { min: 0, max: 90 }, paddingAngle: 3 },
-    { id: 'q2', range: { min: 90, max: 180 }, paddingAngle: 3 },
-    { id: 'q3', range: { min: 180, max: 270 }, paddingAngle: 3 },
-    { id: 'q4', range: { min: 270, max: 360 }, paddingAngle: 3 },
-  ]}
-  series={[
-    { id: 'a', data: 50, color: 'rgb(var(--blue40))', angularAxisId: 'q1' },
-    { id: 'b', data: 30, color: 'rgb(var(--blue30))', angularAxisId: 'q1' },
-    { id: 'c', data: 20, color: 'rgb(var(--blue20))', angularAxisId: 'q1' },
-    { id: 'd', data: 40, color: 'rgb(var(--green40))', angularAxisId: 'q2' },
-    { id: 'e', data: 35, color: 'rgb(var(--green30))', angularAxisId: 'q2' },
-    { id: 'f', data: 25, color: 'rgb(var(--green20))', angularAxisId: 'q2' },
-    { id: 'g', data: 45, color: 'rgb(var(--pink40))', angularAxisId: 'q3' },
-    { id: 'h', data: 30, color: 'rgb(var(--pink30))', angularAxisId: 'q3' },
-    { id: 'i', data: 25, color: 'rgb(var(--purple40))', angularAxisId: 'q3' },
-    { id: 'j', data: 35, color: 'rgb(var(--orange40))', angularAxisId: 'q4' },
-    { id: 'k', data: 40, color: 'rgb(var(--orange30))', angularAxisId: 'q4' },
-    { id: 'l', data: 25, color: 'rgb(var(--yellow40))', angularAxisId: 'q4' },
-  ]}
->
-  <PiePlot angularAxisId="q1" cornerRadius={6} />
-  <PiePlot angularAxisId="q2" cornerRadius={6} />
-  <PiePlot angularAxisId="q3" cornerRadius={6} />
-  <PiePlot angularAxisId="q4" cornerRadius={6} />
-</PolarChart>
 ```
 
 ### Segmented Progress Ring

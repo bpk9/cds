@@ -20,85 +20,47 @@ The only prop required is `series`, which takes an array of series objects. Each
 
 ## Styling
 
-### Corner Radius
+### Corners
 
-Use `cornerRadius` to round the corners of each slice.
+You can use `cornerRadius` to round the corners of each slice.
 
 ```jsx live
-<HStack gap={4} justifyContent="center">
-  <VStack alignItems="center" gap={2}>
-    <PieChart
-      height={150}
-      width={150}
-      cornerRadius={0}
-      series={[
-        { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
-        { id: 'b', data: 40, color: 'rgb(var(--green40))' },
-        { id: 'c', data: 30, color: 'rgb(var(--orange40))' },
-      ]}
-    />
-    <Text font="label2" color="fgMuted">
-      cornerRadius: 0
-    </Text>
-  </VStack>
-  <VStack alignItems="center" gap={2}>
-    <PieChart
-      height={150}
-      width={150}
-      cornerRadius={8}
-      series={[
-        { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
-        { id: 'b', data: 40, color: 'rgb(var(--green40))' },
-        { id: 'c', data: 30, color: 'rgb(var(--orange40))' },
-      ]}
-    />
-    <Text font="label2" color="fgMuted">
-      cornerRadius: 8
-    </Text>
-  </VStack>
-</HStack>
+<PieChart
+  height={200}
+  cornerRadius={8}
+  series={[
+    { id: 'a', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
+    { id: 'b', data: 20, label: 'Category B', color: 'rgb(var(--purple40))' },
+    { id: 'c', data: 15, label: 'Category C', color: 'rgb(var(--pink50))' },
+    { id: 'd', data: 10, label: 'Category D', color: 'rgb(var(--orange40))' },
+    { id: 'e', data: 15, label: 'Category E', color: 'rgb(var(--yellow40))' },
+    { id: 'f', data: 10, label: 'Category F', color: 'rgb(var(--green40))' },
+  ]}
+/>
 ```
 
 ### Stroke
 
-Use `stroke` and `strokeWidth` to add borders between slices.
+By default, slices have a stroke. You can remove this by setting `strokeWidth` to 0.
 
 ```jsx live
 <PieChart
   height={200}
-  stroke="var(--color-bg)"
-  strokeWidth={3}
-  cornerRadius={8}
   series={[
-    { id: 'a', data: 25, color: 'rgb(var(--blue40))' },
-    { id: 'b', data: 25, color: 'rgb(var(--green40))' },
-    { id: 'c', data: 25, color: 'rgb(var(--purple40))' },
-    { id: 'd', data: 25, color: 'rgb(var(--orange40))' },
+    { id: 'a', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
+    { id: 'b', data: 20, label: 'Category B', color: 'rgb(var(--purple40))' },
+    { id: 'c', data: 15, label: 'Category C', color: 'rgb(var(--pink50))' },
+    { id: 'd', data: 10, label: 'Category D', color: 'rgb(var(--orange40))' },
+    { id: 'e', data: 15, label: 'Category E', color: 'rgb(var(--yellow40))' },
+    { id: 'f', data: 10, label: 'Category F', color: 'rgb(var(--green40))' },
   ]}
+  strokeWidth={0}
 />
 ```
 
-### Padding Between Slices
+### Angles
 
-Use `angularAxis` with `paddingAngle` to add gaps between slices.
-
-```jsx live
-<PieChart
-  height={200}
-  angularAxis={{ paddingAngle: 4 }}
-  series={[
-    { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
-    { id: 'b', data: 40, color: 'rgb(var(--purple40))' },
-    { id: 'c', data: 30, color: 'rgb(var(--orange40))' },
-  ]}
-/>
-```
-
-## Partial Charts
-
-### Semicircle
-
-Use `angularAxis` with `range` to create partial pie charts like semicircles.
+Use `angularAxis` with `range` to adjust the start and end angle of a chart.
 
 ```jsx live
 <PieChart
@@ -111,22 +73,6 @@ Use `angularAxis` with `range` to create partial pie charts like semicircles.
   ]}
   legend
   legendPosition="bottom"
-/>
-```
-
-### Quarter Pie
-
-```jsx live
-<PieChart
-  height={150}
-  width={150}
-  angularAxis={{ range: { min: 0, max: 90 } }}
-  cornerRadius={4}
-  series={[
-    { id: 'a', data: 40, color: 'rgb(var(--blue40))' },
-    { id: 'b', data: 35, color: 'rgb(var(--green40))' },
-    { id: 'c', data: 25, color: 'rgb(var(--purple40))' },
-  ]}
 />
 ```
 
@@ -159,30 +105,34 @@ function AnimatedPieChart() {
     [],
   );
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setDataSet((prev) => (prev + 1) % dataSets.length);
+    }, 500);
+
+    return () => clearInterval(intervalId);
+  }, [dataSets.length]);
+
   return (
-    <VStack alignItems="center" gap={4}>
-      <PieChart animate height={200} series={dataSets[dataSet]} />
-      <HStack gap={2}>
-        <IconButton
-          accessibilityLabel="Previous data set"
-          name="caretLeft"
-          onClick={() => setDataSet((prev) => (prev - 1 + dataSets.length) % dataSets.length)}
-          variant="secondary"
-        />
-        <Text font="label1">Data Set {dataSet + 1}</Text>
-        <IconButton
-          accessibilityLabel="Next data set"
-          name="caretRight"
-          onClick={() => setDataSet((prev) => (prev + 1) % dataSets.length)}
-          variant="secondary"
-        />
-      </HStack>
-    </VStack>
+    <HStack gap={4} justifyContent="center">
+      <VStack alignItems="center" gap={2}>
+        <Text font="label1">animate=true</Text>
+        <PieChart animate height={200} series={dataSets[dataSet]} />
+      </VStack>
+      <VStack alignItems="center" gap={2}>
+        <Text font="label1">animate=false</Text>
+        <PieChart animate={false} height={200} series={dataSets[dataSet]} />
+      </VStack>
+    </HStack>
   );
 }
 ```
 
-## Tooltip
+## Composed Examples
+
+### Category Distribution
+
+### Tooltip
 
 Use `enableHighlighting` with `ChartTooltip` to show values on hover. The `valueFormatter` prop customizes how values are displayed.
 
@@ -212,78 +162,14 @@ function PieWithTooltip() {
     <PieChart
       enableHighlighting
       height={200}
-      cornerRadius={4}
       series={series}
       legend
       legendPosition="right"
+      maxWidth={400}
+      style={{ margin: '0 auto' }}
     >
       <ChartTooltip label="Asset Allocation" valueFormatter={percentFormatter} />
     </PieChart>
-  );
-}
-```
-
-## Composed Examples
-
-### Category Distribution
-
-```jsx live
-function CategoryDistribution() {
-  const series = useMemo(
-    () => [
-      { id: 'tech', data: 35, label: 'Technology', color: 'rgb(var(--blue40))' },
-      { id: 'health', data: 25, label: 'Healthcare', color: 'rgb(var(--green40))' },
-      { id: 'finance', data: 20, label: 'Finance', color: 'rgb(var(--purple40))' },
-      { id: 'energy', data: 12, label: 'Energy', color: 'rgb(var(--orange40))' },
-      { id: 'other', data: 8, label: 'Other', color: 'rgb(var(--gray40))' },
-    ],
-    [],
-  );
-
-  return (
-    <PieChart
-      height={200}
-      cornerRadius={4}
-      stroke="var(--color-bg)"
-      strokeWidth={2}
-      series={series}
-      legend
-      legendPosition="right"
-    />
-  );
-}
-```
-
-### Gauge Chart
-
-A semicircle pie chart can be used as a gauge to show progress or status.
-
-```jsx live
-function GaugeChart() {
-  const value = 72;
-  const max = 100;
-
-  return (
-    <Box position="relative" width={200} height={120}>
-      <PieChart
-        height={120}
-        width={200}
-        angularAxis={{ range: { min: -90, max: 90 } }}
-        cornerRadius={100}
-        series={[
-          { id: 'value', data: value, color: 'rgb(var(--green40))' },
-          { id: 'remaining', data: max - value, color: 'rgb(var(--gray20))' },
-        ]}
-      />
-      <Box position="absolute" bottom={0} left={0} right={0} display="flex" justifyContent="center">
-        <VStack alignItems="center">
-          <Text font="title1">{value}%</Text>
-          <Text font="label2" color="fgMuted">
-            Goal Progress
-          </Text>
-        </VStack>
-      </Box>
-    </Box>
   );
 }
 ```
@@ -293,7 +179,7 @@ function GaugeChart() {
 For smaller spaces, you can create compact pie charts.
 
 ```jsx live
-<HStack gap={4}>
+<HStack gap={4} flexWrap="wrap">
   <HStack gap={2} alignItems="center">
     <PieChart
       height={40}
@@ -302,6 +188,7 @@ For smaller spaces, you can create compact pie charts.
         { id: 'a', data: 60, color: 'rgb(var(--blue40))' },
         { id: 'b', data: 40, color: 'rgb(var(--gray20))' },
       ]}
+      inset={0}
     />
     <VStack gap={0}>
       <Text font="label1">60%</Text>
@@ -319,6 +206,7 @@ For smaller spaces, you can create compact pie charts.
         { id: 'b', data: 33, color: 'rgb(var(--green40))' },
         { id: 'c', data: 34, color: 'rgb(var(--purple40))' },
       ]}
+      inset={0}
     />
     <VStack gap={0}>
       <Text font="label1">Equal</Text>
