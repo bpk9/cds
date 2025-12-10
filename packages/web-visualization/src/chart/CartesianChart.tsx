@@ -17,7 +17,7 @@ import {
   type ChartInset,
   type ChartScaleFunction,
   defaultAxisId,
-  defaultChartInset,
+  defaultCartesianChartInset,
   getAxisRange,
   getCartesianAxisConfig,
   getCartesianAxisDomain,
@@ -185,7 +185,10 @@ export const CartesianChart = memo(
       const { observe, width: chartWidth, height: chartHeight } = useDimensions();
       const chartRef = useRef<SVGSVGElement | null>(null);
 
-      const calculatedInset = useMemo(() => getChartInset(inset, defaultChartInset), [inset]);
+      const calculatedInset = useMemo(
+        () => getChartInset(inset, defaultCartesianChartInset),
+        [inset],
+      );
 
       // Axis configs store the properties of each axis, such as id, scale type, domain limit, etc.
       // We only support 1 x axis but allow for multiple y axes.

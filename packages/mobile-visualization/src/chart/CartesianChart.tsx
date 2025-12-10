@@ -20,7 +20,7 @@ import {
   type ChartInset,
   type ChartScaleFunction,
   defaultAxisId,
-  defaultChartInset,
+  defaultCartesianChartInset,
   getAxisRange,
   getCartesianAxisConfig,
   getCartesianAxisDomain,
@@ -174,7 +174,10 @@ export const CartesianChart = memo(
       const chartWidth = containerLayout.width;
       const chartHeight = containerLayout.height;
 
-      const calculatedInset = useMemo(() => getChartInset(inset, defaultChartInset), [inset]);
+      const calculatedInset = useMemo(
+        () => getChartInset(inset, defaultCartesianChartInset),
+        [inset],
+      );
 
       // there can only be one x axis but the helper function always returns an array
       const xAxisConfig = useMemo(
