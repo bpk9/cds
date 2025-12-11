@@ -754,10 +754,10 @@ function SegmentedProgressRing() {
   const angleEachSideGap = (45 / 4) * 3;
   const startAngleDegrees = angleEachSideGap - 180;
   const endAngleDegrees = 180 - angleEachSideGap;
-  const angleGapDegrees = 5;
-  const totalGapDegrees = angleGapDegrees * 2;
-  const gapBetweenDegrees = totalGapDegrees / 3;
-  const sectionLengthDegrees = (endAngleDegrees - startAngleDegrees) / 3 - gapBetweenDegrees;
+  const totalSweepDegrees = endAngleDegrees - startAngleDegrees;
+  const gapBetweenDegrees = 5;
+  // Subtract total gap space (2 gaps for 3 sections), then divide remaining space by 3
+  const sectionLengthDegrees = (totalSweepDegrees - gapBetweenDegrees * 2) / 3;
 
   const firstSectionEnd = startAngleDegrees + sectionLengthDegrees;
   const secondSectionStart = firstSectionEnd + gapBetweenDegrees;
