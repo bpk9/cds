@@ -6,6 +6,7 @@ The only prop required is `series`, which takes an array of series objects. Each
 
 ```jsx live
 <PieChart
+  accessibilityLabel="Pie chart. Category A: 30; Category B: 20; Category C: 15; Category D: 10; Category E: 15; Category F: 10"
   height={200}
   series={[
     { id: 'a', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
@@ -26,8 +27,9 @@ You can use `cornerRadius` to round the corners of each slice.
 
 ```jsx live
 <PieChart
-  height={200}
+  accessibilityLabel="Pie chart. Category A: 30; Category B: 20; Category C: 15; Category D: 10; Category E: 15; Category F: 10"
   cornerRadius={8}
+  height={200}
   series={[
     { id: 'a', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
     { id: 'b', data: 20, label: 'Category B', color: 'rgb(var(--purple40))' },
@@ -45,6 +47,7 @@ By default, slices have a stroke. You can remove this by setting `strokeWidth` t
 
 ```jsx live
 <PieChart
+  accessibilityLabel="Pie chart. Category A: 30; Category B: 20; Category C: 15; Category D: 10; Category E: 15; Category F: 10"
   height={200}
   series={[
     { id: 'a', data: 30, label: 'Category A', color: 'rgb(var(--blue40))' },
@@ -64,15 +67,16 @@ Use `angularAxis` with `range` to adjust the start and end angle of a chart.
 
 ```jsx live
 <PieChart
-  height={120}
+  accessibilityLabel="Semicircle pie chart. Low: 25; Medium: 50; High: 25"
   angularAxis={{ range: { min: -90, max: 90 } }}
+  height={120}
+  legend
+  legendPosition="bottom"
   series={[
     { id: 'low', data: 25, label: 'Low', color: 'rgb(var(--green40))' },
     { id: 'medium', data: 50, label: 'Medium', color: 'rgb(var(--yellow40))' },
     { id: 'high', data: 25, label: 'High', color: 'rgb(var(--red40))' },
   ]}
-  legend
-  legendPosition="bottom"
 />
 ```
 
@@ -113,15 +117,30 @@ function AnimatedPieChart() {
     return () => clearInterval(intervalId);
   }, [dataSets.length]);
 
+  const accessibilityLabel = useMemo(() => {
+    const current = dataSets[dataSet];
+    return `Pie chart. A: ${current[0].data}; B: ${current[1].data}; C: ${current[2].data}`;
+  }, [dataSets, dataSet]);
+
   return (
     <HStack gap={4} justifyContent="center">
       <VStack alignItems="center" gap={2}>
         <Text font="label1">animate=true</Text>
-        <PieChart animate height={200} series={dataSets[dataSet]} />
+        <PieChart
+          accessibilityLabel={accessibilityLabel}
+          animate
+          height={200}
+          series={dataSets[dataSet]}
+        />
       </VStack>
       <VStack alignItems="center" gap={2}>
         <Text font="label1">animate=false</Text>
-        <PieChart animate={false} height={200} series={dataSets[dataSet]} />
+        <PieChart
+          accessibilityLabel={accessibilityLabel}
+          animate={false}
+          height={200}
+          series={dataSets[dataSet]}
+        />
       </VStack>
     </HStack>
   );
@@ -160,12 +179,13 @@ function PieWithTooltip() {
 
   return (
     <PieChart
+      accessibilityLabel="Asset allocation pie chart. Stocks: 45%; Bonds: 25%; Crypto: 20%; Cash: 10%. Hover over slices for details."
       enableHighlighting
       height={200}
-      series={series}
       legend
       legendPosition="right"
       maxWidth={400}
+      series={series}
       style={{ margin: '0 auto' }}
     >
       <ChartTooltip label="Asset Allocation" valueFormatter={percentFormatter} />
@@ -179,38 +199,40 @@ function PieWithTooltip() {
 For smaller spaces, you can create compact pie charts.
 
 ```jsx live
-<HStack gap={4} flexWrap="wrap">
-  <HStack gap={2} alignItems="center">
+<HStack flexWrap="wrap" gap={4}>
+  <HStack alignItems="center" gap={2}>
     <PieChart
+      accessibilityLabel="Allocation: 60% filled, 40% remaining"
       height={40}
-      width={40}
+      inset={0}
       series={[
         { id: 'a', data: 60, color: 'rgb(var(--blue40))' },
         { id: 'b', data: 40, color: 'rgb(var(--gray20))' },
       ]}
-      inset={0}
+      width={40}
     />
     <VStack gap={0}>
       <Text font="label1">60%</Text>
-      <Text font="label2" color="fgMuted">
+      <Text color="fgMuted" font="label2">
         Allocation
       </Text>
     </VStack>
   </HStack>
-  <HStack gap={2} alignItems="center">
+  <HStack alignItems="center" gap={2}>
     <PieChart
+      accessibilityLabel="Equal split: 33%, 33%, 34%"
       height={40}
-      width={40}
+      inset={0}
       series={[
         { id: 'a', data: 33, color: 'rgb(var(--blue40))' },
         { id: 'b', data: 33, color: 'rgb(var(--green40))' },
         { id: 'c', data: 34, color: 'rgb(var(--purple40))' },
       ]}
-      inset={0}
+      width={40}
     />
     <VStack gap={0}>
       <Text font="label1">Equal</Text>
-      <Text font="label2" color="fgMuted">
+      <Text color="fgMuted" font="label2">
         Split
       </Text>
     </VStack>

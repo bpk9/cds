@@ -8,30 +8,32 @@ PolarChart is a customizable, SVG based component that can be used to display a 
 <HStack gap={4} justifyContent="center">
   <VStack alignItems="center" gap={2}>
     <PieChart
+      accessibilityLabel="Pie chart. A: 30; B: 40; C: 30"
       height={150}
-      width={150}
       series={[
         { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
         { id: 'b', data: 40, color: 'rgb(var(--green40))' },
         { id: 'c', data: 30, color: 'rgb(var(--purple40))' },
       ]}
+      width={150}
     />
-    <Text font="label2" color="fgMuted">
+    <Text color="fgMuted" font="label2">
       PieChart
     </Text>
   </VStack>
   <VStack alignItems="center" gap={2}>
     <DonutChart
+      accessibilityLabel="Donut chart. A: 30; B: 40; C: 30"
       height={150}
-      width={150}
       innerRadiusRatio={0.6}
       series={[
         { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
         { id: 'b', data: 40, color: 'rgb(var(--green40))' },
         { id: 'c', data: 30, color: 'rgb(var(--purple40))' },
       ]}
+      width={150}
     />
-    <Text font="label2" color="fgMuted">
+    <Text color="fgMuted" font="label2">
       DonutChart
     </Text>
   </VStack>
@@ -44,6 +46,7 @@ Series are the data that will be displayed on the chart. Each series must have a
 
 ```jsx live
 <PolarChart
+  accessibilityLabel="Polar chart. Bitcoin: 40; Ethereum: 30; Solana: 20; Other: 10"
   height={200}
   series={[
     { id: 'btc', data: 40, label: 'Bitcoin', color: 'rgb(var(--orange40))' },
@@ -68,33 +71,35 @@ Use `angularAxis` with `range` to create partial charts.
 <HStack gap={4} justifyContent="center">
   <VStack alignItems="center" gap={2}>
     <PolarChart
-      height={120}
-      width={200}
+      accessibilityLabel="Top semicircle. A: 35; B: 65"
       angularAxis={{ range: { min: -90, max: 90 } }}
+      height={120}
       series={[
         { id: 'a', data: 35, color: 'rgb(var(--green40))' },
         { id: 'b', data: 65, color: 'rgb(var(--gray20))' },
       ]}
+      width={200}
     >
       <PiePlot cornerRadius={2} />
     </PolarChart>
-    <Text font="label2" color="fgMuted">
+    <Text color="fgMuted" font="label2">
       Semicircle (top)
     </Text>
   </VStack>
   <VStack alignItems="center" gap={2}>
     <PolarChart
-      height={120}
-      width={200}
+      accessibilityLabel="Bottom semicircle. A: 35; B: 65"
       angularAxis={{ range: { min: 90, max: 270 } }}
+      height={120}
       series={[
         { id: 'a', data: 35, color: 'rgb(var(--green40))' },
         { id: 'b', data: 65, color: 'rgb(var(--gray20))' },
       ]}
+      width={200}
     >
       <PiePlot cornerRadius={2} />
     </PolarChart>
-    <Text font="label2" color="fgMuted">
+    <Text color="fgMuted" font="label2">
       Semicircle (bottom)
     </Text>
   </VStack>
@@ -107,11 +112,12 @@ Use `paddingAngle` to add gaps between slices.
 
 ```jsx live
 <PolarChart
+  accessibilityLabel="Polar chart with padding. A: 30; B: 40; C: 30"
+  angularAxis={{ paddingAngle: 5 }}
   height={200}
   radialAxis={{
     range: ({ max }) => ({ min: max - 16, max }),
   }}
-  angularAxis={{ paddingAngle: 5 }}
   series={[
     { id: 'a', data: 30, color: 'rgb(var(--blue40))' },
     { id: 'b', data: 40, color: 'rgb(var(--green40))' },
@@ -128,11 +134,12 @@ You can define multiple angular axes for different sections of the chart.
 
 ```jsx live
 <PolarChart
-  height={200}
+  accessibilityLabel="Dual-axis polar chart. Top: Revenue 30, Profit 50, Costs 20. Bottom: Users 40, Sessions 35, Conversions 25"
   angularAxis={[
     { id: 'top', range: { min: -45, max: 45 } },
     { id: 'bottom', range: { min: 135, max: 225 } },
   ]}
+  height={200}
   radialAxis={{
     range: ({ max }) => ({ min: max - 16, max }),
   }}
@@ -160,6 +167,7 @@ Use `radialAxis` with `range` to create a donut chart with a hollow center.
 
 ```jsx live
 <PolarChart
+  accessibilityLabel="Donut-style polar chart. A: 30; B: 40; C: 30"
   height={200}
   radialAxis={{ range: ({ max }) => ({ min: max * 0.6, max }) }}
   series={[
@@ -178,6 +186,7 @@ Use multiple radial axes to create nested rings.
 
 ```jsx live
 <PolarChart
+  accessibilityLabel="Nested rings chart. Inner: A 30, B 20, C 15, D 10, E 15, F 10. Outer ring shows subcategories for each inner category"
   height={250}
   radialAxis={[
     { id: 'inner', range: ({ max }) => ({ min: 0, max: max * 0.8 }) },
@@ -331,13 +340,16 @@ function DonutWithCenterLabel() {
     );
   };
 
+  const accessibilityLabel = `Donut chart showing total $${(total * 100).toLocaleString()}. Category A: 30; Category B: 20; Category C: 15; Category D: 10; Category E: 15; Category F: 10`;
+
   return (
     <DonutChart
+      accessibilityLabel={accessibilityLabel}
       height={200}
       innerRadiusRatio={0.65}
+      series={series}
       stroke="var(--color-bg)"
       strokeWidth={2}
-      series={series}
     >
       <Label />
     </DonutChart>
@@ -428,14 +440,15 @@ function InteractiveNestedChart() {
 
   return (
     <PolarChart
+      accessibilityLabel="Interactive nested chart. Inner: A 30, B 20, C 15, D 10, E 15, F 10. Hover to highlight related segments"
       enableHighlighting
       height={250}
+      legend={<Legend seriesIds={['a', 'b', 'c', 'd', 'e', 'f']} />}
+      legendPosition="bottom"
       radialAxis={[
         { id: 'inner', range: ({ max }) => ({ min: 0, max: max * 0.8 }) },
         { id: 'outer', range: ({ max }) => ({ min: max * 0.85, max }) },
       ]}
-      legend={<Legend seriesIds={['a', 'b', 'c', 'd', 'e', 'f']} />}
-      legendPosition="bottom"
       series={[
         {
           id: 'a',
@@ -696,6 +709,7 @@ function SegmentedProgressRing() {
 
   return (
     <PolarChart
+      accessibilityLabel="Segmented progress ring showing progress through 3 sections"
       animate
       angularAxis={{ range: { min: startAngleDegrees, max: progressAngle } }}
       height={200}
