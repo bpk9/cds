@@ -1,5 +1,5 @@
 /* stylelint-disable color-named */
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMultiSelect } from '@coinbase/cds-common/select/useMultiSelect';
 import { css } from '@linaria/core';
 
@@ -8,6 +8,7 @@ import { UpsellCard } from '../../../cards/UpsellCard';
 import { TextInput } from '../../../controls';
 import { cx } from '../../../cx';
 import { Icon } from '../../../icons/Icon';
+import { Box } from '../../../layout/Box';
 import { HStack } from '../../../layout/HStack';
 import { VStack } from '../../../layout/VStack';
 import { Spinner } from '../../../loaders';
@@ -1654,6 +1655,120 @@ export const RefImperativeHandle = () => {
         placeholder="Empty value"
         value={value}
       />
+    </VStack>
+  );
+};
+
+export const LayoutShift = () => {
+  const exampleOptions = [
+    { value: null, label: 'Remove selection' },
+    { value: '1', label: 'Option 1' },
+    { value: '2', label: 'Option 2' },
+    { value: '3', label: 'Option 3' },
+    { value: '4', label: 'Option 4' },
+    { value: '5', label: 'Option 5' },
+  ];
+  const [value, setValue] = useState<string | null>(null);
+  const [showContentAbove, setShowContentAbove] = useState(false);
+  const [showContentBelow, setShowContentBelow] = useState(false);
+  const [pendingAbove, setPendingAbove] = useState(false);
+  const [pendingBelow, setPendingBelow] = useState(false);
+
+  const handleToggleAbove = useCallback(() => {
+    if (showContentAbove) {
+      setShowContentAbove(false);
+      setPendingAbove(false);
+    } else {
+      setPendingAbove(true);
+      setTimeout(() => {
+        setShowContentAbove(true);
+        setPendingAbove(false);
+      }, 1500);
+    }
+  }, [showContentAbove]);
+
+  const handleToggleBelow = useCallback(() => {
+    if (showContentBelow) {
+      setShowContentBelow(false);
+      setPendingBelow(false);
+    } else {
+      setPendingBelow(true);
+      setTimeout(() => {
+        setShowContentBelow(true);
+        setPendingBelow(false);
+      }, 1500);
+    }
+  }, [showContentBelow]);
+
+  useEffect(() => {
+    return () => {
+      // Cleanup timeouts on unmount
+      if (pendingAbove || pendingBelow) {
+        setPendingAbove(false);
+        setPendingBelow(false);
+      }
+    };
+  }, [pendingAbove, pendingBelow]);
+
+  return (
+    <VStack gap={4}>
+      <VStack gap={2}>
+        <Text font="body">Toggle content to simulate layout shifts (1.5s delay):</Text>
+        <HStack gap={2}>
+          <Button compact disabled={pendingAbove} onClick={handleToggleAbove}>
+            {pendingAbove ? 'Showing...' : showContentAbove ? 'Hide' : 'Show'} Content Above
+          </Button>
+          <Button compact disabled={pendingBelow} onClick={handleToggleBelow}>
+            {pendingBelow ? 'Showing...' : showContentBelow ? 'Hide' : 'Show'} Content Below
+          </Button>
+        </HStack>
+        {(pendingAbove || pendingBelow) && <Text>Layout shift will occur in 1.5 seconds...</Text>}
+      </VStack>
+
+      {showContentAbove && (
+        <Box
+          background="bgAlternate"
+          borderRadius={200}
+          padding={4}
+          style={{ minHeight: '200px', transition: 'all 0.3s ease' }}
+        >
+          <VStack gap={2}>
+            <Text font="title1">Content Above Select</Text>
+            <Text font="body">This content can be toggled to cause layout shifts.</Text>
+            <Text font="body">
+              Open the dropdown and toggle this content to test repositioning.
+            </Text>
+          </VStack>
+        </Box>
+      )}
+
+      <VStack gap={2}>
+        <Text font="body">Select (open dropdown and toggle content above/below):</Text>
+        <Select
+          label="Single select"
+          onChange={setValue}
+          options={exampleOptions}
+          placeholder="Choose an option"
+          value={value}
+        />
+      </VStack>
+
+      {showContentBelow && (
+        <Box
+          background="bgAlternate"
+          borderRadius={200}
+          padding={4}
+          style={{ minHeight: '200px', transition: 'all 0.3s ease' }}
+        >
+          <VStack gap={2}>
+            <Text font="title1">Content Below Select</Text>
+            <Text font="body">This content can be toggled to cause layout shifts.</Text>
+            <Text font="body">
+              Open the dropdown and toggle this content to test repositioning.
+            </Text>
+          </VStack>
+        </Box>
+      )}
     </VStack>
   );
 };
