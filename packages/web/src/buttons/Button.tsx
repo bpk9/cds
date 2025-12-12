@@ -188,7 +188,7 @@ export const Button: ButtonComponent = memo(
     <AsComponent extends React.ElementType>(
       {
         as,
-        variant = 'primary',
+        variant = 'secondary',
         loading,
         transparent,
         block,
