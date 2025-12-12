@@ -12,6 +12,9 @@ module.exports = {
       'Components/Modal',
     ],
     include: [
+      // TEMP: Only test Button and Text for faster iteration
+      'Core Components/Button:*',
+      'Core Components/Text:*',
       // 'Core Components/SparklineInteractive:*',
       // 'Core Components/ProgressBar:*',
       // 'Core Components/Navigation/Sidebar:*',
