@@ -39,6 +39,12 @@ export const routes = [
       require('@coinbase/cds-mobile/overlays/__stories__/AlertVerticalActions.stories').default,
   },
   {
+    key: 'AlphaContentCard',
+    getComponent: () =>
+      require('@coinbase/cds-mobile/alpha/content-card/__stories__/AlphaContentCard.stories')
+        .default,
+  },
+  {
     key: 'AlphaSelect',
     getComponent: () =>
       require('@coinbase/cds-mobile/alpha/select/__stories__/AlphaSelect.stories').default,
