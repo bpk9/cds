@@ -61,6 +61,7 @@ jobs:
           chrome-version: stable
           install-chromedriver: true
       - name: Visreg Web
+        id: visreg-web
         # Run on `master` or when `visreg` label is present, or when an project that affects storybook is changed
         if: ${{ github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'visreg') || steps.visreg-should-run.outputs.SHOULD_RUN_VISREG == 'true' }}
         run: yarn nx run storybook:percy
@@ -69,3 +70,14 @@ jobs:
           STORYBOOK_SKIP_ANIMATION: true
           PERCY_BRANCH: ${{ env.PERCY_BRANCH }}
           CI: true
+      - name: Wait for Percy Build
+        # Wait for Percy to finish processing and fail if there are unapproved changes
+        if: ${{ steps.visreg-web.outcome == 'success' }}
+        run: |
+          npx percy build:wait \
+            --project ${{ vars.PERCY_PROJECT }} \
+            --commit ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }} \
+            --fail-on-changes \
+            --pass-if-approved
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
