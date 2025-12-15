@@ -1,14 +1,27 @@
-import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
-import { type LayoutChangeEvent, type StyleProp, type View, type ViewStyle } from 'react-native';
+import React, { forwardRef, memo, useCallback, useMemo, useRef, useState } from 'react';
+import {
+  type LayoutChangeEvent,
+  Platform,
+  type StyleProp,
+  type View,
+  type ViewStyle,
+} from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { Rect } from '@coinbase/cds-common/types';
 import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
 import type { BoxBaseProps, BoxProps } from '@coinbase/cds-mobile/layout';
 import { Box } from '@coinbase/cds-mobile/layout';
+import { Haptics } from '@coinbase/cds-mobile/utils/haptics';
 import { Canvas, Skia, type SkTypefaceFontProvider } from '@shopify/react-native-skia';
 
 import { Legend } from './legend/Legend';
 import { ScrubberProvider, type ScrubberProviderProps } from './scrubber/ScrubberProvider';
-import { convertToSerializableScale, type SerializableScale } from './utils/scale';
+import { getPointOnSerializableScale } from './utils/point';
+import {
+  convertToSerializableScale,
+  invertSerializableScale,
+  type SerializableScale,
+} from './utils/scale';
 import { useChartContextBridge } from './ChartContextBridge';
 import { CartesianChartProvider } from './ChartProvider';
 import { HighlightProvider, type HighlightProviderBaseProps } from './HighlightProvider';
@@ -27,6 +40,7 @@ import {
   getCartesianAxisScale,
   getCartesianStackedSeriesData as calculateStackedSeriesData,
   getChartInset,
+  type HighlightedItemData,
   useTotalAxisPadding,
 } from './utils';
 
@@ -48,11 +62,8 @@ const ChartCanvas = memo(({ children, style, onLayout }: ChartCanvasProps) => {
 
 export type LegendPosition = 'top' | 'bottom' | 'left' | 'right';
 
-export type CartesianChartBaseProps = Omit<BoxBaseProps, 'fontFamily'> &
-  Pick<
-    HighlightProviderBaseProps,
-    'enableHighlighting' | 'allowOverflowGestures' | 'onHighlightChange'
-  > & {
+export type CartesianChartBaseProps = Omit<BoxBaseProps, 'fontFamily' | 'accessibilityLabel'> &
+  Pick<HighlightProviderBaseProps, 'enableHighlighting' | 'onHighlightChange'> & {
     /**
      * Configuration objects that define how to visualize the data.
      * Each series contains its own data array.
@@ -98,10 +109,25 @@ export type CartesianChartBaseProps = Omit<BoxBaseProps, 'fontFamily'> &
      * @default 'bottom'
      */
     legendPosition?: LegendPosition;
+    /**
+     * Allows continuous gestures on the chart to continue outside the bounds of the chart element.
+     */
+    allowOverflowGestures?: boolean;
+    /**
+     * Accessibility label for the chart. Can be a static string or a function that receives
+     * the currently highlighted item data to generate dynamic labels.
+     * @example
+     * // Static label
+     * accessibilityLabel="Sales chart showing monthly revenue"
+     *
+     * // Dynamic label based on highlighted data
+     * accessibilityLabel={(item) => item ? `Month ${item.dataIndex + 1} selected` : "Sales chart"}
+     */
+    accessibilityLabel?: string | ((highlightedItem: HighlightedItemData | undefined) => string);
   };
 
 export type CartesianChartProps = CartesianChartBaseProps &
-  Omit<BoxProps, 'fontFamily'> & {
+  Omit<BoxProps, 'fontFamily' | 'accessibilityLabel'> & {
     /**
      * Default font families to use within ChartText.
      * If not provided, will be the default for the system.
@@ -161,6 +187,7 @@ export const CartesianChart = memo(
         allowOverflowGestures,
         fontFamilies,
         fontProvider: fontProviderProp,
+        accessibilityLabel: accessibilityLabelProp,
         // React Native will collapse views by default when only used
         // to group children, which interferes with gesture-handler
         // https://docs.swmansion.com/react-native-gesture-handler/docs/gestures/gesture-detector/#:~:text=%7B%0A%20%20return%20%3C-,View,-collapsable%3D%7B
@@ -170,6 +197,7 @@ export const CartesianChart = memo(
       ref,
     ) => {
       const [containerLayout, onContainerLayout] = useLayout();
+      const [highlightedItem, setHighlightedItem] = useState<HighlightedItemData | undefined>();
 
       const chartWidth = containerLayout.width;
       const chartHeight = containerLayout.height;
@@ -500,12 +528,137 @@ export const CartesianChart = memo(
         ].filter(Boolean);
       }, [isVerticalLegend, style, styles?.root]);
 
-      return (
+      // Track highlighted item for accessibility label
+      const handleHighlightChange = useCallback(
+        (item: HighlightedItemData | undefined) => {
+          setHighlightedItem(item);
+          onHighlightChange?.(item);
+        },
+        [onHighlightChange],
+      );
+
+      // Compute accessibility label
+      const accessibilityLabel = useMemo((): string | undefined => {
+        if (accessibilityLabelProp === undefined) return undefined;
+        if (typeof accessibilityLabelProp === 'string') return accessibilityLabelProp;
+        return accessibilityLabelProp(highlightedItem);
+      }, [accessibilityLabelProp, highlightedItem]);
+
+      // Gesture handling for highlighting (long press + pan)
+      const getDataIndexFromX = useCallback(
+        (touchX: number): number => {
+          'worklet';
+
+          if (!xSerializableScale || !xAxis) return 0;
+
+          if (xSerializableScale.type === 'band') {
+            const [domainMin, domainMax] = xSerializableScale.domain;
+            const categoryCount = domainMax - domainMin + 1;
+            let closestIndex = 0;
+            let closestDistance = Infinity;
+
+            for (let i = 0; i < categoryCount; i++) {
+              const xPos = getPointOnSerializableScale(i, xSerializableScale);
+              if (xPos !== undefined) {
+                const distance = Math.abs(touchX - xPos);
+                if (distance < closestDistance) {
+                  closestDistance = distance;
+                  closestIndex = i;
+                }
+              }
+            }
+            return closestIndex;
+          } else {
+            // For numeric scales with axis data, find the nearest data point
+            const axisData = xAxis.data;
+            if (axisData && Array.isArray(axisData) && typeof axisData[0] === 'number') {
+              const numericData = axisData as number[];
+              let closestIndex = 0;
+              let closestDistance = Infinity;
+
+              for (let i = 0; i < numericData.length; i++) {
+                const xValue = numericData[i];
+                const xPos = getPointOnSerializableScale(xValue, xSerializableScale);
+                if (xPos !== undefined) {
+                  const distance = Math.abs(touchX - xPos);
+                  if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestIndex = i;
+                  }
+                }
+              }
+              return closestIndex;
+            } else {
+              const xValue = invertSerializableScale(touchX, xSerializableScale);
+              const dataIndex = Math.round(xValue);
+              const domain = xAxis.domain;
+              return Math.max(domain.min ?? 0, Math.min(dataIndex, domain.max ?? 0));
+            }
+          }
+        },
+        [xAxis, xSerializableScale],
+      );
+
+      const handleStartEndHaptics = useCallback(() => {
+        void Haptics.lightImpact();
+      }, []);
+
+      // Shared ref for tracking highlighted item in gesture handler
+      const highlightedItemRef = useRef<HighlightedItemData | undefined>(undefined);
+
+      const longPressGesture = useMemo(
+        () =>
+          Gesture.Pan()
+            .activateAfterLongPress(110)
+            .shouldCancelWhenOutside(!allowOverflowGestures)
+            .onStart(function onStart(event) {
+              handleStartEndHaptics();
+
+              // Android does not trigger onUpdate when the gesture starts
+              if (Platform.OS === 'android') {
+                const dataIndex = getDataIndexFromX(event.x);
+                const current = highlightedItemRef.current;
+                if (current?.dataIndex !== dataIndex) {
+                  highlightedItemRef.current = { ...current, dataIndex };
+                  handleHighlightChange({ ...current, dataIndex });
+                }
+              }
+            })
+            .onUpdate(function onUpdate(event) {
+              const dataIndex = getDataIndexFromX(event.x);
+              const current = highlightedItemRef.current;
+              if (current?.dataIndex !== dataIndex) {
+                highlightedItemRef.current = { ...current, dataIndex };
+                handleHighlightChange({ ...current, dataIndex });
+              }
+            })
+            .onEnd(function onEnd() {
+              if (enableHighlighting) {
+                handleStartEndHaptics();
+                highlightedItemRef.current = undefined;
+                handleHighlightChange(undefined);
+              }
+            })
+            .onTouchesCancelled(function onTouchesCancelled() {
+              if (enableHighlighting) {
+                highlightedItemRef.current = undefined;
+                handleHighlightChange(undefined);
+              }
+            }),
+        [
+          allowOverflowGestures,
+          handleStartEndHaptics,
+          getDataIndexFromX,
+          enableHighlighting,
+          handleHighlightChange,
+        ],
+      );
+
+      const chartContent = (
         <CartesianChartProvider value={contextValue}>
           <HighlightProvider
-            allowOverflowGestures={allowOverflowGestures}
             enableHighlighting={enableHighlighting}
-            onHighlightChange={onHighlightChange}
+            onHighlightChange={handleHighlightChange}
           >
             <ScrubberProvider
               allowOverflowGestures={allowOverflowGestures}
@@ -523,6 +676,7 @@ export const CartesianChart = memo(
                     }
                   }
                 }}
+                accessibilityLabel={accessibilityLabel}
                 accessibilityLiveRegion="polite"
                 accessibilityRole="image"
                 collapsable={collapsable}
@@ -541,6 +695,13 @@ export const CartesianChart = memo(
           </HighlightProvider>
         </CartesianChartProvider>
       );
+
+      // Wrap with gesture handler only if highlighting is enabled
+      if (enableHighlighting) {
+        return <GestureDetector gesture={longPressGesture}>{chartContent}</GestureDetector>;
+      }
+
+      return chartContent;
     },
   ),
 );

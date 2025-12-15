@@ -1,4 +1,4 @@
-import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
+import React, { forwardRef, memo, useCallback, useMemo, useRef, useState } from 'react';
 import { type LayoutChangeEvent, type StyleProp, type View, type ViewStyle } from 'react-native';
 import type { Rect } from '@coinbase/cds-common/types';
 import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
@@ -25,6 +25,7 @@ import {
   getPolarAxisRange,
   getPolarAxisScale,
   getRadialAxisConfig,
+  type HighlightedItemData,
   type PolarChartContextValue,
   type PolarSeries,
   type RadialAxisConfig,
@@ -47,7 +48,7 @@ const ChartCanvas = memo(({ children, style, onLayout }: ChartCanvasProps) => {
   );
 });
 
-export type PolarChartBaseProps = Omit<BoxBaseProps, 'fontFamily'> &
+export type PolarChartBaseProps = Omit<BoxBaseProps, 'fontFamily' | 'accessibilityLabel'> &
   Pick<HighlightProviderBaseProps, 'enableHighlighting' | 'onHighlightChange'> & {
     /**
      * Configuration object that defines the data to visualize.
@@ -134,10 +135,21 @@ export type PolarChartBaseProps = Omit<BoxBaseProps, 'fontFamily'> &
      * @default 'bottom'
      */
     legendPosition?: LegendPosition;
+    /**
+     * Accessibility label for the chart. Can be a static string or a function that receives
+     * the currently highlighted item data to generate dynamic labels.
+     * @example
+     * // Static label
+     * accessibilityLabel="Pie chart showing market share"
+     *
+     * // Dynamic label based on highlighted data
+     * accessibilityLabel={(item) => item ? `${item.seriesId} selected` : "Pie chart"}
+     */
+    accessibilityLabel?: string | ((highlightedItem: HighlightedItemData | undefined) => string);
   };
 
 export type PolarChartProps = PolarChartBaseProps &
-  Omit<BoxProps, 'fontFamily'> & {
+  Omit<BoxProps, 'fontFamily' | 'accessibilityLabel'> & {
     /**
      * Default font families to use within ChartText.
      * If not provided, will be the default for the system.
@@ -177,6 +189,10 @@ export type PolarChartProps = PolarChartBaseProps &
 /**
  * Base component for polar coordinate charts (pie, donut).
  * Provides context and layout for polar chart child components.
+ *
+ * Note: For highlighting, individual slice components should handle interactions
+ * via onSlicePress callbacks. The HighlightProvider is primarily used for
+ * screen reader accessibility support.
  */
 export const PolarChart = memo(
   forwardRef<View, PolarChartProps>(
@@ -198,6 +214,7 @@ export const PolarChart = memo(
         styles,
         fontFamilies,
         fontProvider: fontProviderProp,
+        accessibilityLabel: accessibilityLabelProp,
         // React Native will collapse views by default when only used
         // to group children, which interferes with gesture-handler
         // https://docs.swmansion.com/react-native-gesture-handler/docs/gestures/gesture-detector/#:~:text=%7B%0A%20%20return%20%3C-,View,-collapsable%3D%7B
@@ -207,6 +224,7 @@ export const PolarChart = memo(
       ref,
     ) => {
       const [containerLayout, onContainerLayout] = useLayout();
+      const [highlightedItem, setHighlightedItem] = useState<HighlightedItemData | undefined>();
 
       const chartWidth = containerLayout.width;
       const chartHeight = containerLayout.height;
@@ -465,11 +483,27 @@ export const PolarChart = memo(
         ].filter(Boolean);
       }, [isVerticalLegend, style, styles?.root]);
 
+      // Track highlighted item for accessibility label
+      const handleHighlightChange = useCallback(
+        (item: HighlightedItemData | undefined) => {
+          setHighlightedItem(item);
+          onHighlightChange?.(item);
+        },
+        [onHighlightChange],
+      );
+
+      // Compute accessibility label
+      const accessibilityLabel = useMemo((): string | undefined => {
+        if (accessibilityLabelProp === undefined) return undefined;
+        if (typeof accessibilityLabelProp === 'string') return accessibilityLabelProp;
+        return accessibilityLabelProp(highlightedItem);
+      }, [accessibilityLabelProp, highlightedItem]);
+
       return (
         <PolarChartProvider value={contextValue}>
           <HighlightProvider
             enableHighlighting={enableHighlighting}
-            onHighlightChange={onHighlightChange}
+            onHighlightChange={handleHighlightChange}
           >
             <Box
               ref={(node) => {
@@ -482,6 +516,7 @@ export const PolarChart = memo(
                   }
                 }
               }}
+              accessibilityLabel={accessibilityLabel}
               accessibilityLiveRegion="polite"
               accessibilityRole="image"
               collapsable={collapsable}

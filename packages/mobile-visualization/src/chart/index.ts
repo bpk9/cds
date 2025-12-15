@@ -3,6 +3,7 @@ export * from './area/index';
 export * from './axis/index';
 export * from './bar/index';
 export * from './CartesianChart';
+export * from './ChartAccessibilityView';
 export * from './ChartContextBridge';
 export * from './ChartProvider';
 export * from './DonutChart';
