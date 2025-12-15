@@ -12,6 +12,10 @@ export type ThemeConfig = {
   lightColor?: { [key in ThemeVars.Color]: Property.Color };
   /** The dark color palette. */
   darkColor?: { [key in ThemeVars.Color]: Property.Color };
+  /** The light illustration color palette. */
+  lightIllustration?: { [key in ThemeVars.IllustrationColor]: Property.Color };
+  /** The dark illustration color palette. */
+  darkIllustration?: { [key in ThemeVars.IllustrationColor]: Property.Color };
   /** The space values, used for margin and padding. */
   space: { [key in ThemeVars.Space]: number };
   /** The icon size values. */
@@ -55,6 +59,8 @@ export const styleVarPrefixes = {
   darkSpectrum: 'dark',
   lightColor: 'lightColor',
   darkColor: 'darkColor',
+  lightIllustration: 'lightIllustration',
+  darkIllustration: 'darkIllustration',
   spectrum: '',
   color: 'color',
   space: 'space',

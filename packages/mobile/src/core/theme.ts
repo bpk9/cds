@@ -19,6 +19,10 @@ export type ThemeConfig = {
   lightColor?: { [key in ThemeVars.Color]: string };
   /** The dark color palette. */
   darkColor?: { [key in ThemeVars.Color]: string };
+  /** The light illustration color palette. */
+  lightIllustration?: { [key in ThemeVars.IllustrationColor]: string };
+  /** The dark illustration color palette. */
+  darkIllustration?: { [key in ThemeVars.IllustrationColor]: string };
   /** The space values, used for margin and padding. */
   space: { [key in ThemeVars.Space]: number };
   /** The icon size values. */
