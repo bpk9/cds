@@ -715,7 +715,6 @@ const TemperatureRing = () => {
       inset={0}
       radialAxis={{ range: ({ max }) => ({ min: innerRadiusRatio * max, max }) }}
       series={[]}
-      width={200}
     >
       <BackgroundArc />
       <CurrentTempIndicator />
@@ -856,7 +855,6 @@ const SegmentedProgressRing = () => {
       inset={0}
       radialAxis={{ range: ({ max }) => ({ min: innerRadiusRatio * max, max }) }}
       series={[{ id: 'progress', data: 100, color: 'var(--color-fg)' }]}
-      width={200}
     >
       <BackgroundArcs />
       <ClippedProgress />

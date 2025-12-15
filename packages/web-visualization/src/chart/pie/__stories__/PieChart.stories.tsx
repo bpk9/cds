@@ -160,7 +160,7 @@ const WithTooltip = () => {
 
 const CompactPie = () => {
   return (
-    <HStack flexWrap="wrap" gap={4}>
+    <HStack flexWrap="wrap" gap={4} justifyContent="center">
       <HStack alignItems="center" gap={2}>
         <PieChart
           height={40}

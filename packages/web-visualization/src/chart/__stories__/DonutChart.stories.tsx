@@ -404,7 +404,7 @@ const Gauge = () => {
 
 const CompactDonut = () => {
   return (
-    <HStack flexWrap="wrap" gap={4}>
+    <HStack flexWrap="wrap" gap={4} justifyContent="center">
       <HStack alignItems="center" gap={2}>
         <DonutChart
           height={40}
