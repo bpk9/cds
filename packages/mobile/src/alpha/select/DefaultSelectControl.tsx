@@ -60,7 +60,6 @@ export const DefaultSelectControlComponent = memo(
         compact,
         maxSelectedOptionsToShow = 3,
         accessibilityLabel,
-        accessibilityHint,
         hiddenSelectedOptionsLabel = 'more',
         removeSelectedOptionAccessibilityLabel = 'Remove',
         style,
@@ -269,7 +268,6 @@ export const DefaultSelectControlComponent = memo(
         () => (
           <TouchableOpacity
             ref={ref}
-            accessibilityHint={accessibilityHint}
             accessibilityLabel={computedControlAccessibilityLabel}
             accessibilityRole="button"
             disabled={disabled}
@@ -315,7 +313,6 @@ export const DefaultSelectControlComponent = memo(
         ),
         [
           ref,
-          accessibilityHint,
           computedControlAccessibilityLabel,
           disabled,
           styles?.controlInputNode,
