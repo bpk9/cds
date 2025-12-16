@@ -15,6 +15,7 @@ import {
   type CartesianChartContextValue,
   type CartesianSeries,
   type ChartInset,
+  type ChartOrientation,
   type ChartScaleFunction,
   defaultAxisId,
   defaultCartesianChartInset,
@@ -63,6 +64,13 @@ export type CartesianChartBaseProps = BoxBaseProps &
      * Each series contains its own data array.
      */
     series?: Array<CartesianSeries>;
+    /**
+     * Chart orientation. Determines which axis is the category axis.
+     * - 'horizontal' (default): X is category axis, Y is value axis (vertical bars, left-to-right data flow)
+     * - 'vertical': Y is category axis, X is value axis (horizontal bars, top-to-bottom data flow)
+     * @default 'horizontal'
+     */
+    orientation?: ChartOrientation;
     /**
      * Whether to animate the chart.
      * @default true
@@ -161,6 +169,7 @@ export const CartesianChart = memo(
       {
         series,
         children,
+        orientation = 'horizontal',
         animate = true,
         xAxis: xAxisConfigProp,
         yAxis: yAxisConfigProp,
@@ -228,7 +237,7 @@ export const CartesianChart = memo(
         if (!chartRect || chartRect.width <= 0 || chartRect.height <= 0)
           return { xAxis: undefined, xScale: undefined };
 
-        const domain = getCartesianAxisDomain(xAxisConfig, series ?? [], 'x');
+        const domain = getCartesianAxisDomain(xAxisConfig, series ?? [], 'x', orientation);
         const range = getAxisRange(xAxisConfig, chartRect, 'x');
 
         const axisConfig: CartesianAxisConfig = {
@@ -246,6 +255,7 @@ export const CartesianChart = memo(
           type: 'x',
           range: axisConfig.range,
           dataDomain: axisConfig.domain,
+          orientation,
         });
 
         if (!scale) return { xAxis: undefined, xScale: undefined };
@@ -263,7 +273,7 @@ export const CartesianChart = memo(
         };
 
         return { xAxis: finalAxisConfig, xScale: scale };
-      }, [xAxisConfig, series, chartRect]);
+      }, [xAxisConfig, series, chartRect, orientation]);
 
       const { yAxes, yScales } = useMemo(() => {
         const axes = new Map<string, CartesianAxisConfig>();
@@ -279,7 +289,7 @@ export const CartesianChart = memo(
             series?.filter((s) => (s.yAxisId ?? defaultAxisId) === axisId) ?? [];
 
           // Calculate domain and range
-          const dataDomain = getCartesianAxisDomain(axisParam, relevantSeries, 'y');
+          const dataDomain = getCartesianAxisDomain(axisParam, relevantSeries, 'y', orientation);
           const range = getAxisRange(axisParam, chartRect, 'y');
 
           const axisConfig: CartesianAxisConfig = {
@@ -297,6 +307,7 @@ export const CartesianChart = memo(
             type: 'y',
             range: axisConfig.range,
             dataDomain: axisConfig.domain,
+            orientation,
           });
 
           if (scale) {
@@ -317,7 +328,7 @@ export const CartesianChart = memo(
         });
 
         return { yAxes: axes, yScales: scales };
-      }, [yAxisConfig, series, chartRect]);
+      }, [yAxisConfig, series, chartRect, orientation]);
 
       const getXAxis = useCallback(() => xAxis, [xAxis]);
       const getYAxis = useCallback((id?: string) => yAxes.get(id ?? defaultAxisId), [yAxes]);
@@ -416,6 +427,7 @@ export const CartesianChart = memo(
       const contextValue: CartesianChartContextValue = useMemo(
         () => ({
           type: 'cartesian',
+          orientation,
           series: series ?? [],
           getSeries,
           getSeriesData: getStackedSeriesData,
@@ -434,6 +446,7 @@ export const CartesianChart = memo(
           ref: chartRef,
         }),
         [
+          orientation,
           series,
           getSeries,
           getStackedSeriesData,
@@ -493,20 +506,34 @@ export const CartesianChart = memo(
         [isControlled, currentHighlightedItem, onHighlightChange, onScrubberPositionChange],
       );
 
-      // Convert mouse X position to data index
-      const getDataIndexFromX = useCallback(
-        (mouseX: number): number => {
-          if (!xScale || !xAxis) return 0;
+      // Get the category scale and axis based on orientation
+      const getCategoryScaleAndAxis = useCallback(() => {
+        if (orientation === 'vertical') {
+          // For vertical orientation, Y is the category axis
+          return {
+            scale: yScales.get(defaultAxisId),
+            axis: yAxes.get(defaultAxisId),
+          };
+        }
+        // For horizontal orientation, X is the category axis
+        return { scale: xScale, axis: xAxis };
+      }, [orientation, xScale, xAxis, yScales, yAxes]);
 
-          if (isCategoricalScale(xScale)) {
-            const categories = xScale.domain?.() ?? xAxis.data ?? [];
-            const bandwidth = xScale.bandwidth?.() ?? 0;
+      // Convert mouse position to data index (supports both orientations)
+      const getDataIndexFromPosition = useCallback(
+        (mousePosition: number): number => {
+          const { scale: categoryScale, axis: categoryAxis } = getCategoryScaleAndAxis();
+          if (!categoryScale || !categoryAxis) return 0;
+
+          if (isCategoricalScale(categoryScale)) {
+            const categories = categoryScale.domain?.() ?? categoryAxis.data ?? [];
+            const bandwidth = categoryScale.bandwidth?.() ?? 0;
             let closestIndex = 0;
             let closestDistance = Infinity;
             for (let i = 0; i < categories.length; i++) {
-              const xPos = xScale(i);
-              if (xPos !== undefined) {
-                const distance = Math.abs(mouseX - (xPos + bandwidth / 2));
+              const pos = categoryScale(i);
+              if (pos !== undefined) {
+                const distance = Math.abs(mousePosition - (pos + bandwidth / 2));
                 if (distance < closestDistance) {
                   closestDistance = distance;
                   closestIndex = i;
@@ -516,17 +543,17 @@ export const CartesianChart = memo(
             return closestIndex;
           } else {
             // For numeric scales with axis data, find the nearest data point
-            const axisData = xAxis.data;
+            const axisData = categoryAxis.data;
             if (axisData && Array.isArray(axisData) && typeof axisData[0] === 'number') {
               const numericData = axisData as number[];
               let closestIndex = 0;
               let closestDistance = Infinity;
 
               for (let i = 0; i < numericData.length; i++) {
-                const xValue = numericData[i];
-                const xPos = xScale(xValue);
-                if (xPos !== undefined) {
-                  const distance = Math.abs(mouseX - xPos);
+                const dataValue = numericData[i];
+                const pos = categoryScale(dataValue);
+                if (pos !== undefined) {
+                  const distance = Math.abs(mousePosition - pos);
                   if (distance < closestDistance) {
                     closestDistance = distance;
                     closestIndex = i;
@@ -535,24 +562,25 @@ export const CartesianChart = memo(
               }
               return closestIndex;
             } else {
-              const xValue = xScale.invert(mouseX);
-              const dataIndexVal = Math.round(xValue);
-              const domain = xAxis.domain;
+              const dataValue = categoryScale.invert(mousePosition);
+              const dataIndexVal = Math.round(dataValue);
+              const domain = categoryAxis.domain;
               return Math.max(domain.min ?? 0, Math.min(dataIndexVal, domain.max ?? 0));
             }
           }
         },
-        [xScale, xAxis],
+        [getCategoryScaleAndAxis],
       );
 
       // Handle pointer move (mouse or touch)
       const handlePointerMove = useCallback(
-        (clientX: number, target: SVGSVGElement) => {
+        (clientX: number, clientY: number, target: SVGSVGElement) => {
           if (!enableHighlighting || !series || series.length === 0) return;
 
           const rect = target.getBoundingClientRect();
-          const x = clientX - rect.left;
-          const dataIndexVal = getDataIndexFromX(x);
+          // For horizontal orientation, use X position; for vertical, use Y position
+          const position = orientation === 'vertical' ? clientY - rect.top : clientX - rect.left;
+          const dataIndexVal = getDataIndexFromPosition(position);
 
           // Only update if dataIndex changed
           if (dataIndexVal !== lastDataIndexRef.current) {
@@ -563,7 +591,13 @@ export const CartesianChart = memo(
             }));
           }
         },
-        [enableHighlighting, series, getDataIndexFromX, setHighlightedItemInternal],
+        [
+          enableHighlighting,
+          series,
+          orientation,
+          getDataIndexFromPosition,
+          setHighlightedItemInternal,
+        ],
       );
 
       // Handle pointer leave
@@ -577,25 +611,27 @@ export const CartesianChart = memo(
       const handleKeyDown = useCallback(
         (event: KeyboardEvent) => {
           if (!enableHighlighting) return;
-          if (!xScale || !xAxis) return;
 
-          const isBand = isCategoricalScale(xScale);
+          const { scale: categoryScale, axis: categoryAxis } = getCategoryScaleAndAxis();
+          if (!categoryScale || !categoryAxis) return;
+
+          const isBand = isCategoricalScale(categoryScale);
 
           // Determine navigation bounds
           let minIndex: number;
           let maxIndex: number;
 
           if (isBand) {
-            const categories = xScale.domain?.() ?? xAxis.data ?? [];
+            const categories = categoryScale.domain?.() ?? categoryAxis.data ?? [];
             minIndex = 0;
             maxIndex = Math.max(0, categories.length - 1);
           } else {
-            const axisData = xAxis.data;
+            const axisData = categoryAxis.data;
             if (axisData && Array.isArray(axisData)) {
               minIndex = 0;
               maxIndex = Math.max(0, axisData.length - 1);
             } else {
-              const domain = xAxis.domain;
+              const domain = categoryAxis.domain;
               minIndex = domain.min ?? 0;
               maxIndex = domain.max ?? 0;
             }
@@ -610,29 +646,30 @@ export const CartesianChart = memo(
 
           let newIndex: number | undefined;
 
-          switch (event.key) {
-            case 'ArrowLeft':
-              event.preventDefault();
-              newIndex = Math.max(minIndex, currentIndex - stepSize);
-              break;
-            case 'ArrowRight':
-              event.preventDefault();
-              newIndex = Math.min(maxIndex, currentIndex + stepSize);
-              break;
-            case 'Home':
-              event.preventDefault();
-              newIndex = minIndex;
-              break;
-            case 'End':
-              event.preventDefault();
-              newIndex = maxIndex;
-              break;
-            case 'Escape':
-              event.preventDefault();
-              newIndex = undefined;
-              break;
-            default:
-              return;
+          // For horizontal orientation: ArrowLeft/Right navigate data
+          // For vertical orientation: ArrowUp/Down navigate data
+          const isDecreaseKey =
+            orientation === 'vertical' ? event.key === 'ArrowUp' : event.key === 'ArrowLeft';
+          const isIncreaseKey =
+            orientation === 'vertical' ? event.key === 'ArrowDown' : event.key === 'ArrowRight';
+
+          if (isDecreaseKey) {
+            event.preventDefault();
+            newIndex = Math.max(minIndex, currentIndex - stepSize);
+          } else if (isIncreaseKey) {
+            event.preventDefault();
+            newIndex = Math.min(maxIndex, currentIndex + stepSize);
+          } else if (event.key === 'Home') {
+            event.preventDefault();
+            newIndex = minIndex;
+          } else if (event.key === 'End') {
+            event.preventDefault();
+            newIndex = maxIndex;
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            newIndex = undefined;
+          } else {
+            return;
           }
 
           if (newIndex !== lastDataIndexRef.current) {
@@ -647,7 +684,13 @@ export const CartesianChart = memo(
             }
           }
         },
-        [enableHighlighting, xScale, xAxis, currentHighlightedItem, setHighlightedItemInternal],
+        [
+          enableHighlighting,
+          orientation,
+          getCategoryScaleAndAxis,
+          currentHighlightedItem,
+          setHighlightedItemInternal,
+        ],
       );
 
       // Handle blur - clear highlighting when focus leaves
@@ -665,20 +708,20 @@ export const CartesianChart = memo(
         const svg = chartRef.current;
 
         const handleMouseMove = (event: MouseEvent) => {
-          handlePointerMove(event.clientX, svg);
+          handlePointerMove(event.clientX, event.clientY, svg);
         };
 
         const handleTouchStart = (event: TouchEvent) => {
           if (!event.touches.length) return;
           const touch = event.touches[0];
-          handlePointerMove(touch.clientX, svg);
+          handlePointerMove(touch.clientX, touch.clientY, svg);
         };
 
         const handleTouchMove = (event: TouchEvent) => {
           if (!event.touches.length) return;
           event.preventDefault();
           const touch = event.touches[0];
-          handlePointerMove(touch.clientX, svg);
+          handlePointerMove(touch.clientX, touch.clientY, svg);
         };
 
         svg.addEventListener('mousemove', handleMouseMove);

@@ -73,6 +73,139 @@ function MonthlyGainsByAsset() {
 }
 ```
 
+## Horizontal Bars (Vertical Orientation)
+
+You can display bars horizontally by setting `orientation="vertical"`. This swaps the category and value axes - the Y-axis becomes the category axis and the X-axis becomes the value axis.
+
+### Basic Horizontal Bar Chart
+
+```jsx live
+<BarChart
+  orientation="vertical"
+  height={{ base: 200, tablet: 250, desktop: 300 }}
+  inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+  series={[
+    {
+      id: 'sales',
+      data: [45, 82, 68, 95, 110, 72],
+      color: 'var(--color-accentBoldBlue)',
+    },
+  ]}
+  showXAxis
+  showYAxis
+  xAxis={{
+    domain: { min: 0 },
+    showGrid: true,
+  }}
+  yAxis={{
+    scaleType: 'band',
+    data: ['Product A', 'Product B', 'Product C', 'Product D', 'Product E', 'Product F'],
+    width: 80,
+  }}
+/>
+```
+
+### Horizontal Bars with Multiple Series
+
+Horizontal bar charts are great for comparing categories with long labels.
+
+```jsx live
+function RegionalSales() {
+  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+
+  const tickFormatter = useCallback(
+    (amount) =>
+      new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+      }).format(amount),
+    [],
+  );
+
+  return (
+    <BarChart
+      orientation="vertical"
+      height={{ base: 200, tablet: 280, desktop: 320 }}
+      inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      series={[
+        {
+          id: 'q1',
+          data: [125000, 98000, 156000, 87000, 112000],
+          color: 'var(--color-accentBoldBlue)',
+        },
+        {
+          id: 'q2',
+          data: [142000, 105000, 178000, 95000, 128000],
+          color: 'var(--color-accentBoldGreen)',
+        },
+      ]}
+      showXAxis
+      showYAxis
+      xAxis={{
+        domain: { min: 0 },
+        showGrid: true,
+        GridLineComponent: ThinSolidLine,
+        tickLabelFormatter: tickFormatter,
+      }}
+      yAxis={{
+        scaleType: 'band',
+        data: ['North America', 'Europe', 'Asia Pacific', 'Latin America', 'Middle East'],
+        width: 100,
+      }}
+    />
+  );
+}
+```
+
+### Stacked Horizontal Bars
+
+Stacking works the same way with horizontal bars.
+
+```jsx live
+function StackedHorizontalBars() {
+  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+
+  return (
+    <BarChart
+      orientation="vertical"
+      stacked
+      height={{ base: 200, tablet: 280, desktop: 320 }}
+      inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      series={[
+        {
+          id: 'completed',
+          data: [42, 38, 55, 28, 62],
+          color: 'var(--color-fgPositive)',
+        },
+        {
+          id: 'in-progress',
+          data: [18, 24, 12, 32, 15],
+          color: 'var(--color-accentBoldYellow)',
+        },
+        {
+          id: 'pending',
+          data: [8, 12, 5, 18, 8],
+          color: 'var(--color-fgMuted)',
+        },
+      ]}
+      showXAxis
+      showYAxis
+      xAxis={{
+        domain: { min: 0 },
+        showGrid: true,
+        GridLineComponent: ThinSolidLine,
+      }}
+      yAxis={{
+        scaleType: 'band',
+        data: ['Engineering', 'Design', 'Product', 'Marketing', 'Sales'],
+        width: 80,
+      }}
+    />
+  );
+}
+```
+
 ## Series Stacking
 
 You can also configure stacking for your chart using the `stacked` prop.

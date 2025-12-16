@@ -99,7 +99,8 @@ export const Area = memo<AreaProps>(
     transition,
     animate,
   }) => {
-    const { getSeries, getSeriesData, getXScale, getYScale, getXAxis } = useCartesianChartContext();
+    const { getSeries, getSeriesData, getXScale, getYScale, getXAxis, getYAxis, orientation } =
+      useCartesianChartContext();
 
     const matchedSeries = useMemo(() => getSeries(seriesId), [seriesId, getSeries]);
     const gradient = useMemo(
@@ -111,16 +112,18 @@ export const Area = memo<AreaProps>(
     const sourceData = useMemo(() => getSeriesData(seriesId), [seriesId, getSeriesData]);
 
     const xAxis = getXAxis();
+    const yAxis = getYAxis(matchedSeries?.yAxisId);
     const xScale = getXScale();
     const yScale = getYScale(matchedSeries?.yAxisId);
 
     const area = useMemo(() => {
       if (!sourceData || sourceData.length === 0 || !xScale || !yScale) return '';
 
-      // Get numeric x-axis data if available
-      const xData =
-        xAxis?.data && Array.isArray(xAxis.data) && typeof xAxis.data[0] === 'number'
-          ? (xAxis.data as number[])
+      // For horizontal orientation, use xAxis data; for vertical, use yAxis data
+      const categoryAxis = orientation === 'vertical' ? yAxis : xAxis;
+      const categoryData =
+        categoryAxis?.data && Array.isArray(categoryAxis.data) && typeof categoryAxis.data[0] === 'number'
+          ? (categoryAxis.data as number[])
           : undefined;
 
       return getAreaPath({
@@ -128,10 +131,12 @@ export const Area = memo<AreaProps>(
         xScale,
         yScale,
         curve,
-        xData,
+        xData: orientation === 'vertical' ? undefined : categoryData,
+        yData: orientation === 'vertical' ? categoryData : undefined,
         connectNulls,
+        orientation,
       });
-    }, [sourceData, xScale, yScale, curve, xAxis?.data, connectNulls]);
+    }, [sourceData, xScale, yScale, curve, xAxis?.data, yAxis?.data, connectNulls, orientation]);
 
     const AreaComponent = useMemo((): AreaComponent => {
       if (AreaComponentProp) {

@@ -104,8 +104,17 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(
     labelFont,
     BeaconLabelComponent = DefaultScrubberBeaconLabel,
   }) => {
-    const { getSeries, getSeriesData, getXScale, getYScale, getXAxis, drawingArea, dataLength } =
-      useCartesianChartContext();
+    const {
+      getSeries,
+      getSeriesData,
+      getXScale,
+      getYScale,
+      getXAxis,
+      getYAxis,
+      drawingArea,
+      dataLength,
+      orientation,
+    } = useCartesianChartContext();
     const highlightContext = useHighlightContext();
     const scrubberPosition = highlightContext?.highlightedItem?.dataIndex;
 
@@ -137,62 +146,73 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(
           if (!series) return null;
 
           const sourceData = getSeriesData(label.seriesId);
-          const yScale = getYScale(series.yAxisId);
+          // In horizontal: Y is value axis; in vertical: X is value axis
+          const valueScale = orientation === 'vertical' ? getXScale() : getYScale(series.yAxisId);
 
           return {
             seriesId: label.seriesId,
             sourceData,
-            yScale,
+            valueScale,
           };
         })
         .filter((info): info is NonNullable<typeof info> => info !== null);
-    }, [labels, getSeries, getSeriesData, getYScale]);
+    }, [labels, getSeries, getSeriesData, getXScale, getYScale, orientation]);
 
-    const xScale = getXScale();
-    const xAxis = getXAxis();
+    // Category scale/axis depends on orientation
+    const categoryScale = orientation === 'vertical' ? getYScale() : getXScale();
+    const categoryAxis = orientation === 'vertical' ? getYAxis() : getXAxis();
 
     const dataIndex = useMemo(() => {
       return scrubberPosition ?? Math.max(0, dataLength - 1);
     }, [scrubberPosition, dataLength]);
 
-    const dataX = useMemo(() => {
-      if (xAxis?.data && Array.isArray(xAxis.data) && xAxis.data[dataIndex] !== undefined) {
-        const dataValue = xAxis.data[dataIndex];
+    const categoryValue = useMemo(() => {
+      if (
+        categoryAxis?.data &&
+        Array.isArray(categoryAxis.data) &&
+        categoryAxis.data[dataIndex] !== undefined
+      ) {
+        const dataValue = categoryAxis.data[dataIndex];
         return typeof dataValue === 'string' ? dataIndex : dataValue;
       }
       return dataIndex;
-    }, [xAxis, dataIndex]);
+    }, [categoryAxis, dataIndex]);
 
     const allLabelPositions = useMemo(() => {
-      if (!xScale || dataX === undefined) return [];
+      if (!categoryScale || categoryValue === undefined) return [];
 
-      const sharedPixelX = getPointOnScale(dataX, xScale);
+      const sharedCategoryPixel = getPointOnScale(categoryValue, categoryScale);
 
       const desiredPositions = seriesInfo.map((info) => {
-        let dataY: number | undefined;
-        if (info.yScale) {
+        let dataValue: number | undefined;
+        if (info.valueScale) {
           if (
             info.sourceData &&
             dataIndex !== undefined &&
             dataIndex >= 0 &&
             dataIndex < info.sourceData.length
           ) {
-            const dataValue = info.sourceData[dataIndex];
+            const sourceValue = info.sourceData[dataIndex];
 
-            if (Array.isArray(dataValue)) {
-              const validValues = dataValue.filter((val): val is number => val !== null);
+            if (typeof sourceValue === 'number') {
+              dataValue = sourceValue;
+            } else if (Array.isArray(sourceValue)) {
+              const validValues = sourceValue.filter((val): val is number => val !== null);
               if (validValues.length >= 1) {
-                dataY = validValues[validValues.length - 1];
+                dataValue = validValues[validValues.length - 1];
               }
             }
           }
         }
 
-        if (dataY !== undefined && info.yScale) {
+        if (dataValue !== undefined && info.valueScale) {
+          const valuePixel = getPointOnScale(dataValue, info.valueScale);
+          // In horizontal: x = category, y = value
+          // In vertical: x = value, y = category
           return {
             seriesId: info.seriesId,
-            x: sharedPixelX,
-            desiredY: getPointOnScale(dataY, info.yScale),
+            x: orientation === 'vertical' ? valuePixel : sharedCategoryPixel,
+            desiredY: orientation === 'vertical' ? sharedCategoryPixel : valuePixel,
           };
         }
 
@@ -236,16 +256,50 @@ export const ScrubberBeaconLabelGroup = memo<ScrubberBeaconLabelGroupProps>(
           y: yPositions.get(pos.seriesId) ?? pos.desiredY,
         };
       });
-    }, [seriesInfo, dataIndex, dataX, xScale, labelDimensions, drawingArea, labelMinGap]);
+    }, [
+      seriesInfo,
+      dataIndex,
+      categoryValue,
+      categoryScale,
+      labelDimensions,
+      drawingArea,
+      labelMinGap,
+      orientation,
+    ]);
 
     const currentPosition = useMemo(() => {
-      if (!xScale || dataX === undefined) return 'right';
+      if (!categoryScale || categoryValue === undefined) return 'right';
 
-      const pixelX = getPointOnScale(dataX, xScale);
+      const categoryPixel = getPointOnScale(categoryValue, categoryScale);
       const maxWidth = Math.max(...Object.values(labelDimensions).map((dim) => dim.width));
 
-      return getLabelPosition(pixelX, maxWidth, drawingArea, labelHorizontalOffset);
-    }, [dataX, xScale, labelDimensions, drawingArea, labelHorizontalOffset]);
+      // For horizontal orientation, use the category (X) position to determine left/right
+      // For vertical orientation, labels should be positioned based on the X value pixel
+      if (orientation === 'vertical') {
+        // In vertical, all labels share the same Y (category) position
+        // We need to check the X (value) positions for label placement
+        // For now, default to 'right' for vertical orientation
+        // A more sophisticated approach would check if there's room to the right
+        const avgValuePixel =
+          allLabelPositions.length > 0
+            ? allLabelPositions
+                .filter((pos) => pos !== null)
+                .reduce((sum, pos) => sum + pos!.x, 0) / allLabelPositions.length
+            : drawingArea.x + drawingArea.width / 2;
+
+        return getLabelPosition(avgValuePixel, maxWidth, drawingArea, labelHorizontalOffset);
+      }
+
+      return getLabelPosition(categoryPixel, maxWidth, drawingArea, labelHorizontalOffset);
+    }, [
+      categoryValue,
+      categoryScale,
+      labelDimensions,
+      drawingArea,
+      labelHorizontalOffset,
+      orientation,
+      allLabelPositions,
+    ]);
 
     return seriesInfo.map((info, index) => {
       const labelInfo = labels.find((label) => label.seriesId === info.seriesId);

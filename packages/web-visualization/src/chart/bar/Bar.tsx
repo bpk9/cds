@@ -42,9 +42,14 @@ export type BarBaseProps = {
   roundBottom?: boolean;
   /**
    * Y coordinate of the baseline/origin for animations.
-   * Used to calculate initial animation state.
+   * Used to calculate initial animation state for vertical bars.
    */
   originY?: number;
+  /**
+   * X coordinate of the baseline/origin for animations.
+   * Used to calculate initial animation state for horizontal bars.
+   */
+  originX?: number;
   /**
    * The x-axis data value for this bar.
    */

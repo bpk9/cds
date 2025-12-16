@@ -157,8 +157,16 @@ export const Line = memo<LineProps>(
     gradient: gradientProp,
     ...props
   }) => {
-    const { animate, getSeries, getSeriesData, getXScale, getYScale, getXAxis, getYAxis } =
-      useCartesianChartContext();
+    const {
+      animate,
+      getSeries,
+      getSeriesData,
+      getXScale,
+      getYScale,
+      getXAxis,
+      getYAxis,
+      orientation,
+    } = useCartesianChartContext();
 
     const matchedSeries = useMemo(() => getSeries(seriesId), [getSeries, seriesId]);
     const gradient = useMemo(
@@ -168,6 +176,7 @@ export const Line = memo<LineProps>(
     const sourceData = useMemo(() => getSeriesData(seriesId), [getSeriesData, seriesId]);
 
     const xAxis = useMemo(() => getXAxis(), [getXAxis]);
+    const yAxis = useMemo(() => getYAxis(matchedSeries?.yAxisId), [getYAxis, matchedSeries?.yAxisId]);
     const xScale = useMemo(() => getXScale(), [getXScale]);
     const yScale = useMemo(
       () => getYScale(matchedSeries?.yAxisId),
@@ -180,10 +189,11 @@ export const Line = memo<LineProps>(
     const path = useMemo(() => {
       if (!xScale || !yScale || chartData.length === 0) return '';
 
-      // Get numeric x-axis data if available
-      const xData =
-        xAxis?.data && Array.isArray(xAxis.data) && typeof xAxis.data[0] === 'number'
-          ? (xAxis.data as number[])
+      // For horizontal orientation, use xAxis data; for vertical, use yAxis data
+      const categoryAxis = orientation === 'vertical' ? yAxis : xAxis;
+      const categoryData =
+        categoryAxis?.data && Array.isArray(categoryAxis.data) && typeof categoryAxis.data[0] === 'number'
+          ? (categoryAxis.data as number[])
           : undefined;
 
       return getLinePath({
@@ -191,10 +201,12 @@ export const Line = memo<LineProps>(
         xScale,
         yScale,
         curve,
-        xData,
+        xData: orientation === 'vertical' ? undefined : categoryData,
+        yData: orientation === 'vertical' ? categoryData : undefined,
         connectNulls,
+        orientation,
       });
-    }, [chartData, xScale, yScale, curve, xAxis?.data, connectNulls]);
+    }, [chartData, xScale, yScale, curve, xAxis?.data, yAxis?.data, connectNulls, orientation]);
 
     const LineComponent = useMemo((): LineComponent => {
       if (SelectedLineComponent) {

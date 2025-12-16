@@ -661,3 +661,341 @@ function TradingTrends() {
   );
 }
 ```
+
+## Orientation
+
+By default, CartesianChart uses a horizontal orientation where the X-axis is the category/independent axis and the Y-axis is the value/dependent axis. You can switch to a vertical orientation by setting `orientation="vertical"`, which swaps these roles - the Y-axis becomes the category axis and the X-axis becomes the value axis.
+
+### Horizontal Bars with CartesianChart
+
+When using `orientation="vertical"`, bar charts render horizontally. This is particularly useful for displaying ranked data or categories with long labels.
+
+```jsx live
+function HorizontalBarExample() {
+  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+
+  return (
+    <CartesianChart
+      orientation="vertical"
+      height={{ base: 250, tablet: 300, desktop: 350 }}
+      inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      series={[
+        {
+          id: 'revenue',
+          data: [182, 156, 143, 128, 112, 98, 85],
+          color: 'var(--color-accentBoldBlue)',
+        },
+      ]}
+      xAxis={{
+        domain: { min: 0, max: 200 },
+        showGrid: true,
+        GridLineComponent: ThinSolidLine,
+      }}
+      yAxis={{
+        scaleType: 'band',
+        data: ['Bitcoin', 'Ethereum', 'Solana', 'Cardano', 'Polygon', 'Avalanche', 'Chainlink'],
+      }}
+    >
+      <XAxis showLine />
+      <YAxis position="left" width={80} />
+      <BarPlot />
+    </CartesianChart>
+  );
+}
+```
+
+### Horizontal Stacked Bars
+
+Stacking also works with horizontal bars in vertical orientation.
+
+```jsx live
+function StackedHorizontalExample() {
+  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+
+  return (
+    <CartesianChart
+      orientation="vertical"
+      height={{ base: 280, tablet: 320, desktop: 360 }}
+      inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      series={[
+        {
+          id: 'buy',
+          data: [65, 48, 72, 55, 42],
+          color: 'var(--color-fgPositive)',
+          stackId: 'orders',
+        },
+        {
+          id: 'sell',
+          data: [45, 62, 38, 51, 68],
+          color: 'var(--color-fgNegative)',
+          stackId: 'orders',
+        },
+      ]}
+      xAxis={{
+        domain: { min: 0 },
+        showGrid: true,
+        GridLineComponent: ThinSolidLine,
+        tickLabelFormatter: (value) => `${value}%`,
+      }}
+      yAxis={{
+        scaleType: 'band',
+        data: ['Bitcoin', 'Ethereum', 'Solana', 'Cardano', 'Polygon'],
+      }}
+    >
+      <XAxis showLine />
+      <YAxis position="left" width={70} />
+      <BarPlot />
+    </CartesianChart>
+  );
+}
+```
+
+### Multiple Series Horizontal Bars
+
+You can display multiple series as grouped horizontal bars.
+
+```jsx live
+function GroupedHorizontalBars() {
+  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+
+  return (
+    <CartesianChart
+      orientation="vertical"
+      height={{ base: 280, tablet: 320, desktop: 360 }}
+      inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      series={[
+        {
+          id: 'actual',
+          data: [85, 72, 95, 68, 78, 62],
+          color: 'var(--color-accentBoldBlue)',
+        },
+        {
+          id: 'target',
+          data: [90, 80, 85, 75, 85, 70],
+          color: 'var(--color-fgMuted)',
+        },
+      ]}
+      xAxis={{
+        domain: { min: 0, max: 100 },
+        showGrid: true,
+        GridLineComponent: ThinSolidLine,
+        tickLabelFormatter: (value) => `${value}%`,
+      }}
+      yAxis={{
+        scaleType: 'band',
+        data: ['Q1 2023', 'Q2 2023', 'Q3 2023', 'Q4 2023', 'Q1 2024', 'Q2 2024'],
+      }}
+    >
+      <XAxis showLine />
+      <YAxis position="left" width={70} />
+      <BarPlot />
+    </CartesianChart>
+  );
+}
+```
+
+### Voter Turnout Chart with Piecewise Gradient
+
+This example shows a horizontal bar chart with piecewise color gradient based on value thresholds: red for low turnout (&lt;50%), gray for average (50-85%), and blue for high turnout (&gt;85%).
+
+```jsx live
+function VoterTurnoutChart() {
+  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+
+  const voterData = [
+    { country: 'Romania (2020)', turnout: 33.2 },
+    { country: 'Bulgaria (2024)', turnout: 33.4 },
+    { country: 'Albania (2021)', turnout: 46.3 },
+    { country: 'United Kingdom (2024)', turnout: 60.0 },
+    { country: 'Spain (2023)', turnout: 66.0 },
+    { country: 'France (2024)', turnout: 66.7 },
+    { country: 'Germany (2021)', turnout: 76.4 },
+    { country: 'Sweden (2022)', turnout: 83.8 },
+    { country: 'Malta (2022)', turnout: 85.6 },
+    { country: 'Turkey (2023)', turnout: 87.0 },
+    { country: 'Belgium (2024)', turnout: 88.5 },
+  ];
+
+  const turnoutValues = voterData.map((d) => d.turnout);
+  const countries = voterData.map((d) => d.country);
+
+  return (
+    <VStack gap={4}>
+      <Text font="title3">European countries with lowest & highest voter turnout</Text>
+      <CartesianChart
+        orientation="vertical"
+        height={{ base: 400, tablet: 450, desktop: 500 }}
+        inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        series={[
+          {
+            id: 'low',
+            data: [],
+            label: 'lowest turnout',
+            color: 'var(--color-accentBoldRed)',
+            legendShape: 'squircle',
+          },
+          {
+            id: 'avg',
+            data: [],
+            label: 'average',
+            color: 'var(--color-fgMuted)',
+            legendShape: 'squircle',
+          },
+          {
+            id: 'high',
+            data: [],
+            label: 'highest turnout',
+            color: 'var(--color-accentBoldBlue)',
+            legendShape: 'squircle',
+          },
+          {
+            id: 'turnout',
+            data: turnoutValues,
+            gradient: {
+              axis: 'x',
+              // Piecewise gradient: red < 50, gray 50-85, blue > 85
+              // Using duplicate stops at thresholds creates hard color transitions
+              stops: [
+                { offset: 0, color: 'var(--color-accentBoldRed)' },
+                { offset: 49.9, color: 'var(--color-accentBoldRed)' },
+                { offset: 50, color: 'var(--color-fgMuted)' },
+                { offset: 84.9, color: 'var(--color-fgMuted)' },
+                { offset: 85, color: 'var(--color-accentBoldBlue)' },
+                { offset: 100, color: 'var(--color-accentBoldBlue)' },
+              ],
+            },
+          },
+        ]}
+        xAxis={{
+          domain: { min: 0, max: 100 },
+          showGrid: true,
+          GridLineComponent: ThinSolidLine,
+          tickLabelFormatter: (value) => `${value}%`,
+        }}
+        yAxis={{
+          scaleType: 'band',
+          data: countries,
+        }}
+      >
+        <Legend seriesIds={['low', 'avg', 'high']} />
+        <XAxis showLine />
+        <YAxis position="left" width={140} />
+        <BarPlot seriesIds={['turnout']} borderRadius={0} />
+      </CartesianChart>
+    </VStack>
+  );
+}
+```
+
+### Multi-Segment Progress Bar
+
+This example shows how to create a segmented progress bar using stacked horizontal bars. This is useful for showing proportions like "bought vs sold" or any multi-segment breakdown that sums to 100%.
+
+```jsx live
+function MultiSegmentProgressBar() {
+  // Data represents percentages that sum to 100
+  const bought = 76;
+  const sold = 24;
+
+  return (
+    <VStack gap={2} style={{ width: '100%' }}>
+      <CartesianChart
+        orientation="vertical"
+        height={40}
+        inset={{ top: 0, bottom: 0, left: 0, right: 0 }}
+        series={[
+          {
+            id: 'bought',
+            data: [bought],
+            label: `${bought}% bought`,
+            color: 'var(--color-accentBoldGreen)',
+            stackId: 'progress',
+            legendShape: 'circle',
+          },
+          {
+            id: 'sold',
+            data: [sold],
+            label: `${sold}% sold`,
+            color: 'var(--color-accentBoldRed)',
+            stackId: 'progress',
+            legendShape: 'circle',
+          },
+        ]}
+        xAxis={{
+          domain: { min: 0, max: 100 },
+        }}
+        yAxis={{
+          scaleType: 'band',
+          data: [''],
+        }}
+      >
+        <BarPlot borderRadius={4} />
+      </CartesianChart>
+      <Legend justifyContent="space-between" />
+    </VStack>
+  );
+}
+```
+
+### Multi-Segment Progress with Multiple Rows
+
+You can also display multiple progress bars with different breakdowns.
+
+```jsx live
+function MultiRowProgressBars() {
+  const data = [
+    { category: 'Portfolio A', stocks: 60, bonds: 25, cash: 15 },
+    { category: 'Portfolio B', stocks: 45, bonds: 40, cash: 15 },
+    { category: 'Portfolio C', stocks: 80, bonds: 15, cash: 5 },
+  ];
+
+  return (
+    <VStack gap={3} style={{ width: '100%' }}>
+      <CartesianChart
+        orientation="vertical"
+        height={160}
+        inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        series={[
+          {
+            id: 'stocks',
+            data: data.map((d) => d.stocks),
+            label: 'Stocks',
+            color: 'var(--color-accentBoldBlue)',
+            stackId: 'allocation',
+            legendShape: 'squircle',
+          },
+          {
+            id: 'bonds',
+            data: data.map((d) => d.bonds),
+            label: 'Bonds',
+            color: 'var(--color-accentBoldGreen)',
+            stackId: 'allocation',
+            legendShape: 'squircle',
+          },
+          {
+            id: 'cash',
+            data: data.map((d) => d.cash),
+            label: 'Cash',
+            color: 'var(--color-fgMuted)',
+            stackId: 'allocation',
+            legendShape: 'squircle',
+          },
+        ]}
+        xAxis={{
+          domain: { min: 0, max: 100 },
+          tickLabelFormatter: (value) => `${value}%`,
+        }}
+        yAxis={{
+          scaleType: 'band',
+          data: data.map((d) => d.category),
+        }}
+      >
+        <XAxis showLine />
+        <YAxis position="left" width={90} />
+        <BarPlot borderRadius={4} />
+      </CartesianChart>
+      <Legend />
+    </VStack>
+  );
+}
+```

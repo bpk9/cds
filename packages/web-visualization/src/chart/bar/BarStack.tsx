@@ -110,9 +110,13 @@ export type BarStackComponentProps = Pick<
    */
   roundBottom?: boolean;
   /**
-   * The y-origin for animations (baseline position).
+   * The y-origin for animations (baseline position for vertical bars).
    */
   yOrigin?: number;
+  /**
+   * The x-origin for animations (baseline position for horizontal bars).
+   */
+  xOrigin?: number;
 };
 
 export type BarStackComponent = React.FC<BarStackComponentProps>;

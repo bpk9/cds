@@ -88,6 +88,7 @@ export const BarChart = memo(
         barMinSize,
         stackMinSize,
         transition,
+        orientation = 'horizontal',
         ...chartProps
       },
       ref,
@@ -123,8 +124,14 @@ export const BarChart = memo(
         ...yAxisVisualProps
       } = yAxis || {};
 
+      // Default scale types based on orientation:
+      // - Horizontal: X is category (band), Y is value (linear)
+      // - Vertical: Y is category (band), X is value (linear)
+      const defaultXScaleType = orientation === 'horizontal' ? 'band' : 'linear';
+      const defaultYScaleType = orientation === 'vertical' ? 'band' : undefined;
+
       const xAxisConfig: Partial<CartesianAxisConfigProps> = {
-        scaleType: xScaleType ?? 'band',
+        scaleType: xScaleType ?? defaultXScaleType,
         data: xData,
         categoryPadding: xCategoryPadding,
         domain: xDomain,
@@ -143,12 +150,24 @@ export const BarChart = memo(
         );
       }, [series]);
 
-      // Set default min domain to 0 for area chart, but only if there are no negative values
+      // Set default min domain to 0 for value axis, but only if there are no negative values
+      // For horizontal orientation, Y is the value axis
+      // For vertical orientation, X is the value axis
+      const xAxisDomain =
+        orientation === 'vertical' && !hasNegativeValues ? { min: 0, ...xDomain } : xDomain;
+      const yAxisDomain =
+        orientation === 'horizontal' && !hasNegativeValues ? { min: 0, ...yDomain } : yDomain;
+
+      const xAxisConfigWithDomain: Partial<CartesianAxisConfigProps> = {
+        ...xAxisConfig,
+        domain: xAxisDomain,
+      };
+
       const yAxisConfig: Partial<CartesianAxisConfigProps> = {
-        scaleType: yScaleType,
+        scaleType: yScaleType ?? defaultYScaleType,
         data: yData,
         categoryPadding: yCategoryPadding,
-        domain: hasNegativeValues ? yDomain : { min: 0, ...yDomain },
+        domain: yAxisDomain,
         domainLimit: yDomainLimit,
         range: yRange,
       };
@@ -157,8 +176,9 @@ export const BarChart = memo(
         <CartesianChart
           {...chartProps}
           ref={ref}
+          orientation={orientation}
           series={seriesToRender}
-          xAxis={xAxisConfig}
+          xAxis={xAxisConfigWithDomain}
           yAxis={yAxisConfig}
         >
           {showXAxis && <XAxis {...xAxisVisualProps} />}

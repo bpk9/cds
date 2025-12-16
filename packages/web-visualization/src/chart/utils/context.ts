@@ -6,9 +6,30 @@ import type { CartesianSeries, PolarSeries, Series } from './chart';
 import type { ChartScaleFunction } from './scale';
 
 /**
+ * Determines which axis represents categories and which represents values based on orientation.
+ * This helper makes code more readable when dealing with orientation-dependent logic.
+ */
+export const getOrientedScales = <T>(
+  xValue: T,
+  yValue: T,
+  orientation: 'horizontal' | 'vertical',
+): { category: T; value: T } => {
+  return orientation === 'vertical'
+    ? { category: yValue, value: xValue }
+    : { category: xValue, value: yValue };
+};
+
+/**
  * Chart context type discriminator.
  */
 export type ChartType = 'cartesian' | 'polar';
+
+/**
+ * Chart orientation for Cartesian charts.
+ * - 'horizontal' (default): X is category axis, Y is value axis (vertical bars, left-to-right data flow)
+ * - 'vertical': Y is category axis, X is value axis (horizontal bars, top-to-bottom data flow)
+ */
+export type ChartOrientation = 'horizontal' | 'vertical';
 
 /**
  * Base context value for all chart types.
@@ -58,6 +79,12 @@ export type CartesianChartContextValue = Omit<ChartContextValue, 'series' | 'typ
    * The type of chart.
    */
   type: 'cartesian';
+  /**
+   * Chart orientation.
+   * - 'horizontal' (default): X is category axis, Y is value axis
+   * - 'vertical': Y is category axis, X is value axis
+   */
+  orientation: ChartOrientation;
   /**
    * The series data for the chart.
    */

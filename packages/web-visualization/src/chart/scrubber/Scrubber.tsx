@@ -259,7 +259,7 @@ export const Scrubber = memo(
 
       const highlightContext = useHighlightContext();
       const scrubberPosition = highlightContext?.highlightedItem?.dataIndex;
-      const { getXScale, getXAxis, animate, series, drawingArea, dataLength } =
+      const { getXScale, getXAxis, getYScale, getYAxis, animate, series, drawingArea, dataLength, orientation } =
         useCartesianChartContext();
 
       // Expose imperative handle with pulse method
@@ -276,12 +276,33 @@ export const Scrubber = memo(
         return seriesIds;
       }, [series, seriesIds]);
 
-      const { dataX, dataIndex } = useMemo(() => {
+      // For horizontal orientation, the scrubber tracks X position (category axis)
+      // For vertical orientation, the scrubber tracks Y position (category axis)
+      const { dataX, dataY, dataIndex } = useMemo(() => {
+        const dataIndex = scrubberPosition ?? Math.max(0, dataLength - 1);
+
+        if (orientation === 'vertical') {
+          // For vertical orientation, use Y axis
+          const yScale = getYScale() as ChartScaleFunction;
+          const yAxis = getYAxis();
+          if (!yScale) return { dataX: undefined, dataY: undefined, dataIndex: undefined };
+
+          // Convert index to actual y value if axis has data
+          let dataY: number;
+          if (yAxis?.data && Array.isArray(yAxis.data) && yAxis.data[dataIndex] !== undefined) {
+            const dataValue = yAxis.data[dataIndex];
+            dataY = typeof dataValue === 'string' ? dataIndex : dataValue;
+          } else {
+            dataY = dataIndex;
+          }
+
+          return { dataX: undefined, dataY, dataIndex };
+        }
+
+        // For horizontal orientation, use X axis
         const xScale = getXScale() as ChartScaleFunction;
         const xAxis = getXAxis();
-        if (!xScale) return { dataX: undefined, dataIndex: undefined };
-
-        const dataIndex = scrubberPosition ?? Math.max(0, dataLength - 1);
+        if (!xScale) return { dataX: undefined, dataY: undefined, dataIndex: undefined };
 
         // Convert index to actual x value if axis has data
         let dataX: number;
@@ -292,8 +313,8 @@ export const Scrubber = memo(
           dataX = dataIndex;
         }
 
-        return { dataX, dataIndex };
-      }, [getXScale, getXAxis, scrubberPosition, dataLength]);
+        return { dataX, dataY: undefined, dataIndex };
+      }, [orientation, getXScale, getXAxis, getYScale, getYAxis, scrubberPosition, dataLength]);
 
       // Compute resolved accessibility label
       const resolvedAccessibilityLabel = useMemo(() => {
@@ -324,12 +345,107 @@ export const Scrubber = memo(
         [series, filteredSeriesIds],
       );
 
-      // Check if we have at least the default X scale
+      // Check if we have the required scale for the current orientation
       const defaultXScale = getXScale();
-      if (!defaultXScale) return null;
+      const defaultYScale = getYScale();
 
+      if (orientation === 'vertical') {
+        if (!defaultYScale) return null;
+      } else {
+        if (!defaultXScale) return null;
+      }
+
+      // Compute pixel position based on orientation
       const pixelX =
-        dataX !== undefined && defaultXScale ? getPointOnScale(dataX, defaultXScale) : undefined;
+        orientation !== 'vertical' && dataX !== undefined && defaultXScale
+          ? getPointOnScale(dataX, defaultXScale)
+          : undefined;
+      const pixelY =
+        orientation === 'vertical' && dataY !== undefined && defaultYScale
+          ? getPointOnScale(dataY, defaultYScale)
+          : undefined;
+
+      // Render overlay based on orientation
+      const renderOverlay = () => {
+        if (hideOverlay || scrubberPosition === undefined) return null;
+
+        if (orientation === 'vertical' && pixelY !== undefined) {
+          // For vertical orientation, overlay covers the bottom portion
+          return (
+            <rect
+              className={classNames?.overlay}
+              fill="var(--color-bg)"
+              height={drawingArea.y + drawingArea.height - pixelY + overlayOffset}
+              opacity={0.8}
+              style={styles?.overlay}
+              width={drawingArea.width + overlayOffset * 2}
+              x={drawingArea.x - overlayOffset}
+              y={pixelY}
+            />
+          );
+        }
+
+        if (orientation !== 'vertical' && pixelX !== undefined) {
+          // For horizontal orientation, overlay covers the right portion
+          return (
+            <rect
+              className={classNames?.overlay}
+              fill="var(--color-bg)"
+              height={drawingArea.height + overlayOffset * 2}
+              opacity={0.8}
+              style={styles?.overlay}
+              width={drawingArea.x + drawingArea.width - pixelX + overlayOffset}
+              x={pixelX}
+              y={drawingArea.y - overlayOffset}
+            />
+          );
+        }
+
+        return null;
+      };
+
+      // Render reference line based on orientation
+      const renderLine = () => {
+        if (hideLine || scrubberPosition === undefined) return null;
+
+        if (orientation === 'vertical' && dataY !== undefined) {
+          // For vertical orientation, render horizontal line
+          return (
+            <ReferenceLine
+              LabelComponent={LabelComponent}
+              LineComponent={LineComponent}
+              classNames={{ label: classNames?.line }}
+              dataY={dataY}
+              label={typeof label === 'function' ? label(dataIndex) : label}
+              labelBoundsInset={labelBoundsInset}
+              labelElevated={labelElevated}
+              labelFont={labelFont}
+              stroke={lineStroke}
+              styles={{ label: styles?.line }}
+            />
+          );
+        }
+
+        if (orientation !== 'vertical' && dataX !== undefined) {
+          // For horizontal orientation, render vertical line
+          return (
+            <ReferenceLine
+              LabelComponent={LabelComponent}
+              LineComponent={LineComponent}
+              classNames={{ label: classNames?.line }}
+              dataX={dataX}
+              label={typeof label === 'function' ? label(dataIndex) : label}
+              labelBoundsInset={labelBoundsInset}
+              labelElevated={labelElevated}
+              labelFont={labelFont}
+              stroke={lineStroke}
+              styles={{ label: styles?.line }}
+            />
+          );
+        }
+
+        return null;
+      };
 
       return (
         <motion.g
@@ -353,32 +469,8 @@ export const Scrubber = memo(
               }
             : {})}
         >
-          {!hideOverlay && scrubberPosition !== undefined && pixelX !== undefined && (
-            <rect
-              className={classNames?.overlay}
-              fill="var(--color-bg)"
-              height={drawingArea.height + overlayOffset * 2}
-              opacity={0.8}
-              style={styles?.overlay}
-              width={drawingArea.x + drawingArea.width - pixelX + overlayOffset}
-              x={pixelX}
-              y={drawingArea.y - overlayOffset}
-            />
-          )}
-          {!hideLine && scrubberPosition !== undefined && dataX !== undefined && (
-            <ReferenceLine
-              LabelComponent={LabelComponent}
-              LineComponent={LineComponent}
-              classNames={{ label: classNames?.line }}
-              dataX={dataX}
-              label={typeof label === 'function' ? label(dataIndex) : label}
-              labelBoundsInset={labelBoundsInset}
-              labelElevated={labelElevated}
-              labelFont={labelFont}
-              stroke={lineStroke}
-              styles={{ label: styles?.line }}
-            />
-          )}
+          {renderOverlay()}
+          {renderLine()}
           <ScrubberBeaconGroup
             ref={beaconGroupRef}
             BeaconComponent={BeaconComponent}

@@ -6,6 +6,7 @@ import { isCategoricalScale } from '../utils/scale';
 
 import type { BarStackProps } from './BarStack';
 import { BarStack } from './BarStack';
+import { HorizontalBarStack } from './HorizontalBarStack';
 
 export type BarStackGroupProps = Pick<
   BarStackProps,
@@ -39,74 +40,98 @@ export type BarStackGroupProps = Pick<
 
 /**
  * BarStackGroup component that renders a group of stacks across all categories.
- * Delegates the actual stacking logic to BarStack for each category.
+ * Delegates the actual stacking logic to BarStack (vertical bars) or HorizontalBarStack (horizontal bars)
+ * for each category, based on chart orientation.
  */
 export const BarStackGroup = memo<BarStackGroupProps>(
   ({ series, yAxisId, stackIndex, totalStacks, barPadding = 0.1, ...props }) => {
-    const { getXScale, getYScale, drawingArea, dataLength } = useCartesianChartContext();
+    const { getXScale, getYScale, drawingArea, dataLength, orientation } =
+      useCartesianChartContext();
 
     const xScale = getXScale();
     const yScale = getYScale(yAxisId);
 
-    const stackConfigs = useMemo(() => {
-      if (!xScale || !yScale || !drawingArea || dataLength === 0) return [];
+    // For horizontal orientation: X is category axis, Y is value axis (vertical bars)
+    // For vertical orientation: Y is category axis, X is value axis (horizontal bars)
+    const categoryScale = orientation === 'vertical' ? yScale : xScale;
+    const valueScale = orientation === 'vertical' ? xScale : yScale;
 
-      if (!isCategoricalScale(xScale)) {
+    const stackConfigs = useMemo(() => {
+      if (!categoryScale || !valueScale || !drawingArea || dataLength === 0) return [];
+
+      if (!isCategoricalScale(categoryScale)) {
         return [];
       }
 
-      const categoryWidth = xScale.bandwidth();
+      const categorySize = categoryScale.bandwidth();
 
-      // Calculate width for each stack within a category
+      // Calculate size for each stack within a category
       // Only apply barPadding when there are multiple stacks
-      const gapWidth = totalStacks > 1 ? (categoryWidth * barPadding) / (totalStacks - 1) : 0;
-      const barWidth = categoryWidth / totalStacks - getBarSizeAdjustment(totalStacks, gapWidth);
+      const gapSize = totalStacks > 1 ? (categorySize * barPadding) / (totalStacks - 1) : 0;
+      const barSize = categorySize / totalStacks - getBarSizeAdjustment(totalStacks, gapSize);
 
       const configs: Array<{
         categoryIndex: number;
-        x: number;
-        width: number;
+        position: number;
+        size: number;
       }> = [];
 
       // Calculate position for each category
-      // todo: look at using xDomain for this instead of dataLength
       for (let categoryIndex = 0; categoryIndex < dataLength; categoryIndex++) {
-        // Get x position for this category
-        const categoryX = xScale(categoryIndex);
-        if (categoryX !== undefined) {
-          // Calculate x position for this specific stack within the category
-          const stackX = categoryX + stackIndex * (barWidth + gapWidth);
+        // Get position for this category
+        const categoryPosition = categoryScale(categoryIndex);
+        if (categoryPosition !== undefined) {
+          // Calculate position for this specific stack within the category
+          const stackPosition = categoryPosition + stackIndex * (barSize + gapSize);
 
           configs.push({
             categoryIndex,
-            x: stackX,
-            width: barWidth,
+            position: stackPosition,
+            size: barSize,
           });
         }
       }
 
       return configs;
-    }, [xScale, yScale, drawingArea, dataLength, stackIndex, totalStacks, barPadding]);
+    }, [categoryScale, valueScale, drawingArea, dataLength, stackIndex, totalStacks, barPadding]);
 
-    if (xScale && !isCategoricalScale(xScale)) {
+    if (categoryScale && !isCategoricalScale(categoryScale)) {
+      const axisName = orientation === 'vertical' ? 'y-axis' : 'x-axis';
       throw new Error(
-        'BarStackGroup requires a band scale for x-axis. See https://cds.coinbase.com/components/graphs/XAxis/#scale-type',
+        `BarStackGroup requires a band scale for ${axisName}. See https://cds.coinbase.com/components/graphs/XAxis/#scale-type`,
       );
     }
 
-    if (!yScale || !drawingArea || stackConfigs.length === 0) return null;
+    if (!valueScale || !drawingArea || stackConfigs.length === 0) return null;
 
-    return stackConfigs.map(({ categoryIndex, x, width }) => (
+    // Render vertical bars (horizontal orientation) or horizontal bars (vertical orientation)
+    if (orientation === 'vertical') {
+      return stackConfigs.map(({ categoryIndex, position, size }) => (
+        <HorizontalBarStack
+          {...props}
+          key={`stack-${stackIndex}-category-${categoryIndex}`}
+          categoryIndex={categoryIndex}
+          height={size}
+          rect={drawingArea}
+          series={series}
+          xScale={valueScale}
+          y={position}
+          yAxisId={yAxisId}
+        />
+      ));
+    }
+
+    return stackConfigs.map(({ categoryIndex, position, size }) => (
       <BarStack
         {...props}
         key={`stack-${stackIndex}-category-${categoryIndex}`}
         categoryIndex={categoryIndex}
         rect={drawingArea}
         series={series}
-        width={width}
-        x={x}
+        width={size}
+        x={position}
         yAxisId={yAxisId}
-        yScale={yScale}
+        yScale={valueScale}
       />
     ));
   },

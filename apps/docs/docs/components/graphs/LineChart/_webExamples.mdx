@@ -327,6 +327,219 @@ LineChart uses `linear` scaling on axes by default, but you can also use other t
 />
 ```
 
+## Orientation
+
+By default, LineChart uses a horizontal orientation where the X-axis is the category/independent axis and the Y-axis is the value/dependent axis. You can switch to a vertical orientation by setting `orientation="vertical"`, which swaps these roles.
+
+### Vertical Line Chart
+
+In vertical orientation, the line chart draws lines horizontally from left to right, with categories on the Y-axis.
+
+```jsx live
+<LineChart
+  orientation="vertical"
+  height={{ base: 250, tablet: 300, desktop: 350 }}
+  inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+  series={[
+    {
+      id: 'scores',
+      data: [85, 72, 95, 68, 78, 62],
+      color: 'var(--color-accentBoldBlue)',
+    },
+  ]}
+  showXAxis
+  showYAxis
+  xAxis={{
+    domain: { min: 0, max: 100 },
+    showGrid: true,
+    tickLabelFormatter: (value) => `${value}%`,
+  }}
+  yAxis={{
+    scaleType: 'band',
+    data: ['Project A', 'Project B', 'Project C', 'Project D', 'Project E', 'Project F'],
+    width: 80,
+  }}
+/>
+```
+
+### Vertical Line Chart with Area
+
+You can combine vertical orientation with area fill.
+
+```jsx live
+function VerticalLineWithArea() {
+  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+
+  return (
+    <LineChart
+      orientation="vertical"
+      showArea
+      height={{ base: 280, tablet: 320, desktop: 360 }}
+      inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      series={[
+        {
+          id: 'revenue',
+          data: [145, 128, 172, 98, 156, 112, 89],
+          color: 'var(--color-accentBoldGreen)',
+        },
+      ]}
+      showXAxis
+      showYAxis
+      xAxis={{
+        domain: { min: 0 },
+        showGrid: true,
+        GridLineComponent: ThinSolidLine,
+        tickLabelFormatter: (value) => `$${value}k`,
+      }}
+      yAxis={{
+        scaleType: 'band',
+        data: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7'],
+        width: 70,
+      }}
+    />
+  );
+}
+```
+
+### Vertical Line Chart with Gradient
+
+You can use gradients with vertical orientation. The gradient is applied along the value axis (X-axis in vertical orientation). Note that gradient `offset` values are **data values**, not percentages.
+
+```jsx live
+<LineChart
+  orientation="vertical"
+  showArea
+  height={{ base: 280, tablet: 320, desktop: 360 }}
+  inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+  series={[
+    {
+      id: 'performance',
+      data: [25, 45, 72, 85, 95, 88, 78],
+      gradient: {
+        axis: 'x',
+        // offset values correspond to actual data values (0-100 in this case)
+        stops: [
+          { offset: 0, color: 'var(--color-accentBoldRed)' },
+          { offset: 50, color: 'var(--color-accentBoldYellow)' },
+          { offset: 100, color: 'var(--color-accentBoldGreen)' },
+        ],
+      },
+    },
+  ]}
+  showXAxis
+  showYAxis
+  xAxis={{
+    domain: { min: 0, max: 100 },
+    showGrid: true,
+    tickLabelFormatter: (value) => `${value}%`,
+  }}
+  yAxis={{
+    scaleType: 'band',
+    data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    width: 40,
+  }}
+/>
+```
+
+### Vertical Line Chart with Y-Axis Gradient
+
+You can also apply the gradient along the Y-axis (category axis in vertical orientation). For band scales, the offset is the category index.
+
+```jsx live
+function VerticalGradientY() {
+  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+  const categories = ['Product A', 'Product B', 'Product C', 'Product D', 'Product E', 'Product F'];
+
+  return (
+    <LineChart
+      enableScrubbing
+      orientation="vertical"
+      showArea
+      height={{ base: 300, tablet: 350, desktop: 400 }}
+      inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      series={[
+        {
+          id: 'sales',
+          data: [120, 85, 145, 92, 178, 156],
+          label: 'Sales',
+          gradient: {
+            axis: 'y',
+            // For band scales, offset is the category index (0 to length-1)
+            stops: [
+              { offset: 0, color: 'var(--color-accentBoldPurple)' },
+              { offset: categories.length - 1, color: 'var(--color-accentBoldBlue)' },
+            ],
+          },
+        },
+      ]}
+      showXAxis
+      showYAxis
+      xAxis={{
+        domain: { min: 0 },
+        showGrid: true,
+        GridLineComponent: ThinSolidLine,
+        tickLabelFormatter: (value) => `$${value}k`,
+      }}
+      yAxis={{
+        scaleType: 'band',
+        data: categories,
+        width: 80,
+      }}
+    >
+      <Scrubber />
+    </LineChart>
+  );
+}
+```
+
+### Multiple Lines with Scrubber in Vertical Orientation
+
+Multiple series work with vertical orientation including scrubber interaction. The scrubber line and beacons are positioned horizontally.
+
+```jsx live
+function MultipleVerticalLines() {
+  const ThinSolidLine = memo((props: SolidLineProps) => <SolidLine {...props} strokeWidth={1} />);
+
+  return (
+    <LineChart
+      enableScrubbing
+      orientation="vertical"
+      height={{ base: 280, tablet: 320, desktop: 360 }}
+      inset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      series={[
+        {
+          id: 'actual',
+          data: [85, 72, 95, 68, 78],
+          color: 'var(--color-accentBoldBlue)',
+          label: 'Actual',
+        },
+        {
+          id: 'target',
+          data: [90, 80, 85, 75, 85],
+          color: 'var(--color-fgMuted)',
+          label: 'Target',
+        },
+      ]}
+      showXAxis
+      showYAxis
+      xAxis={{
+        domain: { min: 0, max: 100 },
+        showGrid: true,
+        GridLineComponent: ThinSolidLine,
+        tickLabelFormatter: (value) => `${value}%`,
+      }}
+      yAxis={{
+        scaleType: 'band',
+        data: ['North', 'South', 'East', 'West', 'Central'],
+        width: 60,
+      }}
+    >
+      <Scrubber />
+    </LineChart>
+  );
+}
+```
+
 ## Interaction
 
 Charts have built in functionality enabled through scrubbing, which can be used by setting `enableScrubbing` to true. You can listen to value changes through `onScrubberPositionChange`. Adding `Scrubber` to LineChart showcases the current scrubber position.

@@ -175,6 +175,10 @@ export const getPolarAxisScale = ({
  * For numeric scales, the domain limit controls whether bounds are "nice" (human-friendly)
  * or "strict" (exact min/max). Range can be customized using function-based configuration.
  *
+ * Range inversion is determined by axis role (category vs value) and orientation:
+ * - Horizontal orientation: Y axis (value) is inverted for SVG coordinate system
+ * - Vertical orientation: X axis (value) is NOT inverted (values flow left-to-right)
+ *
  * @param params - Scale parameters
  * @returns The D3 scale function
  * @throws An Error if bounds are invalid
@@ -184,18 +188,25 @@ export const getCartesianAxisScale = ({
   type,
   range,
   dataDomain,
+  orientation = 'horizontal',
 }: {
   config?: CartesianAxisConfig;
   type: 'x' | 'y';
   range: AxisBounds;
   dataDomain: AxisBounds;
+  orientation?: 'horizontal' | 'vertical';
 }): ChartScaleFunction => {
   const scaleType = config?.scaleType ?? 'linear';
 
   let adjustedRange = range;
 
-  // Invert range for Y axis for SVG coordinate system
-  if (type === 'y') {
+  // Determine if this axis needs range inversion for SVG coordinate system.
+  // For horizontal orientation: Y axis (value axis) needs inversion (higher values at top)
+  // For vertical orientation: Y axis (category axis) needs inversion (first category at top)
+  // X axis never needs inversion (left-to-right is natural for both orientations)
+  const shouldInvertRange = type === 'y';
+
+  if (shouldInvertRange) {
     adjustedRange = { min: adjustedRange.max, max: adjustedRange.min };
   }
 
@@ -283,12 +294,14 @@ export const getCartesianAxisConfig = (
  * @param axisParam - The axis configuration
  * @param series - Array of series objects (for stacking support)
  * @param axisType - Whether this is an 'x' or 'y' axis
+ * @param orientation - Chart orientation ('horizontal' or 'vertical')
  * @returns The calculated axis bounds
  */
 export const getCartesianAxisDomain = (
   axisParam: CartesianAxisConfigProps,
   series: CartesianSeries[],
   axisType: 'x' | 'y',
+  orientation: 'horizontal' | 'vertical' = 'horizontal',
 ): AxisBounds => {
   let dataDomain: AxisBounds | null = null;
   if (axisParam.data && Array.isArray(axisParam.data) && axisParam.data.length > 0) {
@@ -312,7 +325,12 @@ export const getCartesianAxisDomain = (
   }
 
   // Calculate domain from series data
-  const seriesDomain = axisType === 'x' ? getCartesianDomain(series) : getCartesianRange(series);
+  // In horizontal orientation: X is category (domain), Y is value (range)
+  // In vertical orientation: Y is category (domain), X is value (range)
+  const isCategoryAxis =
+    (orientation === 'horizontal' && axisType === 'x') ||
+    (orientation === 'vertical' && axisType === 'y');
+  const seriesDomain = isCategoryAxis ? getCartesianDomain(series) : getCartesianRange(series);
 
   // If data sets the domain, use that instead of the series domain
   const preferredDataDomain = dataDomain ?? seriesDomain;

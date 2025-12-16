@@ -67,6 +67,7 @@ export const projectPoint = ({
 /**
  * Projects multiple data points to pixel coordinates using chart scale functions.
  * Handles both numeric and band scales automatically.
+ * Used for horizontal orientation where X is the category axis.
  *
  * @example
  * ```typescript
@@ -133,6 +134,76 @@ export const projectPoints = ({
     ) {
       yValue = value as number;
     }
+
+    return projectPoint({
+      x: xValue,
+      y: yValue,
+      xScale,
+      yScale,
+    });
+  });
+};
+
+/**
+ * Projects multiple data points to pixel coordinates for vertical orientation.
+ * In vertical orientation, Y is the category axis and X is the value axis.
+ * Data values represent X values, and index/yData represents Y positions.
+ *
+ * @example
+ * ```typescript
+ * // For vertical orientation where data flows top-to-bottom
+ * const pixelPoints = projectPointsVertical({ data: [10, 20, 30], xScale, yScale });
+ * // Point 0: y=0, x=10
+ * // Point 1: y=1, x=20
+ * // Point 2: y=2, x=30
+ * ```
+ */
+export const projectPointsVertical = ({
+  data,
+  xScale,
+  yScale,
+  yData,
+}: {
+  data: (number | null | { x: number; y: number })[];
+  yData?: number[];
+  xScale: ChartScaleFunction;
+  yScale: ChartScaleFunction;
+}): Array<{ x: number; y: number } | null> => {
+  if (data.length === 0) {
+    return [];
+  }
+
+  return data.map((value, index) => {
+    if (value === null) {
+      return null;
+    }
+
+    // For explicit x/y objects, use them directly
+    if (typeof value === 'object' && 'x' in value && 'y' in value) {
+      return projectPoint({
+        x: value.x,
+        y: value.y,
+        xScale,
+        yScale,
+      });
+    }
+
+    // For vertical orientation: Y is category axis (index), X is value axis (data value)
+    let yValue: number = index;
+
+    // For band scales, always use the index
+    if (!isCategoricalScale(yScale)) {
+      // For numeric scales with axis data, use the axis data values instead of indices
+      if (yData && Array.isArray(yData) && yData.length > 0) {
+        if (typeof yData[0] === 'number') {
+          const numericYData = yData as number[];
+          yValue = numericYData[index] ?? index;
+        }
+      }
+    }
+
+    // Data value is the X value (value axis)
+    const xValue: number = value as number;
 
     return projectPoint({
       x: xValue,

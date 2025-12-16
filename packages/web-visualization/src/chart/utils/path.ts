@@ -2,10 +2,12 @@ import {
   arc as d3Arc,
   area as d3Area,
   curveBumpX,
+  curveBumpY,
   curveCatmullRom,
   curveLinear,
   curveLinearClosed,
   curveMonotoneX,
+  curveMonotoneY,
   curveNatural,
   curveStep,
   curveStepAfter,
@@ -13,7 +15,8 @@ import {
   line as d3Line,
 } from 'd3-shape';
 
-import { projectPoint, projectPoints } from './point';
+import { projectPoint, projectPoints, projectPointsVertical } from './point';
+import type { ChartOrientation } from './context';
 import { type ChartScaleFunction, isCategoricalScale } from './scale';
 
 export type ChartPathCurveType =
@@ -31,14 +34,22 @@ export type ChartPathCurveType =
  * Get the d3 curve function for a path.
  * See https://d3js.org/d3-shape/curve
  * @param curve - The curve type. Defaults to 'linear'.
+ * @param orientation - Chart orientation. For 'vertical' orientation, uses Y-axis variants
+ *                      of curves that have them (bump, monotone).
  * @returns The d3 curve function.
  */
-export const getPathCurveFunction = (curve: ChartPathCurveType = 'linear') => {
+export const getPathCurveFunction = (
+  curve: ChartPathCurveType = 'linear',
+  orientation: ChartOrientation = 'horizontal',
+) => {
+  const isVertical = orientation === 'vertical';
+
   switch (curve) {
     case 'catmullRom':
       return curveCatmullRom;
-    case 'monotone': // When we support layout="vertical" this should dynamically switch to curveMonotoneY
-      return curveMonotoneX;
+    case 'monotone':
+      // For vertical orientation, use curveMonotoneY which assumes Y is the independent axis
+      return isVertical ? curveMonotoneY : curveMonotoneX;
     case 'natural':
       return curveNatural;
     case 'step':
@@ -47,8 +58,9 @@ export const getPathCurveFunction = (curve: ChartPathCurveType = 'linear') => {
       return curveStepBefore;
     case 'stepAfter':
       return curveStepAfter;
-    case 'bump': // When we support layout="vertical" this should dynamically switch to curveBumpY
-      return curveBumpX;
+    case 'bump':
+      // For vertical orientation, use curveBumpY which creates smooth bumps along the Y axis
+      return isVertical ? curveBumpY : curveBumpX;
     case 'linearClosed':
       return curveLinearClosed;
     case 'linear':
@@ -72,26 +84,39 @@ export const getLinePath = ({
   xScale,
   yScale,
   xData,
+  yData,
   connectNulls,
+  orientation = 'horizontal',
 }: {
   data: (number | null | { x: number; y: number })[];
   curve?: ChartPathCurveType;
   xScale: ChartScaleFunction;
   yScale: ChartScaleFunction;
   xData?: number[];
+  yData?: number[];
   /**
    * When true, null values are skipped and the line connects across gaps.
    * By default, null values create gaps in the line.
    */
   connectNulls?: boolean;
+  /**
+   * Chart orientation. For 'vertical' orientation, data flows top-to-bottom with
+   * Y as the category axis and X as the value axis.
+   * @default 'horizontal'
+   */
+  orientation?: ChartOrientation;
 }): string => {
   if (data.length === 0) {
     return '';
   }
 
-  const curveFunction = getPathCurveFunction(curve);
+  const curveFunction = getPathCurveFunction(curve, orientation);
 
-  const dataPoints = projectPoints({ data, xScale, yScale, xData });
+  // For vertical orientation, use projectPointsVertical which swaps the interpretation
+  const dataPoints =
+    orientation === 'vertical'
+      ? projectPointsVertical({ data, xScale, yScale, yData })
+      : projectPoints({ data, xScale, yScale, xData });
 
   // When connectNulls is true, filter out null values before rendering
   // When false, use defined() to create gaps in the line
@@ -134,27 +159,42 @@ export const getAreaPath = ({
   xScale,
   yScale,
   xData,
+  yData,
   connectNulls,
+  orientation = 'horizontal',
 }: {
   data: (number | null)[] | Array<[number, number] | null>;
   xScale: ChartScaleFunction;
   yScale: ChartScaleFunction;
   curve: ChartPathCurveType;
   xData?: number[];
+  yData?: number[];
   /**
    * When true, null values are skipped and the area connects across gaps.
    * By default null values create gaps in the area.
    */
   connectNulls?: boolean;
+  /**
+   * Chart orientation. For 'vertical' orientation, the area extends horizontally
+   * from a vertical baseline.
+   * @default 'horizontal'
+   */
+  orientation?: ChartOrientation;
 }): string => {
   if (data.length === 0) {
     return '';
   }
 
-  const curveFunction = getPathCurveFunction(curve);
+  const curveFunction = getPathCurveFunction(curve, orientation);
 
-  const yDomain = yScale.domain();
-  const yMin = Math.min(...yDomain);
+  // For horizontal orientation: Y is value axis (area fills vertically)
+  // For vertical orientation: X is value axis (area fills horizontally)
+  const valueScale = orientation === 'vertical' ? xScale : yScale;
+  const categoryScale = orientation === 'vertical' ? yScale : xScale;
+  const categoryData = orientation === 'vertical' ? yData : xData;
+
+  const valueDomain = valueScale.domain();
+  const valueMin = Math.min(...valueDomain);
 
   const normalizedData: Array<[number, number] | null> = data.map((item, index) => {
     if (item === null) {
@@ -169,7 +209,7 @@ export const getAreaPath = ({
     }
 
     if (typeof item === 'number') {
-      return [yMin, item];
+      return [valueMin, item];
     }
 
     return null;
@@ -178,51 +218,74 @@ export const getAreaPath = ({
   const dataPoints = normalizedData.map((range, index) => {
     if (range === null) {
       return {
-        x: 0,
+        category: 0,
         low: null,
         high: null,
         isValid: false,
       };
     }
 
-    let xValue: number = index;
-    if (!isCategoricalScale(xScale) && xData && xData[index] !== undefined) {
-      xValue = xData[index];
+    let categoryValue: number = index;
+    if (!isCategoricalScale(categoryScale) && categoryData && categoryData[index] !== undefined) {
+      categoryValue = categoryData[index];
     }
 
-    const xPoint = projectPoint({ x: xValue, y: 0, xScale, yScale });
-    const lowPoint = projectPoint({
-      x: xValue,
-      y: range[0],
-      xScale,
-      yScale,
-    });
-    const highPoint = projectPoint({
-      x: xValue,
-      y: range[1],
-      xScale,
-      yScale,
-    });
+    if (orientation === 'vertical') {
+      // For vertical orientation: Y is category, X is value
+      const yPoint = projectPoint({ x: 0, y: categoryValue, xScale, yScale });
+      const lowPoint = projectPoint({ x: range[0], y: categoryValue, xScale, yScale });
+      const highPoint = projectPoint({ x: range[1], y: categoryValue, xScale, yScale });
 
-    return {
-      x: xPoint.x,
-      low: lowPoint.y,
-      high: highPoint.y,
-      isValid: true,
-    };
+      return {
+        category: yPoint.y,
+        low: lowPoint.x,
+        high: highPoint.x,
+        isValid: true,
+      };
+    } else {
+      // For horizontal orientation: X is category, Y is value
+      const xPoint = projectPoint({ x: categoryValue, y: 0, xScale, yScale });
+      const lowPoint = projectPoint({ x: categoryValue, y: range[0], xScale, yScale });
+      const highPoint = projectPoint({ x: categoryValue, y: range[1], xScale, yScale });
+
+      return {
+        category: xPoint.x,
+        low: lowPoint.y,
+        high: highPoint.y,
+        isValid: true,
+      };
+    }
   });
 
   // When connectNulls is true, filter out invalid points before rendering
   // When false, use defined() to create gaps in the area
   const filteredPoints = connectNulls ? dataPoints.filter((d) => d.isValid) : dataPoints;
 
+  if (orientation === 'vertical') {
+    // For vertical orientation, area extends horizontally from a vertical line
+    const areaGenerator = d3Area<{
+      category: number;
+      low: number | null;
+      high: number | null;
+      isValid: boolean;
+    }>()
+      .y((d) => d.category) // Y is the category axis
+      .x0((d) => d.low ?? 0) // Left boundary (low values)
+      .x1((d) => d.high ?? 0) // Right boundary (high values)
+      .curve(curveFunction)
+      .defined((d) => connectNulls || (d.isValid && d.low != null && d.high != null));
+
+    return areaGenerator(filteredPoints) ?? '';
+  }
+
+  // Horizontal orientation (default)
   const areaGenerator = d3Area<{
-    x: number;
+    category: number;
     low: number | null;
     high: number | null;
     isValid: boolean;
   }>()
-    .x((d) => d.x)
+    .x((d) => d.category) // X is the category axis
     .y0((d) => d.low ?? 0) // Bottom boundary (low values), fallback to 0
     .y1((d) => d.high ?? 0) // Top boundary (high values), fallback to 0
     .curve(curveFunction)
