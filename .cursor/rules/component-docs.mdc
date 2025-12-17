@@ -113,7 +113,7 @@ apps/docs/docs/components/[docs-category]/[ComponentName]/
 {
   "import": "import { ComponentName } from '@coinbase/cds-web/[source-category]/[ComponentName]'",
   "source": "https://github.com/coinbase/cds/blob/master/packages/web/src/[source-category]/[ComponentName].tsx",
-  "description": "[Component description]",
+  "description": "[One brief sentence describing what the component does]",
   "figma": "[figma link]", // only add if provided
   "storybook": "[storybook link]", // only add if provided
   "relatedComponents": [
@@ -123,13 +123,30 @@ apps/docs/docs/components/[docs-category]/[ComponentName]/
 }
 ```
 
+**Description Guidelines:**
+
+- Keep it to ONE brief sentence
+- Describe WHAT the component does, not WHEN to use it
+- Avoid listing use cases in the description
+
+**Good examples:**
+
+- "A collapsible component to let users show and hide sections of related content on a page."
+- "A text field that allows users to enter and edit text."
+- "A button that triggers an action when pressed."
+
+**Bad examples:**
+
+- "A collapsible component for organizing content into expandable sections. Only one section can be expanded at a time, making it ideal for FAQs, settings panels, and progressive disclosure patterns." (too long, includes use cases)
+- "Use this for FAQs, settings, and forms." (describes use cases, not the component)
+
 #### mobileMetadata.json
 
 ```json
 {
   "import": "import { ComponentName } from '@coinbase/cds-mobile/[source-category]/[ComponentName]'",
   "source": "https://github.com/coinbase/cds/blob/master/packages/mobile/src/[source-category]/[ComponentName].tsx",
-  "description": "[Component description]",
+  "description": "[One brief sentence describing what the component does]",
   "figma": "[figma link]", // only add if provided
   "relatedComponents": [
     { "label": "[componentName]", "url": "/components/[category]/[componentName]" }
@@ -274,83 +291,387 @@ import mobileMetadata from './mobileMetadata.json';
 </VStack>
 ```
 
-### 4. Examples
+### 4. Examples Content Guidelines
 
-#### \_webExamples.mdx (Live Examples)
+The examples files (`_webExamples.mdx` and `_mobileExamples.mdx`) are the heart of component documentation. They should teach developers how to use the component effectively through progressive disclosure.
+
+#### Key Principles
+
+1. **Web and mobile docs should match** - Use the same section structure for both platforms
+2. **Start directly with Basics** - No introduction paragraph. Jump straight into the first `## Basics` section
+3. **Be concise** - Don't over-explain. Brief text before code blocks (1-2 sentences max)
+4. **Show common props in Basics** - Include commonly-used props (like `subtitle`, `media`, etc.) in the Basics examples so users see them immediately
+5. **Don't over-document** - Not every prop or callback needs its own section. Focus on the most important features
+6. **Accessibility only when required** - Only include an Accessibility section if users must provide `accessibilityLabel` or handle specific a11y concerns themselves. If the component handles a11y automatically, skip this section
+7. **Composed Examples at the bottom** - Complex, real-world use cases that combine multiple features
+
+#### Code Block Syntax
+
+- **Web examples**: Use ` ```jsx live ` for interactive examples that render in the browser
+- **Mobile examples**: Use ` ```jsx ` for static code snippets (mobile can't render live)
+
+#### Document Structure
+
+**Web and mobile examples should follow the same structure** to provide a consistent experience across platforms.
+
+**IMPORTANT: Do NOT start with an introduction paragraph.** The component description is already in the metadata and shown in the header. Start directly with `## Basics`.
+
+Organize content in this order:
+
+1. **Setup** - Any required setup (providers, context, etc.) - only if needed (common for mobile charts)
+2. **Basics** - **REQUIRED, ALWAYS FIRST** - Simplest usage showing required props, most common use cases. Mention related components here naturally (e.g., "ComponentName uses [OtherComponent](/link) to..."). Show common props like `subtitle`, `media`, etc. in these examples.
+3. **Data / Validation** - Data handling, validation rules, edge cases (for form inputs, charts, etc.)
+4. **Interaction** - Interactive features like controlled state and callbacks. Start with a brief explanation, then ONE example (no subheadings)
+5. **Accessibility** - **ONLY include if users need to provide `accessibilityLabel` or handle a11y themselves.** If the component handles accessibility automatically, skip this section entirely.
+6. **Localization** - i18n considerations if applicable
+7. **Styling** - Props that modify appearance (compact, disabled, variants). Use simple prop names as headers (e.g., "### Compact" not "### With compact")
+8. **Composed Examples** - **Complex, real-world use cases at the bottom** - showcases combining multiple features into production-ready patterns
+
+#### Writing Style
+
+- **No introduction paragraph** - Don't start with "ComponentName is a..." or describe use cases. Jump straight to Basics.
+- **Brief explanatory text before code blocks** - 1-2 sentences max
+- **Use `##` for major sections** - Creates proper table of contents
+- **Minimal `###` subheadings** - Only use for Styling subsections and Composed Examples. Don't create subheadings within Basics or Interaction.
+- **Inline additional features** - Instead of "### Default expanded item", write "You can use `defaultActiveKey` to specify which item should be expanded when the accordion first renders."
+- **Link related components in Basics** - Mention them naturally: "ComponentName uses [Collapsible](/components/layout/Collapsible/) to show and hide content."
+- **Use `:::tip` syntax sparingly** - Only for critical accessibility or usage tips
+
+#### Basics Section Guidelines
+
+The Basics section should:
+
+- Show the minimal required props first
+- Include common optional props (like `subtitle`, `media`) in examples so users see them
+- Link to related/child components naturally in the text
+- Integrate simple prop explanations inline (not as separate headings)
+
+**Good Basics section:**
 
 ````mdx
-### Basic Usage
+## Basics
 
-```tsx live
-  <[ComponentName]
-    webSpecificProp="value"
-    sharedProp="value"
-  />
+ComponentName uses [ChildComponent](/components/category/ChildComponent/) to render each item. Each item requires a unique `itemKey` prop and a `title`.
+
+```jsx live
+<ComponentName>
+  <ChildComponent itemKey="1" title="First item" subtitle="Optional subtitle">
+    Content goes here
+  </ChildComponent>
+  <ChildComponent itemKey="2" title="Second item">
+    More content
+  </ChildComponent>
+</ComponentName>
 ```
 
-### Web-Specific Features
+You can use `defaultActiveKey` to specify which item should be expanded when the component first renders.
 
-```tsx live
-  <[ComponentName]
-    webOnlyFeature="value"
-    webSpecificHandler={() => {}}
-  />
-</Example>
-```
-
-### Common Use Cases
-
-```tsx live
-  <[ComponentName] ... />
-</Example>
+```jsx live
+<ComponentName defaultActiveKey="2">
+  <ChildComponent itemKey="1" title="First item">
+    Content
+  </ChildComponent>
+  <ChildComponent itemKey="2" title="Second item (open by default)">
+    Content
+  </ChildComponent>
+</ComponentName>
 ```
 ````
 
-#### \_mobileExamples.mdx (Static Examples)
+**Bad Basics section:**
 
 ````mdx
-### Basic Usage
+## Basics
 
-```tsx
-  <[ComponentName]
-    mobileSpecificProp="value"
-    sharedProp="value"
-  />
+### Simple usage
+
+```jsx live
+<ComponentName>...</ComponentName>
 ```
 
-### Mobile-Specific Features
+### Default expanded item
 
-```tsx
-  <[ComponentName]
-    mobileOnlyFeature="value"
-    onMobileSpecificEvent={() => {}}
-  />
+Use the `defaultActiveKey` prop...
+
+```jsx live
+<ComponentName defaultActiveKey="2">...</ComponentName>
 ```
 
-### Common Use Cases
+### With subtitle
 
-```tsx
-  <[ComponentName] ... />
+```jsx live
+<ComponentName>
+  <ChildComponent subtitle="subtitle">...</ChildComponent>
+</ComponentName>
+```
+````
+
+The bad example has too many subheadings and separates simple props that should be shown together.
+
+#### Interaction Section Guidelines
+
+The Interaction section should:
+
+- Start with ONE brief paragraph explaining controlled vs uncontrolled behavior
+- Show ONE example demonstrating the key interactive features
+- NOT have subheadings (no `###` within Interaction)
+
+**Good Interaction section:**
+
+````mdx
+## Interaction
+
+By default, ComponentName is uncontrolled. You can use `activeKey` and `setActiveKey` to manage controlled state, and `onChange` to listen to changes.
+
+```jsx live
+function ControlledExample() {
+  const [activeKey, setActiveKey] = useState(null);
+
+  return (
+    <VStack gap={3}>
+      <HStack gap={2}>
+        <Button compact variant="secondary" onClick={() => setActiveKey('section1')}>
+          Open first
+        </Button>
+        <Button compact variant="secondary" onClick={() => setActiveKey(null)}>
+          Close all
+        </Button>
+      </HStack>
+      <ComponentName
+        activeKey={activeKey}
+        setActiveKey={setActiveKey}
+        onChange={(key) => console.log(key)}
+      >
+        <ChildComponent itemKey="section1" title="Section 1">
+          Content
+        </ChildComponent>
+        <ChildComponent itemKey="section2" title="Section 2">
+          Content
+        </ChildComponent>
+      </ComponentName>
+    </VStack>
+  );
+}
+```
+````
+
+**Bad Interaction section:**
+
+````mdx
+## Interaction
+
+### Uncontrolled with onChange
+
+Use the `onChange` callback...
+
+```jsx live
+// example 1
+```
+
+### Controlled state
+
+For full control...
+
+```jsx live
+// example 2
+```
+
+### Item-level callbacks
+
+Use the `onClick` prop...
+
+```jsx live
+// example 3
+```
+````
+
+The bad example over-documents with too many subheadings and examples.
+
+#### Styling Section Guidelines
+
+The Styling section should:
+
+- Only include props that genuinely modify styling/appearance
+- Use simple prop names as headers (e.g., "### Compact" not "### With compact")
+- NOT include props that are better shown in Basics (like `subtitle`, `media`)
+
+**Good Styling headers:**
+
+- `### Compact`
+- `### Disabled`
+- `### Variants`
+
+**Bad Styling headers:**
+
+- `### With compact`
+- `### Using the disabled prop`
+- `### Subtitle` (should be in Basics instead)
+
+#### When to Skip Sections
+
+- **Skip Accessibility** if the component handles a11y automatically (no user-provided labels needed)
+- **Skip Interaction** if there's no controlled state or meaningful callbacks
+- **Skip Styling** if there are no appearance-modifying props
+- **Skip individual prop documentation** if it's minor or self-explanatory from the props table
+
+#### Mobile vs Web Differences
+
+**Mobile-specific patterns:**
+
+- Use `theme.color.X` instead of CSS variables: `theme.color.fgPositive` not `var(--color-fgPositive)`
+- Use `theme.spectrum.X` for spectrum colors: `rgb(${theme.spectrum.green40})`
+- Use `onPress` instead of `onClick`
+- Mobile charts may need `ChartBridgeProvider` setup - document this in a Setup section
+- Reference Skia-specific APIs where relevant (fonts, paragraph builders)
+
+**Web-specific patterns:**
+
+- Use CSS variables: `var(--color-fgPositive)`
+- Use responsive height objects: `height={{ base: 200, tablet: 225, desktop: 250 }}`
+- Use `onClick` handlers
+- Can use `useBreakpoints()` for responsive behavior
+
+#### Full Example Template
+
+````mdx
+## Basics
+
+ComponentName uses [ChildComponent](/components/category/ChildComponent/) to render items. Each item requires a unique `itemKey` and a `title`.
+
+```jsx live
+<ComponentName>
+  <ChildComponent itemKey="1" title="First item" subtitle="With a subtitle">
+    Content goes here
+  </ChildComponent>
+  <ChildComponent itemKey="2" title="Second item">
+    More content
+  </ChildComponent>
+</ComponentName>
+```
+
+You can use `defaultActiveKey` to specify which item should be expanded when the component first renders.
+
+```jsx live
+<ComponentName defaultActiveKey="2">
+  <ChildComponent itemKey="1" title="First item">
+    Content
+  </ChildComponent>
+  <ChildComponent itemKey="2" title="Second item">
+    Content
+  </ChildComponent>
+</ComponentName>
+```
+
+## Interaction
+
+By default, ComponentName is uncontrolled. You can use `activeKey` and `setActiveKey` to manage controlled state, and `onChange` to listen to changes.
+
+```jsx live
+function ControlledExample() {
+  const [activeKey, setActiveKey] = useState(null);
+
+  return (
+    <VStack gap={3}>
+      <Button compact onClick={() => setActiveKey(activeKey ? null : 'item1')}>
+        Toggle first item
+      </Button>
+      <ComponentName activeKey={activeKey} setActiveKey={setActiveKey}>
+        <ChildComponent itemKey="item1" title="First">
+          Content
+        </ChildComponent>
+        <ChildComponent itemKey="item2" title="Second">
+          Content
+        </ChildComponent>
+      </ComponentName>
+    </VStack>
+  );
+}
+```
+
+## Styling
+
+### Compact
+
+Use the `compact` prop for a smaller size.
+
+```jsx live
+<ComponentName compact>
+  <ChildComponent itemKey="1" title="Compact item">
+    Content
+  </ChildComponent>
+</ComponentName>
+```
+
+### Disabled
+
+```jsx live
+<ComponentName disabled>
+  <ChildComponent itemKey="1" title="Disabled item">
+    Content
+  </ChildComponent>
+</ComponentName>
+```
+
+## Composed Examples
+
+### FAQ Section
+
+```jsx live
+function FAQSection() {
+  const faqs = useMemo(
+    () => [
+      { key: 'q1', question: 'Question 1?', answer: 'Answer 1' },
+      { key: 'q2', question: 'Question 2?', answer: 'Answer 2' },
+    ],
+    [],
+  );
+
+  return (
+    <ComponentName>
+      {faqs.map((faq) => (
+        <ChildComponent key={faq.key} itemKey={faq.key} title={faq.question}>
+          <Text font="body" color="fgMuted">
+            {faq.answer}
+          </Text>
+        </ChildComponent>
+      ))}
+    </ComponentName>
+  );
+}
 ```
 ````
 
 ## Final Checklist
 
-- [ ] Verified component existence in web/mobile2
+### Setup
+
+- [ ] Verified component existence in web/mobile
 - [ ] Created only necessary platform-specific files
 - [ ] Set correct `platform_switcher_options`
 - [ ] Metadata files have correct package imports
 - [ ] Props tables import from correct package
-- [ ] Examples use components correctly in the code snippet. Check the implementation of the components in cds-web or cds-mobile package to verify.
 - [ ] ComponentTabsContainer includes only existing platform props
 - [ ] All imports use correct source categories
-- [ ] Component description is clear and helpful
+- [ ] Component description is ONE brief sentence (no use cases)
 - [ ] Added optional storybook/figma links if provided
+
+### Content
+
+- [ ] **No introduction paragraph** - starts directly with `## Basics`
+- [ ] Web and mobile examples follow the same structure
+- [ ] Common props (subtitle, media) shown in Basics examples
+- [ ] Related components linked naturally in Basics text
+- [ ] Interaction section has ONE example with brief intro (no subheadings)
+- [ ] **Accessibility section only if users must handle a11y** - skip if automatic
+- [ ] Styling headers are simple prop names (e.g., "Compact" not "With compact")
+- [ ] Complex examples are in **Composed Examples** at the bottom
+- [ ] Examples use components correctly (check implementation in cds-web/cds-mobile)
+- [ ] All examples work and render correctly
 
 ## Notes
 
 1. Source category might differ from docs category
 2. Add storybook and figma links to metadata if provided
-3. Ensure all examples work and have proper code snippets
-4. Include accessibility considerations if applicable
-5. Test all examples and props tables render correctly
+3. Web uses `jsx live` for interactive examples, mobile uses `jsx` for static snippets
+4. Mobile uses `theme.color.X` instead of CSS variables
+5. Be concise - don't over-document features that are self-explanatory from props table
