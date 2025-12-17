@@ -2,10 +2,12 @@ import React, { forwardRef, memo, useCallback, useMemo, useRef, useState } from 
 import { type LayoutChangeEvent, type StyleProp, type View, type ViewStyle } from 'react-native';
 import type { Rect } from '@coinbase/cds-common/types';
 import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
+import { useScreenReaderStatus } from '@coinbase/cds-mobile/hooks/useScreenReaderStatus';
 import type { BoxBaseProps, BoxProps } from '@coinbase/cds-mobile/layout';
 import { Box } from '@coinbase/cds-mobile/layout';
 import { Canvas, Skia, type SkTypefaceFontProvider } from '@shopify/react-native-skia';
 
+import { ChartAccessibilityView } from './ChartAccessibilityView';
 import { Legend } from './legend/Legend';
 import { convertToSerializableScale, type SerializableScale } from './utils/scale';
 import type { LegendPosition } from './CartesianChart';
@@ -146,6 +148,20 @@ export type PolarChartBaseProps = Omit<BoxBaseProps, 'fontFamily' | 'accessibili
      * accessibilityLabel={(item) => item ? `${item.seriesId} selected` : "Pie chart"}
      */
     accessibilityLabel?: string | ((highlightedItem: HighlightedItemData | undefined) => string);
+    /**
+     * Function to generate accessibility labels for screen reader navigation.
+     * When provided, renders an accessible overlay that allows VoiceOver/TalkBack users
+     * to navigate through each slice of the chart.
+     *
+     * Only rendered when a screen reader is active.
+     *
+     * @example
+     * screenReaderAccessibilityLabel={(item) => {
+     *   const slice = series.find(s => s.id === item.seriesId);
+     *   return `${slice?.label}: ${slice?.data}%`;
+     * }}
+     */
+    screenReaderAccessibilityLabel?: (item: HighlightedItemData) => string;
   };
 
 export type PolarChartProps = PolarChartBaseProps &
@@ -215,6 +231,7 @@ export const PolarChart = memo(
         fontFamilies,
         fontProvider: fontProviderProp,
         accessibilityLabel: accessibilityLabelProp,
+        screenReaderAccessibilityLabel,
         // React Native will collapse views by default when only used
         // to group children, which interferes with gesture-handler
         // https://docs.swmansion.com/react-native-gesture-handler/docs/gestures/gesture-detector/#:~:text=%7B%0A%20%20return%20%3C-,View,-collapsable%3D%7B
@@ -225,6 +242,7 @@ export const PolarChart = memo(
     ) => {
       const [containerLayout, onContainerLayout] = useLayout();
       const [highlightedItem, setHighlightedItem] = useState<HighlightedItemData | undefined>();
+      const isScreenReaderEnabled = useScreenReaderStatus();
 
       const chartWidth = containerLayout.width;
       const chartHeight = containerLayout.height;
@@ -529,6 +547,9 @@ export const PolarChart = memo(
               <ChartCanvas onLayout={onContainerLayout} style={styles?.chart}>
                 {children}
               </ChartCanvas>
+              {isScreenReaderEnabled && screenReaderAccessibilityLabel && (
+                <ChartAccessibilityView accessibilityLabel={screenReaderAccessibilityLabel} />
+              )}
               {!isLegendBefore && legendElement}
             </Box>
           </HighlightProvider>

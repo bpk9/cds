@@ -1,5 +1,5 @@
-import React, { memo, useCallback, useContext, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { memo, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { type AccessibilityActionEvent, AccessibilityInfo, StyleSheet, View } from 'react-native';
 import chunk from 'lodash/chunk';
 
 import { useChartContext } from './ChartProvider';
@@ -11,11 +11,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   polarContainer: {
-    // Hidden from visual display but accessible to screen readers
     position: 'absolute',
-    opacity: 0,
-    width: 1,
-    height: 1,
   },
 });
 
@@ -52,6 +48,7 @@ export type ChartAccessibilityViewProps = {
  *
  * For Polar charts (pie, donut):
  * - Creates one accessible element per series (slice)
+ * - Elements are positioned over the drawing area for VoiceOver discovery
  * - On focus, highlights the corresponding slice via opacity dimming
  *
  * This component should only be rendered when accessibility is needed.
@@ -112,14 +109,8 @@ export const ChartAccessibilityView = memo(function ChartAccessibilityView({
     return chunks;
   }, [type, dataLength, effectiveMode, maxRegions]);
 
-  const getFlexStyle = useCallback(
-    (length: number) => ({
-      flex: length,
-    }),
-    [],
-  );
-
-  const cartesianContainerStyle = useMemo(
+  // Container style positioned over drawing area
+  const containerStyle = useMemo(
     () => [
       styles.container,
       {
@@ -137,7 +128,7 @@ export const ChartAccessibilityView = memo(function ChartAccessibilityView({
     if (dataLength === 0 || chunkedIndices.length === 0) return null;
 
     return (
-      <View pointerEvents="box-none" style={cartesianContainerStyle}>
+      <View pointerEvents="box-none" style={containerStyle}>
         {chunkedIndices.map((indexChunk, chunkIndex) => {
           // Use the first index in the chunk for the accessibility label
           const firstIndex = indexChunk[0];
@@ -151,7 +142,7 @@ export const ChartAccessibilityView = memo(function ChartAccessibilityView({
               accessibilityRole="button"
               onAccessibilityEscape={handleBlur}
               onAccessibilityTap={() => handleFocus(item)}
-              style={getFlexStyle(indexChunk.length)}
+              style={{ flex: indexChunk.length }}
             />
           );
         })}
@@ -159,29 +150,161 @@ export const ChartAccessibilityView = memo(function ChartAccessibilityView({
     );
   }
 
-  // Render Polar accessibility view (one element per series)
+  // Render Polar accessibility view (single adjustable element covering entire pie)
+  // User can swipe up/down to cycle through slices while the view stays in place
   if (type === 'polar') {
     if (!series || series.length === 0) return null;
 
     return (
-      <View accessibilityRole="list" pointerEvents="box-none" style={styles.polarContainer}>
-        {series.map((s, index) => {
-          const item: HighlightedItemData = { seriesId: s.id, dataIndex: index };
-
-          return (
-            <View
-              key={s.id}
-              accessible
-              accessibilityLabel={accessibilityLabel(item)}
-              accessibilityRole="button"
-              onAccessibilityEscape={handleBlur}
-              onAccessibilityTap={() => handleFocus(item)}
-            />
-          );
-        })}
-      </View>
+      <PolarAccessibilityElement
+        accessibilityLabel={accessibilityLabel}
+        drawingArea={drawingArea}
+        handleBlur={handleBlur}
+        handleFocus={handleFocus}
+        series={series}
+      />
     );
   }
 
   return null;
+});
+
+/**
+ * Polar chart accessibility element that uses the "adjustable" role.
+ * Renders a single element covering the entire pie that allows swipe up/down
+ * to navigate between slices.
+ *
+ * Has two states:
+ * 1. Overview state (initial): No slice highlighted, waits for user interaction
+ * 2. Selection state: Shows individual slice labels with position indicator
+ */
+const PolarAccessibilityElement = memo(function PolarAccessibilityElement({
+  series,
+  accessibilityLabel,
+  drawingArea,
+  handleFocus,
+  handleBlur,
+}: {
+  series: Array<{ id: string }>;
+  accessibilityLabel: (item: HighlightedItemData) => string;
+  drawingArea: { x: number; y: number; width: number; height: number };
+  handleFocus: (item: HighlightedItemData) => void;
+  handleBlur: () => void;
+}) {
+  // Use ref for current index to avoid stale closures and ensure sync between
+  // visual highlight and announcement
+  const currentIndexRef = useRef<number | null>(null);
+  // State to trigger re-renders for accessibility label updates
+  const [, forceUpdate] = useState({});
+
+  // Helper to get the announcement text for an index
+  const getAnnouncementText = useCallback(
+    (index: number) => {
+      const item: HighlightedItemData = {
+        seriesId: series[index]?.id,
+        dataIndex: index,
+      };
+      const sliceLabel = accessibilityLabel(item);
+      return `${sliceLabel}. ${index + 1} of ${series.length}`;
+    },
+    [series, accessibilityLabel],
+  );
+
+  // Helper to select a slice - updates highlight and announces
+  const selectSlice = useCallback(
+    (index: number) => {
+      currentIndexRef.current = index;
+
+      // Update visual highlight immediately
+      const item: HighlightedItemData = {
+        seriesId: series[index]?.id,
+        dataIndex: index,
+      };
+      handleFocus(item);
+
+      // Announce the new selection (this ensures sync with visual)
+      const announcement = getAnnouncementText(index);
+      AccessibilityInfo.announceForAccessibility(announcement);
+
+      // Trigger re-render to update accessibility props
+      forceUpdate({});
+    },
+    [series, handleFocus, getAnnouncementText],
+  );
+
+  // Helper to clear selection
+  const clearSelection = useCallback(() => {
+    currentIndexRef.current = null;
+    handleBlur();
+    forceUpdate({});
+  }, [handleBlur]);
+
+  // Container style positioned over drawing area
+  const containerStyle = useMemo(
+    () => [
+      styles.polarContainer,
+      {
+        left: drawingArea.x,
+        top: drawingArea.y,
+        width: drawingArea.width,
+        height: drawingArea.height,
+      },
+    ],
+    [drawingArea],
+  );
+
+  // Handle accessibility actions (increment/decrement for swipe up/down)
+  const handleAccessibilityAction = useCallback(
+    (event: AccessibilityActionEvent) => {
+      const actionName = event.nativeEvent.actionName;
+      const currentIndex = currentIndexRef.current;
+      const isOverview = currentIndex === null;
+
+      if (actionName === 'increment') {
+        // From overview, go to first slice; otherwise go to next
+        const nextIndex = isOverview ? 0 : (currentIndex + 1) % series.length;
+        selectSlice(nextIndex);
+      } else if (actionName === 'decrement') {
+        // From overview, go to last slice; otherwise go to previous
+        const prevIndex = isOverview
+          ? series.length - 1
+          : (currentIndex - 1 + series.length) % series.length;
+        selectSlice(prevIndex);
+      } else if (actionName === 'escape') {
+        clearSelection();
+      }
+    },
+    [series.length, selectSlice, clearSelection],
+  );
+
+  // Accessibility actions for VoiceOver swipe gestures
+  const accessibilityActions = useMemo(
+    () => [
+      { name: 'increment' as const, label: 'Next slice' },
+      { name: 'decrement' as const, label: 'Previous slice' },
+    ],
+    [],
+  );
+
+  // Current state for accessibility props
+  const currentIndex = currentIndexRef.current;
+  const isOverview = currentIndex === null;
+
+  // In overview state, no label - parent chart handles overview
+  // In selection state, show slice info with position
+  const label = isOverview ? undefined : getAnnouncementText(currentIndex);
+
+  return (
+    <View
+      accessible
+      accessibilityActions={accessibilityActions}
+      accessibilityLabel={label}
+      accessibilityRole="adjustable"
+      accessibilityValue={label ? { text: label } : undefined}
+      onAccessibilityAction={handleAccessibilityAction}
+      onAccessibilityEscape={clearSelection}
+      pointerEvents="box-none"
+      style={containerStyle}
+    />
+  );
 });

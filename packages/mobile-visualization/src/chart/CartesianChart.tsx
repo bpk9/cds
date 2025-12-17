@@ -9,11 +9,13 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { Rect } from '@coinbase/cds-common/types';
 import { useLayout } from '@coinbase/cds-mobile/hooks/useLayout';
+import { useScreenReaderStatus } from '@coinbase/cds-mobile/hooks/useScreenReaderStatus';
 import type { BoxBaseProps, BoxProps } from '@coinbase/cds-mobile/layout';
 import { Box } from '@coinbase/cds-mobile/layout';
 import { Haptics } from '@coinbase/cds-mobile/utils/haptics';
 import { Canvas, Skia, type SkTypefaceFontProvider } from '@shopify/react-native-skia';
 
+import { ChartAccessibilityView } from './ChartAccessibilityView';
 import { Legend } from './legend/Legend';
 import { ScrubberProvider, type ScrubberProviderProps } from './scrubber/ScrubberProvider';
 import { getPointOnSerializableScale } from './utils/point';
@@ -124,6 +126,27 @@ export type CartesianChartBaseProps = Omit<BoxBaseProps, 'fontFamily' | 'accessi
      * accessibilityLabel={(item) => item ? `Month ${item.dataIndex + 1} selected` : "Sales chart"}
      */
     accessibilityLabel?: string | ((highlightedItem: HighlightedItemData | undefined) => string);
+    /**
+     * Function to generate accessibility labels for screen reader navigation.
+     * When provided, renders an accessible overlay that allows VoiceOver/TalkBack users
+     * to navigate through chart data points.
+     *
+     * Only rendered when a screen reader is active.
+     *
+     * @example
+     * screenReaderAccessibilityLabel={(item) => {
+     *   const value = data[item.dataIndex];
+     *   return `${xAxisLabels[item.dataIndex]}: $${value}`;
+     * }}
+     */
+    screenReaderAccessibilityLabel?: (item: HighlightedItemData) => string;
+    /**
+     * Maximum number of regions to divide the chart into for screen reader navigation.
+     * Only used when screenReaderAccessibilityLabel is provided.
+     * If the data has fewer points than this value, each point gets its own region.
+     * @default 10
+     */
+    screenReaderMaxRegions?: number;
   };
 
 export type CartesianChartProps = CartesianChartBaseProps &
@@ -188,6 +211,8 @@ export const CartesianChart = memo(
         fontFamilies,
         fontProvider: fontProviderProp,
         accessibilityLabel: accessibilityLabelProp,
+        screenReaderAccessibilityLabel,
+        screenReaderMaxRegions,
         // React Native will collapse views by default when only used
         // to group children, which interferes with gesture-handler
         // https://docs.swmansion.com/react-native-gesture-handler/docs/gestures/gesture-detector/#:~:text=%7B%0A%20%20return%20%3C-,View,-collapsable%3D%7B
@@ -198,6 +223,7 @@ export const CartesianChart = memo(
     ) => {
       const [containerLayout, onContainerLayout] = useLayout();
       const [highlightedItem, setHighlightedItem] = useState<HighlightedItemData | undefined>();
+      const isScreenReaderEnabled = useScreenReaderStatus();
 
       const chartWidth = containerLayout.width;
       const chartHeight = containerLayout.height;
@@ -689,6 +715,12 @@ export const CartesianChart = memo(
                 <ChartCanvas onLayout={onContainerLayout} style={styles?.chart}>
                   {children}
                 </ChartCanvas>
+                {isScreenReaderEnabled && screenReaderAccessibilityLabel && (
+                  <ChartAccessibilityView
+                    accessibilityLabel={screenReaderAccessibilityLabel}
+                    maxRegions={screenReaderMaxRegions}
+                  />
+                )}
                 {!isLegendBefore && legendElement}
               </Box>
             </ScrubberProvider>

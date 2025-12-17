@@ -1,13 +1,15 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useDerivedValue } from 'react-native-reanimated';
 import { Button } from '@coinbase/cds-mobile/buttons';
 import { Example, ExampleScreen } from '@coinbase/cds-mobile/examples/ExampleScreen';
 import { useTheme } from '@coinbase/cds-mobile/hooks/useTheme';
 import { VStack } from '@coinbase/cds-mobile/layout';
+import { TextBody, TextLabel1 } from '@coinbase/cds-mobile/typography';
 
 import { XAxis, YAxis } from '../../axis';
 import { CartesianChart } from '../../CartesianChart';
 import { ReferenceLine, SolidLine, type SolidLineProps } from '../../line';
+import type { HighlightedItemData } from '../../utils';
 import { useHighlightContext } from '../../utils/context';
 import { Bar, type BarComponentProps } from '../Bar';
 import { BarChart } from '../BarChart';
@@ -611,9 +613,65 @@ const ColorMapWithOpacity = () => {
   );
 };
 
+const accessibilityDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const accessibilityData = [45, 52, 38, 65, 48, 72, 55];
+
+const AccessibilityExample = () => {
+  const theme = useTheme();
+  const [highlightedIndex, setHighlightedIndex] = useState<number | undefined>();
+
+  const getAccessibilityLabel = useCallback((item: HighlightedItemData) => {
+    if (item.dataIndex === undefined) return 'No data selected';
+    const day = accessibilityDays[item.dataIndex];
+    const value = accessibilityData[item.dataIndex];
+    return `${day}: $${value}k revenue`;
+  }, []);
+
+  const handleHighlightChange = useCallback((item: HighlightedItemData | undefined) => {
+    setHighlightedIndex(item?.dataIndex);
+  }, []);
+
+  return (
+    <VStack gap={3}>
+      <CartesianChart
+        enableHighlighting
+        height={200}
+        onHighlightChange={handleHighlightChange}
+        screenReaderAccessibilityLabel={getAccessibilityLabel}
+        screenReaderMaxRegions={7}
+        series={[
+          {
+            id: 'revenue',
+            data: accessibilityData,
+            color: theme.color.accentBoldBlue,
+          },
+        ]}
+        xAxis={{
+          data: accessibilityDays,
+          scaleType: 'band',
+        }}
+      >
+        <XAxis showLine showTickMarks />
+        <YAxis showGrid tickLabelFormatter={(value: number) => `$${value}k`} />
+        <BarPlot BarComponent={DimmingBarComponent} />
+      </CartesianChart>
+      <VStack alignItems="center" gap={1}>
+        <TextBody>
+          Highlighted:{' '}
+          {highlightedIndex !== undefined ? accessibilityDays[highlightedIndex] : 'None'}
+        </TextBody>
+        <TextLabel1 color="fgMuted">Long press to scrub, or enable VoiceOver/TalkBack</TextLabel1>
+      </VStack>
+    </VStack>
+  );
+};
+
 const BarChartStories = () => {
   return (
     <ExampleScreen>
+      <Example title="Accessibility with Highlighting">
+        <AccessibilityExample />
+      </Example>
       <Example title="Basic">
         <UpdatingChartValues />
       </Example>

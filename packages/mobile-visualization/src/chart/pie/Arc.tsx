@@ -1,9 +1,15 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { runOnJS, useAnimatedReaction, useSharedValue, withTiming } from 'react-native-reanimated';
+import {
+  runOnJS,
+  useAnimatedReaction,
+  useDerivedValue,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { Group, Path as SkiaPath, Skia } from '@shopify/react-native-skia';
 
 import { usePolarChartContext } from '../ChartProvider';
-import { defaultAxisId } from '../utils';
+import { defaultAxisId, useHighlightContext } from '../utils';
 import { getArcPath } from '../utils/path';
 import { degreesToRadians } from '../utils/polar';
 
@@ -88,18 +94,37 @@ export const Arc = memo<ArcProps>(
     outerRadius,
     paddingAngle,
     fill,
-    fillOpacity = 1,
+    fillOpacity: fillOpacityProp = 1,
     stroke,
     strokeWidth,
     cornerRadius,
     clipPathId,
     angularAxisId,
     animate: animateProp,
-    seriesId: _seriesId,
-    dataIndex: _dataIndex,
+    seriesId,
+    dataIndex,
   }) => {
     const { animate: contextAnimate, drawingArea, getAngularAxis } = usePolarChartContext();
+    const highlightContext = useHighlightContext();
     const animate = animateProp !== undefined ? animateProp : contextAnimate;
+
+    // Compute effective fill opacity based on highlight state
+    // When another slice is highlighted, this slice dims to 0.3 opacity
+    const fillOpacity = useDerivedValue(() => {
+      const highlightedItem = highlightContext?.highlightedItem.value;
+
+      // If no highlighting or this arc doesn't have identifiers, use prop value
+      if (!highlightedItem || (seriesId === undefined && dataIndex === undefined)) {
+        return fillOpacityProp;
+      }
+
+      // Check if this arc is the highlighted one
+      const isHighlighted =
+        (highlightedItem.seriesId === undefined || highlightedItem.seriesId === seriesId) &&
+        (highlightedItem.dataIndex === undefined || highlightedItem.dataIndex === dataIndex);
+
+      return isHighlighted ? fillOpacityProp : fillOpacityProp * 0.3;
+    }, [highlightContext, seriesId, dataIndex, fillOpacityProp]);
 
     // Get the angular axis to determine the baseline angle
     const angularAxis = getAngularAxis(angularAxisId ?? defaultAxisId);
@@ -234,7 +259,7 @@ export const Arc = memo<ArcProps>(
 
     const content = (
       <>
-        {isFilled && <SkiaPath color={fill} opacity={fillOpacity} path={path} style="fill" />}
+        {isFilled && <SkiaPath color={fill} opacity={fillOpacity.value} path={path} style="fill" />}
         {isStroked && (
           <SkiaPath
             color={stroke}

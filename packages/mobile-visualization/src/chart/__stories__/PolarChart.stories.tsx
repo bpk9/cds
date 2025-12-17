@@ -12,7 +12,7 @@ import { DonutChart } from '../DonutChart';
 import { Arc, PieChart, PiePlot } from '../pie';
 import { PolarChart } from '../PolarChart';
 import { ChartText, type ChartTextProps } from '../text';
-import { getArcPath } from '../utils';
+import { getArcPath, type HighlightedItemData } from '../utils';
 
 const DonutCenterLabel = memo<Omit<ChartTextProps, 'x' | 'y'>>(({ children, ...props }) => {
   const { drawingArea } = usePolarChartContext();
@@ -874,6 +874,56 @@ const SemicircleWithLegend = () => {
   );
 };
 
+const AccessibilityViewExample = () => {
+  const theme = useTheme();
+  const [highlightedSlice, setHighlightedSlice] = useState<string | undefined>();
+
+  const series = useMemo(
+    () => [
+      { id: 'btc', data: 40, label: 'Bitcoin', color: `rgb(${theme.spectrum.orange40})` },
+      { id: 'eth', data: 30, label: 'Ethereum', color: `rgb(${theme.spectrum.blue40})` },
+      { id: 'sol', data: 20, label: 'Solana', color: `rgb(${theme.spectrum.purple40})` },
+      { id: 'other', data: 10, label: 'Other', color: `rgb(${theme.spectrum.gray40})` },
+    ],
+    [theme],
+  );
+
+  const getAccessibilityLabel = useCallback(
+    (item: HighlightedItemData) => {
+      const slice = series.find((s) => s.id === item.seriesId);
+      if (!slice) return 'Unknown slice';
+      return `${slice.label}: ${slice.data}%`;
+    },
+    [series],
+  );
+
+  const handleHighlightChange = useCallback((item: HighlightedItemData | undefined) => {
+    setHighlightedSlice(item?.seriesId);
+  }, []);
+
+  return (
+    <VStack alignItems="center" gap={4}>
+      <PolarChart
+        animate
+        enableHighlighting
+        height={200}
+        inset={0}
+        onHighlightChange={handleHighlightChange}
+        radialAxis={{ range: ({ max }) => ({ min: max * 0.5, max }) }}
+        screenReaderAccessibilityLabel={getAccessibilityLabel}
+        series={series}
+        width={200}
+      >
+        <PiePlot stroke={theme.color.bg} strokeWidth={2} />
+      </PolarChart>
+      <VStack alignItems="center" gap={1}>
+        <Text font="label1">Highlighted: {highlightedSlice ?? 'None'}</Text>
+        <TextLabel1 color="fgMuted">Enable VoiceOver/TalkBack to test accessibility</TextLabel1>
+      </VStack>
+    </VStack>
+  );
+};
+
 type ExampleItem = {
   title: string;
   component: React.ReactNode;
@@ -886,6 +936,7 @@ function ExampleNavigator() {
     () => [
       { title: 'Basic Pie Chart', component: <BasicPieChart /> },
       { title: 'Basic Donut Chart', component: <BasicDonutChart /> },
+      { title: 'Accessibility View 2', component: <AccessibilityViewExample /> },
       { title: 'Pie with Legend', component: <PieChartWithLegend /> },
       { title: 'Donut with Legend (Right)', component: <DonutWithLegendRight /> },
       { title: 'Donut with Legend (Left)', component: <DonutWithLegendLeft /> },
