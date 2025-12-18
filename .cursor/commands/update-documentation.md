@@ -109,6 +109,37 @@ If creating new files, explain why they're needed.
 
 ---
 
+## Phrasing & Voice
+
+Use concise, direct language. Avoid filler words.
+
+| ✅ Do                                  | ❌ Don't                                          |
+| -------------------------------------- | ------------------------------------------------- |
+| Use `accessibilityLabel` to provide... | Use the `accessibilityLabel` prop to provide...   |
+| Set `variant` to `"outline"`           | Set the `variant` prop to `"outline"`             |
+| `size` controls the dimensions         | The `size` prop controls the dimensions           |
+| Enable `showArea` for filled regions   | Enable the `showArea` prop for filled regions     |
+| Charts require a `series` array        | Charts require a `series` prop which is an array  |
+| To show labels, set `showLabels`       | In order to show labels, you can set...           |
+| Button renders a clickable element     | The Button component renders a clickable element  |
+| Renders a tooltip on hover             | This will render a tooltip when you hover         |
+| `Scrubber` displays the current value  | The `Scrubber` component allows you to display... |
+| Combine with `PeriodSelector` for...   | You can combine this with `PeriodSelector` to...  |
+| Wrap your app with `ThemeProvider`     | Make sure to wrap your app with `ThemeProvider`   |
+| Values update on drag                  | Note that values will update when dragging        |
+
+**Key principles:**
+
+- Drop "the" before component/prop names in backticks
+- Drop "prop" and "component" - backticks make it clear
+- Drop "you can" - just give the instruction directly
+- Drop "in order to" - use "to"
+- Drop "note that", "make sure to", "please" - just state the fact
+- Use active voice: "Renders X" not "This will render X"
+- Use present tense: "updates" not "will update"
+
+---
+
 **Important Notes:**
 
 - Do NOT modify the component source code, only documentation
