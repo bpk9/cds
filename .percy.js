@@ -12,8 +12,9 @@ module.exports = {
       'Components/Modal',
       // Animation and randomized examples aren't reliable for visual regression testing
       'Components/Chart/ChartText: Interactive Chart Text Group',
-      'Components/SparklineInteractive: Fallback Positive',
+      'Components/SparklineInteractive: Fallback Compact',
       'Components/SparklineInteractive: Fallback Negative',
+      'Components/SparklineInteractive: Fallback Positive',
       'Components/LottieStatusAnimation: Default',
       'Components/Loaders/MaterialSpinner: Material Spinner Default',
       'Components/Chart/LineChart: Transitions',
