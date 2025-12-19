@@ -14,6 +14,7 @@ import type {
   BannerStyleVariant,
   BannerVariant,
   IconName,
+  NegativeSpace,
   SharedProps,
 } from '@coinbase/cds-common/types';
 import { css } from '@linaria/core';
@@ -21,7 +22,7 @@ import { css } from '@linaria/core';
 import { Collapsible } from '../collapsible';
 import { Icon } from '../icons/Icon';
 import { Box, HStack, type HStackDefaultElement, type HStackProps, VStack } from '../layout';
-import type { ResponsiveProps, StaticStyleProps } from '../styles/styleProps';
+import type { ResponsiveProp, ResponsiveProps, StaticStyleProps } from '../styles/styleProps';
 import { Pressable } from '../system/Pressable';
 import type { LinkDefaultElement, LinkProps } from '../typography/Link';
 import { Link } from '../typography/Link';
@@ -194,6 +195,23 @@ export const Banner = memo(
       );
 
       const wrapperWidth = useMemo(() => {
+        /**
+         * Why we compute a custom wrapper width:
+         *
+         * CDS "margin*" style props (e.g. marginX) are implemented as **negative margins**.
+         * If the Banner wrapper is simply `width="100%"`, applying a negative horizontal
+         * margin will *shift* the Banner left/right while preserving its 100% width.
+         *
+         * The expected "bleed" behavior for negative margins is:
+         * - still span the full container width, AND
+         * - extend beyond the container by the negative margin amount.
+         *
+         * To achieve that, we expand the wrapper width to compensate for the negative
+         * margins using `calc(100% + <startBleed> + <endBleed>)`.
+         *
+         * This also supports responsive margin props: we emit responsive `width` values
+         * (base/phone/tablet/desktop) so the bleed behavior tracks the same breakpoints.
+         */
         const normalizeNegativeSpace = (value: string | number | undefined) => {
           if (value == null) return undefined;
           const str = String(value);
@@ -208,6 +226,7 @@ export const Banner = memo(
           effectiveMarginStart: string | number | undefined,
           effectiveMarginEnd: string | number | undefined,
         ) => {
+          // Prefer explicit start/end over marginX (marginX sets *both* sides).
           // Prefer explicit start/end over marginX (which sets both sides).
           const startSpaceToken =
             normalizeNegativeSpace(effectiveMarginStart) ??
@@ -217,27 +236,36 @@ export const Banner = memo(
 
           if (!startSpaceToken && !endSpaceToken) return '100%';
 
+          // If a side isn't bleeding, treat it as 0 so we can always use a single calc().
           const start = startSpaceToken ? spaceVar(startSpaceToken) : '0px';
           const end = endSpaceToken ? spaceVar(endSpaceToken) : '0px';
           return `calc(100% + ${start} + ${end})`;
         };
 
-        const toResponsiveObject = (value: unknown) => {
+        /**
+         * Normalize ResponsiveProp<T> into a consistent object shape so we can:
+         * - compute a base width, and
+         * - optionally compute phone/tablet/desktop overrides if any are provided.
+         *
+         * NOTE: we cannot rely on `typeof value === 'object'` alone here because
+         * ResponsiveProp<T> allows T itself to be an object type. We only use this
+         * helper with NegativeSpace, so it's safe in practice, but we still keep
+         * the types narrow for readability.
+         */
+        const toResponsiveObject = (value: ResponsiveProp<NegativeSpace | undefined>) => {
           if (value == null) return {};
-          if (typeof value === 'object')
-            return value as {
-              base?: string | number;
-              phone?: string | number;
-              tablet?: string | number;
-              desktop?: string | number;
-            };
-          return { base: value as string | number };
+          if (typeof value === 'object') return value;
+          return { base: value };
         };
 
+        // Pull the responsive margin values (or base-only values) into objects so we can
+        // compute bleed width per breakpoint.
         const respMarginX = toResponsiveObject(marginX);
         const respMarginStart = toResponsiveObject(marginStart);
         const respMarginEnd = toResponsiveObject(marginEnd);
 
+        // Base width (always computed). This is returned as a string if there are no
+        // responsive overrides, which keeps the output minimal.
         const baseWidth = computeBleedWidth(
           respMarginX.base,
           respMarginStart.base,
@@ -259,6 +287,9 @@ export const Banner = memo(
 
           if (!hasOverride) return;
 
+          // If a breakpoint overrides any of the margin props, compute an explicit width
+          // override for that breakpoint. We fall back to base values when only some
+          // sides are overridden.
           widthByBreakpoint[breakpoint] = computeBleedWidth(
             respMarginX[breakpoint] ?? respMarginX.base,
             respMarginStart[breakpoint] ?? respMarginStart.base,
