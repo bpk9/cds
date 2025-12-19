@@ -199,12 +199,7 @@ export const Banner = memo(
       );
 
       const content = (
-        <Box
-          position="relative"
-          width="100%"
-          {...(!showDismiss && marginStyles)}
-          height="fit-content"
-        >
+        <Box height="fit-content" position="relative" width="100%">
           <HStack
             ref={ref}
             background={background}
@@ -297,25 +292,21 @@ export const Banner = memo(
       );
 
       return showDismiss ? (
-        <Box
-          display="block"
-          height="fit-content"
-          position="relative"
-          width="100%"
-          {...marginStyles}
-        >
-          <Collapsible
-            accessibilityLabelledBy={accessibilityLabelledBy}
-            collapsed={isCollapsed}
-            id={`${titleId}--controller`}
-            testID={`${testID}-collapsible`}
-          >
-            {content}
-          </Collapsible>
-          {styleVariant === 'global' && borderBox}
+        <Box {...marginStyles}>
+          <Box display="block" height="fit-content" position="relative" width="100%">
+            <Collapsible
+              accessibilityLabelledBy={accessibilityLabelledBy}
+              collapsed={isCollapsed}
+              id={`${titleId}--controller`}
+              testID={`${testID}-collapsible`}
+            >
+              {content}
+            </Collapsible>
+            {styleVariant === 'global' && borderBox}
+          </Box>
         </Box>
       ) : (
-        content
+        <Box {...marginStyles}>{content}</Box>
       );
     },
   ),
