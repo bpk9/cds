@@ -10,25 +10,30 @@ COPY packages/illustrations/src/__generated__/heroSquare/png/dark/ ui-infra/illu
 COPY packages/illustrations/src/__generated__/heroSquare/png/light/ ui-infra/illustration/v1/heroSquare/png/light/
 COPY packages/illustrations/src/__generated__/heroSquare/svg/dark/ ui-infra/illustration/v1/heroSquare/svg/dark/
 COPY packages/illustrations/src/__generated__/heroSquare/svg/light/ ui-infra/illustration/v1/heroSquare/svg/light/
+COPY packages/illustrations/src/__generated__/heroSquare/svg/themeable/ ui-infra/illustration/v1/heroSquare/svg/themeable/
 
 COPY packages/illustrations/src/__generated__/pictogram/png/dark/ ui-infra/illustration/v1/pictogram/png/dark/
 COPY packages/illustrations/src/__generated__/pictogram/png/light/ ui-infra/illustration/v1/pictogram/png/light/
 COPY packages/illustrations/src/__generated__/pictogram/svg/dark/ ui-infra/illustration/v1/pictogram/svg/dark/
 COPY packages/illustrations/src/__generated__/pictogram/svg/light/ ui-infra/illustration/v1/pictogram/svg/light/
+COPY packages/illustrations/src/__generated__/pictogram/svg/themeable/ ui-infra/illustration/v1/pictogram/svg/themeable/
 
 COPY packages/illustrations/src/__generated__/spotIcon/png/dark/ ui-infra/illustration/v1/spotIcon/png/dark/
 COPY packages/illustrations/src/__generated__/spotIcon/png/light/ ui-infra/illustration/v1/spotIcon/png/light/
 COPY packages/illustrations/src/__generated__/spotIcon/svg/dark/ ui-infra/illustration/v1/spotIcon/svg/dark/
 COPY packages/illustrations/src/__generated__/spotIcon/svg/light/ ui-infra/illustration/v1/spotIcon/svg/light/
+COPY packages/illustrations/src/__generated__/spotIcon/svg/themeable/ ui-infra/illustration/v1/spotIcon/svg/themeable/
 
 COPY packages/illustrations/src/__generated__/spotRectangle/png/dark/ ui-infra/illustration/v1/spotRectangle/png/dark/
 COPY packages/illustrations/src/__generated__/spotRectangle/png/light/ ui-infra/illustration/v1/spotRectangle/png/light/
 COPY packages/illustrations/src/__generated__/spotRectangle/svg/dark/ ui-infra/illustration/v1/spotRectangle/svg/dark/
 COPY packages/illustrations/src/__generated__/spotRectangle/svg/light/ ui-infra/illustration/v1/spotRectangle/svg/light/
+COPY packages/illustrations/src/__generated__/spotRectangle/svg/themeable/ ui-infra/illustration/v1/spotRectangle/svg/themeable/
 
 COPY packages/illustrations/src/__generated__/spotSquare/png/dark/ ui-infra/illustration/v1/spotSquare/png/dark/
 COPY packages/illustrations/src/__generated__/spotSquare/png/light/ ui-infra/illustration/v1/spotSquare/png/light/
 COPY packages/illustrations/src/__generated__/spotSquare/svg/dark/ ui-infra/illustration/v1/spotSquare/svg/dark/
 COPY packages/illustrations/src/__generated__/spotSquare/svg/light/ ui-infra/illustration/v1/spotSquare/svg/light/
+COPY packages/illustrations/src/__generated__/spotSquare/svg/themeable/ ui-infra/illustration/v1/spotSquare/svg/themeable/
 
 RUN /shard-assets.sh
