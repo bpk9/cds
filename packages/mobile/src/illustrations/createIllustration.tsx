@@ -60,7 +60,10 @@ export type IllustrationBaseProps<T extends keyof IllustrationNamesMap> = Shared
   fallback?: null | React.ReactElement;
 };
 
-type IllustrationConfigShape = Record<string, { light: () => string; dark: () => string }>;
+type IllustrationConfigShape = Record<
+  string,
+  { light: () => string; dark: () => string; themeable?: () => string }
+>;
 
 export type IllustrationA11yProps = Pick<
   AccessibilityProps,
@@ -87,10 +90,67 @@ export function createIllustration<
     accessibilityHint,
     accessibilityLabel,
   }: IllustrationProps) {
-    const { activeColorScheme } = useTheme();
-    const requireFn = config[name]?.[activeColorScheme];
+    const theme = useTheme();
+    const { activeColorScheme } = theme;
+    const themeableSvgAvailable = config[name]?.['themeable'] !== undefined;
+    let requiredFn = null;
+    if (themeableSvgAvailable) {
+      requiredFn = config[name]?.['themeable'];
+    } else {
+      requiredFn = config[name]?.[activeColorScheme === 'dark' ? 'dark' : 'light'];
+    }
 
-    const xml = useMemo(() => requireFn?.(), [requireFn]);
+    const illustrationPalette = useMemo(
+      () =>
+        activeColorScheme === 'dark'
+          ? (theme.darkIllustration as Record<string, string> | undefined)
+          : (theme.lightIllustration as Record<string, string> | undefined),
+      [activeColorScheme, theme.darkIllustration, theme.lightIllustration],
+    );
+
+    const xml = useMemo(() => requiredFn?.(), [requiredFn]);
+
+    const themedXml = useMemo(() => {
+      if (!xml || !themeableSvgAvailable || !illustrationPalette) {
+        return xml;
+      }
+
+      const cssVarPattern = /var\(--illustration-([a-z0-9-]+)\)/gi;
+      const normalizeToken = (token: string) => token.replace(/-/g, '');
+      const channelToHex = (channel: number) =>
+        Math.max(0, Math.min(255, Math.round(channel)))
+          .toString(16)
+          .padStart(2, '0');
+
+      const convertColorToHex = (value: string) => {
+        const match = value.match(/^rgba?\(([^)]+)\)$/i);
+        if (!match) {
+          return value;
+        }
+
+        const [rRaw, gRaw, bRaw, aRaw] = match[1].split(',').map((part) => part.trim());
+        const r = Number(rRaw);
+        const g = Number(gRaw);
+        const b = Number(bRaw);
+
+        if ([r, g, b].some((channel) => Number.isNaN(channel))) {
+          return value;
+        }
+
+        const baseHex = `#${channelToHex(r)}${channelToHex(g)}${channelToHex(b)}`;
+        if (aRaw === undefined) {
+          return baseHex;
+        }
+
+        const alpha = Number(aRaw);
+        return Number.isNaN(alpha) ? value : `${baseHex}${channelToHex(alpha * 255)}`;
+      };
+
+      return xml.replace(cssVarPattern, (_, token: string) => {
+        const color = illustrationPalette[normalizeToken(token)];
+        return color ? convertColorToHex(color) : `var(--illustration-${token})`;
+      });
+    }, [illustrationPalette, themeableSvgAvailable, xml]);
 
     const style = useMemo(() => {
       let size = defaultSize;
@@ -103,7 +163,7 @@ export function createIllustration<
       return size;
     }, [dimension, scaleMultiplier]);
 
-    if (!xml) {
+    if (!themedXml) {
       if (isDevelopment()) {
         console.error(`Unable to find illustration with name: ${name}`);
       }
@@ -118,7 +178,7 @@ export function createIllustration<
         accessible={!!accessibilityLabel}
         style={style}
         testID={testID}
-        xml={xml}
+        xml={themedXml}
       />
     );
   });
