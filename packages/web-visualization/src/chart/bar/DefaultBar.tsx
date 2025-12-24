@@ -23,11 +23,13 @@ export type DefaultBarProps = BarComponentProps & {
 export const DefaultBar = memo<DefaultBarProps>(
   ({
     x,
+    y,
     width,
+    height,
     borderRadius = 4,
     roundTop,
     roundBottom,
-    originY,
+    origin,
     d,
     fill = 'var(--color-fgPrimary)',
     fillOpacity = 1,
@@ -36,15 +38,31 @@ export const DefaultBar = memo<DefaultBarProps>(
     transition,
     ...props
   }) => {
-    const { animate } = useCartesianChartContext();
+    const { layout, animate } = useCartesianChartContext();
 
     const initialPath = useMemo(() => {
       if (!animate) return undefined;
-      // Need a minimum height to allow for animation
-      const minHeight = 1;
-      const initialY = (originY ?? 0) - minHeight;
-      return getBarPath(x, initialY, width, minHeight, borderRadius, !!roundTop, !!roundBottom);
-    }, [animate, x, originY, width, borderRadius, roundTop, roundBottom]);
+      const isHorizontal = layout === 'horizontal';
+      // Need a minimum size to allow for animation
+      const minSize = 1;
+
+      let initialX = x;
+      let initialY = y;
+      let initialWidth = width;
+      let initialHeight = height;
+
+      if (isHorizontal) {
+        // Vertical growth: width is constant, height grows from origin
+        initialY = origin ?? (y + height);
+        initialHeight = minSize;
+      } else {
+        // Horizontal growth: height is constant, width grows from origin
+        initialX = origin ?? x;
+        initialWidth = minSize;
+      }
+
+      return getBarPath(initialX, initialY, initialWidth, initialHeight, borderRadius, !!roundTop, !!roundBottom, layout);
+    }, [animate, layout, x, y, origin, width, height, borderRadius, roundTop, roundBottom]);
 
     if (animate && initialPath) {
       return (

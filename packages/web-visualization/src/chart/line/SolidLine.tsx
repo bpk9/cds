@@ -58,7 +58,7 @@ export const SolidLine = memo<SolidLineProps>(
         )}
         <Path
           animate={animate}
-          clipOffset={strokeWidth}
+          clipOffset={Math.max(8, strokeWidth * 2)}
           d={d}
           fill={fill}
           stroke={gradient ? `url(#${gradientId})` : stroke}

@@ -3,6 +3,8 @@ import type { SVGProps } from 'react';
 import type { Transition } from 'framer-motion';
 
 import { getBarPath } from '../utils';
+import { useCartesianChartContext } from '../ChartProvider';
+import type { CartesianChartLayout } from '../utils';
 
 import { DefaultBar } from './';
 
@@ -37,10 +39,11 @@ export type BarBaseProps = {
    */
   roundBottom?: boolean;
   /**
-   * Y coordinate of the baseline/origin for animations.
-   * Used to calculate initial animation state.
+   * Coordinate of the baseline/origin for animations.
+   * For horizontal layout, this is the Y coordinate.
+   * For vertical layout, this is the X coordinate.
    */
-  originY?: number;
+  origin?: number;
   /**
    * The x-axis data value for this bar.
    */
@@ -105,7 +108,7 @@ export const Bar = memo<BarProps>(
     y,
     width,
     height,
-    originY,
+    origin,
     dataX,
     dataY,
     BarComponent = DefaultBar,
@@ -114,15 +117,15 @@ export const Bar = memo<BarProps>(
     stroke,
     strokeWidth,
     borderRadius = 4,
-    roundTop = true,
-    roundBottom = true,
+    roundTop,
+    roundBottom,
     transition,
   }) => {
-    const barPath = useMemo(() => {
-      return getBarPath(x, y, width, height, borderRadius, roundTop, roundBottom);
-    }, [x, y, width, height, borderRadius, roundTop, roundBottom]);
+    const { layout } = useCartesianChartContext();
 
-    const effectiveOriginY = originY ?? y + height;
+    const barPath = useMemo(() => {
+      return getBarPath(x, y, width, height, borderRadius, !!roundTop, !!roundBottom, layout);
+    }, [x, y, width, height, borderRadius, roundTop, roundBottom, layout]);
 
     if (!barPath) {
       return null;
@@ -137,7 +140,7 @@ export const Bar = memo<BarProps>(
         fill={fill}
         fillOpacity={fillOpacity}
         height={height}
-        originY={effectiveOriginY}
+        origin={origin ?? (layout === 'vertical' ? x : y + height)}
         roundBottom={roundBottom}
         roundTop={roundTop}
         stroke={stroke}

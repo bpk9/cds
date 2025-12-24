@@ -6,10 +6,25 @@ import type { Series } from './chart';
 import type { ChartScaleFunction } from './scale';
 
 /**
+ * Chart layout for Cartesian charts.
+ * - 'horizontal': X is data axis, Y is value axis.
+ * - 'vertical': Y is data axis, X is value axis.
+ */
+export type CartesianChartLayout = 'horizontal' | 'vertical';
+
+
+/**
  * Context value for Cartesian (X/Y) coordinate charts.
  * Contains axis-specific methods and properties for rectangular coordinate systems.
  */
 export type CartesianChartContextValue = {
+  /**
+   * Chart layout.
+   * @default 'horizontal'
+   * - 'horizontal': X is data axis, Y is value axis.
+   * - 'vertical': Y is data axis, X is value axis.
+   */
+  layout: CartesianChartLayout;
   /**
    * The series data for the chart.
    */

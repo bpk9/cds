@@ -53,6 +53,7 @@ export const SolidArea = memo<SolidAreaProps>(
         )}
         <Path
           animate={animate}
+          clipOffset={2}
           d={d}
           fill={gradient ? `url(#${patternId})` : fill}
           fillOpacity={fillOpacity}

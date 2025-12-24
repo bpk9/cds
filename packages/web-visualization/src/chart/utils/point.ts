@@ -1,4 +1,5 @@
 import type { TextHorizontalAlignment, TextVerticalAlignment } from '../text';
+import type { CartesianChartLayout } from './context';
 
 import { type ChartScaleFunction, isCategoricalScale, isLogScale, isNumericScale } from './scale';
 
@@ -13,9 +14,9 @@ export type PointLabelPosition = 'top' | 'bottom' | 'left' | 'right' | 'center';
 
 /**
  * Get a point from a data value and a scale.
- * @note for categorical scales, the point will be centered within the band.
+ * @note for categorical scales, the point will be centered within the banner.
  * @note for log scales, zero and negative values are clamped to a small positive value.
- * @param data - the data value.
+ * @param dataValue - the data value.
  * @param scale - the scale function.
  * @returns the pixel value (defaulting to 0 if data value is not defined in scale).
  */
@@ -82,12 +83,18 @@ export const projectPoints = ({
   yScale,
   xData,
   yData,
+  layout = 'horizontal',
 }: {
   data: (number | null | { x: number; y: number })[];
   xData?: number[];
   yData?: number[];
   xScale: ChartScaleFunction;
   yScale: ChartScaleFunction;
+  /**
+   * Chart layout.
+   * @default 'horizontal'
+   */
+  layout?: CartesianChartLayout;
 }): Array<{ x: number; y: number } | null> => {
   if (data.length === 0) {
     return [];
@@ -107,36 +114,45 @@ export const projectPoints = ({
       });
     }
 
-    // For scales with axis data, determine the correct x value
-    let xValue: number = index;
+    // Determine values/scales based on role (index vs value) and layout
+    const isHorizontal = layout === 'horizontal';
 
-    // For band scales, always use the index
-    if (!isCategoricalScale(xScale)) {
-      // For numeric scales with axis data, use the axis data values instead of indices
-      if (xData && Array.isArray(xData) && xData.length > 0) {
-        // Check if it's numeric data
-        if (typeof xData[0] === 'number') {
-          const numericXData = xData as number[];
-          xValue = numericXData[index] ?? index;
+    const indexScale = isHorizontal ? xScale : yScale;
+    const indexData = isHorizontal ? xData : yData;
+
+    const valueScale = isHorizontal ? yScale : xScale;
+    const valueData = isHorizontal ? yData : xData;
+
+    // 1. Calculate the position along the index axis (categorical or numeric domain)
+    let indexValue: number = index;
+
+    // For band scales, we almost always use the index.
+    // For numeric scales, we check if there is custom axis data provided.
+    if (!isCategoricalScale(indexScale)) {
+      if (indexData && Array.isArray(indexData) && indexData.length > 0) {
+        if (typeof indexData[0] === 'number') {
+          indexValue = (indexData as number[])[index] ?? index;
         }
       }
     }
 
-    let yValue: number = value as number;
-    if (
-      isNumericScale(yScale) &&
-      yData &&
-      Array.isArray(yData) &&
-      yData.length > 0 &&
-      typeof yData[0] === 'number' &&
-      typeof value === 'number'
-    ) {
-      yValue = value as number;
+    // 2. Calculate the position along the value axis (measured magnitude)
+    let val: number = value as number;
+    // (In case we ever need to project based on custom valueData, we can add logic here)
+
+    // 3. Project to final coordinates based on layout
+    if (isHorizontal) {
+      return projectPoint({
+        x: indexValue,
+        y: val,
+        xScale,
+        yScale,
+      });
     }
 
     return projectPoint({
-      x: xValue,
-      y: yValue,
+      x: val,
+      y: indexValue,
       xScale,
       yScale,
     });

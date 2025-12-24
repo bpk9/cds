@@ -245,7 +245,7 @@ const Candlesticks = () => {
   ][];
 
   const CandlestickBarComponent = memo<BarComponentProps>(
-    ({ x, y, width, height, originY, dataX, ...props }) => {
+    ({ x, y, width, height, dataX, ...props }) => {
       const { getYScale } = useCartesianChartContext();
       const yScale = getYScale();
 
@@ -311,8 +311,8 @@ const Candlesticks = () => {
       const text =
         index !== undefined
           ? `Open: ${formatPrice(parseFloat(stockData[index].open))}, Close: ${formatPrice(
-              parseFloat(stockData[index].close),
-            )}, Volume: ${formatVolume(stockData[index].volume)}`
+            parseFloat(stockData[index].close),
+          )}, Volume: ${formatVolume(stockData[index].volume)}`
           : formatPrice(parseFloat(stockData[stockData.length - 1].close));
 
       // Direct DOM manipulation - no React re-render
@@ -386,9 +386,45 @@ const Candlesticks = () => {
   );
 };
 
+const HorizontalBars = () => {
+  const dataset = [
+    { month: 'Jan', seoul: 21 },
+    { month: 'Feb', seoul: 28 },
+    { month: 'Mar', seoul: 41 },
+    { month: 'Apr', seoul: 73 },
+    { month: 'May', seoul: 99 },
+    { month: 'June', seoul: 144 },
+    { month: 'July', seoul: 319 },
+    { month: 'Aug', seoul: 249 },
+    { month: 'Sept', seoul: 131 },
+    { month: 'Oct', seoul: 55 },
+    { month: 'Nov', seoul: 48 },
+    { month: 'Dec', seoul: 25 },
+  ];
+
+  return (
+    <BarChart
+      height={400}
+      inset={0}
+      layout="vertical"
+      series={[{ id: 'seoul', label: 'Seoul rainfall', data: dataset.map(d => d.seoul) }]}
+      showXAxis
+      showYAxis
+      xAxis={{ label: 'rainfall (mm)' }}
+      yAxis={{
+        data: dataset.map((d) => d.month),
+        tickLabelFormatter: (val) => String(val),
+      }}
+    />
+  );
+};
+
 export const All = () => {
   return (
     <VStack gap={2}>
+      <Example title="Horizontal Bars (Weather Dataset)">
+        <HorizontalBars />
+      </Example>
       <Example title="Basic">
         <BarChart
           showXAxis
