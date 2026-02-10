@@ -193,11 +193,21 @@ export const FocusTrap = memo(function FocusTrap({
         event.preventDefault();
       }
 
+      // Check if the active element is a text input that needs arrow key navigation
+      const activeElementIsTextInput =
+        activeElement?.tagName === 'TEXTAREA' ||
+        (activeElement?.tagName === 'INPUT' &&
+          ['text', 'search', 'email', 'url', 'tel', 'password', 'number'].includes(
+            (activeElement as HTMLInputElement).type,
+          )) ||
+        activeElement?.getAttribute('contenteditable') === 'true';
+
+      // Only prevent default for arrow keys when focused on menu items/options,
+      // not when focused on text inputs that need arrow key navigation
       if (
         activeElementIsMenuItemOrOption ||
-        secondElementIsMenuItemOrOption ||
-        event.key === 'ArrowUp' ||
-        event.key === 'ArrowDown'
+        ((secondElementIsMenuItemOrOption || event.key === 'ArrowUp' || event.key === 'ArrowDown') &&
+          !activeElementIsTextInput)
       ) {
         event.preventDefault();
       }
