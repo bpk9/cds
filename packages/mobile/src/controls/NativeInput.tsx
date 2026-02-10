@@ -1,5 +1,5 @@
 import React, { forwardRef, memo, useMemo } from 'react';
-import { TextInput } from 'react-native';
+import { Platform, TextInput } from 'react-native';
 import type { TextInputProps, ViewStyle } from 'react-native';
 import type { SharedProps } from '@coinbase/cds-common/types';
 import type { SharedAccessibilityProps } from '@coinbase/cds-common/types/SharedAccessibilityProps';
@@ -96,6 +96,8 @@ export const NativeInput = memo(
            * @link https://github.com/facebook/react-native/issues/29068
            */
           { textAlign: textAlign === 'unset' ? undefined : textAlignInputTransformed },
+          // Hide the default browser focus outline on web platforms since we render our own focus indicator
+          Platform.OS === 'web' && { outlineStyle: 'none' as const },
           style,
         ];
       }, [inputTextStyle, containerStyle, textAlign, textAlignInputTransformed, style]);
