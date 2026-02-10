@@ -183,4 +183,66 @@ describe('FocusTrap', () => {
     fireEvent.keyDown(screen.getByTestId('first'), { key: 'Tab', code: 'Tab', shiftKey: true });
     expect(trigger).toHaveFocus();
   });
+
+  it('allows arrow key navigation in textareas without preventing default', () => {
+    render(
+      <DefaultThemeProvider>
+        <FocusTrap>
+          <div>
+            <textarea data-testid="textarea" />
+            <button data-testid="button">Button</button>
+          </div>
+        </FocusTrap>
+      </DefaultThemeProvider>,
+    );
+
+    const textarea = screen.getByTestId('textarea');
+    textarea.focus();
+
+    // Simulate ArrowDown - should not have defaultPrevented
+    const arrowDownEvent = fireEvent.keyDown(textarea, {
+      key: 'ArrowDown',
+      code: 'ArrowDown',
+    });
+
+    // Simulate ArrowUp - should not have defaultPrevented
+    const arrowUpEvent = fireEvent.keyDown(textarea, {
+      key: 'ArrowUp',
+      code: 'ArrowUp',
+    });
+
+    // The events should not be prevented (return true means not prevented)
+    expect(arrowDownEvent).toBe(true);
+    expect(arrowUpEvent).toBe(true);
+  });
+
+  it('allows arrow key navigation in text inputs without preventing default', () => {
+    render(
+      <DefaultThemeProvider>
+        <FocusTrap>
+          <div>
+            <input type="text" data-testid="text-input" />
+            <button data-testid="button">Button</button>
+          </div>
+        </FocusTrap>
+      </DefaultThemeProvider>,
+    );
+
+    const textInput = screen.getByTestId('text-input');
+    textInput.focus();
+
+    // Simulate ArrowDown and ArrowUp - should not have defaultPrevented
+    const arrowDownEvent = fireEvent.keyDown(textInput, {
+      key: 'ArrowDown',
+      code: 'ArrowDown',
+    });
+
+    const arrowUpEvent = fireEvent.keyDown(textInput, {
+      key: 'ArrowUp',
+      code: 'ArrowUp',
+    });
+
+    expect(arrowDownEvent).toBe(true);
+    expect(arrowUpEvent).toBe(true);
+  });
 });
