@@ -200,7 +200,7 @@ export const FocusTrap = memo(function FocusTrap({
           ['text', 'search', 'email', 'url', 'tel', 'password', 'number'].includes(
             (activeElement as HTMLInputElement).type,
           )) ||
-        activeElement?.getAttribute('contenteditable') === 'true';
+        activeElement?.isContentEditable;
 
       // Only prevent default for arrow keys when focused on menu items/options,
       // not when focused on text inputs that need arrow key navigation
