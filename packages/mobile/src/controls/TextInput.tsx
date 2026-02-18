@@ -232,9 +232,10 @@ export const TextInput = memo(
 
       return (
         <InputStack
-          borderFocusedStyle={borderFocusedStyle}
+          borderFocusedStyle={bordered ? borderFocusedStyle : undefined}
           borderRadius={borderRadius}
           borderStyle={borderUnfocusedStyle}
+          borderWidth={bordered ? 100 : 0}
           disabled={disabled}
           enableColorSurge={enableColorSurge}
           endNode={
