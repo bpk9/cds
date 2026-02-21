@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## Unreleased
+
+#### 🐞 Fixes
+
+- Fix: suppress focus border on TextInput when `bordered={false}` on mobile.
+
 ## 8.47.2 (2/19/2026 PST)
 
 #### 🐞 Fixes
