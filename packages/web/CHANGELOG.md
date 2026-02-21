@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
-## 8.47.3
+## Unreleased
 
 ### Patch Changes
 
