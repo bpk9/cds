@@ -1,5 +1,7 @@
 import { Button } from '../../buttons';
+import { NativeTextArea } from '../../controls/NativeTextArea';
 import { TextInput } from '../../controls/TextInput';
+import { Box } from '../../layout/Box';
 import { VStack } from '../../layout/VStack';
 import { Text } from '../../typography/Text';
 import { FocusTrap } from '../FocusTrap';
@@ -27,6 +29,22 @@ export const Playground = () => {
         </VStack>
       </FocusTrap>
     </VStack>
+  );
+};
+
+export const ArrowKeysInTextInputs = () => {
+  return (
+    <FocusTrap>
+      <VStack background="bgPrimaryWash" gap={3} padding={3}>
+        <Text as="h1" display="block" font="headline">
+          Up/Down arrow keys should work
+        </Text>
+        <Box background="bg">
+          <NativeTextArea placeholder="Type a message..." rows={3} />
+        </Box>
+        <Button>Submit</Button>
+      </VStack>
+    </FocusTrap>
   );
 };
 
