@@ -234,7 +234,7 @@ export const InputStack = memo(function InputStack({
       <HStack>
         {!!prependNode && <>{prependNode}</>}
         <View style={styles.inputAreaContainerStyle}>
-          {focused && <Animated.View style={borderFocusedStyles} />}
+          {focused && !!borderFocusedStyle && <Animated.View style={borderFocusedStyles} />}
           <Animated.View
             onLayout={onInputAreaLayout}
             style={inputAreaStyles}
