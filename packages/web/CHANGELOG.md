@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- template-start -->
 
+## 8.47.3
+
+### Patch Changes
+
+- fix: prevent FocusTrap from blocking arrow keys in text inputs (textarea, input, contentEditable)
+
 ## 8.47.2 ((2/19/2026, 03:18 PM PST))
 
 This is an artificial version bump with no new change.

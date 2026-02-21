@@ -206,7 +206,9 @@ export const FocusTrap = memo(function FocusTrap({
       // not when focused on text inputs that need arrow key navigation
       if (
         activeElementIsMenuItemOrOption ||
-        ((secondElementIsMenuItemOrOption || event.key === 'ArrowUp' || event.key === 'ArrowDown') &&
+        ((secondElementIsMenuItemOrOption ||
+          event.key === 'ArrowUp' ||
+          event.key === 'ArrowDown') &&
           !activeElementIsTextInput)
       ) {
         event.preventDefault();

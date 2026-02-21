@@ -221,7 +221,7 @@ describe('FocusTrap', () => {
       <DefaultThemeProvider>
         <FocusTrap>
           <div>
-            <input type="text" data-testid="text-input" />
+            <input data-testid="text-input" type="text" />
             <button data-testid="button">Button</button>
           </div>
         </FocusTrap>
